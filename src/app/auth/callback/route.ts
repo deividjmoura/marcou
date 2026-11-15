@@ -32,15 +32,13 @@ export async function GET(request: NextRequest) {
     user.user_metadata?.name ??
     null;
 
+  const profileRow: { id: string; display_name?: string } = { id: user.id };
+  if (typeof displayName === "string" && displayName.trim()) {
+    profileRow.display_name = displayName.trim().slice(0, 80);
+  }
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .upsert(
-      {
-        id: user.id,
-        display_name: typeof displayName === "string" ? displayName.slice(0, 80) : null,
-      },
-      { onConflict: "id" },
-    )
+    .upsert(profileRow, { onConflict: "id" })
     .select("phone")
     .single();
 

@@ -62,13 +62,14 @@ async function saveAuthProfile(
     user.user_metadata?.name ??
     null;
 
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      id: user.id,
-      display_name: typeof displayName === "string" ? displayName.slice(0, 80) : null,
-    },
-    { onConflict: "id", ignoreDuplicates: false },
-  );
+  const profileRow: { id: string; display_name?: string } = { id: user.id };
+  if (typeof displayName === "string" && displayName.trim()) {
+    profileRow.display_name = displayName.trim().slice(0, 80);
+  }
+  const { error } = await supabase.from("profiles").upsert(profileRow, {
+    onConflict: "id",
+    ignoreDuplicates: false,
+  });
   if (error) throw new Error("Não foi possível preparar seu perfil.");
 }
 
@@ -155,7 +156,8 @@ export async function signupAction(
     } catch {
       return { error: "A conta foi criada, mas não foi possível preparar o perfil. Entre novamente." };
     }
-    redirect("/perfil?next=%2Fpainel");
+    const next = safeNextPath(String(formData.get("next") ?? ""));
+    redirect(`/perfil?next=${encodeURIComponent(next)}`);
   }
 
   return {
