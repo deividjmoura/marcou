@@ -6,7 +6,8 @@
 - Implementação em andamento nesta branch: permitir editar o slug com a mesma validação do cadastro, persistir no servidor, apresentar mensagem amigável quando o endereço já estiver ocupado e revalidar os caminhos público antigo/novo.
 - Testes adicionados para validar o slug durante a edição. Lint, typecheck, testes, test:db e build ainda aguardam execução de CI nesta entrega.
 - Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração Vercel ou deploy foi executado.
-- Próximos passos: revisar o diff, abrir PR draft vinculada à #24, verificar todos os checks e registrar resultados reais. Não fazer merge sem autorização do responsável.
+- PR aberta em draft: [#34](https://github.com/deividjmoura/marcou/pull/34), vinculada à #24 (entrega parcial, sem fechar a issue). Diff limitado a slug do negócio, validação/testes e este registro de continuidade.
+- CI do commit inicial da PR está em execução; resultado ainda não confirmado. Próximo passo: verificar lint, typecheck, testes, test:db e build no head mais recente, corrigir falhas se houver e atualizar este registro. Não fazer merge sem autorização do responsável.
 
 ---
 
