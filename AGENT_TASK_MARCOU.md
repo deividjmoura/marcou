@@ -1,3 +1,12 @@
+# Auditoria e merges verificados — 15/11/2026
+
+- PR #35 BOOKING-OPS merged via squash em `ad9983bf7f8b9e574d603b1efb33d08448326577`. Adiciona `docs/BOOKING-OPS.md` com matriz de estados/transições, hold, expiração, cancelamento, lacunas e dependências. CI run #48 passou: lint, typecheck, testes, test:db e build. Issue #25 permanece aberta: scheduler em ambiente real, política comercial e testes E2E ainda pendentes.
+- PR #34 PROVIDER-ADMIN merged via squash em `fa074def73478c1b1738336979d423555683aab0`. Permite alterar slug público e editar períodos de expediente semanal; testes de slug incluídos. Head final validado: `889a52957265cb57a4620a028747588ff62c2e1e`. CI run #51 passou em lint, typecheck, npm test, test:db e build; Vercel Preview check passou. Branch atualizada com a main antes do merge. Issue #24 permanece aberta para agenda ampliada, revisão de acessibilidade/estados e testes dedicados de isolamento/RLS.
+- PRs ainda abertas e não integradas nesta auditoria: #1 e #2 são prévias demonstrativas sem backend real e continuam draft; #4 está divergente da main (13 commits atrás, 5 à frente, mergeable=false); #32 está divergente (3 commits atrás, 10 à frente) e não pode ser integrada porque substitui este documento de continuidade (mais de 800 linhas) por apenas 39 linhas e inclui `docs/MOTION.md` fora do escopo PLATFORM.
+- Nenhuma migration foi aplicada remotamente; nenhum secret, configuração remota do Supabase/Vercel ou deploy de produção foi alterado.
+
+---
+
 # ANDAMENTO — ISSUE #24 PROVIDER-ADMIN — 15/11/2026
 
 - Responsável por esta entrega: agente PROVIDER-ADMIN.
