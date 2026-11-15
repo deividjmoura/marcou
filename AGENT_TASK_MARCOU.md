@@ -258,7 +258,6 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
   "identity_delivery": {
     "status": "implementado_nao_verificado",
     "branch": "feat/23-identity-auth-profile",
-    "head_commit": "b311dae6be6e9f335750edf8c856ddec57540059",
     "pull_request": 33,
     "note": "Cadastro/login existentes preservados; perfil/telefone, recuperação de senha e callback Supabase implementados. Google Cloud/Supabase provider ainda depende de configuração do responsável.",
     "tests": {
@@ -268,7 +267,8 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "database": "success — CI run #43775254043",
       "build": "success — CI run #43775254043"
     },
-    "ci_run": "https://github.com/deividjmoura/marcou/actions/runs/43775254043"
+    "ci_run": "https://github.com/deividjmoura/marcou/actions/runs/43775254043",
+    "last_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059"
   }
 }
 ```
@@ -974,7 +974,7 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 **Status:** implementação realizada em branch própria; PR aberta em draft, sem merge. A Issue #23 permanece aberta porque a configuração externa do Google OAuth e a validação ponta a ponta ainda dependem do responsável.
 
 - **Branch:** `feat/23-identity-auth-profile` (criada diretamente de `main` em `217823e7af67f451d5a2fd9bbd631cd2d4f4f6c5`).
-- **Head:** `b311dae6be6e9f335750edf8c856ddec57540059`.
+- **Último commit de código:** `b311dae6be6e9f335750edf8c856ddec57540059` (os commits seguintes atualizam apenas o documento de handoff).
 - **PR:** [#33 — IDENTITY](https://github.com/deividjmoura/marcou/pull/33), draft, base `main`, sem `Closes #23`.
 - **Commits:** `46d0fda77d2028cc9ad50eb15a9853cb23b116a0`, `2d2f6bb9565157ead8341f9bb38820d5b8d16fe0`, `21fdcb8a89de74a65e206b12ac63d2ba0aa99e14`, `26f5dfaca16e93c38e674a7a701ef11ffd77d8f5`, `e80ab28796295d1de56aa6f027495326b177eb58`, `1a600faa65834310f02bd2296340e19b2f50a53b`, `90cf7fdf9f843d8fb9a875dc2494499cb3e1bdbe`, `b311dae6be6e9f335750edf8c856ddec57540059`.
 
