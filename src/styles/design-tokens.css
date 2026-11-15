@@ -1,17 +1,14 @@
-/* Marcou Design System — foundation tokens.
- * Values intentionally mirror the current production stylesheet.
- * Brand palette changes are documented in docs/DESIGN-SYSTEM.md and should
- * not be introduced silently while the green-vs-rose direction is unresolved.
- */
+/* Marcou Design System — palette bege, branco e rosé. */
 :root {
   color-scheme: light;
-  --ds-color-ink: #20211f;
-  --ds-color-muted: #777a72;
-  --ds-color-paper: #f7f7f2;
+  --ds-color-ink: #33272b;
+  --ds-color-muted: #76686d;
+  --ds-color-paper: #f8f3f0;
   --ds-color-surface: #ffffff;
-  --ds-color-line: #e6e8df;
-  --ds-color-brand: #b9e36a;
-  --ds-color-brand-strong: #7aa52e;
+  --ds-color-line: #e9dde1;
+  --ds-color-brand: #e8c4cf;
+  --ds-color-brand-strong: #8a4d62;
+  --ds-color-brand-soft: #f7e9ed;
   --ds-color-success-bg: #eef7dd;
   --ds-color-success-text: #4c6b1e;
   --ds-color-warning-bg: #fff4d6;
@@ -43,9 +40,9 @@
   --ds-radius-lg: 1rem;
   --ds-radius-xl: 1.25rem;
   --ds-radius-pill: 999px;
-  --ds-shadow-card: 0 24px 70px rgb(45 54 30 / 7%);
-  --ds-shadow-overlay: 0 16px 48px rgb(32 33 31 / 16%);
-  --ds-focus-color: #718b42;
+  --ds-shadow-card: 0 24px 70px rgb(65 40 49 / 8%);
+  --ds-shadow-overlay: 0 16px 48px rgb(51 39 43 / 16%);
+  --ds-focus-color: #8a4d62;
   --ds-focus-width: 2px;
   --ds-focus-offset: 3px;
   --ds-control-min-height: 44px;
