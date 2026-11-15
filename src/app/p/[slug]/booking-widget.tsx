@@ -73,13 +73,6 @@ export function BookingWidget({
         const result = await fetchSlotsAction({ slug, serviceId, date });
         if (active) {
           setSlots(result);
-          if (
-            selectedSlot &&
-            !result.slots?.some((slot) => slot.startsAt === selectedSlot)
-          ) {
-            setSelectedSlot(null);
-            setPicked(false);
-          }
         }
       } catch {
         if (active) {
