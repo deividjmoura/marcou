@@ -60,8 +60,10 @@ export async function saveProviderAction(
     if (existing) {
       const parsed = providerSettingsSchema.safeParse(raw);
       if (!parsed.success) return { error: firstIssue(parsed.error) };
-      await updateProviderSettings(existing.id, parsed.data);
+      const updated = await updateProviderSettings(existing.id, parsed.data);
       revalidatePath("/painel");
+      revalidatePath(`/p/${existing.slug}`);
+      revalidatePath(`/p/${updated.slug}`);
       return { success: "Configurações salvas." };
     }
 
