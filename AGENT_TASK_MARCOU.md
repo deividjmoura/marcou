@@ -548,3 +548,61 @@ Antes de encerrar:
 Comece com um diagnóstico curto do repositório **depois de realmente inspecioná-lo**. Não comece afirmando que o projeto já possui funcionalidades que ainda não foram verificadas. Depois, apresente o plano baseado no estado encontrado e execute as etapas seguras sem pedir confirmação para cada pequena alteração.
 
 **Prioridade geral:** preservar o que existe, tornar o agendamento confiável e entregar um fluxo real que permita a um profissional configurar seu negócio e receber agendamentos.
+
+
+---
+
+# 🧭 ROADMAP CENTRAL E DIVISÃO POR ÁREAS — 15/11/2026
+
+Este roadmap foi criado para distribuir o trabalho entre agentes por domínio. **Cada agente deve assumir uma área e trabalhar somente nas issues atribuídas àquela área**, respeitando dependências e branches existentes. Não abrir PR sem código implementado; não criar PR vazia apenas para reservar trabalho.
+
+## Convenção de roteamento
+
+- O prefixo entre colchetes no título da issue identifica a área responsável.
+- Ao delegar, atribuir ao agente todas as issues com o mesmo prefixo/área.
+- Um agente não deve alterar arquivos/branches de outra área sem coordenação.
+- Cada issue deve ser executada em branch própria, com PR vinculada à issue.
+- Antes de iniciar, verificar se o escopo já foi implementado em `main` ou em PR aberta; atualizar/fechar issue duplicada em vez de reimplementar.
+- Atualizar esta seção e o bloco JSON do topo quando o estado real mudar. Não declarar PR integrada sem conferir estado e merge commit.
+- Labels atuais: PRs existentes foram categorizadas com `enhancement` ou `bug`; as issues usam prefixos padronizados no título e label `enhancement`. Não inventar labels de área que não existam no repositório.
+
+## Backlog criado
+
+| Issue | Área | Responsabilidade |
+|---|---|---|
+| [#21 — BOOKING](https://github.com/deividjmoura/marcou/issues/21) | BOOKING | Múltiplos serviços, duração/preço combinados e disponibilidade consistente |
+| [#22 — PUBLIC-FLOW](https://github.com/deividjmoura/marcou/issues/22) | PUBLIC-FLOW | Jornada pública real conectada ao backend |
+| [#23 — IDENTITY](https://github.com/deividjmoura/marcou/issues/23) | IDENTITY | Cadastro, login, OAuth Google, telefone e perfil |
+| [#24 — PROVIDER-ADMIN](https://github.com/deividjmoura/marcou/issues/24) | PROVIDER-ADMIN | Painel, negócio, serviços, expediente e agenda |
+| [#25 — BOOKING-OPS](https://github.com/deividjmoura/marcou/issues/25) | BOOKING-OPS | Expiração, estados, cancelamento e políticas |
+| [#26 — NOTIFICATIONS](https://github.com/deividjmoura/marcou/issues/26) | NOTIFICATIONS | Jobs de lembrete/expiração e e-mail |
+| [#27 — DESIGN-SYSTEM](https://github.com/deividjmoura/marcou/issues/27) | DESIGN-SYSTEM | Tipografia, identidade, componentes e ícones animados |
+| [#28 — PAYMENTS](https://github.com/deividjmoura/marcou/issues/28) | PAYMENTS | Sinal, pagamento, comprovantes e webhooks |
+| [#29 — CALENDAR-INTEGRATION](https://github.com/deividjmoura/marcou/issues/29) | CALENDAR-INTEGRATION | Integração segura com Google Calendar |
+| [#30 — PLATFORM](https://github.com/deividjmoura/marcou/issues/30) | PLATFORM | Supabase, ambientes, cron, deploy, backup e observabilidade |
+| [#31 — QUALITY](https://github.com/deividjmoura/marcou/issues/31) | QUALITY | E2E, segurança, acessibilidade e performance |
+
+## PRs existentes — não duplicar
+
+- [PR #1](https://github.com/deividjmoura/marcou/pull/1): prévia visual da página pública; relacionada às issues #22 e #27. Dados demonstrativos.
+- [PR #2](https://github.com/deividjmoura/marcou/pull/2): prévia do calendário mobile; relacionada às issues #21 e #22. Horários demonstrativos.
+- [PR #4](https://github.com/deividjmoura/marcou/pull/4): resiliência do calendário; revisar diff e CI, relacionada às issues #21 e #22.
+- [PR #5](https://github.com/deividjmoura/marcou/pull/5): notificações internas; pendências relacionadas à issue #26. **Há divergência entre o texto histórico deste documento/README e o estado retornado pela listagem de PRs. Confirmar no GitHub o estado real e o merge commit antes de alterar o status canônico.**
+- [PR #3](https://github.com/deividjmoura/marcou/pull/3): motor básico e fluxo essencial, descrita como integrada na documentação; confirmar merge em `main` antes de qualquer reabertura de escopo.
+
+## Ordem sugerida e dependências
+
+1. **BOOKING (#21) + BOOKING-OPS (#25):** garantir modelo e ciclo de vida das reservas.
+2. **IDENTITY (#23) + PROVIDER-ADMIN (#24):** fechar contas, perfis e operação do prestador.
+3. **PUBLIC-FLOW (#22):** integrar a jornada pública aos serviços reais e ao motor validado.
+4. **NOTIFICATIONS (#26) + PLATFORM (#30):** automatizar lembretes e jobs com infraestrutura segura.
+5. **DESIGN-SYSTEM (#27) + QUALITY (#31):** consolidar experiência e validar qualidade transversal; podem avançar em paralelo com coordenação.
+6. **PAYMENTS (#28) e CALENDAR-INTEGRATION (#29):** dependem de decisões explícitas do responsável sobre provedor, modelo de cobrança e comportamento da sincronização.
+
+## Fase futura — fora do backlog ativo
+
+WhatsApp, bot, webhooks e Railway permanecem adiados. Não abrir trabalho de implementação dessas integrações até nova autorização do responsável.
+
+## Instrução de delegação
+
+Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse agente deve assumir #21 e coordenar dependências com #25, sem assumir automaticamente as outras áreas. Toda PR deve referenciar a issue correspondente (por exemplo, `Closes #21`) apenas quando realmente a concluir. Não atribuir pessoas/usuários sem confirmação de quem será responsável.
