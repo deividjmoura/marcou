@@ -51,8 +51,23 @@
 
 ## Decisões pendentes
 1. Confirmar Firebase como backend definitivo ou indicar outra stack.
-2. Identificar provedor, repositório e fluxo do bot de WhatsApp existente.
+2. Repositório identificado: `deividjmoura/SEGA_stats_bot`, implementação WhatsApp na branch `feat/nox-agenda-sugestoes-20261015`, diretório `whatsapp-service/`.
 3. Definir meio de pagamento do sinal e forma de aprovação (webhook automático ou conferência manual).
 4. Confirmar serviços, duração, preços e valor/percentual do sinal a partir do catálogo.
 5. Definir se a agenda Google do prestador será fonte de disponibilidade ou apenas receberá cópias dos agendamentos.
 6. Definir duração da reserva temporária e política de cancelamento/reembolso.
+
+## Análise do bot WhatsApp existente
+
+Repositório de referência: `deividjmoura/SEGA_stats_bot`, branch `feat/nox-agenda-sugestoes-20261015`.
+
+- O serviço isolado está em `whatsapp-service/`, usa Node.js (ES modules), `@whiskeysockets/baileys` `7.0.0-rc14` e `pino`.
+- O README do serviço documenta execução persistente na Railway, autenticação WhatsApp em diretório persistente e chave de criptografia mantida em segredo.
+- O bot já contém lógica de agenda de eventos e presença (`agendaAttendance.js`, `agendaTiming.js`), útil como referência de experiência e regras, mas não é um motor de reservas de serviços nem deve ser acoplado diretamente ao domínio Marcou.
+- A implementação Baileys é não oficial e pode sofrer mudanças ou restrições. Para um serviço comercial, avaliar a WhatsApp Business Platform oficial antes de produção. Se o responsável optar por manter Baileys no MVP, isolar a conexão num serviço/adapter separado para permitir substituição sem reescrever agendamentos.
+- O Marcou deve enviar eventos ao adapter (por exemplo: `booking.pending_payment`, `payment.approved`, `booking.confirmed`, `booking.cancelled`); o adapter envia mensagens e encaminha respostas/mídias recebidas para endpoints autenticados do backend.
+- Não compartilhar a sessão WhatsApp, os arquivos de autenticação, o volume Railway ou a chave de criptografia do NOX com o Marcou. A conexão do prestador deve ser própria e autorizada para esse uso.
+
+### Próxima etapa de integração
+
+Criar um contrato independente para o WhatsApp (envio de texto, instrução PIX, recebimento de comprovante/mídia, consulta de status e envio de confirmação), com webhook autenticado, idempotência e correlação por `bookingId`. A validação do pagamento deve ocorrer no backend, nunca por inferência do texto ou da imagem recebida.
