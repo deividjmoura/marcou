@@ -757,3 +757,36 @@ WhatsApp, bot, webhooks e Railway permanecem adiados. Não abrir trabalho de imp
 ## Instrução de delegação
 
 Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse agente deve assumir #21 e coordenar dependências com #25, sem assumir automaticamente as outras áreas. Toda PR deve referenciar a issue correspondente (por exemplo, `Closes #21`) apenas quando realmente a concluir. Não atribuir pessoas/usuários sem confirmação de quem será responsável.
+
+
+
+## Tarefa delegada ao agente externo — Issue #21 BOOKING
+
+**Responsável:** agente externo designado pelo usuário.  
+**Issue principal:** https://github.com/deividjmoura/marcou/issues/21  
+**Objetivo:** implementar seleção e agendamento de múltiplos serviços em uma única reserva, com duração e preço combinados e disponibilidade validada no servidor.
+
+### Instruções obrigatórias
+1. Leia este documento inteiro e audite a `main`, as PRs abertas e as migrations antes de alterar qualquer coisa.
+2. Trabalhe exclusivamente no escopo da Issue #21. Não altere autenticação, painel administrativo, notificações, pagamentos ou integrações de calendário.
+3. Crie uma branch própria, por exemplo `feat/21-booking-multiple-services`, a partir da `main` atualizada. Não trabalhe diretamente em `main`.
+4. Preserve compatibilidade com reservas existentes de um único serviço. Não faça mudanças destrutivas no banco.
+5. Permita selecionar vários serviços ativos do mesmo estabelecimento. Calcule duração total e preço total no servidor, usando os valores persistidos dos serviços; não confie em totais enviados pelo navegador.
+6. Valide disponibilidade para o intervalo combinado, expediente, bloqueios e reservas existentes. A operação de criação precisa ser segura contra duas requisições concorrentes tentando ocupar o mesmo horário.
+7. Se o modelo atual do banco não suportar múltiplos serviços, proponha e implemente migration aditiva, com constraints/índices apropriados e estratégia de compatibilidade. Não aplique migration no projeto Supabase remoto; apenas versionar o arquivo e documentar como validar/aplicar.
+8. Atualize UI pública apenas no necessário para seleção múltipla, resumo de serviços, duração e preço. Trate carregamento, erro, estado vazio e validação.
+9. Adicione testes para cálculo agregado, disponibilidade, conflitos concorrentes/duplicidade e fluxo de criação; execute lint, typecheck, testes e build disponíveis.
+10. Abra uma PR vinculada à Issue #21 com `Closes #21` somente quando todos os critérios estiverem concluídos. Descreva decisões, migration, riscos, testes executados e limitações. Não faça merge.
+11. Não altere PRs #1, #2 ou #4 nem faça cherry-pick/merge de branches de terceiros sem necessidade e sem documentar.
+12. Antes de encerrar, atualize o JSON de estado no início deste documento e esta seção com branch, commits, PR, arquivos alterados, testes e pendências. Não declare concluído algo que não foi validado.
+
+### Critérios de aceite
+- Usuário consegue escolher um ou mais serviços do mesmo estabelecimento.
+- Preço e duração combinados são calculados no backend e exibidos corretamente.
+- Horário só é oferecido/confirmado quando o intervalo completo está livre.
+- Duas tentativas simultâneas para horários incompatíveis não conseguem criar reservas conflitantes.
+- Reservas antigas continuam funcionando.
+- Testes, lint, typecheck e build passam; qualquer falha preexistente é identificada separadamente.
+- PR pequena, revisável e ligada à Issue #21.
+
+**Limite de escopo:** se descobrir dependência real de outra área, documente e abra comentário na issue correspondente; não amplie esta implementação por conta própria.
