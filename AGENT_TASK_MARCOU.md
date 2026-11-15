@@ -1,3 +1,41 @@
+# 🔴 PADRÃO OBRIGATÓRIO DO DOCUMENTO — FORMATO HÍBRIDO (15/11/2026)
+
+## Fonte de verdade estruturada para todos os agentes
+
+A partir desta atualização, este arquivo deve seguir um **formato híbrido: JSON válido para estado estruturado + Markdown para instruções e explicações**. O objetivo é permitir que agentes identifiquem rapidamente o estado real do projeto sem perder contexto técnico e regras em linguagem natural.
+
+### 1. Bloco JSON de estado
+- Manter no início do documento um único bloco JSON válido, sem comentários, com informações objetivas e atuais.
+- Organizar nele: nome/repositório, branch principal, arquitetura adotada, funcionalidades e respectivos status, PRs/branches em andamento, entregas concluídas, pendências, bloqueios e regras críticas.
+- Usar estados padronizados, por exemplo: `"concluido_verificado"`, `"implementado_nao_verificado"`, `"em_andamento"`, `"planejado"` e `"bloqueado"`.
+- Registrar links, números de PR e SHAs quando conhecidos. Não inventar dados nem tratar validação em banco local como validação em Supabase remoto.
+- Manter o JSON sintaticamente válido. Não inserir comentários, vírgulas finais ou texto explicativo dentro do bloco.
+
+### 2. Seções em Markdown
+Depois do JSON, manter em Markdown:
+- decisões de produto e arquitetura, com justificativas;
+- instruções detalhadas da tarefa prioritária;
+- critérios de aceite e testes esperados;
+- procedimentos de segurança, Git, revisão e passagem entre agentes;
+- contexto técnico que não se encaixa bem em campos estruturados.
+
+### 3. Atualização obrigatória por qualquer agente
+- Antes de trabalhar, ler o JSON e as instruções Markdown e conferir tudo contra o repositório, branches, PRs, código e CI atuais.
+- Ao alterar o projeto, atualizar o JSON e o Markdown na mesma entrega, antes de encerrar ou transferir o trabalho.
+- Atualizar status, PRs, branches, commits, validações e pendências com fatos confirmados.
+- Se houver divergência, corrigir o documento com base em evidências e registrar o que mudou; não copiar cegamente o estado anterior.
+- Não apagar histórico útil nem duplicar relatos. O resumo estruturado deve refletir o estado atual; o histórico Git permanece como fonte dos detalhes das alterações.
+- Se não for possível verificar um item, marcar como não verificado ou bloqueado e explicar a limitação.
+
+### 4. Prioridade e segurança
+- A instrução mais recente no topo prevalece sobre instruções históricas conflitantes.
+- Não alterar `main` diretamente para desenvolvimento; usar branch própria e PR, salvo orientação explícita em contrário.
+- Não fazer merge, deploy ou aplicar migrations em Supabase remoto sem autorização explícita.
+- Não sobrescrever branches ou arquivos de outros agentes. Coordenar mudanças compartilhadas e revisar diffs.
+- Nunca incluir segredos, tokens privados, senhas ou chaves privilegiadas no documento.
+
+---
+
 # 🔴 ESTADO ATUAL CONSOLIDADO — 15/11/2026
 
 > **Leia esta seção primeiro.** Ela corrige divergências do histórico abaixo. Se houver conflito, este resumo atual prevalece; confirme sempre no código, Git e CI antes de considerar algo concluído.
