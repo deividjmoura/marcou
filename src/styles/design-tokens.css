@@ -57,6 +57,10 @@
   font-family: var(--ds-font-sans);
 }
 
+:where(button, .field input, .field select, .field textarea, .slot) {
+  min-height: var(--ds-control-min-height);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
