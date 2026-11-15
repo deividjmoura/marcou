@@ -272,21 +272,6 @@ create policy "bookings_read_customer_or_provider_owner"
     )
   );
 
-create policy "bookings_insert_customer_for_published_service"
-  on public.bookings for insert to authenticated
-  with check (
-    customer_id = (select auth.uid())
-    and exists (
-      select 1
-      from public.providers p
-      join public.services s on s.provider_id = p.id
-      where p.id = provider_id
-        and p.is_published
-        and s.id = service_id
-        and s.is_active
-    )
-  );
-
 create policy "booking_events_read_booking_participants"
   on public.booking_events for select to authenticated
   using (exists (
@@ -296,5 +281,6 @@ create policy "booking_events_read_booking_participants"
       and (b.customer_id = (select auth.uid()) or p.owner_id = (select auth.uid()))
   ));
 
--- No client-side update/delete policies for bookings or booking_events.
--- State transitions must be exposed through authorized server-side operations.
+-- No client-side INSERT/UPDATE/DELETE policies for bookings or booking_events.
+-- All booking creation and state transitions must use authorized server-side
+-- operations so clients cannot forge prices, expirations or confirmed status.

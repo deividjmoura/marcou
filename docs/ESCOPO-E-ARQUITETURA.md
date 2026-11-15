@@ -34,12 +34,15 @@
 - calendar_connections: tokens protegidos, calendário e estado da sincronização.
 - notification_events: tentativas, canal, status e chave de idempotência.
 
-## Arquitetura sugerida (a confirmar)
-- Frontend responsivo: Next.js + TypeScript.
-- Backend e dados: Firebase Authentication + Cloud Firestore + Cloud Functions.
-- Google Calendar: OAuth 2.0 no backend e Calendar API.
-- WhatsApp: reaproveitar o provedor/API e webhook do bot existente, se compatível.
-- Pagamento: provedor com confirmação via webhook. PIX com conferência manual pode ser etapa inicial, mas imagem isolada não confirma pagamento.
+## Arquitetura aprovada para a fundação do MVP
+- Frontend responsivo: Next.js (App Router) + TypeScript.
+- Backend e dados: Supabase Auth + PostgreSQL; Supabase Storage para arquivos privados.
+- Autorização: Row Level Security (RLS) e validação server-side.
+- Google Calendar: adaptador OAuth 2.0 no backend e Calendar API, ainda sem integração ativa.
+- WhatsApp: adaptador isolado; provedor final ainda pendente.
+- Pagamento: adaptador de provedor; meio e aprovação ainda pendentes.
+
+A decisão está detalhada em `docs/PROPOSTA-STACK-TECNICA.md`. Nenhum projeto externo foi provisionado.
 
 ## Segurança e privacidade
 - Regras de acesso por papel e por proprietário dos dados.
@@ -50,7 +53,7 @@
 - Política de retenção e exclusão de dados pessoais e comprovantes.
 
 ## Decisões pendentes
-1. Confirmar Firebase como backend definitivo ou indicar outra stack.
+1. Stack aprovada: Next.js + TypeScript + Supabase/PostgreSQL. Falta provisionar o projeto Supabase e fornecer credenciais.
 2. Repositório identificado: `deividjmoura/SEGA_stats_bot`, implementação WhatsApp na branch `feat/nox-agenda-sugestoes-20261015`, diretório `whatsapp-service/`.
 3. Definir meio de pagamento do sinal e forma de aprovação (webhook automático ou conferência manual).
 4. Confirmar serviços, duração, preços e valor/percentual do sinal a partir do catálogo.

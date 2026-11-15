@@ -1,13 +1,13 @@
 # Proposta técnica de stack — Marcou
 
-**Status:** proposta para revisão; ainda não aprovada pelo proprietário do produto.  
+**Status:** stack aprovada para a fundação do MVP em 15/11/2026.  
 **Branch de referência:** `design/identidade-visual`
 
 Este documento transforma a arquitetura sugerida em uma recomendação técnica comparável. Não configura serviços externos, não cria recursos em nuvem e não escolhe políticas comerciais.
 
 ## 1. Recomendação resumida
 
-Para o MVP, recomenda-se avaliar a seguinte base:
+Para o MVP, foi aprovada a seguinte base:
 
 | Camada | Recomendação | Responsabilidade |
 |---|---|---|
@@ -67,7 +67,7 @@ Não se afirma que Firestore não possa garantir consistência. A diferença é 
 
 ## 4. Segurança e autorização
 
-Se Supabase for aprovado:
+Com Supabase aprovado:
 
 1. Habilitar RLS em toda tabela acessível por cliente/browser.
 2. Definir políticas por papel e por vínculo com o prestador; nunca confiar em `provider_id` enviado pelo navegador sem verificar autorização.
@@ -98,7 +98,7 @@ A aprovação da stack não resolve as decisões comerciais/operacionais:
 
 | Decisão | Proposta técnica | Precisa de confirmação |
 |---|---|---|
-| Stack | Next.js + TypeScript + Supabase/PostgreSQL | Sim |
+| Stack | Next.js + TypeScript + Supabase/PostgreSQL | Aprovada em 15/11/2026 |
 | Catálogo | Importar serviços reais do catálogo do prestador | Dados de serviço, preço, duração e sinal |
 | Pagamento | Criar interface de provedor; iniciar com fluxo manual somente se aprovado | Provedor e aprovação manual/automática |
 | Google Calendar | Adaptador opcional, sem bloquear o MVP | Fonte de disponibilidade ou espelho |
@@ -107,18 +107,17 @@ A aprovação da stack não resolve as decisões comerciais/operacionais:
 | WhatsApp | Adapter isolado; avaliar API oficial para produção | Canal e conta autorizados |
 | Hospedagem | Compatível com Next.js e tarefas server-side | Provedor, orçamento e região |
 
-Não inserir credenciais, criar projetos Supabase ou provisionar serviços até a aprovação explícita e a disponibilização dos acessos necessários.
+A stack está aprovada, mas nenhum projeto Supabase foi provisionado. Credenciais e recursos externos só serão configurados quando o proprietário disponibilizar os acessos.
 
-## 7. Sequência de implementação após aprovação
+## 7. Sequência de implementação
 
-1. Criar esqueleto Next.js + TypeScript e configurar lint, testes e variáveis de ambiente de exemplo.
-2. Criar migrations PostgreSQL para perfis, prestadores, serviços, disponibilidade e agendamentos.
-3. Implementar RLS e testes de autorização.
-4. Implementar domínio de disponibilidade e reservas, incluindo constraint anti-sobreposição e expiração síncrona/assíncrona.
-5. Criar testes unitários e de integração concorrente.
-6. Implementar catálogo público e painel mínimo do prestador.
-7. Adicionar autenticação e onboarding.
-8. Adicionar pagamento, WhatsApp e calendário somente depois das decisões e credenciais.
+1. Fundação Next.js + TypeScript, configuração de ambiente, lint e testes.
+2. Migrations PostgreSQL, RLS e testes de autorização.
+3. Operação transacional de reservas, constraint anti-sobreposição e expiração.
+4. Testes unitários, de integração e concorrência.
+5. Catálogo público e painel mínimo do prestador.
+6. Autenticação e onboarding.
+7. Pagamento, WhatsApp e calendário somente depois das decisões operacionais e credenciais.
 
 ## 8. Fontes técnicas
 

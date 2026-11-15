@@ -47,7 +47,7 @@ Antes de habilitar reservas reais, falta implementar a operação transacional s
 3. cria a reserva temporária com snapshot do serviço;
 4. converte conflitos de exclusão em resposta de horário indisponível.
 
-Não inserir reservas diretamente pelo cliente. As políticas RLS de leitura e inserção são uma primeira camada de proteção; as transições de estado ainda não têm endpoints/RPC publicados.
+Não inserir reservas diretamente pelo cliente. As políticas RLS permitem leitura autorizada; não existe política de escrita direta para agendamentos. Isso impede que o navegador forje preço, expiração ou status confirmado. A criação e as transições deverão passar por operações server-side/RPC autorizadas.
 
 ## Domínio
 
