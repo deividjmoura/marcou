@@ -1,22 +1,46 @@
 name: CI
 
+# Platform hardening (Issue #30): gates claros, sem continue-on-error.
+# Não enfraquecer checks. Deploy remoto permanece manual e autorizado.
+
 on:
   push:
-    branches: ["main", "design/identidade-visual"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund --legacy-peer-deps
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run test:db
-      - run: npm run build
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund --legacy-peer-deps
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit / domain tests
+        run: npm test
+
+      - name: Database integration tests
+        run: npm run test:db
+
+      - name: Production build
+        run: npm run build
