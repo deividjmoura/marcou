@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const steps = [
   {
     number: "01",
@@ -20,9 +22,9 @@ export default function Home() {
   return (
     <main className="page-shell">
       <nav className="topbar" aria-label="Navegação principal">
-        <a className="brand" href="/" aria-label="Marcou, início">
+        <Link className="brand" href="/" aria-label="Marcou, início">
           marcou<span>.</span>
-        </a>
+        </Link>
         <span className="topbar-note">Agenda organizada. Dia mais leve.</span>
       </nav>
 
@@ -97,7 +99,7 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <a className="brand" href="/">marcou<span>.</span></a>
+        <Link className="brand" href="/">marcou<span>.</span></Link>
         <p>Feito para deixar os encontros mais simples.</p>
       </footer>
     </main>
