@@ -1,5 +1,50 @@
 # Atualização de estado verificada — 15/11/2026
 
+## Delegação do terceiro agente — Issue #30 PLATFORM
+
+**Status da delegação:** instrução preparada em 15/11/2026.  
+**Issue:** https://github.com/deividjmoura/marcou/issues/30  
+**Branch obrigatória:** `feat/30-platform-hardening`, criada a partir da `main` atualizada.
+
+### Contexto e limites para trabalho paralelo
+- O primeiro agente está trabalhando na Issue #21, branch `feat/21-booking-multiple-services`. Não tocar nessa branch, migration, RPCs, lógica de reservas ou arquivos que ele estiver modificando.
+- O segundo agente recebeu a Issue #27, Design System, branch `feat/27-design-system`. Não alterar tokens, componentes visuais, fontes, ícones ou documentação que ele estiver modificando.
+- PRs #1, #2 e #4 permanecem abertas em draft. Não alterar suas branches nem fazer merge.
+- A Issue #30 está aberta e trata de infraestrutura. Esta delegação começa com auditoria e hardening seguro/documental, sem mudanças remotas.
+
+### Objetivo do terceiro agente
+Auditar e fortalecer a base operacional do Marcou: configuração de ambientes, segurança de secrets, CI, documentação de deploy/rollback, backup e observabilidade. Preparar recomendações e alterações locais seguras, sem executar operações no Supabase ou Vercel de produção.
+
+### Instruções obrigatórias
+1. Ler integralmente este documento e a Issue #30. Auditar a `main` atualizada, scripts, workflows, configuração Supabase/Vercel e documentação existente antes de alterar arquivos.
+2. Criar `feat/30-platform-hardening` a partir da `main` atual. Não trabalhar na `main` nem nas branches dos outros agentes.
+3. Começar com um inventário: ambientes existentes, variáveis necessárias, workflows CI, scripts de build/teste, migrations, cron/jobs, deploy e observabilidade. Distinguir claramente o que foi verificado no repositório do que depende de acesso externo.
+4. Criar uma matriz de variáveis por ambiente (local, preview/staging e produção), identificando quais são públicas e quais são secrets. Documentar nomes e finalidade, nunca valores reais. Não copiar tokens, chaves, connection strings ou conteúdo de arquivos `.env` para commits, issues, logs ou PR.
+5. Verificar se secrets estão sendo expostos no bundle/client, logs ou Git. Se encontrar segredo real versionado, não o reproduzir nem tentar rotacionar por conta própria: documentar o caminho/risco sem valor e orientar o responsável sobre rotação segura.
+6. Revisar workflows GitHub Actions e scripts para que lint, typecheck, testes disponíveis e build sejam executados com gates claros. Corrigir apenas problemas de CI/configuração isolados e comprováveis. Não enfraquecer checks, não usar `continue-on-error` para esconder falhas e não inventar resultados.
+7. Documentar o fluxo recomendado de deploy para preview/staging/produção, checklist pré-deploy, smoke tests, rollback e recuperação. Identificar quais passos são automáticos e quais exigem ação/credenciais do responsável.
+8. Documentar estratégia de backup/restore e observabilidade compatível com os serviços realmente configurados. Não afirmar que backups, alertas ou monitoramento estão ativos sem evidência.
+9. Coordenar dependências com #21 e #26 apenas por documentação/comentários. Não implementar jobs de expiração/lembrete nesta tarefa enquanto os contratos de domínio e notificações estiverem em desenvolvimento. Pode preparar checklist técnico e requisitos de segurança/idempotência.
+10. **Proibido nesta tarefa:** aplicar migrations; executar SQL que altere dados; modificar projeto Supabase remoto; alterar configurações, domínios, secrets, variáveis ou deployments da Vercel; promover deploy; mudar Auth/RLS; alterar banco de produção. Qualquer ação externa exige autorização explícita posterior do responsável.
+11. Não tocar nos arquivos de UI/Design System do agente #27, nem nos arquivos de booking/migrations do agente #21. Se precisar documentar esses pontos, fazê-lo em seção própria e sem editar os arquivos de implementação deles.
+12. Executar localmente os checks pertinentes que estiverem disponíveis. Registrar comandos e resultados reais, incluindo limitações por ausência de credenciais/serviços.
+13. Abrir PR em draft para `main`, vinculada à Issue #30. Usar `Closes #30` somente quando os critérios desta entrega estiverem efetivamente concluídos; caso contrário, manter aberta e listar pendências. Não fazer merge.
+14. Ao concluir, atualizar o JSON de estado e esta seção com branch, commits, PR, arquivos, checks, riscos e ações que ainda dependem do responsável. Buscar a versão mais recente deste documento antes de atualizá-lo e preservar os handoffs dos outros agentes.
+
+### Critérios de aceite
+- Inventário de plataforma verificável e com lacunas explicitadas.
+- Matriz de variáveis por ambiente sem valores secretos.
+- CI documentado e, quando possível, com gates reproduzíveis.
+- Procedimentos de deploy, smoke test, rollback e recuperação documentados.
+- Backup/observabilidade descritos sem alegações não comprovadas.
+- Nenhuma alteração remota ou de produção realizada.
+- PR pequena, revisável e sem conflitos com #21 ou #27.
+
+**Limite de escopo:** não implementar funcionalidades de produto, jobs de domínio ou mudanças de infraestrutura remota. A execução operacional será uma etapa separada, após revisão e autorização do responsável.
+
+---
+
+
 ## Delegação do segundo agente — Issue #27 DESIGN-SYSTEM
 
 **Status da delegação:** instrução preparada em 15/11/2026.  
