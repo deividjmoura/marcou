@@ -2,7 +2,7 @@
 
 - PR #35 BOOKING-OPS merged via squash em `ad9983bf7f8b9e574d603b1efb33d08448326577`. Adiciona `docs/BOOKING-OPS.md` com matriz de estados/transições, hold, expiração, cancelamento, lacunas e dependências. CI run #48 passou: lint, typecheck, testes, test:db e build. Issue #25 permanece aberta: scheduler em ambiente real, política comercial e testes E2E ainda pendentes.
 - PR #34 PROVIDER-ADMIN merged via squash em `fa074def73478c1b1738336979d423555683aab0`. Permite alterar slug público e editar períodos de expediente semanal; testes de slug incluídos. Head final validado: `889a52957265cb57a4620a028747588ff62c2e1e`. CI run #51 passou em lint, typecheck, npm test, test:db e build; Vercel Preview check passou. Branch atualizada com a main antes do merge. Issue #24 permanece aberta para agenda ampliada, revisão de acessibilidade/estados e testes dedicados de isolamento/RLS.
-- PRs ainda abertas e não integradas nesta auditoria: #1 e #2 são prévias demonstrativas sem backend real e continuam draft; #4 está divergente da main (13 commits atrás, 5 à frente, mergeable=false); #32 está divergente (3 commits atrás, 10 à frente) e não pode ser integrada porque substitui este documento de continuidade (mais de 800 linhas) por apenas 39 linhas e inclui `docs/MOTION.md` fora do escopo PLATFORM.
+- PRs ainda abertas e não integradas nesta auditoria: #1 e #2 são prévias demonstrativas sem backend real e continuam draft; #4 está divergente da main (16 commits atrás, 5 à frente, mergeable=false); #32 está divergente (6 commits atrás, 10 à frente) e não pode ser integrada porque substitui este documento de continuidade (mais de 800 linhas) por apenas 39 linhas e inclui `docs/MOTION.md` fora do escopo PLATFORM.
 - Nenhuma migration foi aplicada remotamente; nenhum secret, configuração remota do Supabase/Vercel ou deploy de produção foi alterado.
 
 ---
@@ -13,9 +13,9 @@
 - Branch isolada: `feat/24-provider-admin`, criada a partir da `main` observada em `05e70ab1ea72bad609d70b2d185f297169acd1c9`.
 - Auditoria inicial: o painel já possui CRUD de serviços, expediente, exceções, dados do negócio e lista/ações de reservas. Foi identificada uma lacuna objetiva: o slug público só podia ser definido na criação e não podia ser alterado na edição.
 - Implementação nesta branch: permitir editar o slug com a mesma validação do cadastro, persistir no servidor, apresentar mensagem amigável quando o endereço já estiver ocupado e revalidar os caminhos público antigo/novo; permitir editar períodos de expediente semanal já cadastrados, reaproveitando a operação server-side existente e mantendo a validação de intervalos/vigência.
-- Testes adicionados para validar o slug durante a edição. A edição do expediente reutiliza o schema e a operação de atualização existentes. Lint, typecheck, testes, test:db e build ainda aguardam resultado de CI.
+- Testes adicionados para validar o slug durante a edição. A edição do expediente reutiliza o schema e a operação de atualização existentes. CI run #51 passou em lint, typecheck, npm test, test:db e build; Vercel Preview check passou. PR #34 foi integrada por squash em `fa074def73478c1b1738336979d423555683aab0`.
 - Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração Vercel ou deploy foi executado.
-- PR aberta em draft: [#34](https://github.com/deividjmoura/marcou/pull/34), vinculada à #24 (entrega parcial, sem fechar a issue). Diff limitado a slug do negócio, validação/testes e este registro de continuidade.
+- PR [#34](https://github.com/deividjmoura/marcou/pull/34) integrada à main; Issue #24 permanece aberta porque agenda ampliada, acessibilidade/estados e testes dedicados de isolamento/RLS ainda não foram concluídos.
 - CI do head `cd221cb` (run #43776195664) falhou em `npm run lint`; typecheck, testes, test:db e build foram ignorados. A causa identificada foi a atualização de estado síncrona em `useEffect`; removi esse efeito no commit `3a8c128`. Aguardar e validar CI completo no novo head antes de integrar. Não fazer merge sem autorização do responsável.
 
 ---
