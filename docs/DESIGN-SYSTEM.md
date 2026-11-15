@@ -1,22 +1,16 @@
 # Design System — Marcou
 
-**Status:** fundação inicial em revisão (Issue #27). Esta entrega não troca a identidade visual existente; organiza tokens e regras para adoção gradual.
+**Status:** fundação visual e migração inicial em revisão (Issue #27). A paleta bege, branco e rosé foi aplicada aos estilos globais existentes por meio dos tokens semânticos.
 
 ## Auditoria da base atual
 
 A main já possui uma folha global extensa em src/app/globals.css, com estilos reutilizados para autenticação, painel, serviços, agendamento, reservas e notificações. Entre as classes existentes estão .btn, .btn-ghost, .auth-card, .field, .card, .item-row, .status-pill, .alert, .booking-widget e .notification-row.
 
-A base visual efetivamente presente na main usa:
-- tinta #20211f;
-- fundo #f7f7f2;
-- superfície branca #ffffff;
-- linhas #e6e8df;
-- destaque verde #b9e36a e verde escuro #7aa52e;
-- fonte Arial/Helvetica.
+A base anterior à PR usava destaque verde e fonte Arial/Helvetica. Nesta entrega, a camada global passa a consumir tokens de tinta ameixa, fundo bege, superfícies brancas, linhas rosadas e acento rosé.
 
-## Divergência de identidade a resolver
+## Identidade visual aplicada
 
-A Issue #27 registra a direção bege, branco e rosé, enquanto a folha global atualmente integrada usa verde como cor de destaque. Esta PR mantém as cores atuais para evitar uma alteração visual abrangente sem validação explícita da direção final. A paleta rosé deve ser aprovada e aplicada numa etapa visual dedicada, com revisão das telas públicas, autenticação e painel.
+A Issue #27 registra como direção aprovada bege, branco e rosé. A PR aplica essa paleta na folha global compartilhada, cobrindo landing, autenticação, painel, serviços, agendamento, reservas e notificações. As cores semânticas de sucesso, aviso, erro e informação continuam distintas da cor de marca para preservar significado e legibilidade.
 
 ## Tokens iniciais
 
@@ -31,7 +25,7 @@ Os tokens estão em src/styles/design-tokens.css e são carregados pelo layout r
 | Elevação | --ds-shadow-* |
 | Foco e controles | --ds-focus-*, --ds-control-min-height |
 
-Os tokens espelham os valores atuais quando há equivalência. A migração das classes antigas deve ocorrer gradualmente, sem substituir toda a folha global de uma vez.
+A folha global mantém as classes e APIs CSS existentes, mas seus valores estruturais agora apontam para os tokens semânticos. A migração de componentes específicos e a remoção gradual de valores legados podem ocorrer em PRs menores.
 
 ## Acessibilidade e movimento
 
@@ -51,12 +45,20 @@ Nenhuma biblioteca ou asset animado foi adicionado. Ícones animados devem ser p
 
 ## Próximos passos
 
-1. Confirmar a paleta final bege/branco/rosé versus o verde atualmente presente.
-2. Migrar gradualmente componentes existentes para os tokens sem alterar comportamento.
-3. Criar exemplos visuais dos botões, campos, cards, alertas, badges e estados.
-4. Verificar contraste WCAG, foco por teclado e navegação com leitor de tela por componente.
-5. Avaliar fonte e ícones com licença/peso documentados.
+1. Fazer revisão visual por tela em desktop e mobile, incluindo estados de erro, sucesso, aviso e indisponibilidade.
+2. Medir contraste WCAG dos pares reais de texto/superfície e corrigir qualquer falha encontrada.
+3. Migrar componentes específicos para os tokens sem alterar comportamento e criar catálogo de exemplos.
+4. Avaliar fonte de marca e ícones animados somente após verificar licença, peso, fallback e acessibilidade.
 
 ## Limites desta entrega
 
 Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. Não foram adicionadas dependências, fontes externas ou assets de terceiros.
+
+
+## Migração da paleta — 15/11/2026
+
+- Acento de marca: rosé escuro `#8A4D62`; fundo de acento `#E8C4CF`; superfície suave `#F7E9ED`.
+- Fundo geral: bege `#F8F3F0`; superfície: branco `#FFFFFF`; tinta: ameixa `#33272B`.
+- A folha `src/app/globals.css` preserva as classes atuais e passa a consumir `--ds-*` para cores estruturais. Tons de status permanecem semanticamente separados da marca.
+- Nenhuma fonte externa, biblioteca de ícones ou asset animado foi incluído nesta etapa. A escolha depende de análise de licença e desempenho.
+- A aprovação visual final ainda exige inspeção humana das telas renderizadas e verificação objetiva de contraste por estado; o CI técnico não substitui essa revisão.
