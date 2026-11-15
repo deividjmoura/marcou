@@ -4,6 +4,7 @@ import {
   availabilityRuleInputSchema,
   bookingInputSchema,
   providerInputSchema,
+  providerSettingsSchema,
   serviceInputSchema,
 } from "./validation";
 
@@ -85,6 +86,28 @@ describe("providerInputSchema", () => {
         bookingHoldMinutes: 30,
       }).success,
     ).toBe(true);
+  });
+});
+
+describe("providerSettingsSchema", () => {
+  it("permite atualizar o slug com o mesmo formato do cadastro", () => {
+    expect(providerSettingsSchema.safeParse({
+      slug: "studio-novo",
+      displayName: "Studio Ana",
+      timezone: "America/Sao_Paulo",
+      isPublished: true,
+      bookingHoldMinutes: 30,
+    }).success).toBe(true);
+  });
+
+  it("rejeita slug inválido ao editar o negócio", () => {
+    expect(providerSettingsSchema.safeParse({
+      slug: "Studio Novo",
+      displayName: "Studio Ana",
+      timezone: "America/Sao_Paulo",
+      isPublished: true,
+      bookingHoldMinutes: 30,
+    }).success).toBe(false);
   });
 });
 

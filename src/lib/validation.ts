@@ -97,7 +97,7 @@ export const providerInputSchema = z.object({
   bookingHoldMinutes: z.coerce.number().int().min(5).max(1440),
 });
 
-export const providerSettingsSchema = providerInputSchema.omit({ slug: true });
+export const providerSettingsSchema = providerInputSchema;
 
 export const bookingInputSchema = z.object({
   slug: z.string().trim().min(1),
