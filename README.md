@@ -2,14 +2,12 @@
 
 Plataforma de agendamento online para prestadores de serviços.
 
-## Stack inicial
+## Stack
 
-- Next.js 16 + React + TypeScript.
-- Supabase Auth e PostgreSQL.
+- Next.js 16 (App Router) + React 19 + TypeScript.
+- Supabase Auth (e-mail/senha e Google) + PostgreSQL.
 - Supabase Storage (comprovantes privados, a configurar).
-- Vitest para testes do domínio.
-
-A stack está registrada na proposta técnica e a fundação começa nesta branch. Nenhum projeto Supabase ou integração externa foi provisionado.
+- Vitest para testes de domínio e PostgreSQL embutido para integração.
 
 ## Requisitos
 
@@ -20,39 +18,75 @@ A stack está registrada na proposta técnica e a fundação começa nesta branc
 ## Desenvolvimento local
 
 ```bash
-npm install
+npm install --no-audit --no-fund --legacy-peer-deps
 cp .env.example .env.local
 npm run dev
 ```
 
-Preencha `.env.local` com a URL e a publishable key do projeto Supabase. Não coloque chaves secretas ou service-role no navegador nem no repositório.
+Preencha `.env.local` com a URL e a publishable key do projeto Supabase. Não
+coloque chaves secretas ou service-role no navegador nem no repositório.
 
 ## Comandos
 
 ```bash
-npm run dev
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run dev        # ambiente de desenvolvimento
+npm run lint       # eslint
+npm run typecheck  # tsc --noEmit
+npm run test       # testes de domínio (vitest)
+npm run test:db    # testes de integração em PostgreSQL real (embedded-postgres)
+npm run build      # build de produção
 ```
 
 ## Banco de dados
 
-A migration inicial está em `supabase/migrations/`. Ela define perfis, prestadores, serviços, regras e exceções de disponibilidade, agendamentos, eventos de auditoria, RLS e uma constraint GiST para impedir intervalos ativos sobrepostos por prestador.
+As migrations estão em `supabase/migrations/`:
 
-Antes de habilitar reservas reais, falta implementar a operação transacional server-side que:
-1. valida autorização e serviço;
-2. expira reservas vencidas que conflitam com o intervalo solicitado;
-3. cria a reserva temporária com snapshot do serviço;
-4. converte conflitos de exclusão em resposta de horário indisponível.
+1. `202611150001_initial_schema.sql` — perfis, prestadores, serviços, regras e
+   exceções de disponibilidade, agendamentos, eventos de auditoria, RLS e a
+   constraint GiST que impede intervalos ativos sobrepostos por prestador.
+2. `202611150002_booking_operations.sql` — operações transacionais
+   (`create_booking`, `transition_booking`, `expire_stale_bookings`,
+   `get_provider_schedule`), grants e a configuração de expiração por prestador.
 
-Não inserir reservas diretamente pelo cliente. As políticas RLS permitem leitura autorizada; não existe política de escrita direta para agendamentos. Isso impede que o navegador forje preço, expiração ou status confirmado. A criação e as transições deverão passar por operações server-side/RPC autorizadas.
+As regras de escrita ficam no banco, em funções `security definer` com
+verificações explícitas de autorização. As políticas RLS permitem leitura
+autorizada, mas não existem políticas de escrita direta para agendamentos: o
+navegador não consegue forjar preço, expiração ou status confirmado.
 
-## Domínio
+Não aplique migrations em produção sem autorização.
 
-O módulo `src/domain/bookings/booking.ts` contém regras puras de intervalos, ocupação e transições. Ele não substitui transação no banco, autenticação, autorização ou idempotência.
+## Motor de reservas
 
-## Estado
+O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
 
-Fundação inicial em andamento. Catálogo real, autenticação de usuário, painel do prestador, criação transacional de reservas, pagamento, WhatsApp e Google Calendar ainda não foram implementados.
+- A disponibilidade é projetada por `generateSlots` (domínio puro, testado) e
+  confirmada no banco por `create_booking`, que valida expediente, expira
+  reservas vencidas conflitantes e insere a reserva com snapshot do serviço.
+- A constraint de exclusão GiST + `pg_advisory_xact_lock` por prestador impedem
+  dupla marcação, inclusive sob requisições simultâneas.
+- Transições de estado (`pending_payment`, `pending_review`, `confirmed`,
+  `cancelled`, `expired`) são aplicadas por `transition_booking`, com
+  autorização, validade e auditoria.
+- A expiração libera o horário sem apagar o histórico e é registrada em
+  `booking_events`.
+
+## Fluxo implementado
+
+1. Cadastro e login do prestador (e-mail/senha e Google).
+2. Criação e configuração do negócio (nome, slug, fuso, prazo da reserva).
+3. Cadastro de serviços (duração, preço, sinal, intervalo).
+4. Expediente semanal, vigências e exceções (bloqueio/horário especial).
+5. Página pública `/p/[slug]` com os serviços do negócio.
+6. Escolha de serviço, data e horário pelo cliente.
+7. Criação da reserva temporária e página de acompanhamento `/reserva/[id]`.
+8. Painel do prestador com agendamentos, confirmação e cancelamento.
+
+## Pendências
+
+- Provisionar o projeto Supabase e rodar as migrations em ambiente de
+  desenvolvimento.
+- Definir provedor de pagamento e fluxo real de comprovante (upload/validação).
+- Definir provedor de WhatsApp e integração com Google Calendar.
+- Configurar tarefa agendada para `expire_stale_bookings()` (a criação de
+  reservas já expira conflitos imediatos).
+- Revisar política de cancelamento/reembolso e prazo da reserva temporária.
