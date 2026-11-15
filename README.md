@@ -47,6 +47,9 @@ As migrations estão em `supabase/migrations/`:
 2. `202611150002_booking_operations.sql` — operações transacionais
    (`create_booking`, `transition_booking`, `expire_stale_bookings`,
    `get_provider_schedule`), grants e a configuração de expiração por prestador.
+3. `202611150003_notifications.sql` — notificações no aplicativo: tabela,
+   RLS, trigger sobre `booking_events`, RPC de lembrete e RPCs para marcar como
+   lida. Detalhes em `docs/NOTIFICACOES.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
@@ -80,6 +83,20 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
 6. Escolha de serviço, data e horário pelo cliente.
 7. Criação da reserva temporária e página de acompanhamento `/reserva/[id]`.
 8. Painel do prestador com agendamentos, confirmação e cancelamento.
+9. Notificações no aplicativo (`/notificacoes`) para cliente e prestador,
+   geradas pelos eventos de agendamento.
+
+## Notificações
+
+Cada mudança de estado do agendamento gera notificações para os destinatários
+corretos (criação, comprovante, confirmação, cancelamento, expiração e
+lembretes). As mensagens ficam em `/notificacoes`, com contador de não lidas no
+painel, em "Meus agendamentos" e na página da reserva. O acesso é isolado por
+RLS: cada usuário só lê e marca as próprias notificações.
+
+Lembretes são criados por `create_booking_reminders()`; ainda não há cron
+configurado. E-mail não está implementado: nenhuma infraestrutura de envio está
+configurada e nenhuma credencial foi criada.
 
 ## Pendências
 
@@ -89,4 +106,7 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
 - Definir provedor de WhatsApp e integração com Google Calendar.
 - Configurar tarefa agendada para `expire_stale_bookings()` (a criação de
   reservas já expira conflitos imediatos).
+- Configurar tarefa agendada para `create_booking_reminders()` (lembretes de
+  agendamentos confirmados).
+- Implementar e-mail de notificações quando houver provedor configurado.
 - Revisar política de cancelamento/reembolso e prazo da reserva temporária.

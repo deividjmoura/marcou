@@ -808,6 +808,18 @@ a {
   font-size: 13px;
 }
 
+.reservation-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.reservation-topbar .back-link {
+  margin: 34px 0 14px;
+}
+
 .reservation-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -851,12 +863,90 @@ a {
   margin: 0;
 }
 
+.notification-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notification-bell:hover {
+  border-color: #cfd3c4;
+}
+
+.notification-badge {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.notification-row.is-unread {
+  border-color: #d7e6b4;
+  background: #fbfdf5;
+}
+
+.notification-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.notification-main strong {
+  font-size: 15px;
+}
+
+.notification-main p {
+  margin: 0;
+}
+
+.notification-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 900px) {
   .provider-layout {
     grid-template-columns: 1fr;
   }
 
   .painel-header {
+    flex-direction: column;
+  }
+
+  .notification-row {
     flex-direction: column;
   }
 }

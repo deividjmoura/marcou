@@ -10,6 +10,8 @@ import {
 import { ReservationActions } from "./reservation-actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
+import { NotificationBell } from "@/components/notification-bell";
+import { countUnreadNotifications } from "@/server/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -38,11 +40,19 @@ export default async function ReservaPage({
 
   if (!isCustomer && !isOwner) notFound();
 
+  const unread = await countUnreadNotifications();
+
   return (
     <main className="page-shell page-reservation">
-      <Link href={isOwner ? "/painel" : "/meus-agendamentos"} className="back-link">
-        ← Voltar
-      </Link>
+      <div className="reservation-topbar">
+        <Link
+          href={isOwner ? "/painel" : "/meus-agendamentos"}
+          className="back-link"
+        >
+          ← Voltar
+        </Link>
+        <NotificationBell unreadCount={unread} />
+      </div>
 
       <article className="reservation-card">
         <span

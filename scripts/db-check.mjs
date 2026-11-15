@@ -106,6 +106,7 @@ await db.query(`
 const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
   "supabase/migrations/202611150002_booking_operations.sql",
+  "supabase/migrations/202611150003_notifications.sql",
 ];
 
 for (const file of migrations) {
@@ -536,6 +537,217 @@ console.log("\n[expiração em lote]");
 {
   const result = await db.query(`select public.expire_stale_bookings() as total`);
   check("função de expiração em lote executa", Number(result.rows[0].total) >= 0);
+}
+
+console.log("\n[notificações]");
+{
+  const ownerN = uuid();
+  const customerN = uuid();
+  const outsiderN = uuid();
+  for (const id of [ownerN, customerN, outsiderN]) {
+    await db.query("insert into auth.users (id) values ($1)", [id]);
+  }
+
+  const providerN = (
+    await db.query(
+      `insert into public.providers (owner_id, slug, display_name, timezone, is_published, booking_hold_minutes)
+       values ($1, 'notif-a', 'Notif A', 'America/Sao_Paulo', true, 30)
+       returning id`,
+      [ownerN],
+    )
+  ).rows[0].id;
+  const serviceN = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents, deposit_cents, buffer_minutes)
+       values ($1, 'Serviço Notif', 60, 8000, 2000, 0) returning id`,
+      [providerN],
+    )
+  ).rows[0].id;
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     values ($1, 2, '09:00', '12:00')`,
+    [providerN],
+  );
+
+  const ownerNClient = await asRole("authenticated", ownerN);
+  const customerNClient = await asRole("authenticated", customerN);
+  const outsiderNClient = await asRole("authenticated", outsiderN);
+  const anonN = await asRole("anon");
+
+  const nBooking = await createBooking(
+    customerNClient,
+    "notif-a",
+    serviceN,
+    "2026-12-01T12:00:00.000Z",
+    `notif-${uuid()}`,
+    "Cliente Notif",
+  );
+
+  const created = (
+    await db.query(
+      `select recipient_id, kind from public.notifications where booking_id = $1 order by recipient_id`,
+      [nBooking.id],
+    )
+  ).rows;
+  check(
+    "criação notifica cliente e prestador",
+    created.length === 2 &&
+      created.some((row) => row.recipient_id === customerN && row.kind === "booking_created") &&
+      created.some((row) => row.recipient_id === ownerN && row.kind === "booking_created"),
+    `obteve ${created.length}`,
+  );
+  check(
+    "terceiro não recebe notificação da reserva",
+    created.every((row) => row.recipient_id !== outsiderN),
+  );
+
+  await customerNClient.query(
+    `select * from public.transition_booking($1, 'proof_received')`,
+    [nBooking.id],
+  );
+  const proof = (
+    await db.query(
+      `select recipient_id from public.notifications where booking_id = $1 and kind = 'booking_proof_received'`,
+      [nBooking.id],
+    )
+  ).rows;
+  check(
+    "comprovante notifica apenas o prestador",
+    proof.length === 1 && proof[0].recipient_id === ownerN,
+    `obteve ${proof.length}`,
+  );
+  check(
+    "transição persiste mesmo com trigger de notificação",
+    (
+      await db.query(`select status from public.bookings where id = $1`, [nBooking.id])
+    ).rows[0].status === "pending_review",
+  );
+
+  await ownerNClient.query(
+    `select * from public.transition_booking($1, 'payment_approved')`,
+    [nBooking.id],
+  );
+  const confirmed = (
+    await db.query(
+      `select recipient_id from public.notifications where booking_id = $1 and kind = 'booking_confirmed'`,
+      [nBooking.id],
+    )
+  ).rows;
+  check(
+    "confirmação notifica cliente e prestador",
+    confirmed.length === 2,
+    `obteve ${confirmed.length}`,
+  );
+
+  const ownRows = (await customerNClient.query(`select * from public.notifications`)).rows;
+  check(
+    "cliente só lê as próprias notificações",
+    ownRows.length > 0 && ownRows.every((row) => row.recipient_id === customerN),
+  );
+  const anonDenied = await anonN
+    .query(`select * from public.notifications`)
+    .then(() => false)
+    .catch(() => true);
+  check("anon não lê notificações", anonDenied);
+
+  const insertDenied = await customerNClient
+    .query(
+      `insert into public.notifications (recipient_id, kind, title, body, event_key)
+       values ($1, 'booking_created', 'x', 'y', 'forjado')`,
+      [ownerN],
+    )
+    .then(() => false)
+    .catch(() => true);
+  check("cliente não consegue forjar notificação", insertDenied);
+
+  const target = (
+    await customerNClient.query(
+      `select * from public.notifications where recipient_id = $1 limit 1`,
+      [customerN],
+    )
+  ).rows[0];
+  const marked = (
+    await customerNClient.query(`select * from public.mark_notification_read($1)`, [
+      target.id,
+    ])
+  ).rows[0];
+  check(
+    "marcar como lida grava read_at",
+    marked.is_read === true && Boolean(marked.read_at),
+  );
+
+  const foreignDenied = await outsiderNClient
+    .query(`select * from public.mark_notification_read($1)`, [target.id])
+    .then(() => false)
+    .catch(() => true);
+  check("terceiro não marca notificação alheia", foreignDenied);
+
+  await customerNClient.query(`select public.mark_all_notifications_read()`);
+  const unread = (
+    await db.query(
+      `select count(*)::int as total from public.notifications where recipient_id = $1 and not is_read`,
+      [customerN],
+    )
+  ).rows[0].total;
+  check("marcar todas zera não lidas do cliente", unread === 0, `obteve ${unread}`);
+
+  await db.query(
+    `update public.bookings set starts_at = now() + interval '2 hours' where id = $1`,
+    [nBooking.id],
+  );
+  const serviceRole = await asRole("service_role");
+  const first = (
+    await serviceRole.query(`select public.create_booking_reminders(24) as total`)
+  ).rows[0].total;
+  const second = (
+    await serviceRole.query(`select public.create_booking_reminders(24) as total`)
+  ).rows[0].total;
+  check("lembretes criados para a reserva confirmada", Number(first) >= 1, `obteve ${first}`);
+  check("lembretes são idempotentes no mesmo dia", Number(second) === 0, `obteve ${second}`);
+  const reminders = (
+    await db.query(
+      `select recipient_id from public.notifications where booking_id = $1 and kind = 'booking_reminder'`,
+      [nBooking.id],
+    )
+  ).rows;
+  check(
+    "lembrete alcança cliente e prestador",
+    reminders.length === 2,
+    `obteve ${reminders.length}`,
+  );
+
+  const expiredBooking = await createBooking(
+    customerNClient,
+    "notif-a",
+    serviceN,
+    "2026-12-08T12:00:00.000Z",
+    `notif-exp-${uuid()}`,
+    "Cliente Expirado",
+  );
+  await db.query(
+    `update public.bookings set expires_at = now() - interval '1 minute' where id = $1`,
+    [expiredBooking.id],
+  );
+  await serviceRole.query(`select public.expire_stale_bookings()`);
+  const expired = (
+    await db.query(
+      `select recipient_id from public.notifications where booking_id = $1 and kind = 'booking_expired'`,
+      [expiredBooking.id],
+    )
+  ).rows;
+  check(
+    "expiração notifica cliente e prestador",
+    expired.length === 2 &&
+      expired.some((row) => row.recipient_id === customerN) &&
+      expired.some((row) => row.recipient_id === ownerN),
+    `obteve ${expired.length}`,
+  );
+
+  await ownerNClient.end();
+  await customerNClient.end();
+  await outsiderNClient.end();
+  await anonN.end();
+  await serviceRole.end();
 }
 
 await ownerAClient.end();

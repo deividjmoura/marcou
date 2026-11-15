@@ -13,6 +13,8 @@ import {
 import { logoutAction } from "../(auth)/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
+import { NotificationBell } from "@/components/notification-bell";
+import { countUnreadNotifications } from "@/server/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +28,10 @@ export default async function MeusAgendamentosPage() {
   }
 
   await requireUser("/meus-agendamentos");
-  const bookings = await listCustomerBookings();
+  const [bookings, unread] = await Promise.all([
+    listCustomerBookings(),
+    countUnreadNotifications(),
+  ]);
 
   return (
     <main className="page-shell page-painel">
@@ -35,11 +40,14 @@ export default async function MeusAgendamentosPage() {
           <span className="eyebrow">MEUS AGENDAMENTOS</span>
           <h1>Suas reservas</h1>
         </div>
-        <form action={logoutAction}>
-          <button type="submit" className="btn btn-ghost">
-            Sair
-          </button>
-        </form>
+        <div className="item-actions">
+          <NotificationBell unreadCount={unread} />
+          <form action={logoutAction}>
+            <button type="submit" className="btn btn-ghost">
+              Sair
+            </button>
+          </form>
+        </div>
       </header>
 
       {bookings.length === 0 ? (

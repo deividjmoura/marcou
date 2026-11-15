@@ -1,5 +1,52 @@
 # 🔴 INSTRUÇÕES MAIS RECENTES — LER PRIMEIRO
 
+## ✅ Entrega registrada — notificações no aplicativo (15/11/2026)
+
+**Status: implementado e verificado.** A estrutura de notificações descrita em
+"Trabalho novo: notificações para clientes e profissionais" foi concluída no
+aplicativo, com origem nos eventos de agendamento. Nada de WhatsApp, bot ou
+Railway foi tocado.
+
+**O que entrou**
+- Migration `supabase/migrations/202611150003_notifications.sql`: tabela
+  `public.notifications`, tipo `notification_kind`, RLS (leitura/atualização
+  somente do próprio `recipient_id`), trigger `booking_events_notify` sobre
+  `booking_events`, RPC `create_booking_reminders(p_within_hours)` e RPCs
+  `mark_notification_read` / `mark_all_notifications_read`.
+- Camada de servidor `src/server/notifications.ts` e ações
+  `src/app/notificacoes/actions.ts`.
+- Interface: página `/notificacoes` (lista, "Marcar como lida", "Marcar todas",
+  link para a reserva) e sino `NotificationBell` com contador de não lidas no
+  painel, em `/meus-agendamentos` e em `/reserva/[id]`.
+- Design em `docs/NOTIFICACOES.md`.
+
+**Validação executada (resultados reais)**
+- `npm run lint` — sem erros.
+- `npm run typecheck` — sem erros.
+- `npm test` — 39/39.
+- `npm run test:db` — 45/45 (inclui a seção `[notificações]`: destinatários,
+  RLS, idempotência, marcar como lida, lembretes).
+- `npm run build` — OK; rota `/notificacoes` dinâmica.
+- Smoke do app: `/`, `/login`, `/cadastro`, `/painel`, `/meus-agendamentos`,
+  `/notificacoes`, `/p/qualquer`, `/reserva/abc` responderam HTTP 200.
+
+**Verificado apenas em banco embutido.** Não existe projeto Supabase remoto
+provisionado; as migrations não foram aplicadas em nenhum ambiente real e a
+página `/notificacoes` com sessão/RLS só foi exercitada no harness
+`scripts/db-check.mjs`.
+
+**Pendências desta frente**
+- Nenhum cron configurado para `create_booking_reminders()` nem para
+  `expire_stale_bookings()`.
+- E-mail não implementado (nenhuma infraestrutura de envio configurada; nenhuma
+  credencial criada). O que seria necessário está em `docs/NOTIFICACOES.md`.
+- `booking.changed` está mapeado, mas nenhuma transição atual o emite; entrará
+  quando houver reagendamento/edição de reserva.
+
+**Git:** branch `arena/68d409cd-marcou` (base `main` = `03ac75b`). PR aberta
+para `main`; **sem merge** (aguardando autorização).
+
+---
 
 ## 🔴 REGRA OBRIGATÓRIA — DOCUMENTO VIVO DE CONTINUIDADE PARA TODOS OS AGENTES
 
@@ -55,6 +102,10 @@
 O desenvolvimento deve acontecer por etapas. **Neste momento, o foco é exclusivamente o aplicativo Marcou. A integração com o bot do WhatsApp fica para uma fase futura e não deve entrar no escopo das tarefas atuais.**
 
 ### Trabalho novo: notificações para clientes e profissionais
+
+> **Andamento em 15/11/2026:** a estrutura de notificações foi implementada no
+> aplicativo e verificada (ver "Entrega registrada" no topo). E-mail e
+> provisionamento do cron continuam pendentes e bloqueados por infraestrutura.
 
 Planeje e implemente, conforme a arquitetura e o estágio real do projeto, uma estrutura de notificações que atenda aos dois públicos:
 
