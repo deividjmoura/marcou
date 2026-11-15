@@ -3,8 +3,8 @@
 - Responsável por esta entrega: agente PROVIDER-ADMIN.
 - Branch isolada: `feat/24-provider-admin`, criada a partir da `main` observada em `05e70ab1ea72bad609d70b2d185f297169acd1c9`.
 - Auditoria inicial: o painel já possui CRUD de serviços, expediente, exceções, dados do negócio e lista/ações de reservas. Foi identificada uma lacuna objetiva: o slug público só podia ser definido na criação e não podia ser alterado na edição.
-- Implementação em andamento nesta branch: permitir editar o slug com a mesma validação do cadastro, persistir no servidor, apresentar mensagem amigável quando o endereço já estiver ocupado e revalidar os caminhos público antigo/novo.
-- Testes adicionados para validar o slug durante a edição. Lint, typecheck, testes, test:db e build ainda aguardam execução de CI nesta entrega.
+- Implementação nesta branch: permitir editar o slug com a mesma validação do cadastro, persistir no servidor, apresentar mensagem amigável quando o endereço já estiver ocupado e revalidar os caminhos público antigo/novo; permitir editar períodos de expediente semanal já cadastrados, reaproveitando a operação server-side existente e mantendo a validação de intervalos/vigência.
+- Testes adicionados para validar o slug durante a edição. A edição do expediente reutiliza o schema e a operação de atualização existentes. Lint, typecheck, testes, test:db e build ainda aguardam resultado de CI.
 - Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração Vercel ou deploy foi executado.
 - PR aberta em draft: [#34](https://github.com/deividjmoura/marcou/pull/34), vinculada à #24 (entrega parcial, sem fechar a issue). Diff limitado a slug do negócio, validação/testes e este registro de continuidade.
 - CI do commit inicial da PR está em execução; resultado ainda não confirmado. Próximo passo: verificar lint, typecheck, testes, test:db e build no head mais recente, corrigir falhas se houver e atualizar este registro. Não fazer merge sem autorização do responsável.
