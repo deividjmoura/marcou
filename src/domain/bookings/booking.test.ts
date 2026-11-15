@@ -67,6 +67,24 @@ describe("bookingOccupiesTime", () => {
       ),
     ).toBe(true);
   });
+
+  it("reserva em revisão ocupa o horário enquanto válida", () => {
+    expect(
+      bookingOccupiesTime(
+        pendingBooking({ status: "pending_review" }),
+        date("2026-12-01T11:00:00Z"),
+      ),
+    ).toBe(true);
+  });
+
+  it("reserva em revisão vencida não ocupa o horário", () => {
+    expect(
+      bookingOccupiesTime(
+        pendingBooking({ status: "pending_review" }),
+        date("2026-12-01T12:00:00Z"),
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("transitionBooking", () => {
@@ -116,5 +134,69 @@ describe("transitionBooking", () => {
       date("2026-12-01T12:00:00Z"),
     );
     expect(next.status).toBe("expired");
+  });
+
+  it("expira reserva em revisão após o prazo", () => {
+    const next = transitionBooking(
+      pendingBooking({ status: "pending_review" }),
+      "expire",
+      date("2026-12-01T12:00:00Z"),
+    );
+    expect(next.status).toBe("expired");
+  });
+
+  it("não expira reserva confirmada", () => {
+    expect(() =>
+      transitionBooking(
+        pendingBooking({ status: "confirmed", expiresAt: null }),
+        "expire",
+        date("2026-12-01T12:00:00Z"),
+      ),
+    ).toThrow(BookingTransitionError);
+  });
+
+  it("não aprova pagamento diretamente a partir de pendente de pagamento", () => {
+    expect(() =>
+      transitionBooking(
+        pendingBooking(),
+        "payment_approved",
+        date("2026-12-01T11:00:00Z"),
+      ),
+    ).toThrow(BookingTransitionError);
+  });
+
+  it("não registra comprovante em reserva já em revisão", () => {
+    expect(() =>
+      transitionBooking(
+        pendingBooking({ status: "pending_review" }),
+        "proof_received",
+        date("2026-12-01T11:00:00Z"),
+      ),
+    ).toThrow(BookingTransitionError);
+  });
+
+  it("cancelamento libera o horário em qualquer estado ativo", () => {
+    for (const status of [
+      "pending_payment",
+      "pending_review",
+      "confirmed",
+    ] as const) {
+      const next = transitionBooking(
+        pendingBooking({ status, expiresAt: null }),
+        "cancel",
+        date("2026-12-01T11:00:00Z"),
+      );
+      expect(next.status).toBe("cancelled");
+    }
+  });
+
+  it("não reativa reserva cancelada", () => {
+    expect(() =>
+      transitionBooking(
+        pendingBooking({ status: "cancelled", expiresAt: null }),
+        "cancel",
+        date("2026-12-01T11:00:00Z"),
+      ),
+    ).toThrow(BookingTransitionError);
   });
 });
