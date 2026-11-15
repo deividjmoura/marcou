@@ -1,3 +1,237 @@
+```json
+{
+  "schema_version": "1.0.0",
+  "updated_at": "2026-11-15",
+  "project": {
+    "name": "Marcou",
+    "repository": "deividjmoura/marcou",
+    "default_branch": "main"
+  },
+  "architecture": {
+    "frontend": "Next.js 16 App Router + React 19 + TypeScript",
+    "backend": "Supabase Auth + PostgreSQL + Storage",
+    "hosting": "Vercel",
+    "tests": [
+      "Vitest",
+      "embedded PostgreSQL"
+    ]
+  },
+  "status_legend": [
+    "concluido_verificado",
+    "implementado_nao_verificado",
+    "em_andamento",
+    "planejado",
+    "bloqueado"
+  ],
+  "integrated_features": [
+    {
+      "name": "Motor básico de agendamentos",
+      "status": "concluido_verificado",
+      "pull_request": 3,
+      "merge_commit": "03ac75bc69bda0c63cc08c699cb6d49b6396fd17"
+    },
+    {
+      "name": "Notificações internas",
+      "status": "concluido_verificado",
+      "pull_request": 5,
+      "merge_commit": "ca9b73f7b43efeba759fafc12214fc806bfb24d0",
+      "note": "Testes reportados em banco embutido; Supabase remoto não validado."
+    }
+  ],
+  "open_pull_requests": [
+    {
+      "number": 1,
+      "title": "Página pública de agendamento (prévia)",
+      "status": "open_draft",
+      "head": "feat/pagina-publica-agendamento",
+      "base": "design/identidade-visual",
+      "url": "https://github.com/deividjmoura/marcou/pull/1",
+      "note": "Protótipo visual; validar integração real."
+    },
+    {
+      "number": 2,
+      "title": "Calendário mobile (prévia)",
+      "status": "open_draft",
+      "head": "feat/calendario-mobile",
+      "base": "feat/pagina-publica-agendamento",
+      "url": "https://github.com/deividjmoura/marcou/pull/2",
+      "note": "PR encadeada na #1; conferir dependência antes de integrar."
+    },
+    {
+      "number": 4,
+      "title": "Calendário resiliente",
+      "status": "open_draft",
+      "head": "fix/calendario-disponibilidade-resiliente",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/4",
+      "note": "Preservar branch; revisar diff/CI antes de integrar."
+    }
+  ],
+  "completed_pull_requests": [
+    {
+      "number": 3,
+      "status": "merged",
+      "url": "https://github.com/deividjmoura/marcou/pull/3"
+    },
+    {
+      "number": 5,
+      "status": "merged",
+      "url": "https://github.com/deividjmoura/marcou/pull/5"
+    }
+  ],
+  "supabase": {
+    "project_id": "peornypgltuueubmsucm",
+    "region": "South America (São Paulo)",
+    "migrations_remote_applied": false,
+    "remote_validation": "not_verified"
+  },
+  "open_issues": [
+    {
+      "number": 6,
+      "area": "AUTH",
+      "title": "Autenticação de clientes e recuperação de senha",
+      "url": "https://github.com/deividjmoura/marcou/issues/6"
+    },
+    {
+      "number": 7,
+      "area": "BOOKING",
+      "title": "Seleção e agendamento de múltiplos serviços",
+      "url": "https://github.com/deividjmoura/marcou/issues/7"
+    },
+    {
+      "number": 8,
+      "area": "CALENDAR",
+      "title": "Calendário resiliente e disponibilidade real",
+      "url": "https://github.com/deividjmoura/marcou/issues/8"
+    },
+    {
+      "number": 9,
+      "area": "PROVIDER",
+      "title": "Configuração do negócio, expediente e bloqueios",
+      "url": "https://github.com/deividjmoura/marcou/issues/9"
+    },
+    {
+      "number": 10,
+      "area": "BOOKING",
+      "title": "Gestão de reservas e transições de status",
+      "url": "https://github.com/deividjmoura/marcou/issues/10"
+    },
+    {
+      "number": 11,
+      "area": "PAYMENTS",
+      "title": "Pagamento e comprovantes",
+      "url": "https://github.com/deividjmoura/marcou/issues/11"
+    },
+    {
+      "number": 12,
+      "area": "NOTIFICATIONS",
+      "title": "Automatizar lembretes e expiração",
+      "url": "https://github.com/deividjmoura/marcou/issues/12"
+    },
+    {
+      "number": 13,
+      "area": "NOTIFICATIONS",
+      "title": "Preferências e canais de notificação",
+      "url": "https://github.com/deividjmoura/marcou/issues/13"
+    },
+    {
+      "number": 14,
+      "area": "SECURITY",
+      "title": "Auditoria de RLS e SECURITY DEFINER",
+      "url": "https://github.com/deividjmoura/marcou/issues/14"
+    },
+    {
+      "number": 15,
+      "area": "SUPABASE",
+      "title": "Integração remota e validação de migrations",
+      "url": "https://github.com/deividjmoura/marcou/issues/15"
+    },
+    {
+      "number": 16,
+      "area": "UX",
+      "title": "Experiência mobile e acessibilidade",
+      "url": "https://github.com/deividjmoura/marcou/issues/16"
+    },
+    {
+      "number": 17,
+      "area": "QUALITY",
+      "title": "Testes E2E, CI e release",
+      "url": "https://github.com/deividjmoura/marcou/issues/17"
+    },
+    {
+      "number": 18,
+      "area": "INTEGRATIONS",
+      "title": "Google Calendar (fase posterior)",
+      "url": "https://github.com/deividjmoura/marcou/issues/18"
+    },
+    {
+      "number": 19,
+      "area": "INTEGRATIONS",
+      "title": "WhatsApp (fase posterior)",
+      "url": "https://github.com/deividjmoura/marcou/issues/19"
+    },
+    {
+      "number": 20,
+      "area": "RELEASE",
+      "title": "Deploy, observabilidade e operação",
+      "url": "https://github.com/deividjmoura/marcou/issues/20"
+    }
+  ],
+  "critical_rules": [
+    "Não criar PR vazia: PR só quando existir branch com implementação revisável.",
+    "Não fazer merge, deploy ou aplicar migrations remotas sem autorização explícita.",
+    "Não sobrescrever branches/PRs de outros agentes.",
+    "Atualizar este documento ao encerrar cada entrega.",
+    "Nunca registrar segredos."
+  ]
+}
+```
+
+## Backlog organizado por área — GitHub Issues
+
+As issues abaixo formam o quadro de trabalho do produto. A classificação está no prefixo do título (`[AUTH]`, `[BOOKING]` etc.) para permitir encaminhar uma área inteira a um agente. Cada issue contém escopo, critérios de aceite e dependências. Não abrir PR vazia: cada issue deve gerar PR quando houver código real, em branch própria.
+
+### AUTH — Autenticação e contas
+- [ ] [Issue #6](https://github.com/deividjmoura/marcou/issues/6)
+
+### BOOKING — Jornada e regras de agendamento
+- [ ] [Issue #7](https://github.com/deividjmoura/marcou/issues/7)
+- [ ] [Issue #10](https://github.com/deividjmoura/marcou/issues/10)
+
+### CALENDAR — Calendário e disponibilidade
+- [ ] [Issue #8](https://github.com/deividjmoura/marcou/issues/8)
+
+### PROVIDER — Painel e configuração do prestador
+- [ ] [Issue #9](https://github.com/deividjmoura/marcou/issues/9)
+
+### PAYMENTS — Pagamentos
+- [ ] [Issue #11](https://github.com/deividjmoura/marcou/issues/11)
+
+### NOTIFICATIONS — Notificações e automações
+- [ ] [Issue #12](https://github.com/deividjmoura/marcou/issues/12)
+- [ ] [Issue #13](https://github.com/deividjmoura/marcou/issues/13)
+
+### SECURITY — Segurança e banco
+- [ ] [Issue #14](https://github.com/deividjmoura/marcou/issues/14)
+
+### SUPABASE — Integração Supabase
+- [ ] [Issue #15](https://github.com/deividjmoura/marcou/issues/15)
+
+### UX — Experiência do cliente
+- [ ] [Issue #16](https://github.com/deividjmoura/marcou/issues/16)
+
+### QUALITY — Qualidade e testes
+- [ ] [Issue #17](https://github.com/deividjmoura/marcou/issues/17)
+
+### RELEASE — Deploy e operação
+- [ ] [Issue #20](https://github.com/deividjmoura/marcou/issues/20)
+
+### INTEGRATIONS — Integrações futuras
+- [ ] [Issue #18](https://github.com/deividjmoura/marcou/issues/18)
+- [ ] [Issue #19](https://github.com/deividjmoura/marcou/issues/19)
+
+---
+
 # 🔴 PADRÃO OBRIGATÓRIO DO DOCUMENTO — FORMATO HÍBRIDO (15/11/2026)
 
 ## Fonte de verdade estruturada para todos os agentes
@@ -44,7 +278,7 @@ Depois do JSON, manter em Markdown:
 
 - **Motor básico de agendamentos:** integrado pela PR #3 (merge commit `03ac75b`). Inclui fluxo básico de reservas, disponibilidade, proteção contra duplicidade, cadastro de negócio/serviços/expediente e painel. Ainda precisa ser auditado para confirmar os requisitos novos de múltiplos serviços e expiração.
 - **Notificações internas:** PR #5 integrada por squash em `main` (commit `ca9b73f`). Inclui notificações para cliente/profissional, sino/contador e página `/notificacoes`. Os testes e build registrados pelo agente foram 39/39, 45/45 no banco embutido e build OK; isso não equivale a validação em Supabase remoto.
-- **Supabase remoto:** projeto criado pelo responsável, mas não considerar migrations aplicadas ou integração remota validada sem evidência atual. Não aplicar migrations, alterar dados ou configurar produção nesta tarefa.
+- **Supabase remoto:** projeto criado (`peornypgltuueubmsucm`, São Paulo); migrations remotas não aplicadas e integração remota ainda não validada. Não aplicar migrations, alterar dados ou configurar produção nesta tarefa.
 - **Google OAuth:** decisão de produto definida; configuração no Google Cloud fica para a etapa de integração do login. Não introduzir Firebase como autenticação paralela.
 - **WhatsApp/Railway:** fora do escopo atual; fase futura.
 
@@ -92,10 +326,7 @@ Railway foi tocado.
 - Smoke do app: `/`, `/login`, `/cadastro`, `/painel`, `/meus-agendamentos`,
   `/notificacoes`, `/p/qualquer`, `/reserva/abc` responderam HTTP 200.
 
-**Verificado apenas em banco embutido.** Não existe projeto Supabase remoto
-provisionado; as migrations não foram aplicadas em nenhum ambiente real e a
-página `/notificacoes` com sessão/RLS só foi exercitada no harness
-`scripts/db-check.mjs`.
+**Verificado apenas em banco embutido.** Existe projeto Supabase remoto provisionado, mas as migrations não foram aplicadas nele; a página `/notificacoes` com sessão/RLS só foi exercitada no harness `scripts/db-check.mjs`.
 
 **Pendências desta frente**
 - Nenhum cron configurado para `create_booking_reminders()` nem para
@@ -105,10 +336,7 @@ página `/notificacoes` com sessão/RLS só foi exercitada no harness
 - `booking.changed` está mapeado, mas nenhuma transição atual o emite; entrará
   quando houver reagendamento/edição de reserva.
 
-**Git:** branch `arena/68d409cd-marcou` (base `main` = `03ac75b`), commit
-`5c5c7a7`. PR #5 aberta para `main`
-(https://github.com/deividjmoura/marcou/pull/5); **sem merge** (aguardando
-autorização). Checks da PR: `quality` e `Vercel` passaram.
+**Registro histórico corrigido:** o texto original desta entrega foi escrito antes do merge. A PR #5 foi posteriormente integrada por squash à `main` (commit `ca9b73f7b43efeba759fafc12214fc806bfb24d0`). Consulte o JSON do topo para o estado atual.
 
 **Trabalho paralelo de outros agentes (não mexer, não sobrescrever):** existem
 outras branches/PRs abertas na mesma base — `feat/calendario-mobile` (PR #2,
