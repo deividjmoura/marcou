@@ -49,7 +49,7 @@ a {
 }
 
 .brand span {
-  color: #8a4d62;
+  color: var(--ds-color-brand-strong);
 }
 
 .topbar-note,
@@ -68,7 +68,7 @@ a {
 
 .eyebrow,
 .muted-label {
-  color: #8a4d62;
+  color: var(--ds-color-brand-strong);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.7px;
@@ -82,7 +82,7 @@ a {
 }
 
 .hero h1 span {
-  color: #8a4d62;
+  color: var(--ds-color-brand-strong);
 }
 
 .hero-copy > p {
@@ -97,7 +97,7 @@ a {
   align-items: center;
   gap: 9px;
   margin-top: 24px;
-  color: #555b4b;
+  color: var(--ds-color-muted);
   font-size: 12px;
   font-weight: 700;
 }
@@ -115,7 +115,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--surface);
-  box-shadow: 0 24px 70px rgb(45 54 30 / 7%);
+  box-shadow: var(--ds-shadow-card);
 }
 
 .card-heading {
@@ -176,7 +176,7 @@ a {
   padding: 13px 15px;
   border-left: 3px solid #a85f78;
   border-radius: 0 9px 9px 0;
-  background: #f7e9ed;
+  background: var(--ds-color-brand-soft);
 }
 
 .schedule-event strong,
@@ -203,7 +203,7 @@ a {
 
 .card-footnote {
   margin: 20px 0 0;
-  color: #9a9d93;
+  color: #9b8b91;
   font-size: 10px;
   text-align: right;
 }
@@ -233,7 +233,7 @@ a {
 }
 
 .step > span {
-  color: #8a4d62;
+  color: var(--ds-color-brand-strong);
   font-size: 12px;
   font-weight: 800;
 }
@@ -300,7 +300,7 @@ a {
 }
 
 .topbar-actions a:not(.btn):hover {
-  color: #8a4d62;
+  color: var(--ds-color-brand-strong);
 }
 
 .btn {
@@ -377,7 +377,7 @@ a {
 }
 
 .auth-footnote a {
-  color: #8a4d62;
+  color: var(--ds-color-brand-strong);
   font-weight: 700;
 }
 
@@ -912,8 +912,8 @@ a {
 }
 
 .notification-row.is-unread {
-  border-color: #e4c4cf;
-  background: #fcf7f8;
+  border-color: var(--ds-color-brand);
+  background: var(--ds-color-brand-soft);
 }
 
 .notification-main {
