@@ -125,10 +125,11 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       ]
     },
     "IDENTITY": {
-      "status": "backlog_open",
+      "status": "em_andamento",
       "issues": [
         23
-      ]
+      ],
+      "branch": "feat/23-identity-auth-profile"
     },
     "PROVIDER-ADMIN": {
       "status": "backlog_open",
@@ -222,6 +223,16 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
         "NOTIFICATIONS"
       ],
       "url": "https://github.com/deividjmoura/marcou/pull/5"
+    },
+    {
+      "number": 33,
+      "status": "open_draft",
+      "area": [
+        "IDENTITY"
+      ],
+      "head": "feat/23-identity-auth-profile",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/33"
     }
   ],
   "rules": {
@@ -232,6 +243,13 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "no_merge_without_owner_approval": true,
     "no_remote_supabase_migrations_without_owner_approval": true,
     "whatsapp_phase": "deferred"
+  },
+  "identity_delivery": {
+    "status": "implementado_nao_verificado",
+    "branch": "feat/23-identity-auth-profile",
+    "head_commit": "e80ab28796295d1de56aa6f027495326b177eb58",
+    "pull_request": 33,
+    "note": "Cadastro/login existentes preservados; perfil/telefone, recuperação de senha e callback Supabase implementados. Google Cloud/Supabase provider ainda depende de configuração do responsável."
   }
 }
 ```
@@ -305,6 +323,15 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/4",
       "note": "Preservar branch; revisar diff/CI antes de integrar."
+    },
+    {
+      "number": 33,
+      "title": "[IDENTITY] Completar perfil, recuperação de senha e callback Supabase",
+      "status": "open_draft",
+      "head": "feat/23-identity-auth-profile",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/33",
+      "note": "Google OAuth ponta a ponta e SMTP dependem de configuração externa; CI em execução."
     }
   ],
   "completed_pull_requests": [
@@ -423,7 +450,33 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "Não sobrescrever branches/PRs de outros agentes.",
     "Atualizar este documento ao encerrar cada entrega.",
     "Nunca registrar segredos."
-  ]
+  ],
+  "identity_delivery": {
+    "status": "implementado_nao_verificado",
+    "issue": 23,
+    "branch": "feat/23-identity-auth-profile",
+    "commits": [
+      "46d0fda77d2028cc9ad50eb15a9853cb23b116a0",
+      "2d2f6bb9565157ead8341f9bb38820d5b8d16fe0",
+      "21fdcb8a89de74a65e206b12ac63d2ba0aa99e14",
+      "26f5dfaca16e93c38e674a7a701ef11ffd77d8f5",
+      "e80ab28796295d1de56aa6f027495326b177eb58"
+    ],
+    "pull_request": 33,
+    "tests": {
+      "lint": "não executado localmente; CI em execução",
+      "typecheck": "não executado localmente; CI em execução",
+      "unit": "não executado localmente; CI em execução",
+      "database": "não executado localmente; CI em execução",
+      "build": "não executado localmente; CI em execução"
+    },
+    "pending": [
+      "Configurar credenciais e provider Google no Google Cloud/Supabase.",
+      "Cadastrar Site URL e Redirect URLs por ambiente no Supabase.",
+      "Validar SMTP, confirmação de e-mail e recuperação no ambiente real.",
+      "Validar fluxos ponta a ponta com Supabase remoto após autorização."
+    ]
+  }
 }
 ```
 
@@ -879,3 +932,33 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - PR pequena, revisável e ligada à Issue #21.
 
 **Limite de escopo:** se descobrir dependência real de outra área, documente e abra comentário na issue correspondente; não amplie esta implementação por conta própria.
+
+
+---
+
+## Entrega do agente — Issue #23 IDENTITY (15/11/2026)
+
+**Status:** implementação realizada em branch própria; PR aberta em draft, sem merge. A Issue #23 permanece aberta porque a configuração externa do Google OAuth e a validação ponta a ponta ainda dependem do responsável.
+
+- **Branch:** `feat/23-identity-auth-profile` (criada diretamente de `main` em `217823e7af67f451d5a2fd9bbd631cd2d4f4f6c5`).
+- **Head:** `e80ab28796295d1de56aa6f027495326b177eb58`.
+- **PR:** [#33 — IDENTITY](https://github.com/deividjmoura/marcou/pull/33), draft, base `main`, sem `Closes #23`.
+- **Commits:** `46d0fda77d2028cc9ad50eb15a9853cb23b116a0`, `2d2f6bb9565157ead8341f9bb38820d5b8d16fe0`, `21fdcb8a89de74a65e206b12ac63d2ba0aa99e14`, `26f5dfaca16e93c38e674a7a701ef11ffd77d8f5`, `e80ab28796295d1de56aa6f027495326b177eb58`.
+
+### Arquivos alterados
+
+- `src/app/(auth)/actions.ts` e `forms.tsx`: preservação do login/cadastro existentes; provisionamento do perfil, validação de telefone, logout, recuperação e redefinição de senha.
+- `src/app/(auth)/perfil/page.tsx`, `esqueci-senha/page.tsx`, `redefinir-senha/page.tsx` e `login/page.tsx`: páginas de perfil e recuperação, além de feedback de callback.
+- `src/app/auth/callback/route.ts`: troca PKCE, provisionamento Supabase e redirecionamento seguro para completar telefone quando ausente.
+- `src/app/painel/page.tsx` e `src/app/meus-agendamentos/page.tsx`: links mínimos para editar o perfil.
+- `src/lib/identity.ts` e `src/lib/identity.test.ts`: validação/normalização de telefone, redirecionamento local e testes unitários.
+- `docs/IDENTITY.md`: arquitetura, RLS existente e instruções de configuração Google Cloud/Supabase.
+
+### Banco, segurança e validação
+
+- Nenhuma migration nova foi necessária: `public.profiles`, colunas `display_name`/`phone` e policies RLS de acesso à própria linha já existem na migration inicial.
+- Nenhuma migration foi aplicada no Supabase remoto; nenhuma configuração ou variável de produção da Vercel foi alterada.
+- Os fluxos de perfil usam o usuário autenticado no servidor e não recebem um ID de usuário arbitrário do cliente.
+- Não foi possível executar os comandos localmente nesta sessão. O workflow `.github/workflows/ci.yml` iniciou o job `quality` para a PR; no momento deste registro, lint, typecheck, testes, test:db e build ainda aguardam o resultado do CI. Não marcar como aprovados até conferir o run.
+- **Pendências do responsável:** criar Client ID/Secret no Google Cloud, habilitar Google em Supabase Auth, configurar Site URL/Redirect URLs e validar SMTP/recuperação em ambiente real. O telefone é validado sintaticamente (10–15 dígitos), sem verificação de posse por SMS.
+- **Pendência de revisão:** confirmar comportamento real com Supabase configurado e verificar regressões antes de retirar o draft. Nenhuma outra branch/PR foi alterada.
