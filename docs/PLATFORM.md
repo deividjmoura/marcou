@@ -5,6 +5,8 @@ Documento de hardening operacional do Marcou.
 
 Última atualização verificada no repositório: 2026-11-15.
 
+**PR:** https://github.com/deividjmoura/marcou/pull/32 · **Branch:** `feat/30-platform-hardening`
+
 ---
 
 ## 1. Inventário do que existe no repositório
@@ -47,6 +49,7 @@ Documento de hardening operacional do Marcou.
 - **Node:** 22
 - **Gates:** sequenciais; falha em qualquer passo interrompe o job (sem `continue-on-error`)
 - **Concurrency:** cancela runs redundantes na mesma ref
+- **Lockfile:** o repo **não** versiona `package-lock.json` (ver `.gitignore`). Por isso o CI **não** usa `cache: npm` no `setup-node` — essa opção exige lockfile e quebrou a primeira run da PR #32.
 
 ### O que **não** foi encontrado no repositório
 
@@ -157,8 +160,8 @@ Documento de hardening operacional do Marcou.
 ## 5. Melhorias locais realizadas nesta entrega
 
 1. Documentação completa de plataforma (`docs/PLATFORM.md` — este arquivo).
-2. Ajuste do workflow CI para concurrency, timeout, steps nomeados e cache npm; gates mantidos.
-3. `.env.example` enriquecido com comentários de classificação (pública vs futura secreta) sem valores.
+2. Workflow CI: concurrency, timeout 20min, steps nomeados; **sem** `cache: npm` (o repo não versiona lockfile; a primeira run da PR #32 falhou por esse motivo e foi corrigida).
+3. `.env.example` com classificação PUBLIC vs SECRET, sem valores.
 4. Seção operacional no README apontando para este documento.
 
 **Não alterado:** código de produto (#21 booking, #27 design system), Auth, RLS, migrations de domínio, configurações remotas.
@@ -167,12 +170,14 @@ Documento de hardening operacional do Marcou.
 
 ## 6. Ações que dependem do responsável
 
+- [ ] Confirmar CI verde na PR #32 após o fix do cache.
 - [ ] Confirmar e aplicar migrations no Supabase remoto (quando autorizado).
 - [ ] Configurar/validar variáveis no projeto Vercel (preview e production).
 - [ ] Habilitar e testar backups no Supabase; documentar procedimento de restore.
 - [ ] Definir se haverá projeto Supabase separado para staging.
 - [ ] Autorizar implementação de cron/jobs (Issues #25/#26) com secret e idempotência.
 - [ ] Revisar e fazer merge desta PR após validação.
+- [ ] No merge de `AGENT_TASK_MARCOU.md`, preferir a versão completa da `main` + nota curta #30 (evitar truncar handoffs de outros agentes).
 
 ---
 
@@ -187,4 +192,4 @@ npm run test:db
 npm run build
 ```
 
-Registrar resultados reais na descrição da PR. Ausência de credenciais Supabase/Vercel impede validação remota — isso é esperado e deve ser listado como limitação, não como falha da entrega documental.
+Ausência de credenciais Supabase/Vercel impede validação remota — limitação esperada, não falha desta entrega documental.
