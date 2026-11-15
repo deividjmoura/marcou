@@ -24,6 +24,7 @@ import {
   deleteRule,
   setServiceActive,
   updateProviderSettings,
+  updateRule,
   updateService,
 } from "@/server/services";
 
@@ -60,8 +61,10 @@ export async function saveProviderAction(
     if (existing) {
       const parsed = providerSettingsSchema.safeParse(raw);
       if (!parsed.success) return { error: firstIssue(parsed.error) };
-      await updateProviderSettings(existing.id, parsed.data);
+      const updated = await updateProviderSettings(existing.id, parsed.data);
       revalidatePath("/painel");
+      revalidatePath(`/p/${existing.slug}`);
+      revalidatePath(`/p/${updated.slug}`);
       return { success: "Configurações salvas." };
     }
 
@@ -152,6 +155,12 @@ export async function saveRuleAction(
   try {
     const provider = await ownedProviderOrError();
     if (!provider) return { error: "Você ainda não configurou seu negócio." };
+    const ruleId = String(formData.get("ruleId") ?? "");
+    if (ruleId) {
+      await updateRule(provider.id, ruleId, parsed.data);
+      revalidatePath("/painel");
+      return { success: "Período de expediente atualizado." };
+    }
     await createRule(provider.id, parsed.data);
     revalidatePath("/painel");
     return { success: "Período de expediente adicionado." };

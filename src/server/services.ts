@@ -289,6 +289,7 @@ export async function updateProviderSettings(
   const { data, error } = await supabase
     .from("providers")
     .update({
+      slug: input.slug,
       display_name: input.displayName,
       timezone: input.timezone,
       is_published: input.isPublished,
@@ -298,7 +299,12 @@ export async function updateProviderSettings(
     .select()
     .single();
 
-  if (error) fail(error);
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("Este endereço já está em uso. Escolha outro.");
+    }
+    fail(error);
+  }
   if (!data) throw new Error("Negócio não encontrado.");
   return data as Provider;
 }
