@@ -183,7 +183,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
   "pull_requests": [
     {
       "number": 1,
-      "status": "open_status_to_verify",
+      "status": "open_draft_demo_no_ci",
       "area": [
         "PUBLIC-FLOW",
         "DESIGN-SYSTEM"
@@ -192,7 +192,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     },
     {
       "number": 2,
-      "status": "open_status_to_verify",
+      "status": "open_draft_demo_chained_no_ci",
       "area": [
         "PUBLIC-FLOW",
         "BOOKING"
@@ -209,7 +209,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     },
     {
       "number": 4,
-      "status": "open_status_to_verify",
+      "status": "open_draft_stale_unmergeable_ci_success",
       "area": [
         "PUBLIC-FLOW",
         "BOOKING"
@@ -237,7 +237,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     },
     {
       "number": 32,
-      "status": "open",
+      "status": "open_blocked_doc_scope",
       "area": [
         "PLATFORM"
       ],
@@ -273,6 +273,21 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "ci_run": "https://github.com/deividjmoura/marcou/actions/runs/43775254043",
     "last_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059",
     "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
+  },
+  "audit_2026_11_15": {
+    "main": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7",
+    "merged": [
+      33
+    ],
+    "blocked": {
+      "1": "Draft preview only; no CI checks",
+      "2": "Draft preview only, based on PR #1 branch; no CI checks",
+      "4": "CI success, but branch is 10 commits behind main and GitHub reports mergeable=false",
+      "32": "CI success, but deletes most of AGENT_TASK_MARCOU.md and adds docs/MOTION.md outside PLATFORM scope"
+    },
+    "booking_21": "branch exists 2 ahead/2 behind main; only incomplete 26-line migration stub; no PR",
+    "design_27": "issue open; no feat/27-design-system branch or PR found",
+    "provider_24": "issue open; no dedicated branch/PR found"
   }
 }
 ```
@@ -330,7 +345,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     {
       "number": 1,
       "title": "Página pública de agendamento (prévia)",
-      "status": "open_draft",
+      "status": "open_draft_demo_no_ci",
       "head": "feat/pagina-publica-agendamento",
       "base": "design/identidade-visual",
       "url": "https://github.com/deividjmoura/marcou/pull/1",
@@ -339,7 +354,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     {
       "number": 2,
       "title": "Calendário mobile (prévia)",
-      "status": "open_draft",
+      "status": "open_draft_demo_chained_no_ci",
       "head": "feat/calendario-mobile",
       "base": "feat/pagina-publica-agendamento",
       "url": "https://github.com/deividjmoura/marcou/pull/2",
@@ -348,7 +363,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     {
       "number": 4,
       "title": "Calendário resiliente",
-      "status": "open_draft",
+      "status": "open_draft_stale_unmergeable_ci_success",
       "head": "fix/calendario-disponibilidade-resiliente",
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/4",
@@ -357,7 +372,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     {
       "number": 32,
       "title": "[PLATFORM] Hardening operacional, inventário e CI — Issue #30",
-      "status": "open",
+      "status": "open_blocked_doc_scope",
       "head": "feat/30-platform-hardening",
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/32",
@@ -522,6 +537,37 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "Validar fluxos ponta a ponta com Supabase remoto após autorização."
     ],
     "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
+  },
+  "audit_2026_11_15": {
+    "merged_prs": [
+      {
+        "number": 33,
+        "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
+      }
+    ],
+    "blocked_prs": [
+      {
+        "number": 32,
+        "reason": "A PR remove a maior parte do AGENT_TASK_MARCOU.md (882 para 39 linhas) e inclui docs/MOTION.md fora do escopo PLATFORM; CI passou, mas diff não é seguro para merge."
+      },
+      {
+        "number": 4,
+        "reason": "CI passou, porém branch 10 commits atrás da main e mergeable=false; precisa atualização/revalidação."
+      },
+      {
+        "number": 1,
+        "reason": "Prévia demonstrativa, draft, sem CI."
+      },
+      {
+        "number": 2,
+        "reason": "Prévia demonstrativa encadeada à PR #1, draft, sem CI."
+      }
+    ],
+    "areas": {
+      "BOOKING_21": "branch existente, migration parcial/incompleta, sem PR; issue permanece aberta.",
+      "DESIGN_27": "sem branch/PR de implementação identificada; issue permanece aberta.",
+      "PROVIDER_ADMIN_24": "sem branch/PR identificada; issue permanece aberta."
+    }
   }
 }
 ```
@@ -1022,3 +1068,22 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - **CI:** run https://github.com/deividjmoura/marcou/actions/runs/43775254043 — lint, typecheck, testes unitários, test:db e build passaram no commit de código `b311dae6be6e9f335750edf8c856ddec57540059`. Commits posteriores antes do merge alteraram somente este documento.
 - **Pendências para fechar a Issue #23:** configurar Client ID/Secret e provider Google no Google Cloud/Supabase; registrar Site URL/Redirect URLs; validar SMTP, confirmação e recuperação de e-mail no ambiente real. O telefone não tem verificação de posse por SMS.
 - Nenhuma migration remota, configuração de produção ou deploy foi executado. A Issue #23 permanece aberta até as pendências externas serem resolvidas.
+
+
+## Auditoria de integração — 15/11/2026
+
+### Integração realizada
+- **PR #33 IDENTITY:** merged por squash em `main`, commit `8c1e85808d55e149e32213b1b4ce7e69e5259bc7`. CI completo aprovado no run #43775254043. Issue #23 continua aberta somente para configuração externa Google Cloud/Supabase e validação SMTP/recuperação.
+
+### PRs que não foram integradas
+- **PR #32 PLATFORM:** CI passou, mas o diff reduz `AGENT_TASK_MARCOU.md` de 882 para 39 linhas, removendo instruções e handoffs de outras áreas; também inclui `docs/MOTION.md`, fora do escopo PLATFORM. Não integrar até restaurar integralmente o documento e separar o conteúdo de Design System.
+- **PR #4 calendário:** lint, typecheck, testes, test:db e build passaram no run #43754782670, mas a branch está 10 commits atrás da `main` e o GitHub informa `mergeable=false`. Atualizar a base e reexecutar CI antes de considerar merge.
+- **PR #1 e #2:** continuam draft, são prévias demonstrativas sem backend real e sem checks automatizados. #2 depende da branch da #1. Não são funcionalidades prontas para produção.
+
+### Áreas ainda em andamento
+- **#21 BOOKING:** branch `feat/21-booking-multiple-services` existe, mas a migration consultada termina com comentário indicando continuação posterior; diff tem apenas esse arquivo e não há PR. Não integrada.
+- **#27 DESIGN-SYSTEM:** issue aberta; não foi encontrada branch `feat/27-design-system` nem PR.
+- **#24 PROVIDER-ADMIN:** issue aberta; não foi encontrada branch/PR dedicada.
+- **#30 PLATFORM:** issue permanece aberta; PR #32 precisa corrigir os bloqueios acima.
+
+Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de produção/Vercel foi alterada nesta auditoria.
