@@ -69,7 +69,7 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
   dupla marcação, inclusive sob requisições simultâneas.
 - Transições de estado (`pending_payment`, `pending_review`, `confirmed`,
   `cancelled`, `expired`) são aplicadas por `transition_booking`, com
-  autorização, validade e auditoria.
+  autorização, privilegi e auditoria.
 - A expiração libera o horário sem apagar o histórico e é registrada em
   `booking_events`.
 
@@ -97,6 +97,14 @@ RLS: cada usuário só lê e marca as próprias notificações.
 Lembretes são criados por `create_booking_reminders()`; ainda não há cron
 configurado. E-mail não está implementado: nenhuma infraestrutura de envio está
 configurada e nenhuma credencial foi criada.
+
+## Motion e transições (produto inteiro)
+
+Regras canônicas de animação e transição: **[docs/MOTION.md](docs/MOTION.md)**.
+
+Resumo: fade + slide/scale suaves, 180–450ms, ease-out ou spring leve, stagger
+~60ms, press 0.97, sem hard cuts, com suporte a `prefers-reduced-motion`.
+Aplicar em todas as telas (público, painel, auth) e no Design System.
 
 ## Plataforma e operação
 
