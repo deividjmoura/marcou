@@ -249,7 +249,15 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "branch": "feat/23-identity-auth-profile",
     "head_commit": "e80ab28796295d1de56aa6f027495326b177eb58",
     "pull_request": 33,
-    "note": "Cadastro/login existentes preservados; perfil/telefone, recuperação de senha e callback Supabase implementados. Google Cloud/Supabase provider ainda depende de configuração do responsável."
+    "note": "Cadastro/login existentes preservados; perfil/telefone, recuperação de senha e callback Supabase implementados. Google Cloud/Supabase provider ainda depende de configuração do responsável.",
+    "tests": {
+      "lint": "success — CI run #43775045185",
+      "typecheck": "success — CI run #43775045185",
+      "unit": "success — CI run #43775045185",
+      "database": "success — CI run #43775045185",
+      "build": "success — CI run #43775045185"
+    },
+    "ci_run": "https://github.com/deividjmoura/marcou/actions/runs/43775045185"
   }
 }
 ```
@@ -464,11 +472,13 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     ],
     "pull_request": 33,
     "tests": {
-      "lint": "não executado localmente; CI em execução",
-      "typecheck": "não executado localmente; CI em execução",
-      "unit": "não executado localmente; CI em execução",
-      "database": "não executado localmente; CI em execução",
-      "build": "não executado localmente; CI em execução"
+      "lint": "success",
+      "typecheck": "success",
+      "unit": "success",
+      "database": "success",
+      "build": "success",
+      "workflow_run": 43775045185,
+      "tested_code_commit": "e80ab28796295d1de56aa6f027495326b177eb58"
     },
     "pending": [
       "Configurar credenciais e provider Google no Google Cloud/Supabase.",
@@ -959,6 +969,6 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - Nenhuma migration nova foi necessária: `public.profiles`, colunas `display_name`/`phone` e policies RLS de acesso à própria linha já existem na migration inicial.
 - Nenhuma migration foi aplicada no Supabase remoto; nenhuma configuração ou variável de produção da Vercel foi alterada.
 - Os fluxos de perfil usam o usuário autenticado no servidor e não recebem um ID de usuário arbitrário do cliente.
-- Não foi possível executar os comandos localmente nesta sessão. O workflow `.github/workflows/ci.yml` iniciou o job `quality` para a PR; no momento deste registro, lint, typecheck, testes, test:db e build ainda aguardam o resultado do CI. Não marcar como aprovados até conferir o run.
+- Os comandos foram executados pelo GitHub Actions no job `quality` do run [#43775045185](https://github.com/deividjmoura/marcou/actions/runs/43775045185), no commit de código `e80ab28796295d1de56aa6f027495326b177eb58`: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:db` e `npm run build` — todos concluídos com sucesso. A atualização posterior do documento foi apenas documental.
 - **Pendências do responsável:** criar Client ID/Secret no Google Cloud, habilitar Google em Supabase Auth, configurar Site URL/Redirect URLs e validar SMTP/recuperação em ambiente real. O telefone é validado sintaticamente (10–15 dígitos), sem verificação de posse por SMS.
 - **Pendência de revisão:** confirmar comportamento real com Supabase configurado e verificar regressões antes de retirar o draft. Nenhuma outra branch/PR foi alterada.
