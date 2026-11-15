@@ -1,3 +1,60 @@
+# 🔴 INSTRUÇÕES MAIS RECENTES — LER PRIMEIRO
+
+> **Atualizado em 15/11/2026.** Esta seção reúne as orientações mais novas do responsável pelo produto. Leia antes do restante do documento. Ela complementa e, em caso de conflito, prevalece sobre as instruções históricas abaixo. Não repita tarefas já concluídas: confira o estado atual do código, commits, branches e issues antes de agir.
+
+## Prioridade atual: concluir o aplicativo Marcou
+
+O desenvolvimento deve acontecer por etapas. **Neste momento, o foco é exclusivamente o aplicativo Marcou. A integração com o bot do WhatsApp fica para uma fase futura e não deve entrar no escopo das tarefas atuais.**
+
+### Trabalho novo: notificações para clientes e profissionais
+
+Planeje e implemente, conforme a arquitetura e o estágio real do projeto, uma estrutura de notificações que atenda aos dois públicos:
+
+- **Cliente:** avisos relacionados aos próprios agendamentos, como criação/solicitação, confirmação, cancelamento, alteração e lembretes.
+- **Profissional/prestador:** avisos de novos agendamentos, solicitações pendentes, cancelamentos, alterações e lembretes relevantes para sua agenda.
+
+Orientações:
+1. Primeiro audite o que já existe no código e nas issues. Reutilize o que estiver pronto e não crie duplicatas.
+2. Defina eventos de negócio claros como origem das notificações; não espalhe disparos improvisados pela interface.
+3. Garanta que cada destinatário só possa consultar suas próprias notificações. Respeite autenticação, autorização e isolamento entre negócios (RLS, quando aplicável).
+4. Considere estados como não lida/lida, data de criação e destino relacionado (por exemplo, agendamento), além de uma forma de marcar como lida.
+5. Comece pelos recursos internos do aplicativo e, se fizer sentido para a infraestrutura já configurada, e-mail. Não dependa de WhatsApp para concluir esta etapa.
+6. Não invente integração externa nem credenciais. Documente dependências e variáveis de ambiente necessárias.
+7. Inclua testes para autorização, destinatários corretos, eventos duplicados e transições de estado.
+8. Atualize a documentação e as issues existentes com o que foi realmente implementado.
+
+### Separação de fases e infraestrutura
+
+**Fase 1 — Aplicativo:**
+- Aplicação web/PWA e painéis.
+- Cadastro, autenticação e configuração de profissionais/negócios.
+- Serviços, preços, duração e disponibilidade.
+- Página pública e fluxo completo de agendamento.
+- Gestão dos agendamentos.
+- Notificações para clientes e profissionais dentro do aplicativo; e-mail quando viável e configurado.
+- Segurança, testes, métricas e estabilidade.
+
+A arquitetura prevista é Vercel para a aplicação Next.js e Supabase para autenticação e banco de dados, desde que a auditoria confirme que essa continua sendo a arquitetura adotada. Login Google deve ser tratado como provedor OAuth do sistema de autenticação escolhido; não introduza Firebase como segundo sistema de autenticação sem decisão explícita.
+
+**Fase 2 — WhatsApp (adiada):**
+- Bot e integração com a API do WhatsApp.
+- Webhooks e processamento em serviço separado, possivelmente hospedado no Railway.
+- Consultas, agendamentos, cancelamentos, reagendamentos e notificações pelo WhatsApp.
+
+Não desenvolver agora o bot, webhooks do WhatsApp ou infraestrutura Railway para ele. O aplicativo deve, porém, manter regras de agendamento centralizadas e reutilizáveis para que uma futura integração possa consumir os mesmos serviços/API sem duplicar a lógica nem permitir reservas conflitantes.
+
+## Regra de continuidade para este documento
+
+Sempre que surgir uma nova tarefa ou orientação do responsável pelo produto:
+- **Acrescente a nova instrução no topo deste arquivo**, abaixo deste título e acima das instruções anteriores, com data e prioridade.
+- Não coloque a tarefa nova somente no final do documento.
+- Preserve as instruções anteriores como histórico/contexto; não apague nem marque como concluído algo sem verificar.
+- Deixe explícito o que é prioridade atual, o que foi adiado e o que depende de decisão.
+- Antes de executar, compare a instrução nova com o estado real do repositório e com o trabalho dos outros agentes. Não sobrescreva alterações em andamento.
+- Ao terminar, atualize esta seção ou acrescente uma nota de andamento no topo, registrando apenas resultados confirmados, commit/PR e pendências reais.
+
+---
+
 # Instruções para o agente — Projeto Marcou
 
 > **Leia este documento inteiro antes de executar qualquer alteração.** Em seguida, inspecione o repositório e siga as etapas na ordem indicada. Este documento é a fonte de instruções para esta tarefa.
