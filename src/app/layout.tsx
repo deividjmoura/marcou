@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "../styles/design-tokens.css";
 
 export const metadata: Metadata = {
   title: "Marcou — Agendamentos sem complicação",
