@@ -1,5 +1,53 @@
 # 🔴 INSTRUÇÕES MAIS RECENTES — LER PRIMEIRO
 
+
+## 🔴 REGRA OBRIGATÓRIA — DOCUMENTO VIVO DE CONTINUIDADE PARA TODOS OS AGENTES
+
+> **Prioridade máxima — válida para qualquer agente humano ou automatizado que trabalhe neste repositório.** Este arquivo é a referência compartilhada para entender o estado atual do Marcou. Todo agente deve lê-lo antes de começar e atualizá-lo antes de encerrar, entregar, pausar ou transferir qualquer trabalho.
+
+### Atualização obrigatória a cada modificação
+
+- **Toda alteração no projeto exige atualizar este documento na mesma tarefa/entrega**: código, interface, estilos, banco de dados, migrations, autenticação, regras de negócio, testes, documentação, configuração, dependências ou infraestrutura.
+- A atualização deve acontecer antes de concluir o trabalho ou passar a tarefa para outro agente. Não deixe para uma próxima sessão.
+- Não é necessário registrar um diário nem copiar o histórico completo de commits. Mantenha um **resumo curto, atual e operacional**, suficiente para o próximo agente entender o projeto sem precisar reler todo o código para descobrir decisões e andamento.
+- Atualize o resumo existente, em vez de acumular relatos repetidos. Preserve decisões ainda válidas e remova do resumo apenas informações que se tornaram obsoletas; o histórico Git continua sendo a fonte para rastrear alterações detalhadas.
+- Registre somente fatos confirmados. Diferencie claramente: **implementado e verificado**, **implementado mas não verificado**, **em andamento**, **planejado** e **bloqueado**.
+- Se uma alteração não puder ser concluída, registre o que foi feito, o ponto exato em que parou, o motivo e o próximo passo seguro.
+- Não considere a tarefa concluída enquanto a documentação não refletir o estado final real.
+
+### Conteúdo mínimo que deve permanecer atualizado
+
+1. **Visão atual do produto e arquitetura:** stack, serviços e integrações realmente adotados; não apresente planos como implementações.
+2. **Decisões de produto confirmadas:** fluxos aprovados, regras e preferências que os próximos agentes não devem rediscutir ou contradizer sem nova orientação do responsável.
+3. **Estado por funcionalidade:** o que está pronto, incompleto, em desenvolvimento, planejado ou bloqueado.
+4. **Alterações da entrega atual:** resumo dos arquivos/áreas afetados e o objetivo da mudança, sem reproduzir o diff.
+5. **Validação:** comandos executados e resultados reais de lint, typecheck, testes e build; indique explicitamente o que não foi executado.
+6. **Git e colaboração:** branch utilizada, commit(s) relevantes e PR/link, quando existirem; identifique dependências de trabalho de outros agentes e não sobrescreva suas alterações.
+7. **Próximos passos e pendências:** ordem recomendada, dependências, decisões ainda necessárias e bloqueios.
+
+### Procedimento de passagem entre agentes
+
+- Antes de trabalhar: leia este documento, confira o estado atual do repositório, branches, commits e PRs; compare o código com o resumo para detectar divergências.
+- Durante o trabalho: preserve as decisões confirmadas e coordene alterações em áreas compartilhadas com os demais agentes.
+- Ao finalizar ou transferir: atualize este documento, faça commit da documentação junto da entrega correspondente sempre que possível e informe ao próximo agente onde continuar.
+- Se encontrar informação desatualizada, corrija-a com evidência do repositório. Não copie cegamente instruções antigas.
+- Esta regra vale para **todos os agentes e todas as branches**. Uma branch de trabalho deve carregar a atualização documental correspondente às mudanças daquela branch; quando o trabalho for integrado, mantenha o resumo canônico coerente na branch principal.
+
+### Estado e decisões de produto confirmadas em 15/11/2026
+
+- **Cadastro do cliente após selecionar serviços:** oferecer cadastro/login por e-mail e senha ou autenticação com Google.
+- **Cadastro por e-mail:** nome, e-mail e senha; oferecer recuperação de senha.
+- **Login Google:** obter nome e e-mail pelo provedor e solicitar o telefone ao cliente após autenticar, pois o telefone não deve ser presumido como dado fornecido pelo OAuth.
+- **Telefone:** obrigatório no perfil do cliente para continuidade do fluxo, a ser solicitado/completado após autenticação quando ainda não estiver cadastrado.
+- **Fluxo visual aprovado até aqui:** selecionar serviços → cadastro/login do cliente e complemento do telefone → escolher data e horário → revisar e confirmar.
+- **Calendário mobile:** mostrar somente horários realmente disponíveis, considerando duração combinada dos serviços, expediente, pausas, folgas, bloqueios e agendamentos existentes. Impedir conflitos também no backend/banco, inclusive solicitações simultâneas; não confiar apenas na interface.
+- **Janela de agendamento:** o profissional poderá configurar a antecedência máxima das reservas; opções de referência discutidas e aprovadas: 30, 60 ou 90 dias.
+- **Importante:** estas linhas registram decisões de produto, não comprovam que cadastro, OAuth, calendário ou motor de disponibilidade já estejam implementados. Audite o código antes de marcar qualquer item como concluído.
+- **Página pública:** a prévia visual está em uma branch/PR de trabalho separada; conferir o estado atual da PR e da branch antes de continuar. Não assumir que foi integrada ou que já grava reservas reais.
+
+---
+
+
 > **Atualizado em 15/11/2026.** Esta seção reúne as orientações mais novas do responsável pelo produto. Leia antes do restante do documento. Ela complementa e, em caso de conflito, prevalece sobre as instruções históricas abaixo. Não repita tarefas já concluídas: confira o estado atual do código, commits, branches e issues antes de agir.
 
 ## Prioridade atual: concluir o aplicativo Marcou
