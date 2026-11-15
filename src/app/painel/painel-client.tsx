@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   deleteExceptionAction,
   deleteRuleAction,
@@ -309,6 +309,10 @@ export function AvailabilityManager({
     {},
   );
   const [editingRule, setEditingRule] = useState<AvailabilityRuleRow | null>(null);
+
+  useEffect(() => {
+    if (ruleState.success) setEditingRule(null);
+  }, [ruleState.success]);
 
   return (
     <section className="card">
