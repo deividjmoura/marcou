@@ -233,6 +233,17 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "head": "feat/23-identity-auth-profile",
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/33"
+    },
+    {
+      "number": 32,
+      "status": "open",
+      "area": [
+        "PLATFORM"
+      ],
+      "head": "feat/30-platform-hardening",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/32",
+      "note": "PR do agente #30; também atualiza AGENT_TASK_MARCOU.md."
     }
   ],
   "rules": {
@@ -340,6 +351,15 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/33",
       "note": "Google OAuth ponta a ponta e SMTP dependem de configuração externa; CI em execução."
+    },
+    {
+      "number": 32,
+      "title": "[PLATFORM] Hardening operacional, inventário e CI — Issue #30",
+      "status": "open",
+      "head": "feat/30-platform-hardening",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/32",
+      "note": "PR aberta; compartilha atualização de AGENT_TASK_MARCOU.md com PR #33."
     }
   ],
   "completed_pull_requests": [
@@ -975,3 +995,6 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - Os comandos foram executados pelo GitHub Actions no job `quality` do run [#43775045185](https://github.com/deividjmoura/marcou/actions/runs/43775045185), no commit de código `e80ab28796295d1de56aa6f027495326b177eb58`: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:db` e `npm run build` — todos concluídos com sucesso. A atualização posterior do documento foi apenas documental.
 - **Pendências do responsável:** criar Client ID/Secret no Google Cloud, habilitar Google em Supabase Auth, configurar Site URL/Redirect URLs e validar SMTP/recuperação em ambiente real. O telefone é validado sintaticamente (10–15 dígitos), sem verificação de posse por SMS.
 - **Pendência de revisão:** confirmar comportamento real com Supabase configurado e verificar regressões antes de retirar o draft. Nenhuma outra branch/PR foi alterada.
+
+
+**Coordenação entre PRs:** a PR #32 da PLATFORM também modifica `AGENT_TASK_MARCOU.md`. No momento da auditoria, GitHub reporta a PR #33 como mergeable; como ambas alteram o documento compartilhado, revalidar e reconciliar esse arquivo se uma delas for integrada antes da outra. Nenhuma alteração foi feita na branch ou na PR #32.
