@@ -58,6 +58,7 @@ Esta fundação não afirma que todo o produto já está em conformidade WCAG. A
 ## Migração da paleta — 15/11/2026
 
 - Acento de marca: rosé escuro `#8A4D62`; fundo de acento `#E8C4CF`; superfície suave `#F7E9ED`.
+- Contraste calculado (WCAG): rosé escuro sobre branco 6,33:1 e sobre bege 5,75:1; texto secundário `#76686D` sobre bege 4,80:1. Os três pares atendem AA para texto normal. A medição não substitui a revisão de todos os estados e componentes.
 - Fundo geral: bege `#F8F3F0`; superfície: branco `#FFFFFF`; tinta: ameixa `#33272B`.
 - A folha `src/app/globals.css` preserva as classes atuais e passa a consumir `--ds-*` para cores estruturais. Tons de status permanecem semanticamente separados da marca.
 - Nenhuma fonte externa, biblioteca de ícones ou asset animado foi incluído nesta etapa. A escolha depende de análise de licença e desempenho.
