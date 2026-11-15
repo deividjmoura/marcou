@@ -41,7 +41,7 @@ export default async function MeusAgendamentosPage() {
           <h1>Suas reservas</h1>
         </div>
         <div className="item-actions">
-          <Link href="/perfil" className="btn btn-ghost">Meu perfil</Link>
+          <Link href="/perfil?next=%2Fmeus-agendamentos" className="btn btn-ghost">Meu perfil</Link>
           <NotificationBell unreadCount={unread} />
           <form action={logoutAction}>
             <button type="submit" className="btn btn-ghost">

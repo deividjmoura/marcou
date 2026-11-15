@@ -133,7 +133,7 @@ export default async function PainelPage() {
           </p>
         </div>
         <div className="item-actions">
-          <Link href="/perfil" className="btn btn-ghost">Meu perfil</Link>
+          <Link href="/perfil?next=%2Fpainel" className="btn btn-ghost">Meu perfil</Link>
           <NotificationBell unreadCount={unread} />
           <form action={logoutAction}>
             <button type="submit" className="btn btn-ghost">

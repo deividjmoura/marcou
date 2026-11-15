@@ -137,13 +137,14 @@ export async function signupAction(
   }
 
   const origin = await getAppOrigin();
+  const next = safeNextPath(String(formData.get("next") ?? ""));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { display_name: parsed.data.name },
-      emailRedirectTo: `${origin}/auth/callback?next=/perfil`,
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
