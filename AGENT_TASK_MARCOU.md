@@ -1,5 +1,49 @@
 # Atualização de estado verificada — 15/11/2026
 
+## Delegação do segundo agente — Issue #27 DESIGN-SYSTEM
+
+**Status da delegação:** instrução preparada em 15/11/2026.  
+**Issue:** https://github.com/deividjmoura/marcou/issues/27  
+**Branch obrigatória:** `feat/27-design-system`, criada a partir da `main` atualizada.
+
+### Contexto verificado antes da delegação
+- A Issue #21 está sendo trabalhada na branch `feat/21-booking-multiple-services` (head observado: `49358e14122fe0f1d749e8dd351d110dff7aed77`), com dois commits e sem PR localizada até esta verificação.
+- A comparação dessa branch com `main` mostrou somente o arquivo `supabase/migrations/202611150004_booking_multiple_services.sql` (26 linhas); a versão consultada contém um comentário indicando que o conteúdo completo viria em atualizações posteriores. Portanto, #21 continua em andamento e pertence exclusivamente ao primeiro agente. **Não editar nem validar como concluída a branch dele.**
+- A branch `design/identidade-visual` está 23 commits atrás de `main`, sem commits exclusivos. Não a usar como base nem atualizá-la.
+- PR #1 e PR #2 continuam abertas em draft, encadeadas sobre a branch de design/prévia. PR #4 continua aberta em draft e independente. Preservar todas.
+
+### Objetivo do segundo agente
+Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, componentes reutilizáveis e documentação, seguindo a direção aprovada de bege, branco e rosé, com contraste e acessibilidade.
+
+### Instruções obrigatórias
+1. Ler integralmente este documento e a Issue #27; auditar `main`, `design/identidade-visual`, PRs #1/#2/#4 e os arquivos realmente alterados nelas antes de editar.
+2. Criar `feat/27-design-system` diretamente a partir da `main` atual. Não trabalhar na `main`, na branch antiga `design/identidade-visual`, nem nas branches das PRs abertas ou do agente #21.
+3. Trabalhar somente no sistema visual compartilhado: tokens CSS, tema, tipografia, primitives/componentes reutilizáveis, estados visuais e documentação/catálogo. Não reimplementar a página pública, calendário, fluxo de reservas, autenticação ou regras de negócio.
+4. Antes de alterar cada arquivo, verificar se ele aparece nos diffs das PRs #1/#2/#4 ou na branch #21. Evitar esses arquivos. Se uma mudança compartilhada for inevitável, documentar o motivo e não editar arquivos de terceiros; preferir criar uma camada compatível e independente.
+5. Auditar a identidade visual já existente e manter coerência com o produto: bege, branco e rosé. Definir tokens sem espalhar valores arbitrários; validar contraste WCAG, foco visível, hover, disabled, erro, sucesso e estados de carregamento.
+6. Explorar fontes no Free Faces Gallery, mas só adotar fonte com licença compatível, arquivo/pacote confiável, fallback e impacto de performance aceitáveis. Registrar a licença e a decisão; não baixar assets de origem duvidosa.
+7. Avaliar ícones animados da LottieFlow/LottieFiles com parcimônia. Não introduzir dependência pesada ou assets sem licença verificada. Fornecer fallback estático e respeitar `prefers-reduced-motion`; animação nunca pode ser necessária para compreender uma ação.
+8. Padronizar apenas componentes realmente compartilhados e existentes/necessários (por exemplo: Button, Input, Card, Badge, Dialog/Modal, feedback e navegação). Preservar APIs existentes ou documentar migração compatível; não fazer refactor amplo de todas as telas.
+9. Criar documentação visual com tokens, tipografia, exemplos de uso, estados, regras de acessibilidade e decisões de licença. Se útil, criar uma página de catálogo isolada, sem alterar rotas de produção.
+10. Executar lint, typecheck, testes e build disponíveis. Incluir verificações de contraste/acessibilidade pertinentes e relatar exatamente o que foi executado; não declarar validação que não ocorreu.
+11. Abrir PR em draft para `main`, vinculada à Issue #27. Usar `Closes #27` somente se todos os critérios da issue estiverem completos; caso contrário, explicar o que falta e manter aberta. Não fazer merge.
+12. Não aplicar migrations, não alterar Supabase remoto, não fazer deploy de produção e não modificar variáveis/segredos.
+13. Ao finalizar, registrar arquivos, commits, PR, testes, licenças/fontes/assets e pendências. Para atualizar este documento compartilhado, buscar a versão mais recente da `main` e aplicar uma alteração pequena que preserve o handoff do agente #21; nunca sobrescrever atualizações concorrentes nem forçar push.
+
+### Critérios de aceite
+- Tokens de cor, tipografia, espaçamento, raios, sombras e estados documentados e reutilizáveis.
+- Componentes compartilhados consistentes, responsivos e sem regressões conhecidas.
+- Contraste, foco por teclado e estados interativos verificados.
+- Animações com fallback e suporte a movimento reduzido.
+- Fontes e ícones com licença/impacto avaliados.
+- Lint, typecheck, testes e build executados, com resultados registrados.
+- PR revisável, limitada ao Design System e sem tocar no trabalho dos outros agentes.
+
+**Limite de escopo:** qualquer melhoria de tela ou fluxo de negócio deve virar issue separada; não ampliar a #27 por conta própria.
+
+---
+
+
 - PR #3 (motor de reservas) e PR #5 (notificações internas): **merged em `main`**, com merge commits confirmados.
 - PRs #1, #2 e #4: continuam **abertas em draft**. #1 e #2 são PRs encadeadas; #4 é independente e aguarda CI/revisão. Não fazer merge sem autorização.
 - Issues antigas duplicadas foram fechadas com motivo `duplicate` e comentário de encaminhamento: #6 → #23; #7 → #21; #9 → #24; #10 → #25; #11 → #28; #12 → #25/#26; #14 → #31; #15 → #30; #16 → #22/#27/#31; #17 → #31; #18 → #29.
