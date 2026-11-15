@@ -1,3 +1,14 @@
+# Atualização de estado verificada — 15/11/2026
+
+- PR #3 (motor de reservas) e PR #5 (notificações internas): **merged em `main`**, com merge commits confirmados.
+- PRs #1, #2 e #4: continuam **abertas em draft**. #1 e #2 são PRs encadeadas; #4 é independente e aguarda CI/revisão. Não fazer merge sem autorização.
+- Issues antigas duplicadas foram fechadas com motivo `duplicate` e comentário de encaminhamento: #6 → #23; #7 → #21; #9 → #24; #10 → #25; #11 → #28; #12 → #25/#26; #14 → #31; #15 → #30; #16 → #22/#27/#31; #17 → #31; #18 → #29.
+- Permanecem abertas por terem escopo próprio ou aguardarem definição: #8, #13, #19 e #20, além do backlog organizado #21–#31.
+- A branch `docs/proxima-etapa-multisservicos-expiracao` contém apenas commits de documentação e está divergente de `main`; não foi integrada nem alterada. As branches `arena/*` correspondem a PRs já integradas e não foram apagadas.
+- A auditoria de código confirmou que o fluxo público atual em `main` ainda seleciona **um serviço por reserva**. O suporte a múltiplos serviços permanece pendente na #21. A migration remota do Supabase não foi aplicada.
+
+---
+
 # Estado estruturado do projeto (JSON válido)
 
 ```json
@@ -100,7 +111,7 @@
     },
     {
       "number": 3,
-      "status": "merge_status_to_verify",
+      "status": "merged",
       "area": [
         "BOOKING"
       ],
@@ -117,7 +128,7 @@
     },
     {
       "number": 5,
-      "status": "merge_status_to_verify",
+      "status": "merged",
       "area": [
         "NOTIFICATIONS"
       ],
