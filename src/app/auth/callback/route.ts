@@ -46,6 +46,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=Não%20foi%20possível%20carregar%20seu%20perfil.", origin));
   }
 
-  const destination = profile.phone ? next : \`/perfil?next=\${encodeURIComponent(next)}\`;
+  const destination = profile.phone ? next : `/perfil?next=${encodeURIComponent(next)}`;
   return NextResponse.redirect(new URL(destination, origin));
 }

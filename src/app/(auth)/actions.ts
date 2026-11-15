@@ -49,7 +49,7 @@ async function getAppOrigin() {
   const proto = forwardedProto === "http" && host.startsWith("localhost")
     ? "http"
     : "https";
-  return \`\${proto}://\${host}\`;
+  return `${proto}://${host}`;
 }
 
 async function saveAuthProfile(
@@ -107,14 +107,19 @@ export async function loginAction(
 
   try {
     await saveAuthProfile(data.user);
-    const next = safeNextPath(String(formData.get("next") ?? ""));
-    if (await profileNeedsPhone(data.user.id)) {
-      redirect(\`/perfil?next=\${encodeURIComponent(next)}\`);
-    }
-    redirect(next);
   } catch {
     return { error: "Não foi possível carregar seu perfil. Tente novamente." };
   }
+
+  const next = safeNextPath(String(formData.get("next") ?? ""));
+  let needsPhone: boolean;
+  try {
+    needsPhone = await profileNeedsPhone(data.user.id);
+  } catch {
+    return { error: "Não foi possível verificar seu perfil. Tente novamente." };
+  }
+  if (needsPhone) redirect(`/perfil?next=${encodeURIComponent(next)}`);
+  redirect(next);
 }
 
 export async function signupAction(
@@ -138,7 +143,7 @@ export async function signupAction(
     password: parsed.data.password,
     options: {
       data: { display_name: parsed.data.name },
-      emailRedirectTo: \`\${origin}/auth/callback?next=/perfil\`,
+      emailRedirectTo: `${origin}/auth/callback?next=/perfil`,
     },
   });
 
@@ -172,12 +177,12 @@ export async function googleLoginAction(formData: FormData): Promise<void> {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: \`\${origin}/auth/callback?next=\${encodeURIComponent(next)}\`,
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
   if (error || !data.url) {
-    redirect(\`/login?error=\${encodeURIComponent("Não foi possível iniciar o login com Google.")}\`);
+    redirect(`/login?error=${encodeURIComponent("Não foi possível iniciar o login com Google.")}`);
   }
 
   redirect(data.url);
@@ -224,7 +229,7 @@ export async function requestPasswordResetAction(
   const origin = await getAppOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: \`\${origin}/auth/callback?next=/redefinir-senha\`,
+    redirectTo: `${origin}/auth/callback?next=/redefinir-senha`,
   });
 
   if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
