@@ -1,3 +1,27 @@
+# 🔴 ESTADO ATUAL CONSOLIDADO — 15/11/2026
+
+> **Leia esta seção primeiro.** Ela corrige divergências do histórico abaixo. Se houver conflito, este resumo atual prevalece; confirme sempre no código, Git e CI antes de considerar algo concluído.
+
+## O que está implementado na `main`
+
+- **Motor básico de agendamentos:** integrado pela PR #3 (merge commit `03ac75b`). Inclui fluxo básico de reservas, disponibilidade, proteção contra duplicidade, cadastro de negócio/serviços/expediente e painel. Ainda precisa ser auditado para confirmar os requisitos novos de múltiplos serviços e expiração.
+- **Notificações internas:** PR #5 integrada por squash em `main` (commit `ca9b73f`). Inclui notificações para cliente/profissional, sino/contador e página `/notificacoes`. Os testes e build registrados pelo agente foram 39/39, 45/45 no banco embutido e build OK; isso não equivale a validação em Supabase remoto.
+- **Supabase remoto:** projeto criado pelo responsável, mas não considerar migrations aplicadas ou integração remota validada sem evidência atual. Não aplicar migrations, alterar dados ou configurar produção nesta tarefa.
+- **Google OAuth:** decisão de produto definida; configuração no Google Cloud fica para a etapa de integração do login. Não introduzir Firebase como autenticação paralela.
+- **WhatsApp/Railway:** fora do escopo atual; fase futura.
+
+## Trabalho em andamento — respeitar branches de outros agentes
+
+- **PR #4 — calendário resiliente:** aberta como rascunho, branch `fix/calendario-disponibilidade-resiliente`, head `109f7ad`. Não sobrescrever nem integrar sem revisar diff e CI.
+- **PR #1 e #2 — prévia visual pública/calendário:** rascunhos com dados demonstrativos; não tratar como fluxo real nem substituir o fluxo funcional.
+- Verificar novamente o estado das PRs e branches antes de iniciar, pois podem ter recebido commits desde esta atualização.
+
+## Próxima tarefa delegada
+
+Implementar/auditar **agendamento com múltiplos serviços e expiração automática de reservas pendentes**, conforme a seção específica abaixo. O agente deve trabalhar em branch própria, sem tocar na PR #4 nem em branches de terceiros; criar migrations versionadas e testes; não aplicar migrations em Supabase remoto; abrir PR em rascunho e não fazer merge. Antes de alterar, comparar a implementação atual da `main` com o código existente e relatar lacunas reais. Ao terminar, atualizar este documento com fatos e validações executadas.
+
+---
+
 # 🔴 INSTRUÇÕES MAIS RECENTES — LER PRIMEIRO
 
 ## ✅ Entrega registrada — notificações no aplicativo (15/11/2026)
