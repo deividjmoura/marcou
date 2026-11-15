@@ -7,7 +7,7 @@
 - Testes adicionados para validar o slug durante a edição. A edição do expediente reutiliza o schema e a operação de atualização existentes. Lint, typecheck, testes, test:db e build ainda aguardam resultado de CI.
 - Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração Vercel ou deploy foi executado.
 - PR aberta em draft: [#34](https://github.com/deividjmoura/marcou/pull/34), vinculada à #24 (entrega parcial, sem fechar a issue). Diff limitado a slug do negócio, validação/testes e este registro de continuidade.
-- CI do commit inicial da PR está em execução; resultado ainda não confirmado. Próximo passo: verificar lint, typecheck, testes, test:db e build no head mais recente, corrigir falhas se houver e atualizar este registro. Não fazer merge sem autorização do responsável.
+- CI do head `cd221cb` (run #43776195664) falhou em `npm run lint`; typecheck, testes, test:db e build foram ignorados. A causa identificada foi a atualização de estado síncrona em `useEffect`; removi esse efeito no commit `3a8c128`. Aguardar e validar CI completo no novo head antes de integrar. Não fazer merge sem autorização do responsável.
 
 ---
 
