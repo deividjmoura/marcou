@@ -25,7 +25,7 @@ export default async function MeusAgendamentosPage() {
     );
   }
 
-  await requireUser();
+  await requireUser("/meus-agendamentos");
   const bookings = await listCustomerBookings();
 
   return (

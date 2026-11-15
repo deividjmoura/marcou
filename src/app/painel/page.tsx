@@ -74,7 +74,7 @@ export default async function PainelPage() {
     );
   }
 
-  const user = await requireUser();
+  const user = await requireUser("/painel");
   const provider = await getOwnedProvider(user.id);
 
   if (!provider) {

@@ -141,10 +141,10 @@ export async function getCurrentUser() {
 }
 
 /** Exige autenticação; usado por páginas do painel e do cliente. */
-export async function requireUser() {
+export async function requireUser(next?: string) {
   const user = await getCurrentUser();
   if (!user) {
-    redirect("/login");
+    redirect(next ?? "/login");
   }
   return user;
 }

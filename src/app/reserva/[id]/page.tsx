@@ -26,8 +26,8 @@ export default async function ReservaPage({
     );
   }
 
-  const user = await requireUser();
   const { id } = await params;
+  const user = await requireUser(`/reserva/${id}`);
 
   const booking = await getBooking(id);
   if (!booking) notFound();

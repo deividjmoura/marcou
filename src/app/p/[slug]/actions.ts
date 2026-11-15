@@ -17,7 +17,13 @@ export interface SlotsState {
 const slotsSchema = z.object({
   slug: z.string().min(1),
   serviceId: z.string().uuid(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine(
+      (value) => !Number.isNaN(new Date(`${value}T00:00:00.000Z`).getTime()),
+      { message: "Data inválida." },
+    ),
 });
 
 export async function fetchSlotsAction(input: unknown): Promise<SlotsState> {
