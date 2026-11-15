@@ -4,7 +4,7 @@
 - Branch: `fix/calendario-disponibilidade-resiliente`, criada a partir da `main`.
 - Escopo isolado: robustez da consulta de horários na página pública; não altera seleção de serviços, banco ou migrations, evitando conflito com o outro agente.
 - Diagnóstico confirmado na `main`: a página pública já consulta a RPC `get_provider_schedule` e calcula slots pelo motor de disponibilidade Supabase; porém, falhas/retorno nulo eram apresentados como se simplesmente não houvesse horários. O campo de data também aceitava datas impossíveis normalizadas pelo JavaScript.
-- Alterações desta entrega: distinguir erro de consulta de agenda vazia, tratar falhas inesperadas, apresentar estado acessível de carregamento e ação de nova tentativa, limpar horário selecionado que deixou de estar disponível e validar a data por round-trip ISO.
+- Alterações desta entrega: distinguir erro de consulta de agenda vazia, tratar falhas inesperadas, apresentar estado acessível de carregamento e ação de nova tentativa e validar a data por round-trip ISO.
 - Não há projeto Supabase remoto/credenciais confirmados nesta sessão. Portanto, a conexão real com infraestrutura remota não pode ser testada nem provisionada aqui.
 - Validação local (lint, typecheck, testes, build e test:db): não executada neste ambiente; deve ser rodada antes da PR.
 - Próximo passo: revisar diff, executar verificações em ambiente com dependências e abrir PR para revisão. Não fazer merge sem autorização.
