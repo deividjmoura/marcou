@@ -55,24 +55,27 @@ export function ProviderForm({ provider }: { provider: Provider | null }) {
 
       <Alert state={state} />
 
-      {provider ? null : (
-        <label className="field">
-          <span>Endereço da página</span>
-          <div className="input-affix">
-            <span>/p/</span>
-            <input
-              type="text"
-              name="slug"
-              required
-              minLength={3}
-              maxLength={48}
-              pattern="^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$"
-              defaultValue=""
-              placeholder="exemplo: studio-ana"
-            />
-          </div>
-        </label>
-      )}
+      <label className="field">
+        <span>Endereço da página</span>
+        <div className="input-affix">
+          <span>/p/</span>
+          <input
+            type="text"
+            name="slug"
+            required
+            minLength={3}
+            maxLength={48}
+            pattern="^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$"
+            defaultValue={provider?.slug ?? ""}
+            placeholder="exemplo: studio-ana"
+            autoComplete="off"
+            aria-describedby="provider-slug-help"
+          />
+        </div>
+        <span id="provider-slug-help" className="muted small">
+          Use letras minúsculas, números e hífens. Alterar o endereço muda o link público.
+        </span>
+      </label>
 
       <label className="field">
         <span>Nome do negócio</span>
