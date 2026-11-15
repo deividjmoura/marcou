@@ -98,6 +98,21 @@ Lembretes são criados por `create_booking_reminders()`; ainda não há cron
 configurado. E-mail não está implementado: nenhuma infraestrutura de envio está
 configurada e nenhuma credencial foi criada.
 
+## Plataforma e operação
+
+Inventário de ambientes, matriz de variáveis, CI, deploy, rollback, backup e
+observabilidade estão documentados em **[docs/PLATFORM.md](docs/PLATFORM.md)**
+(Issue #30).
+
+Resumo rápido:
+
+- Variáveis públicas obrigatórias: `NEXT_PUBLIC_SUPABASE_URL` e
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ver `.env.example`).
+- CI em GitHub Actions: lint, typecheck, testes de domínio, `test:db` e build.
+- Deploy e aplicação de migrations em produção exigem autorização explícita do
+  responsável; não há deploy automático de produção versionado neste repositório.
+- Não commitar secrets. Não aplicar migrations remotas sem revisão.
+
 ## Pendências
 
 - Provisionar o projeto Supabase e rodar as migrations em ambiente de
