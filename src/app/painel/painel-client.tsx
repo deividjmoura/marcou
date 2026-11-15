@@ -308,12 +308,20 @@ export function AvailabilityManager({
     saveExceptionAction,
     {},
   );
+  const [editingRule, setEditingRule] = useState<AvailabilityRuleRow | null>(null);
 
   return (
     <section className="card">
       <h2>Disponibilidade</h2>
 
-      <h3>Expediente semanal</h3>
+      <div className="card-heading">
+        <h3>Expediente semanal</h3>
+        {editingRule ? (
+          <button type="button" className="btn btn-small btn-ghost" onClick={() => setEditingRule(null)}>
+            Cancelar edição
+          </button>
+        ) : null}
+      </div>
       {rules.length === 0 ? (
         <p className="muted">Nenhum período configurado.</p>
       ) : (
@@ -329,23 +337,33 @@ export function AvailabilityManager({
                     : ""}
                 </span>
               </div>
-              <form action={deleteRuleAction}>
-                <input type="hidden" name="ruleId" value={rule.id} />
-                <button type="submit" className="btn btn-small btn-ghost">
-                  Remover
+              <div className="item-actions">
+                <button type="button" className="btn btn-small" onClick={() => setEditingRule(rule)}>
+                  Editar
                 </button>
-              </form>
+                <form action={deleteRuleAction}>
+                  <input type="hidden" name="ruleId" value={rule.id} />
+                  <button type="submit" className="btn btn-small btn-ghost">
+                    Remover
+                  </button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <form action={ruleAction} className="form-stack nested-form">
+      <form
+        key={editingRule?.id ?? "new-rule"}
+        action={ruleAction}
+        className="form-stack nested-form"
+      >
         <Alert state={ruleState} />
+        {editingRule ? <input type="hidden" name="ruleId" value={editingRule.id} /> : null}
         <div className="field-grid">
           <label className="field">
             <span>Dia da semana</span>
-            <select name="dayOfWeek" defaultValue="2">
+            <select name="dayOfWeek" defaultValue={String(editingRule?.day_of_week ?? 2)}>
               {WEEKDAYS.map((label, index) => (
                 <option key={label} value={index}>
                   {label}
@@ -355,24 +373,29 @@ export function AvailabilityManager({
           </label>
           <label className="field">
             <span>Início</span>
-            <input type="time" name="startsAt" required defaultValue="09:00" />
+            <input type="time" name="startsAt" required defaultValue={editingRule?.starts_at.slice(0, 5) ?? "09:00"} />
           </label>
           <label className="field">
             <span>Fim</span>
-            <input type="time" name="endsAt" required defaultValue="18:00" />
+            <input type="time" name="endsAt" required defaultValue={editingRule?.ends_at.slice(0, 5) ?? "18:00"} />
           </label>
           <label className="field">
             <span>Válido a partir de</span>
-            <input type="date" name="validFrom" />
+            <input type="date" name="validFrom" defaultValue={editingRule?.valid_from ?? ""} />
           </label>
           <label className="field">
             <span>Válido até</span>
-            <input type="date" name="validUntil" />
+            <input type="date" name="validUntil" defaultValue={editingRule?.valid_until ?? ""} />
           </label>
         </div>
         <button type="submit" className="btn" disabled={rulePending}>
-          {rulePending ? "Salvando..." : "Adicionar período"}
+          {rulePending ? "Salvando..." : editingRule ? "Salvar alterações" : "Adicionar período"}
         </button>
+        {editingRule ? (
+          <button type="button" className="btn btn-ghost" onClick={() => setEditingRule(null)}>
+            Cancelar
+          </button>
+        ) : null}
       </form>
 
       <h3>Exceções e bloqueios</h3>
