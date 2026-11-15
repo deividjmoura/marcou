@@ -1109,3 +1109,14 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - **#30 PLATFORM:** issue permanece aberta; PR #32 precisa corrigir os bloqueios acima.
 
 Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de produção/Vercel foi alterada nesta auditoria.
+
+
+---
+
+## Entrega em andamento — Issue #27 DESIGN-SYSTEM
+
+- **Branch:** feat/27-design-system.
+- **Escopo inicial:** tokens semânticos de cor, tipografia, espaçamento, bordas, elevação e foco em src/styles/design-tokens.css; carregamento no layout raiz; documentação em docs/DESIGN-SYSTEM.md.
+- **Auditoria:** a main usa atualmente destaque verde (#b9e36a / #7aa52e), enquanto a Issue #27 registra direção bege/branco/rosé. A implementação inicial preserva o visual atual e registra a divergência para decisão, sem trocar a paleta silenciosamente.
+- **Acessibilidade:** foco visível global e respeito a prefers-reduced-motion incluídos; auditoria completa WCAG e validação por tela permanecem pendentes.
+- **Limites:** nenhuma dependência, fonte externa ou asset animado foi adicionado. A PR deverá permanecer aberta até CI e revisão visual.
