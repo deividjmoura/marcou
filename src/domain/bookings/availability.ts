@@ -58,8 +58,6 @@ export interface SlotQuery {
   minLeadMinutes?: number;
 }
 
-const MINUTES_IN_DAY = 24 * 60;
-
 function parseLocalDate(date: string, timeZone: string): DateTime {
   const parsed = DateTime.fromISO(date, { zone: timeZone });
   if (!parsed.isValid) {
@@ -77,17 +75,6 @@ function assertValidTiming(timing: ServiceTiming) {
     timing.bufferMinutes < 0
   ) {
     throw new RangeError("O intervalo do serviço deve ser um inteiro não negativo.");
-  }
-}
-
-function assertValidWindow(rule: AvailabilityRule) {
-  const withinDay = (value: number) =>
-    Number.isInteger(value) && value >= 0 && value < MINUTES_IN_DAY;
-  if (!withinDay(rule.startsAtMinutes) || !withinDay(rule.endsAtMinutes)) {
-    throw new RangeError("Os minutos do expediente devem estar entre 0 e 1439.");
-  }
-  if (rule.startsAtMinutes >= rule.endsAtMinutes) {
-    throw new RangeError("O início do expediente deve ser menor que o fim.");
   }
 }
 

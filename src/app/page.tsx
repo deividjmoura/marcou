@@ -25,7 +25,12 @@ export default function Home() {
         <Link className="brand" href="/" aria-label="Marcou, início">
           marcou<span>.</span>
         </Link>
-        <span className="topbar-note">Agenda organizada. Dia mais leve.</span>
+        <div className="topbar-actions">
+          <Link href="/login">Entrar</Link>
+          <Link href="/cadastro" className="btn btn-small">
+            Criar conta
+          </Link>
+        </div>
       </nav>
 
       <section className="hero">
