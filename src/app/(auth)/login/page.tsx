@@ -3,9 +3,9 @@ import { LoginForm } from "../forms";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const params = await searchParams;
 
-  return <LoginForm next={params.next} />;
+  return <LoginForm next={params.next} errorMessage={params.error} />;
 }
