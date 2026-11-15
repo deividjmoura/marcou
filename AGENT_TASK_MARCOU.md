@@ -43,8 +43,17 @@ página `/notificacoes` com sessão/RLS só foi exercitada no harness
 - `booking.changed` está mapeado, mas nenhuma transição atual o emite; entrará
   quando houver reagendamento/edição de reserva.
 
-**Git:** branch `arena/68d409cd-marcou` (base `main` = `03ac75b`). PR aberta
-para `main`; **sem merge** (aguardando autorização).
+**Git:** branch `arena/68d409cd-marcou` (base `main` = `03ac75b`), commit
+`5c5c7a7`. PR #5 aberta para `main`
+(https://github.com/deividjmoura/marcou/pull/5); **sem merge** (aguardando
+autorização). Checks da PR: `quality` e `Vercel` passaram.
+
+**Trabalho paralelo de outros agentes (não mexer, não sobrescrever):** existem
+outras branches/PRs abertas na mesma base — `feat/calendario-mobile` (PR #2,
+rascunho), `feat/pagina-publica-agendamento` (PR #1, rascunho) e
+`fix/calendario-disponibilidade-resiliente` (PR #4, rascunho). A entrega de
+notificações não alterou nenhum arquivo dessas frentes; antes de qualquer
+integração, comparar com o estado atual de cada PR.
 
 ---
 
