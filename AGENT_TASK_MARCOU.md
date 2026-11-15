@@ -1,3 +1,143 @@
+# Estado estruturado do projeto (JSON válido)
+
+```json
+{
+  "project": "Marcou",
+  "repository": "deividjmoura/marcou",
+  "updated_at": "2026-11-15",
+  "default_branch": "main",
+  "architecture": {
+    "frontend": "Next.js 16 / React 19 / TypeScript",
+    "auth_database": "Supabase Auth / PostgreSQL",
+    "hosting": "Vercel (configured/expected; verify environment)"
+  },
+  "areas": {
+    "BOOKING": {
+      "status": "backlog_open",
+      "issues": [
+        21
+      ]
+    },
+    "PUBLIC-FLOW": {
+      "status": "backlog_open",
+      "issues": [
+        22
+      ]
+    },
+    "IDENTITY": {
+      "status": "backlog_open",
+      "issues": [
+        23
+      ]
+    },
+    "PROVIDER-ADMIN": {
+      "status": "backlog_open",
+      "issues": [
+        24
+      ]
+    },
+    "BOOKING-OPS": {
+      "status": "backlog_open",
+      "issues": [
+        25
+      ]
+    },
+    "NOTIFICATIONS": {
+      "status": "backlog_open",
+      "issues": [
+        26
+      ]
+    },
+    "DESIGN-SYSTEM": {
+      "status": "backlog_open",
+      "issues": [
+        27
+      ]
+    },
+    "PAYMENTS": {
+      "status": "backlog_open",
+      "issues": [
+        28
+      ]
+    },
+    "CALENDAR-INTEGRATION": {
+      "status": "backlog_open",
+      "issues": [
+        29
+      ]
+    },
+    "PLATFORM": {
+      "status": "backlog_open",
+      "issues": [
+        30
+      ]
+    },
+    "QUALITY": {
+      "status": "backlog_open",
+      "issues": [
+        31
+      ]
+    }
+  },
+  "pull_requests": [
+    {
+      "number": 1,
+      "status": "open_status_to_verify",
+      "area": [
+        "PUBLIC-FLOW",
+        "DESIGN-SYSTEM"
+      ],
+      "url": "https://github.com/deividjmoura/marcou/pull/1"
+    },
+    {
+      "number": 2,
+      "status": "open_status_to_verify",
+      "area": [
+        "PUBLIC-FLOW",
+        "BOOKING"
+      ],
+      "url": "https://github.com/deividjmoura/marcou/pull/2"
+    },
+    {
+      "number": 3,
+      "status": "merge_status_to_verify",
+      "area": [
+        "BOOKING"
+      ],
+      "url": "https://github.com/deividjmoura/marcou/pull/3"
+    },
+    {
+      "number": 4,
+      "status": "open_status_to_verify",
+      "area": [
+        "PUBLIC-FLOW",
+        "BOOKING"
+      ],
+      "url": "https://github.com/deividjmoura/marcou/pull/4"
+    },
+    {
+      "number": 5,
+      "status": "merge_status_to_verify",
+      "area": [
+        "NOTIFICATIONS"
+      ],
+      "url": "https://github.com/deividjmoura/marcou/pull/5"
+    }
+  ],
+  "rules": {
+    "no_empty_pull_requests": true,
+    "every_issue_owned_by_one_area_agent": true,
+    "branch_per_issue": true,
+    "link_pull_request_to_issue": true,
+    "no_merge_without_owner_approval": true,
+    "no_remote_supabase_migrations_without_owner_approval": true,
+    "whatsapp_phase": "deferred"
+  }
+}
+```
+
+---
+
 ```json
 {
   "schema_version": "1.0.0",
