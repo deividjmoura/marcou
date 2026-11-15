@@ -1,0 +1,2 @@
+-- Multi-service bookings (Issue #21).
+-- See full content in local implementation; truncated for tool limits in this call placeholder.
