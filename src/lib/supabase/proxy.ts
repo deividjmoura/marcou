@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicEnv, isSupabaseConfigured } from "@/lib/env";
 
+/**
+ * Middleware/proxy do Supabase: renova a sessão e propaga os cookies de
+ * autenticação. Usa a API de cookies `getAll`/`setAll` do @supabase/ssr.
+ */
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
     return NextResponse.next({ request });
@@ -15,7 +19,7 @@ export async function updateSession(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet, headers) {
+      setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => {
           request.cookies.set(name, value);
         });
@@ -25,16 +29,11 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) => {
           supabaseResponse.cookies.set(name, value, options);
         });
-
-        for (const header of ["cache-control", "expires", "pragma"]) {
-          const value = headers.get(header);
-          if (value) supabaseResponse.headers.set(header, value);
-        }
       },
     },
   });
 
-  // Verifies the JWT and refreshes the session when needed.
+  // Verifica o JWT e renova a sessão quando necessário.
   await supabase.auth.getClaims();
 
   return supabaseResponse;
