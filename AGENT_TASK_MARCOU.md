@@ -1,3 +1,15 @@
+# ANDAMENTO — ISSUE #24 PROVIDER-ADMIN — 15/11/2026
+
+- Responsável por esta entrega: agente PROVIDER-ADMIN.
+- Branch isolada: `feat/24-provider-admin`, criada a partir da `main` observada em `05e70ab1ea72bad609d70b2d185f297169acd1c9`.
+- Auditoria inicial: o painel já possui CRUD de serviços, expediente, exceções, dados do negócio e lista/ações de reservas. Foi identificada uma lacuna objetiva: o slug público só podia ser definido na criação e não podia ser alterado na edição.
+- Implementação em andamento nesta branch: permitir editar o slug com a mesma validação do cadastro, persistir no servidor, apresentar mensagem amigável quando o endereço já estiver ocupado e revalidar os caminhos público antigo/novo.
+- Testes adicionados para validar o slug durante a edição. Lint, typecheck, testes, test:db e build ainda aguardam execução de CI nesta entrega.
+- Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração Vercel ou deploy foi executado.
+- Próximos passos: revisar o diff, abrir PR draft vinculada à #24, verificar todos os checks e registrar resultados reais. Não fazer merge sem autorização do responsável.
+
+---
+
 # Atualização de estado verificada — 15/11/2026
 
 ## Delegação do terceiro agente — Issue #30 PLATFORM
