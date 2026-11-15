@@ -312,7 +312,7 @@ export function AvailabilityManager({
 
   useEffect(() => {
     if (ruleState.success) setEditingRule(null);
-  }, [ruleState.success]);
+  }, [ruleState]);
 
   return (
     <section className="card">
