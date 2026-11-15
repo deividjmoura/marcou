@@ -18,6 +18,8 @@ import { providerBookingAction } from "./actions";
 import { logoutAction } from "../(auth)/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
+import { NotificationBell } from "@/components/notification-bell";
+import { countUnreadNotifications } from "@/server/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +78,7 @@ export default async function PainelPage() {
 
   const user = await requireUser("/painel");
   const provider = await getOwnedProvider(user.id);
+  const unread = await countUnreadNotifications();
 
   if (!provider) {
     return (
@@ -88,11 +91,14 @@ export default async function PainelPage() {
               Crie a página pública de agendamento do seu negócio.
             </p>
           </div>
-          <form action={logoutAction}>
-            <button type="submit" className="btn btn-ghost">
-              Sair
-            </button>
-          </form>
+          <div className="item-actions">
+            <NotificationBell unreadCount={unread} />
+            <form action={logoutAction}>
+              <button type="submit" className="btn btn-ghost">
+                Sair
+              </button>
+            </form>
+          </div>
         </header>
 
         <ProviderForm provider={null} />
@@ -126,11 +132,14 @@ export default async function PainelPage() {
             )}
           </p>
         </div>
-        <form action={logoutAction}>
-          <button type="submit" className="btn btn-ghost">
-            Sair
-          </button>
-        </form>
+        <div className="item-actions">
+          <NotificationBell unreadCount={unread} />
+          <form action={logoutAction}>
+            <button type="submit" className="btn btn-ghost">
+              Sair
+            </button>
+          </form>
+        </div>
       </header>
 
       <div className="painel-grid">
