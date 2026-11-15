@@ -125,10 +125,11 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       ]
     },
     "IDENTITY": {
-      "status": "backlog_open",
+      "status": "em_andamento",
       "issues": [
         23
-      ]
+      ],
+      "branch": "feat/23-identity-auth-profile"
     },
     "PROVIDER-ADMIN": {
       "status": "backlog_open",
@@ -222,6 +223,27 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
         "NOTIFICATIONS"
       ],
       "url": "https://github.com/deividjmoura/marcou/pull/5"
+    },
+    {
+      "number": 33,
+      "status": "open_draft",
+      "area": [
+        "IDENTITY"
+      ],
+      "head": "feat/23-identity-auth-profile",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/33"
+    },
+    {
+      "number": 32,
+      "status": "open",
+      "area": [
+        "PLATFORM"
+      ],
+      "head": "feat/30-platform-hardening",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/32",
+      "note": "PR do agente #30; também atualiza AGENT_TASK_MARCOU.md."
     }
   ],
   "rules": {
@@ -232,6 +254,21 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "no_merge_without_owner_approval": true,
     "no_remote_supabase_migrations_without_owner_approval": true,
     "whatsapp_phase": "deferred"
+  },
+  "identity_delivery": {
+    "status": "implementado_nao_verificado",
+    "branch": "feat/23-identity-auth-profile",
+    "pull_request": 33,
+    "note": "Cadastro/login existentes preservados; perfil/telefone, recuperação de senha e callback Supabase implementados. Google Cloud/Supabase provider ainda depende de configuração do responsável.",
+    "tests": {
+      "lint": "success — CI run #43775254043",
+      "typecheck": "success — CI run #43775254043",
+      "unit": "success — CI run #43775254043",
+      "database": "success — CI run #43775254043",
+      "build": "success — CI run #43775254043"
+    },
+    "ci_run": "https://github.com/deividjmoura/marcou/actions/runs/43775254043",
+    "last_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059"
   }
 }
 ```
@@ -305,6 +342,24 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/4",
       "note": "Preservar branch; revisar diff/CI antes de integrar."
+    },
+    {
+      "number": 33,
+      "title": "[IDENTITY] Completar perfil, recuperação de senha e callback Supabase",
+      "status": "open_draft",
+      "head": "feat/23-identity-auth-profile",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/33",
+      "note": "Google OAuth ponta a ponta e SMTP dependem de configuração externa; CI em execução."
+    },
+    {
+      "number": 32,
+      "title": "[PLATFORM] Hardening operacional, inventário e CI — Issue #30",
+      "status": "open",
+      "head": "feat/30-platform-hardening",
+      "base": "main",
+      "url": "https://github.com/deividjmoura/marcou/pull/32",
+      "note": "PR aberta; compartilha atualização de AGENT_TASK_MARCOU.md com PR #33."
     }
   ],
   "completed_pull_requests": [
@@ -423,7 +478,38 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "Não sobrescrever branches/PRs de outros agentes.",
     "Atualizar este documento ao encerrar cada entrega.",
     "Nunca registrar segredos."
-  ]
+  ],
+  "identity_delivery": {
+    "status": "implementado_nao_verificado",
+    "issue": 23,
+    "branch": "feat/23-identity-auth-profile",
+    "commits": [
+      "46d0fda77d2028cc9ad50eb15a9853cb23b116a0",
+      "2d2f6bb9565157ead8341f9bb38820d5b8d16fe0",
+      "21fdcb8a89de74a65e206b12ac63d2ba0aa99e14",
+      "26f5dfaca16e93c38e674a7a701ef11ffd77d8f5",
+      "e80ab28796295d1de56aa6f027495326b177eb58",
+      "1a600faa65834310f02bd2296340e19b2f50a53b",
+      "90cf7fdf9f843d8fb9a875dc2494499cb3e1bdbe",
+      "b311dae6be6e9f335750edf8c856ddec57540059"
+    ],
+    "pull_request": 33,
+    "tests": {
+      "lint": "success",
+      "typecheck": "success",
+      "unit": "success",
+      "database": "success",
+      "build": "success",
+      "workflow_run": 43775254043,
+      "tested_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059"
+    },
+    "pending": [
+      "Configurar credenciais e provider Google no Google Cloud/Supabase.",
+      "Cadastrar Site URL e Redirect URLs por ambiente no Supabase.",
+      "Validar SMTP, confirmação de e-mail e recuperação no ambiente real.",
+      "Validar fluxos ponta a ponta com Supabase remoto após autorização."
+    ]
+  }
 }
 ```
 
@@ -879,3 +965,36 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - PR pequena, revisável e ligada à Issue #21.
 
 **Limite de escopo:** se descobrir dependência real de outra área, documente e abra comentário na issue correspondente; não amplie esta implementação por conta própria.
+
+
+---
+
+## Entrega do agente — Issue #23 IDENTITY (15/11/2026)
+
+**Status:** implementação realizada em branch própria; PR aberta em draft, sem merge. A Issue #23 permanece aberta porque a configuração externa do Google OAuth e a validação ponta a ponta ainda dependem do responsável.
+
+- **Branch:** `feat/23-identity-auth-profile` (criada diretamente de `main` em `217823e7af67f451d5a2fd9bbd631cd2d4f4f6c5`).
+- **Último commit de código:** `b311dae6be6e9f335750edf8c856ddec57540059` (os commits seguintes atualizam apenas o documento de handoff).
+- **PR:** [#33 — IDENTITY](https://github.com/deividjmoura/marcou/pull/33), draft, base `main`, sem `Closes #23`.
+- **Commits:** `46d0fda77d2028cc9ad50eb15a9853cb23b116a0`, `2d2f6bb9565157ead8341f9bb38820d5b8d16fe0`, `21fdcb8a89de74a65e206b12ac63d2ba0aa99e14`, `26f5dfaca16e93c38e674a7a701ef11ffd77d8f5`, `e80ab28796295d1de56aa6f027495326b177eb58`, `1a600faa65834310f02bd2296340e19b2f50a53b`, `90cf7fdf9f843d8fb9a875dc2494499cb3e1bdbe`, `b311dae6be6e9f335750edf8c856ddec57540059`.
+
+### Arquivos alterados
+
+- `src/app/(auth)/actions.ts` e `forms.tsx`: preservação do login/cadastro existentes; provisionamento do perfil, validação de telefone, logout, recuperação e redefinição de senha.
+- `src/app/(auth)/perfil/page.tsx`, `esqueci-senha/page.tsx`, `redefinir-senha/page.tsx` e `login/page.tsx`: páginas de perfil e recuperação, além de feedback de callback.
+- `src/app/auth/callback/route.ts`: troca PKCE, provisionamento Supabase e redirecionamento seguro para completar telefone quando ausente.
+- `src/app/painel/page.tsx` e `src/app/meus-agendamentos/page.tsx`: links mínimos para editar o perfil.
+- `src/lib/identity.ts` e `src/lib/identity.test.ts`: validação/normalização de telefone, redirecionamento local e testes unitários.
+- `docs/IDENTITY.md`: arquitetura, RLS existente e instruções de configuração Google Cloud/Supabase.
+
+### Banco, segurança e validação
+
+- Nenhuma migration nova foi necessária: `public.profiles`, colunas `display_name`/`phone` e policies RLS de acesso à própria linha já existem na migration inicial.
+- Nenhuma migration foi aplicada no Supabase remoto; nenhuma configuração ou variável de produção da Vercel foi alterada.
+- Os fluxos de perfil usam o usuário autenticado no servidor e não recebem um ID de usuário arbitrário do cliente.
+- Os comandos foram executados pelo GitHub Actions no job `quality` do run [#43775045185](https://github.com/deividjmoura/marcou/actions/runs/43775045185), no commit de código `e80ab28796295d1de56aa6f027495326b177eb58`: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:db` e `npm run build` — todos concluídos com sucesso. A atualização posterior do documento foi apenas documental.
+- **Pendências do responsável:** criar Client ID/Secret no Google Cloud, habilitar Google em Supabase Auth, configurar Site URL/Redirect URLs e validar SMTP/recuperação em ambiente real. O telefone é validado sintaticamente (10–15 dígitos), sem verificação de posse por SMS.
+- **Pendência de revisão:** confirmar comportamento real com Supabase configurado e verificar regressões antes de retirar o draft. Nenhuma outra branch/PR foi alterada.
+
+
+**Coordenação entre PRs:** a PR #32 da PLATFORM também modifica `AGENT_TASK_MARCOU.md`. No momento da auditoria, GitHub reporta a PR #33 como mergeable; como ambas alteram o documento compartilhado, revalidar e reconciliar esse arquivo se uma delas for integrada antes da outra. Nenhuma alteração foi feita na branch ou na PR #32.
