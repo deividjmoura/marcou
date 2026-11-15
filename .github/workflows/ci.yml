@@ -2,6 +2,7 @@ name: CI
 
 # Platform hardening (Issue #30): gates claros, sem continue-on-error.
 # Não enfraquecer checks. Deploy remoto permanece manual e autorizado.
+# Sem cache: npm — o repositório não versiona package-lock.json.
 
 on:
   push:
@@ -25,7 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund --legacy-peer-deps
