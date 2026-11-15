@@ -125,7 +125,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       ]
     },
     "IDENTITY": {
-      "status": "em_andamento",
+      "status": "implementado_pendente_configuracao_externa",
       "issues": [
         23
       ],
@@ -226,13 +226,14 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     },
     {
       "number": 33,
-      "status": "open_draft",
+      "status": "merged",
       "area": [
         "IDENTITY"
       ],
       "head": "feat/23-identity-auth-profile",
       "base": "main",
-      "url": "https://github.com/deividjmoura/marcou/pull/33"
+      "url": "https://github.com/deividjmoura/marcou/pull/33",
+      "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
     },
     {
       "number": 32,
@@ -256,19 +257,22 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "whatsapp_phase": "deferred"
   },
   "identity_delivery": {
-    "status": "implementado_nao_verificado",
+    "status": "merged_pendente_configuracao_externa",
     "branch": "feat/23-identity-auth-profile",
     "pull_request": 33,
     "note": "Cadastro/login existentes preservados; perfil/telefone, recuperação de senha e callback Supabase implementados. Google Cloud/Supabase provider ainda depende de configuração do responsável.",
     "tests": {
-      "lint": "success — CI run #43775254043",
-      "typecheck": "success — CI run #43775254043",
-      "unit": "success — CI run #43775254043",
-      "database": "success — CI run #43775254043",
-      "build": "success — CI run #43775254043"
+      "lint": "success",
+      "typecheck": "success",
+      "unit": "success",
+      "database": "success",
+      "build": "success",
+      "workflow_run": 43775254043,
+      "tested_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059"
     },
     "ci_run": "https://github.com/deividjmoura/marcou/actions/runs/43775254043",
-    "last_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059"
+    "last_code_commit": "b311dae6be6e9f335750edf8c856ddec57540059",
+    "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
   }
 }
 ```
@@ -313,6 +317,13 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "pull_request": 5,
       "merge_commit": "ca9b73f7b43efeba759fafc12214fc806bfb24d0",
       "note": "Testes reportados em banco embutido; Supabase remoto não validado."
+    },
+    {
+      "name": "Identidade, perfil e recuperação de senha",
+      "status": "implementado_pendente_configuracao_externa",
+      "pull_request": 33,
+      "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7",
+      "note": "CI completo passou; provider Google/Supabase, URLs e SMTP dependem do responsável."
     }
   ],
   "open_pull_requests": [
@@ -344,15 +355,6 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "note": "Preservar branch; revisar diff/CI antes de integrar."
     },
     {
-      "number": 33,
-      "title": "[IDENTITY] Completar perfil, recuperação de senha e callback Supabase",
-      "status": "open_draft",
-      "head": "feat/23-identity-auth-profile",
-      "base": "main",
-      "url": "https://github.com/deividjmoura/marcou/pull/33",
-      "note": "Google OAuth ponta a ponta e SMTP dependem de configuração externa; CI em execução."
-    },
-    {
       "number": 32,
       "title": "[PLATFORM] Hardening operacional, inventário e CI — Issue #30",
       "status": "open",
@@ -372,6 +374,16 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "number": 5,
       "status": "merged",
       "url": "https://github.com/deividjmoura/marcou/pull/5"
+    },
+    {
+      "number": 33,
+      "title": "[IDENTITY] Completar perfil, recuperação de senha e callback Supabase",
+      "status": "merged",
+      "head": "feat/23-identity-auth-profile",
+      "base": "main",
+      "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7",
+      "url": "https://github.com/deividjmoura/marcou/pull/33",
+      "note": "Implementação integrada; configuração Google Cloud/Supabase e validação SMTP permanecem pendentes."
     }
   ],
   "supabase": {
@@ -480,7 +492,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     "Nunca registrar segredos."
   ],
   "identity_delivery": {
-    "status": "implementado_nao_verificado",
+    "status": "merged_pendente_configuracao_externa",
     "issue": 23,
     "branch": "feat/23-identity-auth-profile",
     "commits": [
@@ -508,7 +520,8 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "Cadastrar Site URL e Redirect URLs por ambiente no Supabase.",
       "Validar SMTP, confirmação de e-mail e recuperação no ambiente real.",
       "Validar fluxos ponta a ponta com Supabase remoto após autorização."
-    ]
+    ],
+    "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
   }
 }
 ```
@@ -998,3 +1011,14 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 
 
 **Coordenação entre PRs:** a PR #32 da PLATFORM também modifica `AGENT_TASK_MARCOU.md`. No momento da auditoria, GitHub reporta a PR #33 como mergeable; como ambas alteram o documento compartilhado, revalidar e reconciliar esse arquivo se uma delas for integrada antes da outra. Nenhuma alteração foi feita na branch ou na PR #32.
+
+
+---
+
+## Integração confirmada — PR #33 IDENTITY (15/11/2026)
+
+- **Estado:** merged em `main`; commit de merge squash `8c1e85808d55e149e32213b1b4ce7e69e5259bc7`.
+- **PR:** https://github.com/deividjmoura/marcou/pull/33
+- **CI:** run https://github.com/deividjmoura/marcou/actions/runs/43775254043 — lint, typecheck, testes unitários, test:db e build passaram no commit de código `b311dae6be6e9f335750edf8c856ddec57540059`. Commits posteriores antes do merge alteraram somente este documento.
+- **Pendências para fechar a Issue #23:** configurar Client ID/Secret e provider Google no Google Cloud/Supabase; registrar Site URL/Redirect URLs; validar SMTP, confirmação e recuperação de e-mail no ambiente real. O telefone não tem verificação de posse por SMS.
+- Nenhuma migration remota, configuração de produção ou deploy foi executado. A Issue #23 permanece aberta até as pendências externas serem resolvidas.
