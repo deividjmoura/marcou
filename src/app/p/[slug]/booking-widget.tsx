@@ -76,6 +76,8 @@ export function BookingWidget({
   const [picked, setPicked] = useState(false);
   const [showStickyContinue, setShowStickyContinue] = useState(false);
   const bookingFormRef = useRef<HTMLFormElement>(null);
+  const slotsSectionRef = useRef<HTMLElement>(null);
+  const shouldScrollToSlotsRef = useRef(false);
 
   const [bookState, bookAction, bookingPending] = useActionState(
     bookSlotAction,
@@ -118,6 +120,20 @@ export function BookingWidget({
     };
   }, [slug, serviceId, date, retryCount]);
 
+  useEffect(() => {
+    if (!shouldScrollToSlotsRef.current) return;
+    shouldScrollToSlotsRef.current = false;
+
+    const section = slotsSectionRef.current;
+    if (!section) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    section.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [date]);
+
   const service = services.find((item) => item.id === serviceId);
   const monthLabel = formatDate(date, { month: "long", year: "numeric" });
   const canGoBack = weekStart > firstWeek;
@@ -125,6 +141,7 @@ export function BookingWidget({
 
   function chooseDate(nextDate: string) {
     if (nextDate < today || nextDate > maxDate || nextDate === date) return;
+    shouldScrollToSlotsRef.current = true;
     setDate(nextDate);
     setSelectedSlot(null);
     setPicked(false);
@@ -141,32 +158,50 @@ export function BookingWidget({
     <section className={`booking-widget${showStickyContinue ? " has-sticky-continue" : ""}`} aria-labelledby="booking-title">
       <div className="section-heading">
         <span className="eyebrow">AGENDAR</span>
-        <h2 id="booking-title">Escolha o dia e o horário</h2>
+        <h2 id="booking-title">Escolha o serviço, dia e horário</h2>
       </div>
 
       {services.length === 0 ? (
         <p className="muted">Este estabelecimento ainda não tem serviços ativos.</p>
       ) : (
         <>
-          <label className="field">
-            <span>Serviço</span>
-            <select
-              value={serviceId}
-              onChange={(event) => {
-                setServiceId(event.target.value);
-                setSelectedSlot(null);
-                setPicked(false);
-                setShowStickyContinue(false);
-              }}
-            >
-              {services.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} · {item.durationMinutes} min ·{" "}
-                  {formatCents(item.priceCents)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <section className="booking-services" aria-labelledby="booking-services-title">
+            <div className="booking-services-heading">
+              <h3 id="booking-services-title">Escolha seu serviço</h3>
+              <span>Deslize para ver as opções</span>
+            </div>
+            <div className="booking-service-carousel" role="group" aria-label="Serviços disponíveis">
+              {services.map((item) => {
+                const selected = item.id === serviceId;
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={selected ? "booking-service-card is-selected" : "booking-service-card"}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setServiceId(item.id);
+                      setSelectedSlot(null);
+                      setPicked(false);
+                      setShowStickyContinue(false);
+                    }}
+                  >
+                    <span className="booking-service-image" aria-hidden="true">
+                      <span>✦</span>
+                    </span>
+                    <span className="booking-service-content">
+                      <strong>{item.name}</strong>
+                      {item.description ? <span className="booking-service-description">{item.description}</span> : null}
+                      <span className="booking-service-meta">
+                        {item.durationMinutes} min <span aria-hidden="true">·</span> {formatCents(item.priceCents)}
+                      </span>
+                    </span>
+                    <span className="booking-service-check" aria-hidden="true">{selected ? "✓" : "+"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           <section className="booking-date-section" aria-label="Escolha uma data">
             <div className="booking-calendar-heading">
@@ -238,7 +273,7 @@ export function BookingWidget({
             </div>
           </section>
 
-          <section key={date} className="booking-times-section" aria-labelledby="booking-times-title">
+          <section ref={slotsSectionRef} key={date} className="booking-times-section" aria-labelledby="booking-times-title" tabIndex={-1}>
             <div className="booking-times-heading">
               <h3 id="booking-times-title">Horários disponíveis</h3>
               <span aria-live="polite">{formatDate(date, { weekday: "short", day: "numeric", month: "short" })}</span>
