@@ -144,7 +144,7 @@ export function BookingWidget({
   }
 
   return (
-    <section className="booking-widget" aria-labelledby="booking-title">
+    <section className={`booking-widget${showStickyContinue ? " has-sticky-continue" : ""}`} aria-labelledby="booking-title">
       <div className="section-heading">
         <span className="eyebrow">AGENDAR</span>
         <h2 id="booking-title">Escolha o dia e o horário</h2>
