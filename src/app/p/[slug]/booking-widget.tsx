@@ -88,12 +88,6 @@ export function BookingWidget({
   );
 
   useEffect(() => {
-    if (date < weekStart || date > addDaysIsoDate(weekStart, 6)) {
-      setWeekStart(startOfWeek(date));
-    }
-  }, [date, weekStart]);
-
-  useEffect(() => {
     let active = true;
 
     async function load() {
