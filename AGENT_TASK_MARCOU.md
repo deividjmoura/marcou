@@ -1,3 +1,44 @@
+# 🔴 LIMPEZA DE BRANCHS — 16/11/2026
+
+**Status:** concluída. Foram apagadas 12 branches remotas cujo conteúdo já estava na `main`. Nenhuma branch com trabalho aberto foi tocada.
+
+## Critério usado
+
+- Clone local estava **shallow**; rodei `git fetch --unshallow` antes de qualquer decisão (a checagem por ancestrais em clone raso dá falso negativo nas branches mescladas por squash).
+- Branch elegível = **PR com estado `MERGED`** no GitHub **ou** branch **100% ancestral de `origin/main`** (0 commits ausentes).
+- Descartadas do critério: `main`, a branch da sessão atual (`arena/116298da-marcou`) e qualquer branch com PR aberta/rascunho ou commits fora da `main`.
+
+## Branches apagadas (12)
+
+| Branch | PR | |
+| --- | --- | --- |
+| `arena/e0717b26-marcou` | #3 | MERGED |
+| `fix/calendario-disponibilidade-resiliente` | #4 | MERGED |
+| `arena/68d409cd-marcou` | #5 | MERGED |
+| `feat/23-identity-auth-profile` | #33 | MERGED |
+| `feat/24-provider-admin` | #34 | MERGED |
+| `feat/25-booking-ops-lifecycle` | #35 | MERGED |
+| `feat/27-design-system` | #36 | MERGED |
+| `arena/c21c5188-marcou` | #37 | MERGED |
+| `arena/a07661c5-marcou` | #42 | MERGED |
+| `arena/7d0010ae-marcou` | #45 | MERGED |
+| `design/identidade-visual` | — | sem PR; 0 commits fora da `main` |
+| `feat/31-quality-audit` | — | sem PR; 0 commits fora da `main` |
+
+## Branches mantidas (trabalho aberto)
+
+- Com PR aberta: `feat/pagina-publica-agendamento` (#1), `feat/calendario-mobile` (#2), `feat/30-platform-hardening` (#32), `feat/26-notification-scheduler` (#38), `feat/24-provider-agenda` (#39), `fix/22-public-booking-redirect` (#40), `fix/security-definer-execute-grants` (#41).
+- Sem PR e com commits fora da `main`: `docs/proxima-etapa-multisservicos-expiracao` (2), `feat/21-booking-multiple-services` (2), `feat/31-quality-hardening` (1).
+
+## Observações
+
+- A `main` avançou para `fc4922f` durante a análise (commits de branding/landing de outro agente). Nenhum arquivo das branches apagadas era necessário.
+- A branch da sessão atual, `arena/116298da-marcou`, **não existe no remoto** (só local) e não foi tocada.
+- O registro antigo dizia que a branch da PR #4 "não foi alterada"; ela foi **apagada** nesta limpeza por estar mesclada.
+
+
+---
+
 # 🔴 AUDITORIA GERAL + GOOGLE OAUTH — 16/11/2026
 
 **Status:** auditoria concluída, correções aplicadas e verificadas em branch própria. **Nada foi mesclado.** Nenhuma alteração remota (Supabase, Vercel, Google Cloud) foi executada. O Client Secret não foi solicitado, lido, reproduzido ou armazenado.
