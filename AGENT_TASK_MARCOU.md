@@ -23,6 +23,12 @@
 - `src/lib/validation.test.ts`: `isoDate` aceita data válida e rejeita data impossível normalizada pelo JavaScript, mês/dia fora do intervalo e formato fora do padrão.
 - A regra de data passou a reutilizar o `isoDate` já existente em `src/lib/validation.ts` (mesmo validador das exceções de disponibilidade), eliminando duplicação.
 
+## Git
+- Branch `arena/c21c5188-marcou` (base `main` = `8b67d0f`), merge commit `88b2938` (pais `8b67d0f` e `109f7ad`).
+- PR #37 (https://github.com/deividjmoura/marcou/pull/37), que substitui a PR #4.
+- A branch `fix/calendario-disponibilidade-resiliente` da PR #4 **não foi alterada**.
+- **Sem merge** — aguardando autorização do responsável.
+
 ## Pendências e limites
 - Não há projeto Supabase remoto com credenciais confirmadas nesta sessão; a validação de infraestrutura remota não foi executada.
 - A entrega não altera banco, migrations, autenticação, notificações ou painel.
@@ -419,7 +425,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "head": "fix/calendario-disponibilidade-resiliente",
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/4",
-      "note": "Divergente (merge-base 03ac75b); conflito só em AGENT_TASK_MARCOU.md. Conteúdo reaplicado e validado na branch arena/c21c5188-marcou; ver seção de entrega no topo."
+      "note": "Divergente (merge-base 03ac75b); conflito só em AGENT_TASK_MARCOU.md. Conteúdo reaplicado e validado na PR #37 (branch arena/c21c5188-marcou); branch original não alterada."
     },
     {
       "number": 32,
