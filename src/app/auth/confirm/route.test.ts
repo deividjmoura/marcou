@@ -98,7 +98,7 @@ describe("GET /auth/confirm", () => {
 
     expect(mocks.verifyOtp).not.toHaveBeenCalled();
     expect(response.headers.get("location")).toContain("/login?");
-    expect(response.headers.get("location")).toContain("Link+de+confirma%C3%A7%C3%A3o");
+    expect(response.headers.get("location")).toContain("link+de+confirma%C3%A7%C3%A3o");
   });
 
   it("não permite redirecionamento para outro domínio", async () => {
