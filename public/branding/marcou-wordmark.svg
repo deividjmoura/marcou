@@ -1,8 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" role="img" aria-labelledby="title desc">
   <title id="title">Marcou.</title>
-  <desc id="desc">Logotipo Marcou em lettering serifado preto, limpo e elegante.</desc>
-  <text x="320" y="126" text-anchor="middle" fill="#111111"
+  <desc id="desc">Lettering ornamental Marcou em creme sobre fundo preto.</desc>
+  <rect width="640" height="180" rx="18" fill="#111111"/>
+  <g fill="none" stroke="#f3e8d4" stroke-width="2.2" stroke-linecap="round" opacity=".88">
+    <path d="M42 104 C66 104 65 67 91 67 C108 67 109 88 94 93 C83 97 75 87 82 79"/>
+    <path d="M598 104 C574 104 575 67 549 67 C532 67 531 88 546 93 C557 97 565 87 558 79"/>
+    <path d="M48 119 C65 130 79 129 91 119"/>
+    <path d="M592 119 C575 130 561 129 549 119"/>
+  </g>
+  <text x="320" y="123" text-anchor="middle" fill="#f3e8d4"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="116" font-style="italic" font-weight="700"
-    letter-spacing="-7">Marcou.</text>
+    font-size="112" font-style="italic" font-weight="700"
+    letter-spacing="-6">Marcou.</text>
+  <g fill="#f3e8d4">
+    <circle cx="112" cy="54" r="2.5"/>
+    <circle cx="528" cy="54" r="2.5"/>
+    <path d="M320 28 l4 7 -4 7 -4 -7z"/>
+  </g>
 </svg>
