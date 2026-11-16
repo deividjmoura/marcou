@@ -423,6 +423,10 @@ a { color: inherit; text-decoration: none; }
 .booking-sticky-continue { display: none; }
 @media (max-width: 640px) {
   .booking-widget.has-sticky-continue { padding-bottom: 104px; }
+  @keyframes booking-sticky-enter {
+    from { opacity: 0; transform: translateX(-50%) translateY(9px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
   .booking-sticky-continue {
     position: fixed;
     left: 50%;
@@ -441,7 +445,7 @@ a { color: inherit; text-decoration: none; }
     background: color-mix(in srgb, var(--ds-color-surface) 94%, transparent);
     box-shadow: 0 10px 30px rgb(35 25 29 / 14%);
     backdrop-filter: blur(14px);
-    animation: booking-date-enter .22s ease both;
+    animation: booking-sticky-enter .22s ease both;
   }
   .booking-sticky-summary {
     display: flex;
