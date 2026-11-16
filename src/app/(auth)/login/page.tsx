@@ -5,7 +5,7 @@ import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; passwordUpdated?: string }>;
 }) {
   const params = await searchParams;
 
@@ -18,5 +18,15 @@ export default async function LoginPage({
     );
   }
 
-  return <LoginForm next={params.next} errorMessage={params.error} />;
+  return (
+    <LoginForm
+      next={params.next}
+      errorMessage={params.error}
+      successMessage={
+        params.passwordUpdated === "1"
+          ? "Senha atualizada com sucesso. Entre com sua nova senha."
+          : undefined
+      }
+    />
+  );
 }

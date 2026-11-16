@@ -25,7 +25,15 @@ function GoogleButton({ next }: { next?: string }) {
   );
 }
 
-export function LoginForm({ next, errorMessage }: { next?: string; errorMessage?: string }) {
+export function LoginForm({
+  next,
+  errorMessage,
+  successMessage,
+}: {
+  next?: string;
+  errorMessage?: string;
+  successMessage?: string;
+}) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
 
   return (
@@ -33,6 +41,7 @@ export function LoginForm({ next, errorMessage }: { next?: string; errorMessage?
       <h1>Entrar no Marcou</h1>
       <p className="muted">Acesse para agendar ou gerenciar sua agenda.</p>
       {errorMessage ? <p className="alert alert-error">{errorMessage}</p> : null}
+      {successMessage ? <p className="alert alert-success">{successMessage}</p> : null}
       {state.error ? <p className="alert alert-error">{state.error}</p> : null}
 
       <form action={formAction} className="form-stack">
@@ -170,7 +179,11 @@ export function ResetPasswordForm() {
       <form action={formAction} className="form-stack">
         <label className="field">
           <span>Nova senha</span>
-          <input type="password" name="password" required minLength={8} autoComplete="new-password" />
+          <input type="password" name="password" required minLength={8} maxLength={100} autoComplete="new-password" />
+        </label>
+        <label className="field">
+          <span>Confirmar nova senha</span>
+          <input type="password" name="confirmPassword" required minLength={8} maxLength={100} autoComplete="new-password" />
         </label>
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Salvando..." : "Atualizar senha"}

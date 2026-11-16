@@ -37,6 +37,10 @@ const profileSchema = z.object({
 
 const passwordSchema = z.object({
   password: z.string().min(8, "A senha precisa de ao menos 8 caracteres.").max(100),
+  confirmPassword: z.string().min(1, "Confirme a nova senha."),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem.",
+  path: ["confirmPassword"],
 });
 
 async function getAppOrigin() {
@@ -283,7 +287,7 @@ export async function requestPasswordResetAction(
   const origin = await getAppOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${origin}/auth/callback?next=/redefinir-senha`,
+    redirectTo: `${origin}/auth/callback?flow=recovery&next=/redefinir-senha`,
   });
 
   if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
@@ -296,7 +300,10 @@ export async function updatePasswordAction(
 ): Promise<AuthState> {
   if (!isSupabaseConfigured()) return unavailableState();
 
-  const parsed = passwordSchema.safeParse({ password: formData.get("password") });
+  const parsed = passwordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Informe uma senha válida." };
   }
@@ -309,7 +316,13 @@ export async function updatePasswordAction(
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { error: "Não foi possível atualizar a senha. Solicite um novo link." };
-  redirect("/painel");
+
+  // End the recovery session so the user explicitly signs in with the new password.
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    return { error: "A senha foi atualizada, mas não foi possível encerrar a sessão. Saia da conta e entre novamente." };
+  }
+  redirect("/login?passwordUpdated=1");
 }
 
 export async function logoutAction(): Promise<void> {

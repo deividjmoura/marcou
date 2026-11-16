@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
   const next = safeNextPath(searchParams.get("next"));
+  const flow = searchParams.get("flow");
   const providerError = searchParams.get("error");
 
   if (!isSupabaseConfigured()) {
@@ -76,6 +77,12 @@ export async function GET(request: NextRequest) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
     return NextResponse.redirect(loginRedirectUrl(origin, next));
+  }
+
+  // Password recovery already has an authenticated PKCE session. Do not send
+  // the user through profile onboarding: the password page is the destination.
+  if (flow === "recovery" && next === "/redefinir-senha") {
+    return NextResponse.redirect(new URL("/redefinir-senha", origin));
   }
 
   const { data: profile, error: profileError } = await provisionProfile(
