@@ -51,6 +51,16 @@ A escolha é uma primeira versão revisável, não uma aprovação visual final.
 
 Nenhuma biblioteca ou asset animado foi adicionado. Ícones animados devem ser pontuais, ter alternativa estática, respeitar prefers-reduced-motion e não carregar conteúdo remoto sem necessidade. Antes de incorporar arquivos da LottieFlow/LottieFiles, registrar origem e licença do asset.
 
+## Densidade de interface — 16/11/2026
+
+Ajuste incremental para reduzir áreas vazias sem sacrificar leitura ou toque:
+
+- Reduzidos os degraus maiores da escala de espaçamento (tokens 8, 10, 12 e 16).
+- Compactados os paddings e intervalos da landing, autenticação e painel do prestador.
+- Reduzida a altura mínima visual do painel; navegação lateral e cabeçalho ocupam menos espaço.
+- Mantida a altura mínima de 44px dos controles interativos para preservar alvos de toque.
+- Nenhuma rota, ação, permissão, regra de agendamento ou migration foi alterada.
+
 ## Próximos passos
 
 1. Fazer revisão visual por tela em desktop e mobile, incluindo estados de erro, sucesso, aviso e indisponibilidade.
