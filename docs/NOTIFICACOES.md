@@ -107,3 +107,27 @@ Nada disso foi criado e nenhum botão de e-mail foi adicionado à interface.
 - `mark_notification_read` gravando `read_at` e não afetando notificação alheia;
 - `mark_all_notifications_read` zerando as não lidas;
 - `create_booking_reminders` criando e depois não duplicando no mesmo dia.
+
+
+## Scheduler de lembretes e expiração (implementação local)
+
+A rota `GET /api/cron` executa os dois jobs de domínio:
+- `expire_stale_bookings()`: expira holds vencidos e registra o evento de auditoria;
+- `create_booking_reminders(24)`: cria notificações internas para reservas confirmadas que começam nas próximas 24 horas.
+
+A rota usa a service role **somente no servidor** e exige `Authorization: Bearer <CRON_SECRET>`. A comparação do token é feita em tempo constante. Sem segredo ou credenciais, a rota falha fechada (401/503); erros dos RPCs retornam 500 e são registrados sem expor credenciais. Os dois RPCs são idempotentes no banco, portanto a execução a cada cinco minutos não deve duplicar expirações ou lembretes.
+
+### Configuração ainda necessária (não executada)
+
+Adicionar ao ambiente **Production** do projeto Vercel, manualmente e fora do Git:
+- `CRON_SECRET`: token aleatório forte (pelo menos 32 bytes);
+- `SUPABASE_SERVICE_ROLE_KEY`: service role key do projeto Supabase correspondente.
+
+A URL pública do Supabase já é lida de `NEXT_PUBLIC_SUPABASE_URL`. Não colocar a service role em variáveis `NEXT_PUBLIC_*`, arquivos versionados ou logs. A agenda Vercel só passa a executar após deploy de produção com a configuração de Cron e secrets; previews não devem receber a service role. Nenhuma variável, secret, migration remota ou deployment foi alterado nesta entrega.
+
+### Verificações e limites
+
+- Testes unitários cobrem token correto, token incorreto, header ausente/malformado e ausência de `CRON_SECRET`.
+- O CI valida lint, typecheck, testes, test:db e build.
+- Ainda depende de configuração manual dos secrets e confirmação do plano/projeto Vercel para execução agendada real.
+- E-mail permanece fora desta entrega: falta o responsável escolher o provedor e autorizar sua configuração.
