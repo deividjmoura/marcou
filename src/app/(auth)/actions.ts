@@ -4,7 +4,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { isValidPhone, normalizePhone, safeNextPath } from "@/lib/identity";
+import { isSupabaseConfigured } from "@/lib/env";
+import {
+  isValidPhone,
+  loginRedirectUrl,
+  normalizePhone,
+  safeNextPath,
+} from "@/lib/identity";
 
 export interface AuthState {
   error?: string;
@@ -52,6 +58,14 @@ async function getAppOrigin() {
   return `${proto}://${host}`;
 }
 
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
+/**
+ * Cria o perfil quando ainda não existe e preenche o nome vindo do provedor
+ * (Google) ou do cadastro. Um nome já escolhido pelo usuário em `/perfil` não
+ * é sobrescrito pelo nome do provedor a cada login.
+ */
 async function saveAuthProfile(
   user: { id: string; user_metadata?: Record<string, unknown> },
 ) {
@@ -62,10 +76,21 @@ async function saveAuthProfile(
     user.user_metadata?.name ??
     null;
 
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (typeof displayName === "string" && displayName.trim()) {
+  if (
+    !existing?.display_name &&
+    typeof displayName === "string" &&
+    displayName.trim()
+  ) {
     profileRow.display_name = displayName.trim().slice(0, 80);
   }
+
   const { error } = await supabase.from("profiles").upsert(profileRow, {
     onConflict: "id",
     ignoreDuplicates: false,
@@ -85,10 +110,16 @@ async function profileNeedsPhone(userId: string): Promise<boolean> {
   return !data?.phone;
 }
 
+function unavailableState(): AuthState {
+  return { error: SUPABASE_UNAVAILABLE_MESSAGE };
+}
+
 export async function loginAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -126,6 +157,8 @@ export async function signupAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = signupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -173,8 +206,13 @@ export async function signupAction(
 
 export async function googleLoginAction(formData: FormData): Promise<void> {
   const origin = await getAppOrigin();
-  const supabase = await createClient();
   const next = safeNextPath(String(formData.get("next") ?? ""));
+
+  if (!isSupabaseConfigured()) {
+    redirect(loginRedirectUrl(origin, next, SUPABASE_UNAVAILABLE_MESSAGE));
+  }
+
+  const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -183,7 +221,13 @@ export async function googleLoginAction(formData: FormData): Promise<void> {
   });
 
   if (error || !data.url) {
-    redirect(`/login?error=${encodeURIComponent("Não foi possível iniciar o login com Google.")}`);
+    redirect(
+      loginRedirectUrl(
+        origin,
+        next,
+        "Não foi possível iniciar o login com Google.",
+      ),
+    );
   }
 
   redirect(data.url);
@@ -193,6 +237,8 @@ export async function saveProfileAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = profileSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -224,6 +270,8 @@ export async function requestPasswordResetAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const email = z.string().trim().email("Informe um e-mail válido.").safeParse(formData.get("email"));
   if (!email.success) return { error: email.error.issues[0]?.message ?? "E-mail inválido." };
 
@@ -241,6 +289,8 @@ export async function updatePasswordAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = passwordSchema.safeParse({ password: formData.get("password") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Informe uma senha válida." };
@@ -258,6 +308,8 @@ export async function updatePasswordAction(
 }
 
 export async function logoutAction(): Promise<void> {
+  if (!isSupabaseConfigured()) redirect("/");
+
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");

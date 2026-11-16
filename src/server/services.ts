@@ -13,30 +13,6 @@ function fail(error: { message?: string | null } | null): never {
   throw new Error(error?.message ?? "Não foi possível concluir a operação.");
 }
 
-export interface ServiceTiming {
-  durationMinutes: number;
-  bufferMinutes: number;
-}
-
-export async function getServiceTiming(
-  serviceId: string,
-): Promise<ServiceTiming | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("services")
-    .select("duration_minutes, buffer_minutes")
-    .eq("id", serviceId)
-    .maybeSingle();
-
-  if (error) return null;
-  if (!data) return null;
-
-  return {
-    durationMinutes: Number(data.duration_minutes),
-    bufferMinutes: Number(data.buffer_minutes),
-  };
-}
-
 export async function listServicesForOwner(
   providerId: string,
 ): Promise<Service[]> {

@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
+import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { safeNextPath } from "@/lib/identity";
 import { ProfileForm } from "../forms";
 
@@ -12,6 +14,16 @@ export default async function ProfilePage({
 }) {
   const params = await searchParams;
   const next = safeNextPath(params.next);
+
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="auth-card">
+        <h1>Complete seu perfil</h1>
+        <SupabaseConfigWarning />
+      </div>
+    );
+  }
+
   const supabase = await createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
 

@@ -1,3 +1,116 @@
+# 🔴 AUDITORIA GERAL + GOOGLE OAUTH — 16/11/2026
+
+**Status:** auditoria concluída, correções aplicadas e verificadas em branch própria. **Nada foi mesclado.** Nenhuma alteração remota (Supabase, Vercel, Google Cloud) foi executada. O Client Secret não foi solicitado, lido, reproduzido ou armazenado.
+
+**Correção de registro:** a seção "ESTADO ATUAL CONSOLIDADO" diz que a PR #42 está "aberta"; ela foi **mesclada** (merge commit `074338b6ef3182c8f17b34ea277caf77bd8af31a`). A `main` atual é `074338b`.
+
+---
+
+## 1. Relatório de auditoria (escopo e método)
+
+- Branch `arena/7d0010ae-marcou`, base `main` = `074338b`, tree limpo antes de iniciar.
+- Método: leitura integral de `docs/IDENTITY.md`, `src/lib/identity.ts`, `src/app/(auth)/actions.ts`, `src/app/auth/callback/route.ts`, `src/lib/supabase/**`, `proxy.ts`, `next.config.ts`, `.env.example`, `src/server/**`, `src/app/p/[slug]/**`, `src/app/painel/**`, `src/app/reserva/**`, `src/app/notificacoes/**`, `supabase/migrations/*`, `scripts/*` e `.github/workflows/ci.yml`; conferência de `node_modules/@supabase/ssr` e `@supabase/auth-js` para o comportamento real de PKCE.
+- Execução local: `lint`, `typecheck`, `test`, `test:db`, `audit`, `build`, além de `next dev` com e sem variáveis de ambiente.
+- **Não verificado:** qualquer comportamento contra o Supabase remoto ou o Google (não há credenciais nem publishable key no repositório).
+
+## 2. Achados por severidade
+
+### Alta
+
+| # | Achado | Arquivo | Impacto |
+| --- | --- | --- | --- |
+| A1 | O callback OAuth descartava o destino (`next`) quando não havia `code` (consentimento cancelado, link expirado, erro do provedor) e usava mensagem genérica. | `src/app/auth/callback/route.ts` | O usuário voltava para `/login` e, ao entrar, caía em `/painel` em vez da página de agendamento. |
+| A2 | `googleLoginAction` descartava `next` no próprio caminho de erro. | `src/app/(auth)/actions.ts` | Mesma perda de contexto quando o provedor recusava o início do login. |
+
+### Média
+
+| # | Achado | Arquivo | Impacto |
+| --- | --- | --- | --- |
+| M1 | Todo login/callback fazia upsert do `display_name` vindo do provedor, sobrescrevendo nome escolhido pelo usuário em `/perfil`. | `src/app/(auth)/actions.ts`, `src/app/auth/callback/route.ts` | Perda de dados digitados pelo usuário a cada login Google. |
+| M2 | `get_provider_schedule` já retorna `timing`, mas a aplicação fazia uma segunda leitura em `services` para montar os slots. | `src/server/bookings.ts`, `src/server/services.ts` | Duas fontes de verdade para duração/intervalo; falha da segunda leitura derruba a consulta mesmo com a agenda obtida. |
+| M3 | O `<select>` de fuso tem lista curada; um fuso já salvo fora da lista era substituído silenciosamente pelo primeiro da lista ao salvar. | `src/app/painel/painel-client.tsx` | Alteração acidental de fuso horário de um prestador existente. |
+| M4 | A reserva pública aceita `customer_phone` vazio (`bookingInputSchema` opcional). | `src/lib/validation.ts`, `src/app/p/[slug]/booking-widget.tsx` | O prestador pode não ter contato do cliente. **Não corrigido** — decisão de produto (WhatsApp está fora de escopo). Recomenda-se exigir ou documentar explicitamente. |
+
+### Baixa
+
+| # | Achado | Arquivo | Impacto |
+| --- | --- | --- | --- |
+| B1 | `/perfil` e `/redefinir-senha` quebravam (HTTP 500) sem Supabase configurado (S1 da Issue #31). | `src/app/(auth)/perfil/page.tsx`, `redefinir-senha/page.tsx` | Primeiro uso sem env cai em página de erro. **Corrigido.** |
+| B2 | `src/lib/supabase/client.ts` não é importado por nenhum arquivo. | `src/lib/supabase/client.ts` | Código morto; mantido porque o padrão de cliente browser pode ser necessário. |
+| B3 | `toCents` substitui apenas a primeira vírgula; `1.234,56` vira `NaN`. | `src/app/painel/actions.ts` | Usuário que digita milhar com ponto recebe erro de validação. **Não corrigido.** |
+| B4 | Na página `/reserva/[id]`, o dono do estabelecimento vê "Já enviei o comprovante" e "Cancelar agendamento". | `src/app/reserva/[id]/reservation-actions.tsx` | Confusão de papel; o RPC autoriza (`proof_received` é permitido ao cliente ou ao dono). **Não corrigido** — revisar rótulos/ações por papel. |
+
+### Informativo (verificado, sem falha)
+
+| # | Achado |
+| --- | --- |
+| I1 | `safeNextPath` rejeita `//`, `\` e URLs absolutas. Testado com `/\evil`, `/%2f%2fevil`, `/\t/evil`, `/%09/evil`: nenhum sai da origem. |
+| I2 | PKCE está ativo: `@supabase/ssr@0.7.0` fixa `flowType: "pkce"` e `detectSessionInUrl: false` no cliente de servidor. O fluxo implícito não é usado. |
+| I3 | `anon` lê `availability_rules`/`availability_exceptions` de prestador publicado por RLS. Não é vazamento novo (a RPC pública já expõe a agenda), mas é permissão maior que o mínimo. |
+| I4 | Sem E2E com navegador, sem medição de cobertura, sem rate limiting (Issue #30), sem Core Web Vitals (requer deploy). |
+
+## 3. Correções aplicadas
+
+1. `src/lib/identity.ts`: novos `oauthErrorMessage` e `loginRedirectUrl` (puros e testados).
+2. `src/app/auth/callback/route.ts`: preserva `next` em todos os desvios, traduz `error` do provedor, protege o perfil contra sobrescrita de nome e valida `isSupabaseConfigured`.
+3. `src/app/(auth)/actions.ts`: `googleLoginAction` preserva `next` no erro; `saveAuthProfile` só preenche nome se o perfil ainda não tiver; todas as ações validam `isSupabaseConfigured`.
+4. Guarda de configuração estendida para `login`, `cadastro`, `esqueci-senha`, `perfil` e `redefinir-senha`.
+5. Guarda de configuração nas ações de `p/[slug]`, `painel`, `reserva/[id]` e `notificacoes`.
+6. `src/server/bookings.ts`: `ScheduleData` passa a carregar `timing` da RPC; removida a segunda leitura (`getServiceTiming`).
+7. `src/app/painel/painel-client.tsx`: fuso salvo fora da lista curada vira opção no `<select>`.
+8. `scripts/quality-audit.mjs`: novas seções `[guarda de entrada]` e `[oauth]`.
+9. Testes novos em `src/app/auth/callback/route.test.ts`, `src/lib/identity.test.ts` e `src/app/p/[slug]/actions.test.ts`.
+
+## 4. Arquivos modificados
+
+`docs/IDENTITY.md`, `docs/QUALITY-AUDIT.md`, `scripts/quality-audit.mjs`, `src/lib/identity.ts`, `src/lib/identity.test.ts`, `src/server/bookings.ts`, `src/server/services.ts`, `src/app/(auth)/actions.ts`, `src/app/(auth)/login/page.tsx`, `src/app/(auth)/cadastro/page.tsx`, `src/app/(auth)/esqueci-senha/page.tsx`, `src/app/(auth)/perfil/page.tsx`, `src/app/(auth)/redefinir-senha/page.tsx`, `src/app/auth/callback/route.ts`, `src/app/auth/callback/route.test.ts` (novo), `src/app/p/[slug]/actions.ts`, `src/app/p/[slug]/actions.test.ts`, `src/app/painel/actions.ts`, `src/app/painel/painel-client.tsx`, `src/app/reserva/[id]/actions.ts`, `src/app/notificacoes/actions.ts`.
+
+**Não alterados:** `.env.example` (PR #32 reescreve o arquivo), `.github/workflows/ci.yml` (PR #32), `AGENT_TASK_MARCOU.md` de outros agentes, `scripts/db-check.mjs` (PR #41), migrations, `supabase/**`.
+
+## 5. Testes executados e resultados (reais)
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run lint` | sem erros |
+| `npm run typecheck` | sem erros |
+| `npm test` | **64/64** (7 arquivos) |
+| `npm run test:db` | **53/53** |
+| `npm run audit` | **0 falhas, 0 avisos** (antes: 2 avisos) |
+| `npm run build` | OK |
+| `next dev` **sem** env: `/login`, `/cadastro`, `/esqueci-senha`, `/perfil`, `/redefinir-senha` | **200** com aviso (antes: 500 em `/perfil` e `/redefinir-senha`) |
+| `next dev` **com** env (projeto fictício): `/auth/callback?error=access_denied&next=%2Fp%2Fstudio-ana%3Fservice%3Dabc` | 307 → `/login?error=O+login+com+Google+foi+cancelado...&next=%2Fp%2Fstudio-ana%3Fservice%3Dabc` |
+| `next dev` **com** env: `/auth/callback?next=%2Fpainel` (sem code) | 307 → `/login?error=N%C3%A3o+foi+poss%C3%ADvel...&next=%2Fpainel` |
+| Supabase remoto `https://peornypgltuueubmsucm.supabase.co` | responde; `/auth/v1/settings` exige `apikey` |
+
+**Não executado nesta entrega:** round-trip real com o Google; callback PKCE contra o Supabase real; provisionamento de perfil em banco remoto; E2E com navegador; Preview/produção. Nenhuma dessas etapas foi dada por concluída.
+
+## 6. Pendências do responsável (configuração Google + Supabase)
+
+Instruções completas e verificáveis em `docs/IDENTITY.md`. Resumo:
+
+1. Google Cloud: tela de consentimento, credenciais **Web application**, escopos `openid`, `email`, `profile`.
+2. Supabase → Authentication → Providers → Google: informar o Client ID (o valor completo está em `docs/IDENTITY.md`) e o **Client Secret**.
+3. **Rotacionar o Client Secret antes de ativar**, se ele já circulou por chat/e-mail. Não registrar o segredo em repo, issue, PR ou documento.
+4. Google Cloud → Authorized redirect URI: `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`.
+5. Supabase → URL Configuration: Site URL + Redirect URLs com `/auth/callback` para local, Preview e produção.
+6. Definir `NEXT_PUBLIC_SITE_URL` por ambiente.
+7. Testar login Google (usuário novo e existente), PKCE callback, provisionamento, gate de telefone, preservação de destino, redirect seguro e cancelamento de consentimento.
+
+## 7. PR criada
+
+A PR é aberta nesta entrega e **não é mesclada**. O número e o estado das checks são atualizados aqui após a criação.
+
+## 8. Próximas prioridades recomendadas
+
+1. Executar a configuração do responsável (item 6) e rodar a bateria de testes OAuth ponta a ponta.
+2. Corrigir B3 (`toCents` com milhar) e B4 (ações por papel em `/reserva/[id]`).
+3. Decidir M4 (telefone obrigatório na reserva pública).
+4. Configurar cron para `expire_stale_bookings()` e `create_booking_reminders()` (Issues #25/#26).
+5. Rate limiting e observabilidade (Issue #30); ligar `npm run audit` ao CI sem conflitar com a PR #32.
+6. E2E com Playwright + ambiente Supabase; medir cobertura.
+
+---
+
 # ✅ Entrega registrada — auditoria de qualidade (Issue #31) — 16/11/2026
 
 **Status: implementado e verificado.** Escopo limitado à Issue #31 (QUALITY): testes automatizados, verificação de RLS/segurança, acessibilidade (contraste) e evidências de performance/E2E. Nenhuma funcionalidade de pagamento ou de calendário foi tocada; PR #38 e Issue #4 não foram alteradas.

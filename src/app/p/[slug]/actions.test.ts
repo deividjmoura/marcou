@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAvailableSlots } from "@/server/bookings";
+import { isSupabaseConfigured } from "@/lib/env";
 import { fetchSlotsAction } from "./actions";
+
+vi.mock("@/lib/env", () => ({ isSupabaseConfigured: vi.fn(() => true) }));
 
 vi.mock("@/server/bookings", () => ({
   getAvailableSlots: vi.fn(),
@@ -10,6 +13,7 @@ vi.mock("@/server/bookings", () => ({
 }));
 
 const mockedGetAvailableSlots = vi.mocked(getAvailableSlots);
+const mockedIsSupabaseConfigured = vi.mocked(isSupabaseConfigured);
 
 const input = {
   slug: "studio-ana",
@@ -20,6 +24,7 @@ const input = {
 describe("fetchSlotsAction", () => {
   beforeEach(() => {
     mockedGetAvailableSlots.mockReset();
+    mockedIsSupabaseConfigured.mockReturnValue(true);
   });
 
   it("devolve a lista de horários quando a consulta funciona", async () => {
@@ -65,6 +70,16 @@ describe("fetchSlotsAction", () => {
     expect(result.error).toBe(
       "Falha ao consultar os horários. Verifique sua conexão e tente novamente.",
     );
+  });
+
+  it("avisa quando o Supabase não está configurado em vez de quebrar", async () => {
+    mockedIsSupabaseConfigured.mockReturnValue(false);
+
+    const result = await fetchSlotsAction(input);
+
+    expect(result.slots).toBeNull();
+    expect(result.error).toContain("Supabase não está configurado");
+    expect(mockedGetAvailableSlots).not.toHaveBeenCalled();
   });
 
   it("rejeita data impossível sem consultar o banco", async () => {

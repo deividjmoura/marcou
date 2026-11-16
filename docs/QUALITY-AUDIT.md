@@ -141,3 +141,58 @@ cobertura — não há número de cobertura para reportar.
 6. Medição de cobertura de testes.
 7. Ligar `npm run audit` ao pipeline de CI (a Issue #30 também altera `ci.yml`;
    coordenar para evitar conflito).
+
+---
+
+# Adendo — auditoria geral + Google OAuth (16/11/2026)
+
+Atualização do estado dos achados e das verificações.
+
+## S1 — corrigido
+
+O guard de configuração foi estendido para todas as páginas e ações de servidor
+que alcançam o Supabase:
+
+- `src/app/(auth)/perfil/page.tsx`, `src/app/(auth)/redefinir-senha/page.tsx`,
+  `login`, `cadastro` e `esqueci-senha` agora respondem com aviso em vez de 500.
+- `src/app/(auth)/actions.ts`, `src/app/p/[slug]/actions.ts`,
+  `src/app/painel/actions.ts`, `src/app/reserva/[id]/actions.ts`,
+  `src/app/notificacoes/actions.ts` e `src/app/auth/callback/route.ts` validam
+  `isSupabaseConfigured()` antes de usar o cliente.
+
+Verificação em `next dev` sem env: `/login`, `/cadastro`, `/esqueci-senha`,
+`/perfil` e `/redefinir-senha` respondem **200** com o aviso de configuração;
+antes, `/perfil` e `/redefinir-senha` respondiam 500.
+
+## Novas verificações em `npm run audit`
+
+- `[guarda de entrada]`: ações de servidor (`**/actions.ts`) e rotas
+  (`**/route.ts`) que usam Supabase precisam tratar a ausência de env.
+- `[oauth]`: nenhum arquivo de `src/` pode importar `createClient` direto de
+  `@supabase/supabase-js` (o `@supabase/ssr` é quem garante `flowType: "pkce"`).
+
+Resultado atual: **0 falhas, 0 avisos**.
+
+## Novos testes
+
+- `src/app/auth/callback/route.test.ts` (6 testes): cancelamento do Google
+  preserva `next`, falha da troca do code preserva `next`, destino com telefone,
+  encaminhamento para `/perfil` sem telefone, nome do usuário não sobrescrito e
+  nome do provedor preenchido só quando o perfil está vazio.
+- `src/lib/identity.test.ts`: `loginRedirectUrl` e `oauthErrorMessage`.
+- `src/app/p/[slug]/actions.test.ts`: erro amigável sem Supabase configurado.
+
+`npm test` — **64/64** (7 arquivos). `npm run test:db` — **53/53**.
+
+## Correções de OAuth
+
+- O destino (`next`) deixou de ser perdido quando o consentimento é cancelado
+  ou o link expira: o callback volta para `/login?error=...&next=...`.
+- O nome escolhido pelo usuário em `/perfil` não é mais sobrescrito pelo nome
+  do Google a cada login.
+
+## Continua bloqueado
+
+- Round-trip real com o Google e com o Supabase (requer credenciais/painel).
+- E2E com navegador; Core Web Vitals/Lighthouse; revisão assistida por teclado
+  e leitor de tela; medição de cobertura; rate limiting (Issue #30).
