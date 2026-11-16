@@ -82,3 +82,35 @@ ambiente remoto, deploy ou configuração foi alterado por esta limpeza.
 - Não alterar produção, Supabase remoto ou configurações externas sem autorização explícita.
 - Não remover funcionalidades existentes fora do escopo.
 - Antes de encerrar, registrar aqui apenas mudanças relevantes, testes realmente executados e pendências atuais.
+
+
+## Continuidade — 16/11/2026 (frente de identidade visual)
+
+### Estado do branch
+
+- A branch remota `design/identidade-visual` não existia na inspeção desta sessão. Ela foi recriada a partir da `main` em `051942b7d82f7cd3984031929267fba0488f476f`; nenhuma alteração foi feita diretamente na `main`.
+- O trabalho desta frente está na Issue #27. O branch atual contém os commits:
+  - `ed43ba0b2b027c94b437cca658989bda4a558251` — fontes Manrope + Lora auto-hospedadas, tokens tipográficos e licenças OFL.
+  - `befb5349a9533d6a861a5b489e2e62dfcd7470cc` — redução de espaçamento em landing, autenticação e painel do prestador, mantendo controles com altura mínima de 44px.
+- O logotipo existente `public/branding/marcou-logo.svg` e as rotas, ações, permissões, migrations e regras do agendamento foram preservados.
+- CI observada: run `43873224884` (tipografia) e run `43873513270` (densidade) concluíram com sucesso, incluindo lint, typecheck, Vitest, PostgreSQL embutido e build.
+- A revisão visual humana em desktop/mobile ainda não foi executada; não declarar aprovação final de UX/acessibilidade sem essa etapa.
+
+### Próxima etapa desta frente
+
+1. Abrir/revisar a PR da Issue #27 sem merge automático.
+2. Fazer inspeção visual humana em desktop e mobile, especialmente painel do prestador, autenticação e página pública; corrigir eventuais quebras de linha, overflow e hierarquia.
+3. Continuar a migração gradual dos componentes para os tokens semânticos e documentar exemplos reutilizáveis.
+4. Manter ícones animados fora desta entrega até selecionar assets com licença verificada, fallback estático e respeito a `prefers-reduced-motion`.
+
+### Decisões de produto/integração ainda não assumidas
+
+- **Stack:** aprovada — Next.js 16 App Router, React 19, TypeScript, Supabase Auth/PostgreSQL, RLS e Storage. A referência de projeto Supabase aparece em `docs/IDENTITY.md`, mas a conectividade, credenciais por ambiente, status dos provedores e aplicação remota das migrations não foram verificados nesta sessão.
+- **Catálogo:** os prestadores cadastram serviços dinamicamente; catálogo comercial, preços, durações e sinal padrão não foram aprovados como defaults globais.
+- **Pagamento:** provedor, pagamento integral versus sinal, upload/validação de comprovante e aprovação automática/manual continuam pendentes. Receber comprovante não confirma pagamento.
+- **Google Calendar:** continua pendente decidir se a agenda do prestador será fonte de disponibilidade ou apenas espelho; não há integração ativa nesta entrega.
+- **Expiração:** o código tem fallback técnico de 30 minutos em `booking_hold_minutes`, configurável pelo prestador. Isso não substitui a decisão comercial sobre o prazo. O job periódico de expiração ainda não está provisionado.
+- **Cancelamento/reembolso:** não há antecedência mínima, multa ou política de reembolso aprovada; o mecanismo atual permite cancelamento por participante autorizado e preserva auditoria.
+- **WhatsApp/e-mail:** provedores e credenciais permanecem pendentes; nenhum adapter externo foi ativado por esta frente.
+
+Nenhuma decisão comercial acima foi convertida em comportamento novo por estes commits.
