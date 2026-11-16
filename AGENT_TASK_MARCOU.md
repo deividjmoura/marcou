@@ -1,6 +1,6 @@
 # 🔴 AUDITORIA GERAL + GOOGLE OAUTH — 16/11/2026
 
-**Status:** auditoria concluída, correções aplicadas e verificadas em branch própria. **Nada foi mesclado.** Nenhuma alteração remota (Supabase, Vercel, Google Cloud) foi executada. O Client Secret não foi solicitado, lido, reproduzido ou armazenado.
+**Status:** auditoria concluída, correções aplicadas e verificadas em branch própria. **Nada foi mesclado.** Nenhuma alteração remota (Supabase, provedor de deploy anterior, Google Cloud) foi executada. O Client Secret não foi solicitado, lido, reproduzido ou armazenado.
 
 **Correção de registro:** a seção "ESTADO ATUAL CONSOLIDADO" diz que a PR #42 está "aberta"; ela foi **mesclada** (merge commit `074338b6ef3182c8f17b34ea277caf77bd8af31a`). A `main` atual é `074338b`.
 
@@ -100,7 +100,7 @@ Instruções completas e verificáveis em `docs/IDENTITY.md`. Resumo:
 
 - **PR #45** — https://github.com/deividjmoura/marcou/pull/45 (`arena/7d0010ae-marcou` → `main`), commit `ec9dc3d`.
 - **Não mesclada.** Nenhuma autorização de merge foi solicitada ou concedida.
-- Checks no head `e6a5a90`: `quality` **pass** (run 43784769143) e `Vercel` **pass**.
+- Checks no head `e6a5a90`: `quality` **pass** (run 43784769143) e `provedor de deploy anterior` **pass**.
 
 ## 8. Próximas prioridades recomendadas
 
@@ -192,9 +192,9 @@ Instruções completas e verificáveis em `docs/IDENTITY.md`. Resumo:
 # Auditoria e merges verificados — 15/11/2026
 
 - PR #35 BOOKING-OPS merged via squash em `ad9983bf7f8b9e574d603b1efb33d08448326577`. Adiciona `docs/BOOKING-OPS.md` com matriz de estados/transições, hold, expiração, cancelamento, lacunas e dependências. CI run #48 passou: lint, typecheck, testes, test:db e build. Issue #25 permanece aberta: scheduler em ambiente real, política comercial e testes E2E ainda pendentes.
-- PR #34 PROVIDER-ADMIN merged via squash em `fa074def73478c1b1738336979d423555683aab0`. Permite alterar slug público e editar períodos de expediente semanal; testes de slug incluídos. Head final validado: `889a52957265cb57a4620a028747588ff62c2e1e`. CI run #51 passou em lint, typecheck, npm test, test:db e build; Vercel Preview check passou. Branch atualizada com a main antes do merge. Issue #24 permanece aberta para agenda ampliada, revisão de acessibilidade/estados e testes dedicados de isolamento/RLS.
+- PR #34 PROVIDER-ADMIN merged via squash em `fa074def73478c1b1738336979d423555683aab0`. Permite alterar slug público e editar períodos de expediente semanal; testes de slug incluídos. Head final validado: `889a52957265cb57a4620a028747588ff62c2e1e`. CI run #51 passou em lint, typecheck, npm test, test:db e build; provedor de deploy anterior Preview check passou. Branch atualizada com a main antes do merge. Issue #24 permanece aberta para agenda ampliada, revisão de acessibilidade/estados e testes dedicados de isolamento/RLS.
 - PRs ainda abertas e não integradas nesta auditoria: #1 e #2 são prévias demonstrativas sem backend real e continuam draft; #4 está divergente da main (16 commits atrás, 5 à frente, mergeable=false); #32 está divergente (6 commits atrás, 10 à frente) e não pode ser integrada porque substitui este documento de continuidade (mais de 800 linhas) por apenas 39 linhas e inclui `docs/MOTION.md` fora do escopo PLATFORM.
-- Nenhuma migration foi aplicada remotamente; nenhum secret, configuração remota do Supabase/Vercel ou deploy de produção foi alterado.
+- Nenhuma migration foi aplicada remotamente; nenhum secret, configuração remota do Supabase/provedor de deploy anterior ou deploy de produção foi alterado.
 
 ---
 
@@ -204,8 +204,8 @@ Instruções completas e verificáveis em `docs/IDENTITY.md`. Resumo:
 - Branch isolada: `feat/24-provider-admin`, criada a partir da `main` observada em `05e70ab1ea72bad609d70b2d185f297169acd1c9`.
 - Auditoria inicial: o painel já possui CRUD de serviços, expediente, exceções, dados do negócio e lista/ações de reservas. Foi identificada uma lacuna objetiva: o slug público só podia ser definido na criação e não podia ser alterado na edição.
 - Implementação nesta branch: permitir editar o slug com a mesma validação do cadastro, persistir no servidor, apresentar mensagem amigável quando o endereço já estiver ocupado e revalidar os caminhos público antigo/novo; permitir editar períodos de expediente semanal já cadastrados, reaproveitando a operação server-side existente e mantendo a validação de intervalos/vigência.
-- Testes adicionados para validar o slug durante a edição. A edição do expediente reutiliza o schema e a operação de atualização existentes. CI run #51 passou em lint, typecheck, npm test, test:db e build; Vercel Preview check passou. PR #34 foi integrada por squash em `fa074def73478c1b1738336979d423555683aab0`.
-- Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração Vercel ou deploy foi executado.
+- Testes adicionados para validar o slug durante a edição. A edição do expediente reutiliza o schema e a operação de atualização existentes. CI run #51 passou em lint, typecheck, npm test, test:db e build; provedor de deploy anterior Preview check passou. PR #34 foi integrada por squash em `fa074def73478c1b1738336979d423555683aab0`.
+- Limites: não tocar em #21 (BOOKING), #22 (PUBLIC-FLOW), #27 (DESIGN-SYSTEM), #30 (PLATFORM), #31 (QUALITY), nem nas PRs #1/#2/#4. Nenhuma migration, alteração remota Supabase, configuração provedor de deploy anterior ou deploy foi executado.
 - PR [#34](https://github.com/deividjmoura/marcou/pull/34) integrada à main; Issue #24 permanece aberta porque agenda ampliada, acessibilidade/estados e testes dedicados de isolamento/RLS ainda não foram concluídos.
 - CI do head `cd221cb` (run #43776195664) falhou em `npm run lint`; typecheck, testes, test:db e build foram ignorados. A causa identificada foi a atualização de estado síncrona em `useEffect`; removi esse efeito no commit `3a8c128`. Aguardar e validar CI completo no novo head antes de integrar. Não fazer merge sem autorização do responsável.
 
@@ -226,10 +226,10 @@ Instruções completas e verificáveis em `docs/IDENTITY.md`. Resumo:
 - A Issue #30 está aberta e trata de infraestrutura. Esta delegação começa com auditoria e hardening seguro/documental, sem mudanças remotas.
 
 ### Objetivo do terceiro agente
-Auditar e fortalecer a base operacional do Marcou: configuração de ambientes, segurança de secrets, CI, documentação de deploy/rollback, backup e observabilidade. Preparar recomendações e alterações locais seguras, sem executar operações no Supabase ou Vercel de produção.
+Auditar e fortalecer a base operacional do Marcou: configuração de ambientes, segurança de secrets, CI, documentação de deploy/rollback, backup e observabilidade. Preparar recomendações e alterações locais seguras, sem executar operações no Supabase ou provedor de deploy anterior de produção.
 
 ### Instruções obrigatórias
-1. Ler integralmente este documento e a Issue #30. Auditar a `main` atualizada, scripts, workflows, configuração Supabase/Vercel e documentação existente antes de alterar arquivos.
+1. Ler integralmente este documento e a Issue #30. Auditar a `main` atualizada, scripts, workflows, configuração Supabase/provedor de deploy anterior e documentação existente antes de alterar arquivos.
 2. Criar `feat/30-platform-hardening` a partir da `main` atual. Não trabalhar na `main` nem nas branches dos outros agentes.
 3. Começar com um inventário: ambientes existentes, variáveis necessárias, workflows CI, scripts de build/teste, migrations, cron/jobs, deploy e observabilidade. Distinguir claramente o que foi verificado no repositório do que depende de acesso externo.
 4. Criar uma matriz de variáveis por ambiente (local, preview/staging e produção), identificando quais são públicas e quais são secrets. Documentar nomes e finalidade, nunca valores reais. Não copiar tokens, chaves, connection strings ou conteúdo de arquivos `.env` para commits, issues, logs ou PR.
@@ -238,7 +238,7 @@ Auditar e fortalecer a base operacional do Marcou: configuração de ambientes, 
 7. Documentar o fluxo recomendado de deploy para preview/staging/produção, checklist pré-deploy, smoke tests, rollback e recuperação. Identificar quais passos são automáticos e quais exigem ação/credenciais do responsável.
 8. Documentar estratégia de backup/restore e observabilidade compatível com os serviços realmente configurados. Não afirmar que backups, alertas ou monitoramento estão ativos sem evidência.
 9. Coordenar dependências com #21 e #26 apenas por documentação/comentários. Não implementar jobs de expiração/lembrete nesta tarefa enquanto os contratos de domínio e notificações estiverem em desenvolvimento. Pode preparar checklist técnico e requisitos de segurança/idempotência.
-10. **Proibido nesta tarefa:** aplicar migrations; executar SQL que altere dados; modificar projeto Supabase remoto; alterar configurações, domínios, secrets, variáveis ou deployments da Vercel; promover deploy; mudar Auth/RLS; alterar banco de produção. Qualquer ação externa exige autorização explícita posterior do responsável.
+10. **Proibido nesta tarefa:** aplicar migrations; executar SQL que altere dados; modificar projeto Supabase remoto; alterar configurações, domínios, secrets, variáveis ou deployments da provedor de deploy anterior; promover deploy; mudar Auth/RLS; alterar banco de produção. Qualquer ação externa exige autorização explícita posterior do responsável.
 11. Não tocar nos arquivos de UI/Design System do agente #27, nem nos arquivos de booking/migrations do agente #21. Se precisar documentar esses pontos, fazê-lo em seção própria e sem editar os arquivos de implementação deles.
 12. Executar localmente os checks pertinentes que estiverem disponíveis. Registrar comandos e resultados reais, incluindo limitações por ausência de credenciais/serviços.
 13. Abrir PR em draft para `main`, vinculada à Issue #30. Usar `Closes #30` somente quando os critérios desta entrega estiverem efetivamente concluídos; caso contrário, manter aberta e listar pendências. Não fazer merge.
@@ -322,7 +322,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
   "architecture": {
     "frontend": "Next.js 16 / React 19 / TypeScript",
     "auth_database": "Supabase Auth / PostgreSQL",
-    "hosting": "Vercel (configured/expected; verify environment)"
+    "hosting": "provedor de deploy anterior (configured/expected; verify environment)"
   },
   "areas": {
     "BOOKING": {
@@ -520,7 +520,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
   "architecture": {
     "frontend": "Next.js 16 App Router + React 19 + TypeScript",
     "backend": "Supabase Auth + PostgreSQL + Storage",
-    "hosting": "Vercel",
+    "hosting": "provedor de deploy anterior",
     "tests": [
       "Vitest",
       "embedded PostgreSQL"
@@ -1079,7 +1079,7 @@ Orientações:
 - Notificações para clientes e profissionais dentro do aplicativo; e-mail quando viável e configurado.
 - Segurança, testes, métricas e estabilidade.
 
-A arquitetura prevista é Vercel para a aplicação Next.js e Supabase para autenticação e banco de dados, desde que a auditoria confirme que essa continua sendo a arquitetura adotada. Login Google deve ser tratado como provedor OAuth do sistema de autenticação escolhido; não introduza Firebase como segundo sistema de autenticação sem decisão explícita.
+A arquitetura prevista é provedor de deploy anterior para a aplicação Next.js e Supabase para autenticação e banco de dados, desde que a auditoria confirme que essa continua sendo a arquitetura adotada. Login Google deve ser tratado como provedor OAuth do sistema de autenticação escolhido; não introduza Firebase como segundo sistema de autenticação sem decisão explícita.
 
 **Fase 2 — WhatsApp (adiada):**
 - Bot e integração com a API do WhatsApp.
@@ -1311,7 +1311,7 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 ### Banco, segurança e validação
 
 - Nenhuma migration nova foi necessária: `public.profiles`, colunas `display_name`/`phone` e policies RLS de acesso à própria linha já existem na migration inicial.
-- Nenhuma migration foi aplicada no Supabase remoto; nenhuma configuração ou variável de produção da Vercel foi alterada.
+- Nenhuma migration foi aplicada no Supabase remoto; nenhuma configuração ou variável de produção da provedor de deploy anterior foi alterada.
 - Os fluxos de perfil usam o usuário autenticado no servidor e não recebem um ID de usuário arbitrário do cliente.
 - Os comandos foram executados pelo GitHub Actions no job `quality` do run [#43775045185](https://github.com/deividjmoura/marcou/actions/runs/43775045185), no commit de código `e80ab28796295d1de56aa6f027495326b177eb58`: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:db` e `npm run build` — todos concluídos com sucesso. A atualização posterior do documento foi apenas documental.
 - **Pendências do responsável:** criar Client ID/Secret no Google Cloud, habilitar Google em Supabase Auth, configurar Site URL/Redirect URLs e validar SMTP/recuperação em ambiente real. O telefone é validado sintaticamente (10–15 dígitos), sem verificação de posse por SMS.
@@ -1348,7 +1348,7 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - **#24 PROVIDER-ADMIN:** issue aberta; não foi encontrada branch/PR dedicada.
 - **#30 PLATFORM:** issue permanece aberta; PR #32 precisa corrigir os bloqueios acima.
 
-Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de produção/Vercel foi alterada nesta auditoria.
+Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de produção/provedor de deploy anterior foi alterada nesta auditoria.
 
 
 ---
@@ -1365,7 +1365,7 @@ Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de pr
 ## Continuidade — Issue #27 DESIGN-SYSTEM (15/11/2026)
 
 - PR [#36](https://github.com/deividjmoura/marcou/pull/36), branch `feat/27-design-system`, permanece aberta em draft; head `b549a9fce6aa47975ce94900565bde13e90272ca` antes desta atualização.
-- CI run [#43777461982](https://github.com/deividjmoura/marcou/actions/runs/43777461982) passou integralmente: lint, typecheck, testes, test:db e build. Preview Vercel reportado como Ready.
+- CI run [#43777461982](https://github.com/deividjmoura/marcou/actions/runs/43777461982) passou integralmente: lint, typecheck, testes, test:db e build. Preview provedor de deploy anterior reportado como Ready.
 - Continuação desta entrega: aplicar tokens semânticos de bege/branco/rosé à folha global existente, preservando nomes de classes e fluxos; documentar paleta aplicada e pendências de contraste/revisão visual.
 - Permanecem pendentes auditoria WCAG por combinação de estado, revisão visual manual mobile/desktop, decisão fundamentada sobre fonte e ícones animados/licenças. Não declarar Issue #27 concluída até esses itens serem validados.
 - Nenhuma dependência externa, fonte, asset, migration, configuração remota ou deploy de produção foi adicionado/alterado.
