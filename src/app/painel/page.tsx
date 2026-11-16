@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   getOwnedProvider,
   listProviderBookings,
@@ -15,6 +14,7 @@ import {
 } from "@/lib/format";
 import { ProviderForm, ProviderPanelMenu } from "./painel-client";
 import { providerBookingAction } from "./actions";
+import { logoutAction } from "../(auth)/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
