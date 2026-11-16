@@ -71,6 +71,7 @@ describe("providerInputSchema", () => {
     const uppercaseSlug = providerInputSchema.safeParse({
       slug: "Studio-Ana",
       displayName: "Studio Ana",
+      description: "Atendimento com carinho e qualidade.",
       timezone: "America/Sao_Paulo",
       isPublished: "on",
       bookingHoldMinutes: 30,
