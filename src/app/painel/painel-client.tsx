@@ -520,6 +520,9 @@ export function ProviderPanelMenu({
               <span aria-hidden="true">→</span>
             </button>
           ))}
+          <Link className="provider-menu-item" href={`/p/${provider.slug}`} target="_blank">
+            <span><strong>Visualizar página pública</strong><small>Ver como seus clientes enxergam sua página</small></span><span aria-hidden="true">↗</span>
+          </Link>
           <Link className="provider-menu-item" href="/perfil?next=%2Fpainel">
             <span><strong>Meu perfil</strong><small>Foto, nome, e-mail e telefone</small></span><span aria-hidden="true">→</span>
           </Link>
