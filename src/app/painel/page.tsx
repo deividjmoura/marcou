@@ -13,9 +13,8 @@ import {
   formatBookingTime,
   formatCents,
 } from "@/lib/format";
-import { AvailabilityManager, ProviderForm, ServicesManager } from "./painel-client";
+import { ProviderForm, ProviderPanelMenu } from "./painel-client";
 import { providerBookingAction } from "./actions";
-import { logoutAction } from "../(auth)/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
@@ -119,35 +118,17 @@ export default async function PainelPage() {
         <div>
           <span className="eyebrow">PAINEL DO PRESTADOR</span>
           <h1>{provider.display_name}</h1>
-          <p className="muted">
-            {provider.is_published ? (
-              <>
-                Página pública:{" "}
-                <Link href={`/p/${provider.slug}`} target="_blank">
-                  /p/{provider.slug}
-                </Link>
-              </>
-            ) : (
-              "Sua página pública ainda está desativada."
-            )}
-          </p>
-        </div>
-        <div className="item-actions">
-          <Link href="/perfil?next=%2Fpainel" className="btn btn-ghost">Meu perfil</Link>
-          <NotificationBell unreadCount={unread} />
-          <form action={logoutAction}>
-            <button type="submit" className="btn btn-ghost">
-              Sair
-            </button>
-          </form>
+          <p className="muted">Acompanhe e gerencie seus agendamentos.</p>
         </div>
       </header>
 
-      <div className="painel-grid">
-        <ProviderForm provider={provider} />
-        <ServicesManager services={services} />
-        <AvailabilityManager rules={rules} exceptions={exceptions} />
-      </div>
+      <ProviderPanelMenu
+        provider={provider}
+        services={services}
+        rules={rules}
+        exceptions={exceptions}
+        unreadCount={unread}
+      />
 
       <section className="card">
         <h2>Agendamentos</h2>
