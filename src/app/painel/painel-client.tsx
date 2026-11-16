@@ -22,17 +22,6 @@ import type {
 } from "@/server/bookings";
 import { formatCents } from "@/lib/format";
 
-const TIMEZONES = [
-  "America/Sao_Paulo",
-  "America/Fortaleza",
-  "America/Recife",
-  "America/Bahia",
-  "America/Manaus",
-  "America/Cuiaba",
-  "America/Rio_Branco",
-  "America/Boa_Vista",
-];
-
 const WEEKDAYS = [
   "Domingo",
   "Segunda-feira",
@@ -51,13 +40,6 @@ function Alert({ state }: { state: PainelActionState }) {
 
 export function ProviderForm({ provider }: { provider: Provider | null }) {
   const [state, action, pending] = useActionState(saveProviderAction, {});
-
-  // Um fuso já salvo que não está na lista curada precisa aparecer como opção,
-  // senão o `<select>` o substitui silenciosamente pelo primeiro da lista.
-  const timezoneOptions =
-    provider?.timezone && !TIMEZONES.includes(provider.timezone)
-      ? [provider.timezone, ...TIMEZONES]
-      : TIMEZONES;
 
   return (
     <form action={action} className="card form-stack">
@@ -102,14 +84,17 @@ export function ProviderForm({ provider }: { provider: Provider | null }) {
       </label>
 
       <label className="field">
-        <span>Fuso horário</span>
-        <select name="timezone" defaultValue={provider?.timezone ?? "America/Sao_Paulo"}>
-          {timezoneOptions.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone.replace("_", " ")}
-            </option>
-          ))}
-        </select>
+        <span>Frase de impacto (opcional)</span>
+        <textarea
+          name="description"
+          rows={3}
+          maxLength={180}
+          defaultValue={provider?.description ?? ""}
+          placeholder="Ex.: Realçando sua beleza com cuidado e dedicação."
+        />
+        <span className="muted small">
+          Uma frase curta para apresentar seu negócio na página de agendamento.
+        </span>
       </label>
 
       <label className="field">
