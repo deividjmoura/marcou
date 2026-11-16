@@ -31,6 +31,22 @@ interface BookingWidgetProps {
 const initialSlots: SlotsState = { slots: null };
 const initialBook: BookState = {};
 
+function startOfWeek(date: string): string {
+  const weekday = new Date(`${date}T00:00:00.000Z`).getUTCDay();
+  return addDaysIsoDate(date, -((weekday + 6) % 7));
+}
+
+function dateAtUtcNoon(date: string): Date {
+  return new Date(`${date}T12:00:00.000Z`);
+}
+
+function formatDate(date: string, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    ...options,
+    timeZone: "UTC",
+  }).format(dateAtUtcNoon(date));
+}
+
 export function BookingWidget({
   slug,
   timeZone,
@@ -41,11 +57,15 @@ export function BookingWidget({
 }: BookingWidgetProps) {
   const today = todayIsoDate(timeZone);
   const maxDate = useMemo(() => addDaysIsoDate(today, 30), [today]);
+  const firstWeek = useMemo(() => startOfWeek(today), [today]);
 
   const [serviceId, setServiceId] = useState(
     initialServiceId ?? services[0]?.id ?? "",
   );
   const [date, setDate] = useState(initialDate ?? today);
+  const [weekStart, setWeekStart] = useState(() =>
+    startOfWeek(initialDate ?? today),
+  );
   const [slots, setSlots] = useState<SlotsState>(initialSlots);
   const [loading, setLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -59,6 +79,17 @@ export function BookingWidget({
     initialBook,
   );
 
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => addDaysIsoDate(weekStart, index)),
+    [weekStart],
+  );
+
+  useEffect(() => {
+    if (date < weekStart || date > addDaysIsoDate(weekStart, 6)) {
+      setWeekStart(startOfWeek(date));
+    }
+  }, [date, weekStart]);
+
   useEffect(() => {
     let active = true;
 
@@ -69,11 +100,11 @@ export function BookingWidget({
       }
       setLoading(true);
       setSlots({ slots: null });
+      setSelectedSlot(null);
+      setPicked(false);
       try {
         const result = await fetchSlotsAction({ slug, serviceId, date });
-        if (active) {
-          setSlots(result);
-        }
+        if (active) setSlots(result);
       } catch {
         if (active) {
           setSlots({
@@ -93,12 +124,22 @@ export function BookingWidget({
   }, [slug, serviceId, date, retryCount]);
 
   const service = services.find((item) => item.id === serviceId);
+  const monthLabel = formatDate(date, { month: "long", year: "numeric" });
+  const canGoBack = weekStart > firstWeek;
+  const canGoForward = addDaysIsoDate(weekStart, 7) <= maxDate;
+
+  function chooseDate(nextDate: string) {
+    if (nextDate < today || nextDate > maxDate || nextDate === date) return;
+    setDate(nextDate);
+    setSelectedSlot(null);
+    setPicked(false);
+  }
 
   return (
     <section className="booking-widget" aria-labelledby="booking-title">
       <div className="section-heading">
         <span className="eyebrow">AGENDAR</span>
-        <h2 id="booking-title">Escolha o horário</h2>
+        <h2 id="booking-title">Escolha o dia e o horário</h2>
       </div>
 
       {services.length === 0 ? (
@@ -124,68 +165,133 @@ export function BookingWidget({
             </select>
           </label>
 
-          <label className="field">
-            <span>Data</span>
-            <input
-              type="date"
-              value={date}
-              min={today}
-              max={maxDate}
-              onChange={(event) => {
-                setDate(event.target.value);
-                setSelectedSlot(null);
-                setPicked(false);
-              }}
-            />
-          </label>
-
-          {loading ? (
-            <p className="muted" role="status" aria-live="polite">
-              Consultando disponibilidade em tempo real...
-            </p>
-          ) : slots.error ? (
-            <div className="alert alert-error" role="alert">
-              <p>{slots.error}</p>
-              <button
-                type="button"
-                className="btn btn-small"
-                onClick={() => setRetryCount((count) => count + 1)}
-              >
-                Tentar novamente
-              </button>
+          <section className="booking-date-section" aria-label="Escolha uma data">
+            <div className="booking-calendar-heading">
+              <div>
+                <p className="booking-calendar-eyebrow">DATA DO AGENDAMENTO</p>
+                <h3>{monthLabel}</h3>
+              </div>
+              <div className="booking-week-navigation" aria-label="Navegar pelas semanas">
+                <button
+                  type="button"
+                  className="booking-week-nav"
+                  aria-label="Semana anterior"
+                  disabled={!canGoBack}
+                  onClick={() => setWeekStart((current) => addDaysIsoDate(current, -7))}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="booking-week-nav"
+                  aria-label="Próxima semana"
+                  disabled={!canGoForward}
+                  onClick={() => setWeekStart((current) => addDaysIsoDate(current, 7))}
+                >
+                  ›
+                </button>
+              </div>
             </div>
-          ) : slots.slots && slots.slots.length > 0 ? (
-            <div className="slot-grid">
-              {slots.slots.map((slot) => {
-                const label = formatInstantInZone(slot.startsAt, timeZone, {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                });
-                const isActive = selectedSlot === slot.startsAt;
+
+            <div className="booking-week" role="group" aria-label="Dias disponíveis">
+              {weekDays.map((day) => {
+                const disabled = day < today || day > maxDate;
+                const selected = day === date;
+                const isToday = day === today;
                 return (
                   <button
                     type="button"
-                    key={slot.startsAt}
-                    className={isActive ? "slot slot-active" : "slot"}
-                    aria-pressed={isActive}
-                    onClick={() => {
-                      setSelectedSlot(slot.startsAt);
-                      setPicked(true);
-                    }}
+                    key={day}
+                    className={[
+                      "booking-day",
+                      selected ? "is-selected" : "",
+                      isToday ? "is-today" : "",
+                    ].filter(Boolean).join(" ")}
+                    disabled={disabled}
+                    aria-pressed={selected}
+                    aria-label={`${formatDate(day, {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })}${isToday ? ", hoje" : ""}${selected ? ", selecionado" : ""}`}
+                    onClick={() => chooseDate(day)}
                   >
-                    {label}
+                    <span className="booking-day-name">
+                      {formatDate(day, { weekday: "short" }).replace(".", "")}
+                    </span>
+                    <span className="booking-day-number">
+                      {formatDate(day, { day: "2-digit" })}
+                    </span>
+                    {isToday ? <span className="booking-day-today" aria-hidden="true" /> : null}
                   </button>
                 );
               })}
             </div>
-          ) : (
-            <p className="muted">
-              Não há horários disponíveis nesta data. Escolha outra data.
-            </p>
-          )}
+          </section>
+
+          <section className="booking-times-section" aria-labelledby="booking-times-title">
+            <div className="booking-times-heading">
+              <h3 id="booking-times-title">Horários disponíveis</h3>
+              <span>{formatDate(date, { weekday: "short", day: "numeric", month: "short" })}</span>
+            </div>
+
+            {loading ? (
+              <p className="muted" role="status" aria-live="polite">
+                Consultando disponibilidade em tempo real...
+              </p>
+            ) : slots.error ? (
+              <div className="alert alert-error" role="alert">
+                <p>{slots.error}</p>
+                <button
+                  type="button"
+                  className="btn btn-small"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : slots.slots && slots.slots.length > 0 ? (
+              <div className="booking-slot-list">
+                {slots.slots.map((slot) => {
+                  const label = formatInstantInZone(slot.startsAt, timeZone, {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  const isActive = selectedSlot === slot.startsAt;
+                  return (
+                    <button
+                      type="button"
+                      key={slot.startsAt}
+                      className={isActive ? "booking-time-card is-selected" : "booking-time-card"}
+                      aria-pressed={isActive}
+                      aria-label={`${label}, ${service?.name ?? "serviço"}, ${service?.durationMinutes ?? 0} minutos, disponível${isActive ? ", selecionado" : ""}`}
+                      onClick={() => {
+                        setSelectedSlot(slot.startsAt);
+                        setPicked(true);
+                      }}
+                    >
+                      <span className="booking-time-value">{label}</span>
+                      <span className="booking-time-divider" aria-hidden="true" />
+                      <span className="booking-time-details">
+                        <strong>{service?.name}</strong>
+                        <small>{service?.durationMinutes} min · Disponível</small>
+                      </span>
+                      <span className="booking-time-check" aria-hidden="true">
+                        {isActive ? "✓" : ""}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="booking-empty-slots">
+                Não há horários disponíveis nesta data. Escolha outro dia.
+              </p>
+            )}
+          </section>
 
           {bookState.error ? (
-            <p className="alert alert-error">{bookState.error}</p>
+            <p className="alert alert-error" role="alert">{bookState.error}</p>
           ) : null}
 
           {picked && selectedSlot ? (
