@@ -116,7 +116,7 @@ Pendência: introduzir Playwright e um ambiente com Supabase (Issue #30/#31).
 
 **Não implementado.** A aplicação não tem limitação de taxa; as rotas são estáticas
 e a escrita passa pelas RPCs do Supabase. Rate limiting deve ser definido na
-Issue #30 (PLATFORM), com o Supabase/Edge/Vercel, antes de expor a aplicação.
+Issue #30 (PLATFORM), com o Supabase/Edge ou a infraestrutura de hospedagem, antes de expor a aplicação.
 
 ## 6. Tratamento de erros e estados de carregamento
 
