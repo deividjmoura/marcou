@@ -98,7 +98,9 @@ Instruções completas e verificáveis em `docs/IDENTITY.md`. Resumo:
 
 ## 7. PR criada
 
-A PR é aberta nesta entrega e **não é mesclada**. O número e o estado das checks são atualizados aqui após a criação.
+- **PR #45** — https://github.com/deividjmoura/marcou/pull/45 (`arena/7d0010ae-marcou` → `main`), commit `ec9dc3d`.
+- **Não mesclada.** Nenhuma autorização de merge foi solicitada ou concedida.
+- Checks: rodar `gh pr checks 45` para o estado atual; o resultado é registrado aqui quando disponível.
 
 ## 8. Próximas prioridades recomendadas
 
