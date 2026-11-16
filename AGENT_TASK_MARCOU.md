@@ -1164,3 +1164,15 @@ Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de pr
 - Continuação desta entrega: aplicar tokens semânticos de bege/branco/rosé à folha global existente, preservando nomes de classes e fluxos; documentar paleta aplicada e pendências de contraste/revisão visual.
 - Permanecem pendentes auditoria WCAG por combinação de estado, revisão visual manual mobile/desktop, decisão fundamentada sobre fonte e ícones animados/licenças. Não declarar Issue #27 concluída até esses itens serem validados.
 - Nenhuma dependência externa, fonte, asset, migration, configuração remota ou deploy de produção foi adicionado/alterado.
+
+
+---
+
+## Entrega em andamento — Hardening de permissões SECURITY DEFINER (16/11/2026)
+
+- **PR:** [#41 — SECURITY: Restringir execução de funções SECURITY DEFINER](https://github.com/deividjmoura/marcou/pull/41), branch `fix/security-definer-execute-grants`, draft, sem merge.
+- **Achado:** as migrations 002/003 revogavam EXECUTE de `anon` e/ou `authenticated` em algumas funções `SECURITY DEFINER`, mas não revogavam explicitamente o grant padrão de `PUBLIC` do PostgreSQL. Assim, a ACL efetiva podia continuar permitindo chamadas por clientes apesar da intenção documentada de restringir rotinas de cron a `service_role`.
+- **Correção proposta:** migration aditiva `supabase/migrations/202611160001_harden_security_definer_grants.sql` revoga EXECUTE de `PUBLIC`, `anon` e `authenticated` em helpers internos/jobs e concede apenas os papéis necessários. Mantém agenda pública acessível a `anon`/ `authenticated`; restringe expiração e lembretes a `service_role`; criação/transição e APIs de leitura de notificações a `authenticated`.
+- **Testes:** `scripts/db-check.mjs` aplica a nova migration e verifica privilégios efetivos via `has_function_privilege`, inclusive a ausência de acesso aos helpers internos e a preservação do endpoint público de agenda.
+- **Coordenação:** achado registrado nas Issues #25 e #26. A PR não encerra nenhuma delas: scheduler real, política comercial de cancelamento/reembolso e provedor de e-mail continuam pendentes.
+- **Limites:** nenhuma migration foi aplicada ao Supabase remoto; nenhum secret, ambiente Vercel ou deploy de produção foi alterado. Aguardar CI e revisão antes de qualquer merge.

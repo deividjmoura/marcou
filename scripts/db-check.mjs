@@ -107,12 +107,66 @@ const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
   "supabase/migrations/202611150002_booking_operations.sql",
   "supabase/migrations/202611150003_notifications.sql",
+  "supabase/migrations/202611160001_harden_security_definer_grants.sql",
 ];
 
 for (const file of migrations) {
   const sql = await readFile(file, "utf8");
   await db.query(sql);
   console.log(`aplicada: ${file}`);
+}
+
+console.log("\n[permissões de funções SECURITY DEFINER]");
+{
+  const permissions = (
+    await db.query(`
+      select
+        has_function_privilege('anon', 'public.expire_stale_bookings()', 'EXECUTE') as anon_expire,
+        has_function_privilege('authenticated', 'public.expire_stale_bookings()', 'EXECUTE') as authenticated_expire,
+        has_function_privilege('service_role', 'public.expire_stale_bookings()', 'EXECUTE') as service_expire,
+        has_function_privilege('anon', 'public.create_booking(text, uuid, timestamptz, text, text, text)', 'EXECUTE') as anon_create_booking,
+        has_function_privilege('authenticated', 'public.create_booking(text, uuid, timestamptz, text, text, text)', 'EXECUTE') as authenticated_create_booking,
+        has_function_privilege('anon', 'public.transition_booking(uuid, text, text)', 'EXECUTE') as anon_transition,
+        has_function_privilege('authenticated', 'public.transition_booking(uuid, text, text)', 'EXECUTE') as authenticated_transition,
+        has_function_privilege('anon', 'public.create_booking_reminders(integer)', 'EXECUTE') as anon_reminders,
+        has_function_privilege('authenticated', 'public.create_booking_reminders(integer)', 'EXECUTE') as authenticated_reminders,
+        has_function_privilege('service_role', 'public.create_booking_reminders(integer)', 'EXECUTE') as service_reminders,
+        has_function_privilege('anon', 'public.get_provider_schedule(text, uuid, date, timestamptz, timestamptz)', 'EXECUTE') as anon_schedule,
+        has_function_privilege('authenticated', 'public.get_provider_schedule(text, uuid, date, timestamptz, timestamptz)', 'EXECUTE') as authenticated_schedule,
+        has_function_privilege('anon', 'public.mark_notification_read(uuid)', 'EXECUTE') as anon_mark_one,
+        has_function_privilege('authenticated', 'public.mark_notification_read(uuid)', 'EXECUTE') as authenticated_mark_one,
+        has_function_privilege('anon', 'public.mark_all_notifications_read()', 'EXECUTE') as anon_mark_all,
+        has_function_privilege('authenticated', 'public.mark_all_notifications_read()', 'EXECUTE') as authenticated_mark_all,
+        has_function_privilege('anon', 'public.is_interval_available(uuid, timestamptz, timestamptz)', 'EXECUTE') as anon_interval_helper,
+        has_function_privilege('authenticated', 'public.is_interval_available(uuid, timestamptz, timestamptz)', 'EXECUTE') as authenticated_interval_helper,
+        has_function_privilege('anon', 'public.notification_payloads(text, public.bookings, public.providers, text)', 'EXECUTE') as anon_notification_payloads,
+        has_function_privilege('authenticated', 'public.notification_payloads(text, public.bookings, public.providers, text)', 'EXECUTE') as authenticated_notification_payloads,
+        has_function_privilege('anon', 'public.notify_on_booking_event()', 'EXECUTE') as anon_notification_trigger,
+        has_function_privilege('authenticated', 'public.notify_on_booking_event()', 'EXECUTE') as authenticated_notification_trigger
+    `)
+  ).rows[0];
+
+  check("expiração em lote é exclusiva de service_role",
+    !permissions.anon_expire && !permissions.authenticated_expire && permissions.service_expire);
+  check("criação de reserva exige autenticação",
+    !permissions.anon_create_booking && permissions.authenticated_create_booking);
+  check("transição de reserva exige autenticação",
+    !permissions.anon_transition && permissions.authenticated_transition);
+  check("geração de lembretes é exclusiva de service_role",
+    !permissions.anon_reminders && !permissions.authenticated_reminders && permissions.service_reminders);
+  check("agenda pública permanece acessível a anon e authenticated",
+    permissions.anon_schedule && permissions.authenticated_schedule);
+  check("leitura de notificação exige autenticação",
+    !permissions.anon_mark_one && permissions.authenticated_mark_one);
+  check("leitura de todas notificações exige autenticação",
+    !permissions.anon_mark_all && permissions.authenticated_mark_all);
+  check("helpers SECURITY DEFINER não são executáveis por anon",
+    !permissions.anon_interval_helper &&
+    !permissions.authenticated_interval_helper &&
+    !permissions.anon_notification_payloads &&
+    !permissions.authenticated_notification_payloads &&
+    !permissions.anon_notification_trigger &&
+    !permissions.authenticated_notification_trigger);
 }
 
 function clientFor(role) {
