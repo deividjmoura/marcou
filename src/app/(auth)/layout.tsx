@@ -7,8 +7,8 @@ export default function AuthLayout({
 }) {
   return (
     <main className="auth-shell">
-      <Link href="/" className="brand" aria-label="Marcou, início">
-        marcou<span>.</span>
+      <Link href="/" className="brand brand-logo" aria-label="Marcou, início">
+        <img src="/branding/marcou-logo.svg" alt="Marcou." />
       </Link>
       {children}
     </main>
