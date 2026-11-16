@@ -68,15 +68,15 @@ describe("availabilityExceptionInputSchema", () => {
 
 describe("providerInputSchema", () => {
   it("valida slug e fuso", () => {
-    expect(
-      providerInputSchema.safeParse({
-        slug: "Studio-Ana",
-        displayName: "Studio Ana",
-        timezone: "America/Sao_Paulo",
-        isPublished: "on",
-        bookingHoldMinutes: 30,
-      }).success,
-    ).toBe(false);
+    const uppercaseSlug = providerInputSchema.safeParse({
+      slug: "Studio-Ana",
+      displayName: "Studio Ana",
+      timezone: "America/Sao_Paulo",
+      isPublished: "on",
+      bookingHoldMinutes: 30,
+    });
+    expect(uppercaseSlug.success).toBe(true);
+    if (uppercaseSlug.success) expect(uppercaseSlug.data.slug).toBe("studio-ana");
 
     expect(
       providerInputSchema.safeParse({
