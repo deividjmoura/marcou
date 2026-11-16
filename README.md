@@ -2,6 +2,8 @@
 
 Plataforma de agendamento online para prestadores de serviços.
 
+**Aplicação publicada:** https://marcoou.netlify.app
+
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript.
