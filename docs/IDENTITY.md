@@ -7,11 +7,25 @@ O Marcou usa exclusivamente **Supabase Auth** para autenticação. O perfil de a
 - Cadastro por e-mail/senha com nome em metadata e confirmação de e-mail quando habilitada no Supabase.
 - Login por e-mail/senha e logout.
 - Google OAuth pelo provedor Google do Supabase Auth, em **PKCE**.
-- Callback em `/auth/callback`, com troca de code por sessão e criação/atualização do perfil.
+- Callback OAuth em `/auth/callback`, com troca de code por sessão e criação/atualização do perfil.\n- Confirmação de cadastro por e-mail em `/auth/confirm`, com `token_hash` via `verifyOtp` no fluxo PKCE e provisionamento do perfil.
 - Complemento de perfil em `/perfil`; nome e telefone com DDD são obrigatórios para concluir o onboarding.
 - Recuperação em `/esqueci-senha` e redefinição autenticada em `/redefinir-senha`.
 - Redirecionamentos pós-login limitados a caminhos locais para evitar open redirect.
 - Falha de OAuth (consentimento cancelado, link expirado, erro do provedor) devolve o usuário ao login **com o destino original preservado** e mensagem específica.
+
+## Confirmação de e-mail no fluxo PKCE
+
+O cadastro SSR usa PKCE. O endpoint OAuth `/auth/callback` recebe `code`, mas o link de confirmação de cadastro deve usar `token_hash` e `verifyOtp`; não se deve enviar o link de confirmação diretamente ao callback OAuth.
+
+No Supabase Dashboard → Authentication → Email Templates → **Confirm signup**, configurar o link:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}">
+  Confirmar meu e-mail
+</a>
+```
+
+O cadastro envia `emailRedirectTo` como o destino final permitido no próprio domínio. A rota `/auth/confirm` valida o token, cria a sessão nos cookies, provisiona o perfil e encaminha para completar o telefone quando necessário. A URL final precisa estar na lista de Redirect URLs do Supabase; em produção/preview, permitir somente os domínios oficiais do Marcou com wildcard de caminhos, sem liberar domínios externos.
 
 ## PKCE (verificado em código)
 
