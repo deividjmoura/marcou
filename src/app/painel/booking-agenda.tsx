@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Booking } from "@/server/bookings";
 import {
   BOOKING_STATUS_CLASSES,
@@ -63,19 +63,15 @@ function localDateKey(booking: Booking): string {
 }
 
 export function BookingAgenda({ bookings }: { bookings: Booking[] }) {
-  const [period, setPeriod] = useState<Period>("upcoming");
+  const [period, setPeriod] = useState<Period>("all");
   const [search, setSearch] = useState("");
   const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    setNow(Date.now());
-  }, []);
 
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
     return bookings
       .filter((booking) => {
-        const isUpcoming = now === null || new Date(booking.starts_at).getTime() >= now;
+        const isUpcoming = now !== null && new Date(booking.starts_at).getTime() >= now;
         if (period === "upcoming" && !isUpcoming) return false;
         if (period === "past" && isUpcoming) return false;
         if (!normalizedSearch) return true;
@@ -120,7 +116,10 @@ export function BookingAgenda({ bookings }: { bookings: Booking[] }) {
             type="button"
             className={period === "upcoming" ? "btn btn-small" : "btn btn-small btn-ghost"}
             aria-pressed={period === "upcoming"}
-            onClick={() => setPeriod("upcoming")}
+            onClick={() => {
+              setNow(Date.now());
+              setPeriod("upcoming");
+            }}
           >
             Próximos
           </button>
@@ -128,7 +127,10 @@ export function BookingAgenda({ bookings }: { bookings: Booking[] }) {
             type="button"
             className={period === "past" ? "btn btn-small" : "btn btn-small btn-ghost"}
             aria-pressed={period === "past"}
-            onClick={() => setPeriod("past")}
+            onClick={() => {
+              setNow(Date.now());
+              setPeriod("past");
+            }}
           >
             Anteriores
           </button>
