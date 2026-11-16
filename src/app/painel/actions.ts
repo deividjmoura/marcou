@@ -62,7 +62,8 @@ export async function saveProviderAction(
   const raw = {
     slug: formData.get("slug"),
     displayName: formData.get("displayName"),
-    timezone: formData.get("timezone"),
+    description: formData.get("description"),
+    timezone: existing?.timezone ?? "America/Sao_Paulo",
     isPublished: formData.get("isPublished"),
     bookingHoldMinutes: formData.get("bookingHoldMinutes"),
   };
