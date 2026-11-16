@@ -111,14 +111,22 @@ a { color: inherit; text-decoration: none; }
   from { opacity: .72; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
 }
-/* A frase é revelada progressivamente, sem deslizar ou saltar na tela. */
-.hero h1 span {
-  display: inline-block;
-  clip-path: inset(0 100% 0 0);
-  animation: phrase-type 1.9s steps(21, end) .35s forwards;
+/* Cada letra surge em sequência, com desfoque suave semelhante a fumaça. */
+.hero h1 .headline-reveal {
+  display: inline;
+  color: var(--ds-color-brand-strong);
+  font-style: italic;
 }
-@keyframes phrase-type {
-  to { clip-path: inset(0 0 0 0); }
+.hero h1 .headline-reveal .smoke-letter {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(9px);
+  transform: translateY(5px);
+  animation: smoke-letter-in .52s cubic-bezier(.2,.65,.25,1) forwards;
+}
+@keyframes smoke-letter-in {
+  55% { opacity: .72; filter: blur(3px); transform: translateY(1px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
