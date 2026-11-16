@@ -101,12 +101,15 @@ a { color: inherit; text-decoration: none; }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn-ghost:hover { background: transparent; border-color: var(--ink); }
 .btn-small { padding: 7px 12px; font-size: 13px; }
-.hero-copy, .hero-card, .step { animation: content-enter .65s cubic-bezier(.2,.8,.2,1) both; }
-.hero-card { animation-delay: .1s; }
+.hero-copy, .hero-card, .step { animation-duration: .65s; animation-timing-function: cubic-bezier(.2,.8,.2,1); animation-fill-mode: both; }
+.hero-copy { animation-name: content-enter-left; }
+.hero-card { animation-name: content-enter-right; animation-delay: .1s; }
+.step { animation-name: content-enter-left; }
 .step:nth-child(2) { animation-delay: .08s; }
 .step:nth-child(3) { animation-delay: .16s; }
 @keyframes access-pill-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-@keyframes content-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes content-enter-left { from { opacity: .65; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes content-enter-right { from { opacity: .65; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
 /* Movimento concentrado na mensagem principal, sem fazer o conteúdo desaparecer durante a rolagem. */
 .hero h1 span {
   display: inline-block;
