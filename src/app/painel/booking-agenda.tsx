@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Booking } from "@/server/bookings";
 import {
   BOOKING_STATUS_CLASSES,
@@ -65,13 +65,17 @@ function localDateKey(booking: Booking): string {
 export function BookingAgenda({ bookings }: { bookings: Booking[] }) {
   const [period, setPeriod] = useState<Period>("upcoming");
   const [search, setSearch] = useState("");
-  const now = Date.now();
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
 
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
     return bookings
       .filter((booking) => {
-        const isUpcoming = new Date(booking.starts_at).getTime() >= now;
+        const isUpcoming = now === null || new Date(booking.starts_at).getTime() >= now;
         if (period === "upcoming" && !isUpcoming) return false;
         if (period === "past" && isUpcoming) return false;
         if (!normalizedSearch) return true;
