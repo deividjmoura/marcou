@@ -123,6 +123,10 @@ a { color: inherit; text-decoration: none; }
   color: var(--ds-color-brand-strong);
   font-style: italic;
 }
+.hero h1 .headline-reveal .headline-word {
+  display: inline-block;
+  white-space: nowrap;
+}
 .hero h1 .headline-reveal .smoke-letter {
   display: inline-block;
   opacity: 0;
