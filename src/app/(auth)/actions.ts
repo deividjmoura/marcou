@@ -287,7 +287,7 @@ export async function requestPasswordResetAction(
   const origin = await getAppOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${origin}/auth/callback?next=/redefinir-senha`,
+    redirectTo: `${origin}/auth/callback?flow=recovery&next=/redefinir-senha`,
   });
 
   if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
