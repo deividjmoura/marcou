@@ -422,15 +422,19 @@ a { color: inherit; text-decoration: none; }
 /* Barra de continuidade do agendamento: aparece após escolher um horário. */
 .booking-sticky-continue { display: none; }
 @media (max-width: 640px) {
+  .booking-widget.has-sticky-continue { padding-bottom: 104px; }
   .booking-sticky-continue {
-    position: sticky;
+    position: fixed;
+    left: 50%;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-    z-index: 15;
+    z-index: 100;
     display: flex;
+    width: min(520px, calc(100vw - 28px));
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin: 16px -4px 10px;
+    margin: 0;
+    transform: translateX(-50%);
     padding: 10px 12px;
     border: 1px solid var(--ds-color-line);
     border-radius: 18px;
