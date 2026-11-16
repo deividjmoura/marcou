@@ -45,8 +45,8 @@ export default async function ProviderPage({
           <span className="eyebrow">AGENDAMENTO ONLINE</span>
           <h1>{provider.display_name}</h1>
           <p className="muted">
-            Escolha o serviço e o horário. A confirmação chega depois da
-            validação do sinal.
+            {provider.description ||
+              "Escolha o serviço e o horário. A confirmação chega depois da validação do sinal."}
           </p>
         </div>
       </header>
