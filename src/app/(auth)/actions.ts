@@ -179,7 +179,10 @@ export async function signupAction(
     password: parsed.data.password,
     options: {
       data: { display_name: parsed.data.name },
-      emailRedirectTo: new URL(next, origin).toString(),
+      emailRedirectTo: new URL(
+        `/auth/callback?next=${encodeURIComponent(next)}`,
+        origin,
+      ).toString(),
     },
   });
 
