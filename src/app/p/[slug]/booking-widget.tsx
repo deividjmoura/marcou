@@ -100,8 +100,6 @@ export function BookingWidget({
       }
       setLoading(true);
       setSlots({ slots: null });
-      setSelectedSlot(null);
-      setPicked(false);
       try {
         const result = await fetchSlotsAction({ slug, serviceId, date });
         if (active) setSlots(result);
