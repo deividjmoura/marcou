@@ -472,6 +472,13 @@ type ProviderPanelMenuProps = {
   bookingsContent: ReactNode;
 };
 
+const PANEL_MENU_ITEMS = [
+  { id: "bookings", label: "Agendamentos", description: "Sua agenda e reservas", icon: "ic-agenda" },
+  { id: "business", label: "Meu negócio", description: "Informações e página pública", icon: "ic-local" },
+  { id: "services", label: "Serviços", description: "Preços, duração e cadastro", icon: "ic-sacola" },
+  { id: "availability", label: "Horários", description: "Expediente e exceções", icon: "ic-horario" },
+] as const;
+
 export function ProviderPanelMenu({
   provider,
   services,
@@ -480,60 +487,92 @@ export function ProviderPanelMenu({
   unreadCount,
   bookingsContent,
 }: ProviderPanelMenuProps) {
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuItems = [
-    { id: "business", label: "Dados do negócio", description: "Informações e página pública" },
-    { id: "services", label: "Serviços", description: "Preços, duração e cadastro" },
-    { id: "availability", label: "Horários de atendimento", description: "Expediente e exceções" },
-  ];
+  const [activeSection, setActiveSection] = useState<string>("bookings");
+  const activeItem = PANEL_MENU_ITEMS.find((item) => item.id === activeSection) ?? PANEL_MENU_ITEMS[0];
+
+  function renderSection() {
+    if (activeSection === "business") return <ProviderForm provider={provider} />;
+    if (activeSection === "services") return <ServicesManager services={services} />;
+    if (activeSection === "availability") return <AvailabilityManager rules={rules} exceptions={exceptions} />;
+    return bookingsContent;
+  }
 
   return (
-    <section className="provider-tools">
-      <div className="provider-tools-bar">
-        <div>
-          <span className="eyebrow">GERENCIAR</span>
-          <h2>{activeSection ? menuItems.find((item) => item.id === activeSection)?.label : "Menu do painel"}</h2>
+    <section className="provider-dashboard">
+      <aside className="provider-sidebar" aria-label="Navegação do painel">
+        <div className="provider-sidebar-brand">
+          <span className="provider-sidebar-mark" aria-hidden="true">m.</span>
+          <span><strong>Marcou</strong><small>PAINEL DO PRESTADOR</small></span>
         </div>
-        <button type="button" className="btn btn-ghost provider-menu-trigger"
-          aria-expanded={menuOpen} aria-controls="provider-panel-menu"
-          onClick={() => setMenuOpen((open) => !open)}>
-          <span aria-hidden="true">☰</span> Menu
-        </button>
-      </div>
-      {menuOpen ? (
-        <nav id="provider-panel-menu" className="provider-menu card" aria-label="Menu do painel">
-          {menuItems.map((item) => (
-            <button key={item.id} type="button" className="provider-menu-item"
-              onClick={() => { setActiveSection(item.id); setMenuOpen(false); }}>
+
+        <nav className="provider-sidebar-nav" aria-label="Seções do painel">
+          <span className="provider-nav-caption">MENU PRINCIPAL</span>
+          {PANEL_MENU_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`provider-nav-item ${activeSection === item.id ? "is-active" : ""}`}
+              aria-current={activeSection === item.id ? "page" : undefined}
+              onClick={() => setActiveSection(item.id)}
+            >
+              <svg className="provider-nav-icon" aria-hidden="true" viewBox="0 0 48 48">
+                <use href={`/icons/navigation/sprite.svg#${item.icon}`} />
+              </svg>
               <span><strong>{item.label}</strong><small>{item.description}</small></span>
-              <span aria-hidden="true">→</span>
             </button>
           ))}
-          <Link className="provider-menu-item" href={`/p/${provider.slug}`} target="_blank">
-            <span><strong>Visualizar página pública</strong><small>Ver como seus clientes enxergam sua página</small></span><span aria-hidden="true">↗</span>
-          </Link>
-          <Link className="provider-menu-item" href="/perfil?next=%2Fpainel">
-            <span><strong>Meu perfil</strong><small>Foto, nome, e-mail e telefone</small></span><span aria-hidden="true">→</span>
-          </Link>
-          <Link className="provider-menu-item" href="/notificacoes">
-            <span><strong>Notificações</strong><small>{unreadCount ? `${unreadCount} não lida(s)` : "Suas atualizações"}</small></span><span aria-hidden="true">→</span>
-          </Link>
-          <form action={logoutAction} className="provider-menu-logout">
-            <button type="submit" className="btn btn-ghost">Sair da conta</button>
-          </form>
         </nav>
-      ) : null}
-      {activeSection === null ? bookingsContent : null}
-      {activeSection ? (
-        <div className="provider-tool-content">
-          <button type="button" className="btn btn-small btn-ghost"
-            onClick={() => setActiveSection(null)}>← Voltar aos agendamentos</button>
-          {activeSection === "business" ? <ProviderForm provider={provider} /> : null}
-          {activeSection === "services" ? <ServicesManager services={services} /> : null}
-          {activeSection === "availability" ? <AvailabilityManager rules={rules} exceptions={exceptions} /> : null}
+
+        <div className="provider-sidebar-bottom">
+          <Link className="provider-utility-link" href={`/p/${provider.slug}`} target="_blank">
+            <span className="provider-utility-icon" aria-hidden="true">↗</span>
+            <span><strong>Ver página pública</strong><small>Como seus clientes veem</small></span>
+          </Link>
+          <Link className="provider-utility-link" href="/perfil?next=%2Fpainel">
+            <svg className="provider-nav-icon" aria-hidden="true" viewBox="0 0 48 48"><use href="/icons/navigation/sprite.svg#ic-perfil" /></svg>
+            <span><strong>Meu perfil</strong><small>Dados da sua conta</small></span>
+          </Link>
+          <Link className="provider-utility-link" href="/notificacoes">
+            <svg className="provider-nav-icon" aria-hidden="true" viewBox="0 0 48 48"><use href="/icons/navigation/sprite.svg#ic-notificacoes" /></svg>
+            <span><strong>Notificações</strong><small>{unreadCount ? `${unreadCount} não lida(s)` : "Suas atualizações"}</small></span>
+            {unreadCount > 0 ? <span className="provider-notification-count">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
+          </Link>
+          <form action={logoutAction} className="provider-sidebar-logout">
+            <button type="submit" className="provider-logout-button">Sair da conta <span aria-hidden="true">↗</span></button>
+          </form>
         </div>
-      ) : null}
+      </aside>
+
+      <div className="provider-dashboard-main">
+        <header className="provider-dashboard-heading">
+          <div>
+            <span className="eyebrow">SEU ESPAÇO DE TRABALHO</span>
+            <h2>{activeItem.label}</h2>
+            <p>{activeItem.description}</p>
+          </div>
+          <Link className="provider-public-shortcut" href={`/p/${provider.slug}`} target="_blank">
+            Visualizar página <span aria-hidden="true">↗</span>
+          </Link>
+        </header>
+        <div className="provider-dashboard-content" key={activeSection}>
+          {renderSection()}
+        </div>
+      </div>
+
+      <nav className="provider-mobile-nav" aria-label="Navegação principal">
+        {PANEL_MENU_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`provider-mobile-nav-item ${activeSection === item.id ? "is-active" : ""}`}
+            aria-current={activeSection === item.id ? "page" : undefined}
+            onClick={() => setActiveSection(item.id)}
+          >
+            <svg aria-hidden="true" viewBox="0 0 48 48"><use href={`/icons/navigation/sprite.svg#${item.icon}`} /></svg>
+            <span>{item.id === "availability" ? "Horários" : item.id === "business" ? "Negócio" : item.label}</span>
+          </button>
+        ))}
+      </nav>
     </section>
   );
 }
