@@ -32,8 +32,8 @@
 - **Cobertura de testes:** não medida (Vitest sem `--coverage`).
 
 ## Git
-- Branch `arena/a07661c5-marcou`, base `main` = `db0fd8d`.
-- PR #A_DEFINIR (aberta para `main`, vinculada à Issue #31).
+- Branch `arena/a07661c5-marcou`, base `main` = `db0fd8d`, commit `d3317b4`.
+- PR #42 (https://github.com/deividjmoura/marcou/pull/42), aberta para `main` e vinculada à Issue #31.
 - **Sem merge** — aguardando autorização do responsável.
 
 ---
@@ -816,7 +816,8 @@ Depois do JSON, manter em Markdown:
 
 ## Trabalho em andamento — respeitar branches de outros agentes
 
-- **PR #4 — calendário resiliente:** era um rascunho divergente (head `109f7ad`, merge-base `03ac75b`), com conflito apenas em `AGENT_TASK_MARCOU.md`. O conteúdo foi reaplicado e validado na branch `arena/c21c5188-marcou` (ver "Entrega registrada" no topo); a PR #4 original continua aberta e não foi alterada.
+- **PR #4 — calendário resiliente:** era um rascunho divergente (head `109f7ad`, merge-base `03ac75b`), com conflito apenas em `AGENT_TASK_MARCOU.md`. O conteúdo foi reaplicado e validado na branch `arena/c21c5188-marcou` e integrado pela **PR #37** (merge commit `db0fd8d`); a PR #4 original continua aberta e não foi alterada.
+- **PR #42 — QUALITY (Issue #31):** auditoria de segurança/RLS, contraste e verificações de repositório. Aberta, aguardando revisão.
 - **PR #1 e #2 — prévia visual pública/calendário:** rascunhos com dados demonstrativos; não tratar como fluxo real nem substituir o fluxo funcional.
 - Verificar novamente o estado das PRs e branches antes de iniciar, pois podem ter recebido commits desde esta atualização.
 
