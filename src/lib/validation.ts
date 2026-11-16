@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DateTime } from "luxon";
 
-const isoDate = z
+export const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Use o formato yyyy-mm-dd.")
   .refine((value) => DateTime.fromISO(value, { zone: "utc" }).isValid, {

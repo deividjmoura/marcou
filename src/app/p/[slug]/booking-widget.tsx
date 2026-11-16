@@ -48,6 +48,7 @@ export function BookingWidget({
   const [date, setDate] = useState(initialDate ?? today);
   const [slots, setSlots] = useState<SlotsState>(initialSlots);
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(
     initialSlot ?? null,
   );
@@ -67,10 +68,21 @@ export function BookingWidget({
         return;
       }
       setLoading(true);
-      const result = await fetchSlotsAction({ slug, serviceId, date });
-      if (active) {
-        setSlots(result);
-        setLoading(false);
+      setSlots({ slots: null });
+      try {
+        const result = await fetchSlotsAction({ slug, serviceId, date });
+        if (active) {
+          setSlots(result);
+        }
+      } catch {
+        if (active) {
+          setSlots({
+            slots: null,
+            error: "Não foi possível carregar os horários. Tente novamente.",
+          });
+        }
+      } finally {
+        if (active) setLoading(false);
       }
     }
 
@@ -78,7 +90,7 @@ export function BookingWidget({
     return () => {
       active = false;
     };
-  }, [slug, serviceId, date]);
+  }, [slug, serviceId, date, retryCount]);
 
   const service = services.find((item) => item.id === serviceId);
 
@@ -128,7 +140,20 @@ export function BookingWidget({
           </label>
 
           {loading ? (
-            <p className="muted">Carregando horários...</p>
+            <p className="muted" role="status" aria-live="polite">
+              Consultando disponibilidade em tempo real...
+            </p>
+          ) : slots.error ? (
+            <div className="alert alert-error" role="alert">
+              <p>{slots.error}</p>
+              <button
+                type="button"
+                className="btn btn-small"
+                onClick={() => setRetryCount((count) => count + 1)}
+              >
+                Tentar novamente
+              </button>
+            </div>
           ) : slots.slots && slots.slots.length > 0 ? (
             <div className="slot-grid">
               {slots.slots.map((slot) => {

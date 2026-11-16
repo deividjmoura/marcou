@@ -1,3 +1,33 @@
+# ✅ Entrega registrada — calendário e consulta de disponibilidade resilientes (15/11/2026)
+
+## Origem e diagnóstico
+- Conteúdo original: PR #4 (`fix/calendario-disponibilidade-resiliente`, head `109f7ad`), 5 commits, +72/−16 em `src/app/p/[slug]/actions.ts`, `src/app/p/[slug]/booking-widget.tsx` e `AGENT_TASK_MARCOU.md`.
+- A PR #4 estava divergente da `main` (merge-base `03ac75b`; `main` 18 commits à frente) e o GitHub marcava `mergeable=CONFLICTING` / `DIRTY`. O único conflito era este documento de continuidade; os dois arquivos de código não foram alterados pela `main` desde o merge-base.
+- Diagnóstico confirmado: a página pública já consulta a RPC `get_provider_schedule` e calcula slots pelo motor de disponibilidade; porém falhas/retorno nulo eram apresentados como se simplesmente não houvesse horários, e o campo de data aceitava datas impossíveis normalizadas pelo JavaScript.
+
+## O que foi implementado
+- `fetchSlotsAction` distingue "sem horários" de "falha na consulta" (`SlotsState.error`) e trata exceções inesperadas.
+- Validação de data por round-trip ISO (rejeita datas impossíveis normalizadas pelo JavaScript).
+- `BookingWidget`: estado de carregamento acessível (`role="status"`, `aria-live="polite"`), alerta de erro com `role="alert"`, botão "Tentar novamente" e efeito que não refaz a consulta ao selecionar horário.
+- Compatibilidade com o CSS atual: o botão de nova tentativa usa `btn btn-small` (a classe `btn-secondary` não existe em `globals.css`).
+
+## Validação executada (resultados reais, 15/11/2026)
+- `npm run lint` — sem erros.
+- `npm run typecheck` — sem erros.
+- `npm test` — 52/52 (5 arquivos; inclui 5 testes novos de `fetchSlotsAction` e 4 de `isoDate`).
+- `npm run test:db` — 45/45 em PostgreSQL embutido.
+- `npm run build` — OK; `/p/[slug]` permanece dinâmica.
+
+## Testes adicionados
+- `src/app/p/[slug]/actions.test.ts`: horários retornados, agenda vazia ≠ erro, retorno nulo → erro, exceção → erro, data impossível sem consultar o banco.
+- `src/lib/validation.test.ts`: `isoDate` aceita data válida e rejeita data impossível normalizada pelo JavaScript, mês/dia fora do intervalo e formato fora do padrão.
+- A regra de data passou a reutilizar o `isoDate` já existente em `src/lib/validation.ts` (mesmo validador das exceções de disponibilidade), eliminando duplicação.
+
+## Pendências e limites
+- Não há projeto Supabase remoto com credenciais confirmadas nesta sessão; a validação de infraestrutura remota não foi executada.
+- A entrega não altera banco, migrations, autenticação, notificações ou painel.
+
+---
 # Auditoria e merges verificados — 15/11/2026
 
 - PR #35 BOOKING-OPS merged via squash em `ad9983bf7f8b9e574d603b1efb33d08448326577`. Adiciona `docs/BOOKING-OPS.md` com matriz de estados/transições, hold, expiração, cancelamento, lacunas e dependências. CI run #48 passou: lint, typecheck, testes, test:db e build. Issue #25 permanece aberta: scheduler em ambiente real, política comercial e testes E2E ainda pendentes.
@@ -389,7 +419,7 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "head": "fix/calendario-disponibilidade-resiliente",
       "base": "main",
       "url": "https://github.com/deividjmoura/marcou/pull/4",
-      "note": "Preservar branch; revisar diff/CI antes de integrar."
+      "note": "Divergente (merge-base 03ac75b); conflito só em AGENT_TASK_MARCOU.md. Conteúdo reaplicado e validado na branch arena/c21c5188-marcou; ver seção de entrega no topo."
     },
     {
       "number": 32,
@@ -691,14 +721,13 @@ Depois do JSON, manter em Markdown:
 
 ## Trabalho em andamento — respeitar branches de outros agentes
 
-- **PR #4 — calendário resiliente:** aberta como rascunho, branch `fix/calendario-disponibilidade-resiliente`, head `109f7ad`. Não sobrescrever nem integrar sem revisar diff e CI.
+- **PR #4 — calendário resiliente:** era um rascunho divergente (head `109f7ad`, merge-base `03ac75b`), com conflito apenas em `AGENT_TASK_MARCOU.md`. O conteúdo foi reaplicado e validado na branch `arena/c21c5188-marcou` (ver "Entrega registrada" no topo); a PR #4 original continua aberta e não foi alterada.
 - **PR #1 e #2 — prévia visual pública/calendário:** rascunhos com dados demonstrativos; não tratar como fluxo real nem substituir o fluxo funcional.
 - Verificar novamente o estado das PRs e branches antes de iniciar, pois podem ter recebido commits desde esta atualização.
 
 ## Próxima tarefa delegada
 
 Implementar/auditar **agendamento com múltiplos serviços e expiração automática de reservas pendentes**, conforme a seção específica abaixo. O agente deve trabalhar em branch própria, sem tocar na PR #4 nem em branches de terceiros; criar migrations versionadas e testes; não aplicar migrations em Supabase remoto; abrir PR em rascunho e não fazer merge. Antes de alterar, comparar a implementação atual da `main` com o código existente e relatar lacunas reais. Ao terminar, atualizar este documento com fatos e validações executadas.
-
 ---
 
 # 🔴 INSTRUÇÕES MAIS RECENTES — LER PRIMEIRO
