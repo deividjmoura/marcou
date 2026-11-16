@@ -51,11 +51,6 @@ export default function Home() {
         <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-wordmark.svg" alt="Marcou." /></Link>
         <p>Feito para deixar os encontros mais simples.</p>
       </footer>
-
-      <nav className="floating-actions" aria-label="Ações rápidas">
-        <Link href="/login">Entrar</Link>
-        <Link href="/cadastro">Criar conta</Link>
-      </nav>
     </main>
   );
 }
