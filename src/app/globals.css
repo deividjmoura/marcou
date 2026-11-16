@@ -103,13 +103,19 @@ a { color: inherit; text-decoration: none; }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn-ghost:hover { background: transparent; border-color: var(--ink); }
 .btn-small { padding: 7px 12px; font-size: 13px; }
-/* O topo permanece estático; o movimento começa na seção de etapas. */
-.step { animation: content-enter-left .8s cubic-bezier(.2,.7,.25,1) both; }
-.step:nth-child(2) { animation-delay: .18s; }
-.step:nth-child(3) { animation-delay: .36s; }
+/* Os cards entram em sequência quando a seção aparece na tela. */
+.steps .step { opacity: 0; transform: translateX(-18px); }
+.steps.is-visible .step {
+  animation: content-enter-left .85s cubic-bezier(.2,.7,.25,1) both;
+}
+.steps.is-visible .step:nth-child(2) { animation-delay: .22s; }
+.steps.is-visible .step:nth-child(3) { animation-delay: .44s; }
 @keyframes content-enter-left {
-  from { opacity: .72; transform: translateX(-8px); }
+  from { opacity: 0; transform: translateX(-18px); }
   to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .steps .step { opacity: 1; transform: none; animation: none !important; }
 }
 /* Cada letra surge em sequência, com desfoque suave semelhante a fumaça. */
 .hero h1 .headline-reveal {
