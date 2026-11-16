@@ -1369,3 +1369,36 @@ Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de pr
 - Continuação desta entrega: aplicar tokens semânticos de bege/branco/rosé à folha global existente, preservando nomes de classes e fluxos; documentar paleta aplicada e pendências de contraste/revisão visual.
 - Permanecem pendentes auditoria WCAG por combinação de estado, revisão visual manual mobile/desktop, decisão fundamentada sobre fonte e ícones animados/licenças. Não declarar Issue #27 concluída até esses itens serem validados.
 - Nenhuma dependência externa, fonte, asset, migration, configuração remota ou deploy de produção foi adicionado/alterado.
+
+
+---
+
+## Configuração de produção — Netlify + Supabase (16/11/2026)
+
+### Endereço público confirmado pelo usuário
+- O usuário informou o domínio padrão da Netlify como **https://marcoou.netlify.app** (nome com dois caracteres "o" consecutivos: `marcoou`). Antes de salvar qualquer URL em produção, conferir visualmente no navegador/Netlify que o hostname está exatamente escrito assim.
+- Não usar `.netlify.com`: o domínio padrão informado é `.netlify.app`.
+
+### Variáveis de ambiente na Netlify
+- O usuário já cadastrou as duas variáveis solicitadas pelo projeto:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `src/lib/env.ts` confirma que essas são as duas variáveis públicas obrigatórias para inicializar o Supabase no frontend.
+- **Não pedir para cadastrar novamente** nem adicionar variáveis extras sem confirmar uso no código.
+- Foi sugerido `NEXT_PUBLIC_SITE_URL=https://marcoou.netlify.app`, mas a inspeção de `src/lib/env.ts` não mostrou leitura dessa variável. Tratar como **não confirmada/opcional**, não como requisito. Antes de orientar a criação, pesquisar o repositório por `NEXT_PUBLIC_SITE_URL` e verificar se há uso efetivo.
+- Na interface atual da Netlify, o usuário encontrou o menu **Project configuration**. Orientação passo a passo: abrir o projeto/site correto → **Project configuration** → localizar **Environment variables** → adicionar somente a variável previamente confirmada. Não insistir em "Site configuration" se a interface mostrar "Project configuration".
+- Após qualquer alteração de variável, salvar e disparar novo deploy (ou redeploy) para que o build/runtime receba o valor.
+
+### Configuração de autenticação no Supabase — etapa ainda pendente
+- Abrir Supabase → projeto Marcou → **Authentication → URL Configuration**.
+- Configurar **Site URL** com o endereço público exato confirmado no navegador: `https://marcoou.netlify.app` (validar grafia antes de salvar).
+- Adicionar em **Redirect URLs** o callback: `https://marcoou.netlify.app/auth/callback`.
+- Se houver preview deploys da Netlify, não liberar curingas amplos sem necessidade; cadastrar URLs específicas de preview somente quando forem usadas e com escopo restrito.
+- O callback implementado no app está em `src/app/auth/callback/route.ts`.
+- Confirmar também em Authentication → Providers / Email se confirmação de e-mail está habilitada e se SMTP está configurado. Não afirmar que entrega de e-mail está operacional sem teste real.
+- Login Google é configuração separada: exige credenciais OAuth do Google Cloud e habilitação do provider no Supabase. Não bloquear o primeiro teste de e-mail/senha por causa do Google.
+
+### Procedimento guiado com o usuário
+- O usuário pediu explicitamente instruções lentas, uma etapa por vez. Não despejar todos os passos em uma única resposta.
+- Próximo passo da conversa: usuário está dentro do projeto na Netlify e perguntou se **Project configuration** é o menu certo. Confirmar que sim e orientar apenas o próximo toque/clique para abrir **Environment variables**; aguardar confirmação antes de avançar.
+- Não declarar que configuração foi aplicada enquanto o usuário não confirmar que salvou. Não afirmar que login está validado até executar teste real de cadastro, confirmação de e-mail, login, recuperação de senha e retorno ao painel.
