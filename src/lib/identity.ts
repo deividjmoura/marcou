@@ -41,3 +41,25 @@ export function loginRedirectUrl(
   url.searchParams.set("next", next);
   return url.toString();
 }
+
+/** Mensagem segura para falhas conhecidas de login por senha. */
+export function passwordLoginErrorMessage(code?: string | null): string {
+  if (code === "email_not_confirmed") {
+    return "Seu e-mail ainda não foi confirmado. Abra o link enviado para concluir o cadastro.";
+  }
+  if (code === "over_request_rate_limit") {
+    return "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
+  }
+  return "E-mail ou senha incorretos.";
+}
+
+/** Mensagem segura para falhas conhecidas ao criar conta. */
+export function signupErrorMessage(code?: string | null): string {
+  if (code === "email_address_not_authorized") {
+    return "O envio de confirmação ainda não está habilitado para esse endereço. A equipe precisa configurar o serviço de e-mail do Marcou.";
+  }
+  if (code === "over_email_send_rate_limit") {
+    return "O limite de e-mails de confirmação foi atingido. Aguarde antes de tentar novamente.";
+  }
+  return "Não foi possível criar a conta com esses dados.";
+}
