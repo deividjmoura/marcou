@@ -11,10 +11,10 @@
 - Ao selecionar uma data, a página conduz a seção **Horários disponíveis** com scroll suave; respeita `prefers-reduced-motion`, mantém a data selecionada visível e usa `scroll-margin-top`.
 - O calendário continua consultando disponibilidade real e a reserva segue usando a ação de backend já existente.
 - O contrato atual permite um serviço por reserva. Seleção múltipla e duração combinada permanecem na Issue #21; a interface não simula suporte inexistente.
-- CI da PR #51 (run `43811590367`): lint, typecheck, testes, testes de banco e build concluídos com sucesso.
+- CI do commit final da PR #51 (run `43815526621`): lint, typecheck, testes, testes de banco e build concluídos com sucesso.
 - Nenhuma migration foi criada/aplicada e nenhum ambiente remoto/produção foi alterado.
 - Pendências desmembradas: #52 (imagem de serviço), #53 (foto do profissional), #54 (edição de perfil, URL e QR Code), #55 (auditoria/remoção do campo de intervalo). A Issue #21 continua responsável pelo motor multi-serviço; a #22 continua aberta para critérios restantes do fluxo público.
-- PR #51 está pronta para revisão; não foi mergeada.
+- PR #51 foi mergeada em `main` em 16/11/2026 por squash; commit integrado `6b778f00a642248ebf56c1e66fa8981cc71f1437`.
 
 
 ### Calendário e novo fluxo de agendamento
