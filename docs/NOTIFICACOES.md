@@ -109,25 +109,34 @@ Nada disso foi criado e nenhum botão de e-mail foi adicionado à interface.
 - `create_booking_reminders` criando e depois não duplicando no mesmo dia.
 
 
-## Scheduler de lembretes e expiração (implementação local)
 
-A rota `GET /api/cron` executa os dois jobs de domínio:
+## Endpoint de scheduler de lembretes e expiração (implementação local)
+
+A rota protegida `GET /api/cron` executa os dois jobs de domínio quando invocada:
 - `expire_stale_bookings()`: expira holds vencidos e registra o evento de auditoria;
 - `create_booking_reminders(24)`: cria notificações internas para reservas confirmadas que começam nas próximas 24 horas.
 
-A rota usa a service role **somente no servidor** e exige `Authorization: Bearer <CRON_SECRET>`. A comparação do token é feita em tempo constante. Sem segredo ou credenciais, a rota falha fechada (401/503); erros dos RPCs retornam 500 e são registrados sem expor credenciais. Os dois RPCs são idempotentes no banco, portanto a execução a cada cinco minutos não deve duplicar expirações ou lembretes.
+A rota usa a service role **somente no servidor** e exige `Authorization: Bearer <CRON_SECRET>`. A comparação do token é feita em tempo constante. Sem segredo ou credenciais, a rota falha fechada (401/503); erros dos RPCs retornam 500 e são registrados sem expor credenciais. Os dois RPCs são idempotentes no banco, portanto chamadas repetidas não devem duplicar expirações ou lembretes.
 
-### Configuração ainda necessária (não executada)
+### Agendamento ainda bloqueado por decisão de infraestrutura
 
-Adicionar ao ambiente **Production** do projeto Vercel, manualmente e fora do Git:
+A primeira tentativa de configurar Vercel Cron a cada cinco minutos recebeu falha de deployment. O link oficial indicado pelo check da Vercel leva à documentação de limites: no plano Hobby, Cron Jobs aceitam apenas uma execução por dia; frequências menores que diárias exigem Pro/Enterprise. Uma execução diária é inadequada para holds de reserva com duração padrão de 30 minutos. Por isso, **não deixamos uma agenda que possa quebrar o deploy nem reduzimos silenciosamente a frequência**.
+
+Para ativar corretamente, o responsável precisa confirmar um destes caminhos:
+- Vercel Pro/Enterprise, permitindo Cron a cada 5 minutos; ou
+- um scheduler externo/Supabase Cron com acesso seguro à rota/RPC.
+
+### Configuração necessária quando o scheduler for escolhido
+
+Adicionar ao ambiente **Production** da Vercel (ou ao ambiente do scheduler escolhido), manualmente e fora do Git:
 - `CRON_SECRET`: token aleatório forte (pelo menos 32 bytes);
 - `SUPABASE_SERVICE_ROLE_KEY`: service role key do projeto Supabase correspondente.
 
-A URL pública do Supabase já é lida de `NEXT_PUBLIC_SUPABASE_URL`. Não colocar a service role em variáveis `NEXT_PUBLIC_*`, arquivos versionados ou logs. A agenda Vercel só passa a executar após deploy de produção com a configuração de Cron e secrets; previews não devem receber a service role. Nenhuma variável, secret, migration remota ou deployment foi alterado nesta entrega.
+A URL pública do Supabase é lida de `NEXT_PUBLIC_SUPABASE_URL`. Não colocar a service role em variáveis `NEXT_PUBLIC_*`, arquivos versionados ou logs. Nenhuma variável, secret, migration remota ou deployment de produção foi alterado nesta entrega.
 
 ### Verificações e limites
 
 - Testes unitários cobrem token correto, token incorreto, header ausente/malformado e ausência de `CRON_SECRET`.
 - O CI valida lint, typecheck, testes, test:db e build.
-- Ainda depende de configuração manual dos secrets e confirmação do plano/projeto Vercel para execução agendada real.
+- A execução agendada real depende de decisão do plano/provedor, configuração manual dos secrets e deploy.
 - E-mail permanece fora desta entrega: falta o responsável escolher o provedor e autorizar sua configuração.
