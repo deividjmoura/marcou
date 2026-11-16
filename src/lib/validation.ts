@@ -87,6 +87,7 @@ export const providerInputSchema = z.object({
       "Use minúsculas, números e hífens.",
     ),
   displayName: z.string().trim().min(1, "Informe o nome do negócio.").max(80),
+  description: z.string().trim().max(180, "A frase deve ter até 180 caracteres.").optional().default(""),
   timezone: z
     .string()
     .trim()
