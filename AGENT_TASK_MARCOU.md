@@ -61,7 +61,7 @@ ambiente remoto, deploy ou configuração foi alterado por esta limpeza.
 - Campo de fuso horário removido da interface do painel. O fuso continua no backend, com padrão `America/Sao_Paulo`, pois é necessário para calcular disponibilidade e horários corretamente.
 - Campo opcional “Frase de impacto” adicionado ao cadastro do negócio; limite de 180 caracteres. A descrição é salva e exibida na página pública.
 - Migration pendente de aplicação no Supabase: `supabase/migrations/202611160001_provider_description.sql`.
-- Configuração versionada específica da Vercel removida (`vercel.json`). Deploy atual: Netlify.
+- Hospedagem e deploy do projeto: Netlify. Manter documentação, instruções e arquivos de configuração de deploy alinhados exclusivamente a esse provedor.
 
 ## Já concluído e integrado à main
 - Autenticação e perfil (PR #33), incluindo callback OAuth/PKCE, recuperação de senha e dados de perfil.
