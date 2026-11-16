@@ -4,6 +4,17 @@
 
 ## Em andamento
 
+### Issue #50 + parte pública da #22 — seleção de serviço e calendário
+- Branch: `feat/50-public-booking-experience`, criada a partir da `main` atual.
+- A seleção redundante de serviços na lateral foi removida da página pública.
+- A escolha do serviço agora aparece como cards horizontais dentro do fluxo de agendamento, com nome, descrição, duração, preço e placeholder visual quando ainda não há imagem cadastrada.
+- Ao selecionar uma data, a página rola suavemente até **Horários disponíveis**; respeita `prefers-reduced-motion` e usa margem de scroll para evitar posicionamento colado ao topo.
+- O motor atual ainda aceita um serviço por reserva. Multi-serviço depende da Issue #21 e não foi simulado na interface.
+- Upload/armazenamento de imagem por serviço, foto do profissional e edição/compartilhamento de perfil continuam pendentes; exigem implementação e validação próprias.
+- Nenhuma migration foi criada/aplicada e nenhum ambiente remoto foi alterado.
+- Validação automatizada desta branch: pendente de CI após abertura da PR.
+
+
 ### Calendário e novo fluxo de agendamento
 - Branch: `feat/novo-fluxo-agendamento-calendario`.
 - Base atual: `main`; a branch está 37 commits à frente e 0 atrás.
