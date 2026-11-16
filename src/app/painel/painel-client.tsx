@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { logoutAction } from "../(auth)/actions";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import {
   deleteExceptionAction,
   deleteRuleAction,
@@ -481,6 +481,7 @@ type ProviderPanelMenuProps = {
   rules: AvailabilityRuleRow[];
   exceptions: AvailabilityExceptionRow[];
   unreadCount: number;
+  bookingsContent: ReactNode;
 };
 
 export function ProviderPanelMenu({
@@ -489,6 +490,7 @@ export function ProviderPanelMenu({
   rules,
   exceptions,
   unreadCount,
+  bookingsContent,
 }: ProviderPanelMenuProps) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -534,6 +536,7 @@ export function ProviderPanelMenu({
           </form>
         </nav>
       ) : null}
+      {activeSection === null ? bookingsContent : null}
       {activeSection ? (
         <div className="provider-tool-content">
           <button type="button" className="btn btn-small btn-ghost"
