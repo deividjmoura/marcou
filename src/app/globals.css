@@ -87,7 +87,7 @@ a { color: inherit; text-decoration: none; }
 .step h3 { margin: 16px 0 8px; font-family: Georgia, serif; font-size: 17px; font-weight: 600; }
 .step p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
 .footer { border-top: 1px solid var(--line); }
-.topbar-actions { display: flex; align-items: center; gap: 18px; font-size: 14px; }
+.topbar-actions { display: flex; align-items: center; gap: 18px; padding: 6px 8px 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--ds-shadow-card); font-size: 14px; animation: access-pill-float 4.2s ease-in-out infinite; }
 .topbar-actions a:not(.btn):hover { color: var(--ds-color-brand-strong); }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; padding: 11px 18px;
@@ -104,6 +104,7 @@ a { color: inherit; text-decoration: none; }
 .hero-card { animation-delay: .1s; }
 .step:nth-child(2) { animation-delay: .08s; }
 .step:nth-child(3) { animation-delay: .16s; }
+@keyframes access-pill-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 @keyframes content-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
