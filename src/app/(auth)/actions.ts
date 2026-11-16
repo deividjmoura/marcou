@@ -9,7 +9,9 @@ import {
   isValidPhone,
   loginRedirectUrl,
   normalizePhone,
+  passwordLoginErrorMessage,
   safeNextPath,
+  signupErrorMessage,
 } from "@/lib/identity";
 
 export interface AuthState {
@@ -133,7 +135,7 @@ export async function loginAction(
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error || !data.user) {
-    return { error: "E-mail ou senha incorretos." };
+    return { error: passwordLoginErrorMessage(error?.code) };
   }
 
   try {
@@ -182,7 +184,7 @@ export async function signupAction(
   });
 
   if (error) {
-    return { error: "Não foi possível criar a conta com esses dados." };
+    return { error: signupErrorMessage(error.code) };
   }
 
   if (!data.user) {
