@@ -77,6 +77,9 @@ export function ProviderForm({ provider }: { provider: Provider | null }) {
             maxLength={48}
             pattern="^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$"
             defaultValue={provider?.slug ?? ""}
+            onChange={(event) => {
+              event.currentTarget.value = event.currentTarget.value.toLowerCase();
+            }}
             placeholder="exemplo: studio-ana"
             autoComplete="off"
             aria-describedby="provider-slug-help"
