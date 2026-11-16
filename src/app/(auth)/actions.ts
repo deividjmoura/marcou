@@ -291,7 +291,7 @@ export async function requestPasswordResetAction(
   });
 
   if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
-  return { success: "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha." };
+  return { success: "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Verifique também a caixa de spam ou lixo eletrônico, pois a mensagem pode ser direcionada para lá." };
 }
 
 export async function updatePasswordAction(
