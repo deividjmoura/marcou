@@ -96,19 +96,23 @@ export async function bookSlotAction(
     };
   }
 
+  let booking: Awaited<ReturnType<typeof createBooking>>;
   try {
-    const booking = await createBooking({
+    booking = await createBooking({
       slug: parsed.data.slug,
       serviceId: parsed.data.serviceId,
       startsAt: parsed.data.startsAt,
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone ?? "",
     });
-    redirect(`/reserva/${booking.id}`);
   } catch (error) {
     if (error instanceof BookingOperationError) {
       return { error: error.message };
     }
     return { error: "Não foi possível concluir a reserva. Tente novamente." };
   }
+
+  // Next.js redirect() throws an internal control-flow exception.
+  // Keep it outside this catch so a successful booking is not shown as a failure.
+  redirect(`/reserva/${booking.id}`);
 }
