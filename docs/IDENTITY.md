@@ -7,7 +7,8 @@ O Marcou usa exclusivamente **Supabase Auth** para autenticação. O perfil de a
 - Cadastro por e-mail/senha com nome em metadata e confirmação de e-mail quando habilitada no Supabase.
 - Login por e-mail/senha e logout.
 - Google OAuth pelo provedor Google do Supabase Auth, em **PKCE**.
-- Callback OAuth em `/auth/callback`, com troca de code por sessão e criação/atualização do perfil.\n- Confirmação de cadastro por e-mail em `/auth/confirm`, com `token_hash` via `verifyOtp` no fluxo PKCE e provisionamento do perfil.
+- Callback OAuth em `/auth/callback`, com troca de code por sessão e criação/atualização do perfil.
+- Confirmação de cadastro por e-mail em `/auth/confirm`, com `token_hash` via `verifyOtp` no fluxo PKCE e provisionamento do perfil.
 - Complemento de perfil em `/perfil`; nome e telefone com DDD são obrigatórios para concluir o onboarding.
 - Recuperação em `/esqueci-senha` e redefinição autenticada em `/redefinir-senha`.
 - Redirecionamentos pós-login limitados a caminhos locais para evitar open redirect.
