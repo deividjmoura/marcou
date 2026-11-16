@@ -86,7 +86,7 @@ export async function bookSlotAction(
     };
   }
 
-  let booking;
+  let booking: Awaited<ReturnType<typeof createBooking>>;
   try {
     booking = await createBooking({
       slug: parsed.data.slug,
