@@ -49,6 +49,13 @@ function Alert({ state }: { state: PainelActionState }) {
 export function ProviderForm({ provider }: { provider: Provider | null }) {
   const [state, action, pending] = useActionState(saveProviderAction, {});
 
+  // Um fuso já salvo que não está na lista curada precisa aparecer como opção,
+  // senão o `<select>` o substitui silenciosamente pelo primeiro da lista.
+  const timezoneOptions =
+    provider?.timezone && !TIMEZONES.includes(provider.timezone)
+      ? [provider.timezone, ...TIMEZONES]
+      : TIMEZONES;
+
   return (
     <form action={action} className="card form-stack">
       <h2>{provider ? "Dados do negócio" : "Seu negócio"}</h2>
@@ -91,7 +98,7 @@ export function ProviderForm({ provider }: { provider: Provider | null }) {
       <label className="field">
         <span>Fuso horário</span>
         <select name="timezone" defaultValue={provider?.timezone ?? "America/Sao_Paulo"}>
-          {TIMEZONES.map((zone) => (
+          {timezoneOptions.map((zone) => (
             <option key={zone} value={zone}>
               {zone.replace("_", " ")}
             </option>

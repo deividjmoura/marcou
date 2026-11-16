@@ -1,51 +1,96 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { safeNextPath } from "@/lib/identity";
+import { isSupabaseConfigured } from "@/lib/env";
+import {
+  loginRedirectUrl,
+  oauthErrorMessage,
+  safeNextPath,
+} from "@/lib/identity";
 
-export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
-  const code = searchParams.get("code");
-  const next = safeNextPath(searchParams.get("next"));
+const AUTH_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 
-  if (!code) {
-    return NextResponse.redirect(
-      new URL("/login?error=Não%20foi%20possível%20concluir%20a%20autenticação.", origin),
-    );
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return NextResponse.redirect(
-      new URL("/login?error=Não%20foi%20possível%20concluir%20a%20autenticação.", origin),
-    );
-  }
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    return NextResponse.redirect(new URL("/login", origin));
-  }
-
+/**
+ * Monta o perfil de um usuário recém-autenticado sem sobrescrever um nome
+ * escolhido pelo próprio usuário em `/perfil`.
+ */
+async function provisionProfile(
+  user: { id: string; user_metadata?: Record<string, unknown> },
+  supabase: Awaited<ReturnType<typeof createClient>>,
+) {
   const displayName =
     user.user_metadata?.display_name ??
     user.user_metadata?.full_name ??
     user.user_metadata?.name ??
     null;
 
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (typeof displayName === "string" && displayName.trim()) {
+  if (
+    !existing?.display_name &&
+    typeof displayName === "string" &&
+    displayName.trim()
+  ) {
     profileRow.display_name = displayName.trim().slice(0, 80);
   }
-  const { data: profile, error: profileError } = await supabase
+
+  return supabase
     .from("profiles")
     .upsert(profileRow, { onConflict: "id" })
     .select("phone")
     .single();
+}
 
-  if (profileError) {
-    return NextResponse.redirect(new URL("/login?error=Não%20foi%20possível%20carregar%20seu%20perfil.", origin));
+export async function GET(request: NextRequest) {
+  const { searchParams, origin } = request.nextUrl;
+  const code = searchParams.get("code");
+  const next = safeNextPath(searchParams.get("next"));
+  const providerError = searchParams.get("error");
+
+  if (!isSupabaseConfigured()) {
+    return NextResponse.redirect(
+      loginRedirectUrl(origin, next, AUTH_UNAVAILABLE_MESSAGE),
+    );
   }
 
-  const destination = profile.phone ? next : `/perfil?next=${encodeURIComponent(next)}`;
+  if (!code) {
+    const message = providerError
+      ? oauthErrorMessage(providerError)
+      : "Não foi possível concluir a autenticação. Tente novamente.";
+    return NextResponse.redirect(loginRedirectUrl(origin, next, message));
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    return NextResponse.redirect(
+      loginRedirectUrl(origin, next, oauthErrorMessage()),
+    );
+  }
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return NextResponse.redirect(loginRedirectUrl(origin, next));
+  }
+
+  const { data: profile, error: profileError } = await provisionProfile(
+    user,
+    supabase,
+  );
+
+  if (profileError) {
+    return NextResponse.redirect(
+      loginRedirectUrl(origin, next, "Não foi possível carregar seu perfil."),
+    );
+  }
+
+  const destination = profile.phone
+    ? next
+    : `/perfil?next=${encodeURIComponent(next)}`;
   return NextResponse.redirect(new URL(destination, origin));
 }

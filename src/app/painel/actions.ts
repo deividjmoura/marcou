@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isSupabaseConfigured } from "@/lib/env";
 import {
   providerInputSchema,
   providerSettingsSchema,
@@ -33,6 +34,13 @@ export interface PainelActionState {
   success?: string;
 }
 
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
+function unavailableState(): PainelActionState {
+  return { error: SUPABASE_UNAVAILABLE_MESSAGE };
+}
+
 async function ownedProviderOrError() {
   const user = await requireUser();
   return getOwnedProvider(user.id);
@@ -46,6 +54,8 @@ export async function saveProviderAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const user = await requireUser();
   const existing = await getOwnedProvider(user.id);
 
@@ -84,6 +94,8 @@ export async function saveServiceAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const intent = String(formData.get("intent") ?? "create");
   const serviceId = String(formData.get("serviceId") ?? "");
 
@@ -123,6 +135,8 @@ export async function saveServiceAction(
 }
 
 export async function toggleServiceAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 
@@ -142,6 +156,8 @@ export async function saveRuleAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = availabilityRuleInputSchema.safeParse({
     dayOfWeek: formData.get("dayOfWeek"),
     startsAt: formData.get("startsAt"),
@@ -172,6 +188,8 @@ export async function saveRuleAction(
 }
 
 export async function deleteRuleAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 
@@ -187,6 +205,8 @@ export async function saveExceptionAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = availabilityExceptionInputSchema.safeParse({
     date: formData.get("date"),
     kind: formData.get("kind"),
@@ -211,6 +231,8 @@ export async function saveExceptionAction(
 }
 
 export async function deleteExceptionAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 
@@ -233,6 +255,8 @@ const BOOKING_EVENTS: BookingEventName[] = [
 ];
 
 export async function providerBookingAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 

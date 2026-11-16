@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isSupabaseConfigured } from "@/lib/env";
 import { requireUser } from "@/server/bookings";
 import {
   markAllNotificationsRead,
@@ -10,6 +11,8 @@ import {
 export async function markNotificationReadAction(
   formData: FormData,
 ): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/notificacoes");
+
   await requireUser("/notificacoes");
 
   const notificationId = String(formData.get("notificationId") ?? "");
@@ -25,6 +28,8 @@ export async function markNotificationReadAction(
 }
 
 export async function markAllNotificationsReadAction(): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/notificacoes");
+
   await requireUser("/notificacoes");
 
   try {

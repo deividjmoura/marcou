@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isSupabaseConfigured } from "@/lib/env";
 import {
   BookingOperationError,
   getCurrentUser,
@@ -13,10 +14,15 @@ export interface ReservationActionState {
   success?: string;
 }
 
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
 export async function markProofReceivedAction(
   _prev: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  if (!isSupabaseConfigured()) return { error: SUPABASE_UNAVAILABLE_MESSAGE };
+
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -39,6 +45,8 @@ export async function cancelOwnBookingAction(
   _prev: ReservationActionState,
   formData: FormData,
 ): Promise<ReservationActionState> {
+  if (!isSupabaseConfigured()) return { error: SUPABASE_UNAVAILABLE_MESSAGE };
+
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 

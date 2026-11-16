@@ -3,12 +3,16 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { bookingInputSchema, isoDate } from "@/lib/validation";
+import { isSupabaseConfigured } from "@/lib/env";
 import {
   BookingOperationError,
   createBooking,
   getAvailableSlots,
   getCurrentUser,
 } from "@/server/bookings";
+
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 
 export interface SlotsState {
   slots: Array<{ startsAt: string; occupiedUntil: string; label: string }> | null;
@@ -22,6 +26,10 @@ const slotsSchema = z.object({
 });
 
 export async function fetchSlotsAction(input: unknown): Promise<SlotsState> {
+  if (!isSupabaseConfigured()) {
+    return { slots: null, error: SUPABASE_UNAVAILABLE_MESSAGE };
+  }
+
   const parsed = slotsSchema.safeParse(input);
   if (!parsed.success) return { slots: null };
 
@@ -56,6 +64,8 @@ export async function bookSlotAction(
   _prev: BookState,
   formData: FormData,
 ): Promise<BookState> {
+  if (!isSupabaseConfigured()) return { error: SUPABASE_UNAVAILABLE_MESSAGE };
+
   const user = await getCurrentUser();
   const slug = String(formData.get("slug") ?? "");
   const serviceId = String(formData.get("serviceId") ?? "");

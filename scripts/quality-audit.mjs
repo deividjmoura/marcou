@@ -101,6 +101,65 @@ console.log("\n[guarda de configuração]");
   }
 }
 
+console.log("\n[guarda de entrada]");
+{
+  // Ações de servidor e rotas também alcançam o Supabase. Sem a guarda, o
+  // envio de um formulário que depende do banco devolve HTTP 500 em vez de
+  // uma mensagem utilizável.
+  const entryFiles = trackedFiles().filter(
+    (file) =>
+      file.startsWith("src/app/") &&
+      /\/actions\.ts$|\/route\.ts$/.test(file) &&
+      !file.endsWith(".test.ts"),
+  );
+
+  for (const file of entryFiles) {
+    const content = readFileSync(file, "utf8");
+    const usesSupabase =
+      /@\/lib\/supabase\/(?:server|client)/.test(content) ||
+      /@\/server\/(?:bookings|services|notifications)/.test(content) ||
+      /requireUser\(/.test(content) ||
+      /createClient\(/.test(content);
+    if (!usesSupabase) continue;
+
+    if (/isSupabaseConfigured/.test(content)) {
+      console.log(`  ok   ${file}`);
+    } else {
+      warn(`${file} usa Supabase sem tratar a ausência de env`);
+    }
+  }
+}
+
+console.log("\n[oauth]");
+{
+  // O @supabase/ssr fixa `flowType: "pkce"` no cliente de servidor e de
+  // navegador. Criar o cliente direto de @supabase/supabase-js cai no fluxo
+  // implícito, que entrega o token no fragmento da URL e não funciona com o
+  // callback em rota de servidor.
+  const files = trackedFiles().filter(
+    (file) =>
+      file.startsWith("src/") && /\.(?:ts|tsx)$/.test(file) && !file.endsWith(".test.ts"),
+  );
+  const offenders = [];
+  for (const file of files) {
+    let content;
+    try {
+      content = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    if (/from\s+"@supabase\/supabase-js"/.test(content)) offenders.push(file);
+  }
+
+  if (offenders.length === 0) {
+    console.log("  ok   cliente Supabase sempre via @supabase/ssr (PKCE)");
+  } else {
+    fail(
+      `${offenders.join(", ")} cria cliente Supabase fora do @supabase/ssr (fluxo implícito, sem PKCE)`,
+    );
+  }
+}
+
 console.log(
   `\nresultado: ${failures} falha(s), ${warnings} aviso(s)`,
 );
