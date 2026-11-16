@@ -23,6 +23,7 @@ export interface Provider {
   owner_id: string;
   slug: string;
   display_name: string;
+  description: string | null;
   timezone: string;
   is_published: boolean;
   booking_hold_minutes: number;
