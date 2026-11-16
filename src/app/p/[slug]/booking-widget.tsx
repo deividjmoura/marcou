@@ -66,6 +66,7 @@ export function BookingWidget({
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(initialDate ?? today),
   );
+  const [weekDirection, setWeekDirection] = useState<"next" | "previous">("next");
   const [slots, setSlots] = useState<SlotsState>(initialSlots);
   const [loading, setLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -175,7 +176,10 @@ export function BookingWidget({
                   className="booking-week-nav"
                   aria-label="Semana anterior"
                   disabled={!canGoBack}
-                  onClick={() => setWeekStart((current) => addDaysIsoDate(current, -7))}
+                  onClick={() => {
+                    setWeekDirection("previous");
+                    setWeekStart((current) => addDaysIsoDate(current, -7));
+                  }}
                 >
                   ‹
                 </button>
@@ -184,14 +188,17 @@ export function BookingWidget({
                   className="booking-week-nav"
                   aria-label="Próxima semana"
                   disabled={!canGoForward}
-                  onClick={() => setWeekStart((current) => addDaysIsoDate(current, 7))}
+                  onClick={() => {
+                    setWeekDirection("next");
+                    setWeekStart((current) => addDaysIsoDate(current, 7));
+                  }}
                 >
                   ›
                 </button>
               </div>
             </div>
 
-            <div className="booking-week" role="group" aria-label="Dias disponíveis">
+            <div key={weekStart} className={`booking-week is-${weekDirection}`} role="group" aria-label="Dias disponíveis">
               {weekDays.map((day) => {
                 const disabled = day < today || day > maxDate;
                 const selected = day === date;
