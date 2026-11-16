@@ -37,7 +37,15 @@ A folha global mantém as classes e APIs CSS existentes, mas seus valores estrut
 
 ## Tipografia e licenças
 
-Nenhuma fonte externa foi adicionada nesta etapa. A base permanece em Arial/Helvetica, sem download de arquivos ou dependência nova. Uma fonte de marca só deve ser escolhida após avaliar licença, cobertura de caracteres portugueses, legibilidade mobile, peso e carregamento.
+A primeira combinação tipográfica foi aplicada com arquivos servidos pelo próprio app, sem requisições a serviços externos:
+
+- **Interface e textos:** Manrope Variable, pesos variáveis, pacote `@fontsource-variable/manrope@5.3.0`.
+- **Títulos e destaques editoriais:** Lora, pesos 400–600 e itálico 400, pacote `@fontsource/lora@5.3.0`.
+- As duas famílias usam SIL Open Font License 1.1; os avisos e textos integrais estão em `LICENSES/MANROPE-OFL.txt` e `LICENSES/LORA-OFL.txt`.
+- Ambas incluem subconjuntos Latin e Latin Extended, necessários para os caracteres em português. O fallback de sistema permanece definido nos tokens.
+- O arquivo de marca `public/branding/marcou-logo.svg` foi preservado; a tipografia não redesenha nem substitui o logotipo.
+
+A escolha é uma primeira versão revisável, não uma aprovação visual final. Evitar adicionar uma terceira família sem necessidade comprovada.
 
 ## Ícones e animações
 
@@ -48,11 +56,11 @@ Nenhuma biblioteca ou asset animado foi adicionado. Ícones animados devem ser p
 1. Fazer revisão visual por tela em desktop e mobile, incluindo estados de erro, sucesso, aviso e indisponibilidade.
 2. Medir contraste WCAG dos pares reais de texto/superfície e corrigir qualquer falha encontrada.
 3. Migrar componentes específicos para os tokens sem alterar comportamento e criar catálogo de exemplos.
-4. Avaliar fonte de marca e ícones animados somente após verificar licença, peso, fallback e acessibilidade.
+4. Revisar visualmente a dupla Manrope/Lora em desktop e mobile; avaliar ícones animados somente após verificar licença, peso, fallback e acessibilidade.
 
 ## Limites desta entrega
 
-Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. Não foram adicionadas dependências, fontes externas ou assets de terceiros.
+Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. Foram adicionadas duas famílias auto-hospedadas e suas licenças; nenhum ícone animado ou outro asset visual de terceiros foi incluído.
 
 
 ## Migração da paleta — 15/11/2026
