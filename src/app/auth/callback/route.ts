@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const next = safeNextPath(searchParams.get("next"));
   const flow = searchParams.get("flow");
+  const authType = searchParams.get("type");
   const providerError = searchParams.get("error");
 
   if (!isSupabaseConfigured()) {
@@ -81,7 +82,13 @@ export async function GET(request: NextRequest) {
 
   // Password recovery already has an authenticated PKCE session. Do not send
   // the user through profile onboarding: the password page is the destination.
-  if (flow === "recovery" && next === "/redefinir-senha") {
+  // Supabase may preserve the destination while dropping custom query metadata
+  // from the redirect URL. The dedicated reset destination is also an explicit
+  // recovery signal; never route it through profile onboarding.
+  if (
+    next === "/redefinir-senha" &&
+    (flow === "recovery" || authType === "recovery" || !flow)
+  ) {
     return NextResponse.redirect(new URL("/redefinir-senha", origin));
   }
 
