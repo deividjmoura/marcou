@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { bookingInputSchema } from "@/lib/validation";
+import { bookingInputSchema, isoDate } from "@/lib/validation";
 import {
   BookingOperationError,
   createBooking,
@@ -12,31 +12,40 @@ import {
 
 export interface SlotsState {
   slots: Array<{ startsAt: string; occupiedUntil: string; label: string }> | null;
+  error?: string;
 }
 
 const slotsSchema = z.object({
   slug: z.string().min(1),
   serviceId: z.string().uuid(),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .refine(
-      (value) => !Number.isNaN(new Date(`${value}T00:00:00.000Z`).getTime()),
-      { message: "Data inválida." },
-    ),
+  date: isoDate,
 });
 
 export async function fetchSlotsAction(input: unknown): Promise<SlotsState> {
   const parsed = slotsSchema.safeParse(input);
   if (!parsed.success) return { slots: null };
 
-  const slots = await getAvailableSlots({
-    slug: parsed.data.slug,
-    serviceId: parsed.data.serviceId,
-    date: parsed.data.date,
-  });
+  try {
+    const slots = await getAvailableSlots({
+      slug: parsed.data.slug,
+      serviceId: parsed.data.serviceId,
+      date: parsed.data.date,
+    });
 
-  return { slots };
+    if (!slots) {
+      return {
+        slots: null,
+        error: "Não foi possível consultar a disponibilidade deste serviço.",
+      };
+    }
+
+    return { slots };
+  } catch {
+    return {
+      slots: null,
+      error: "Falha ao consultar os horários. Verifique sua conexão e tente novamente.",
+    };
+  }
 }
 
 export interface BookState {

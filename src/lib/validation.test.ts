@@ -3,6 +3,7 @@ import {
   availabilityExceptionInputSchema,
   availabilityRuleInputSchema,
   bookingInputSchema,
+  isoDate,
   providerInputSchema,
   providerSettingsSchema,
   serviceInputSchema,
@@ -108,6 +109,27 @@ describe("providerSettingsSchema", () => {
       isPublished: true,
       bookingHoldMinutes: 30,
     }).success).toBe(false);
+  });
+});
+
+describe("isoDate", () => {
+  it("aceita uma data válida", () => {
+    expect(isoDate.safeParse("2026-12-01").success).toBe(true);
+  });
+
+  it("rejeita data impossível normalizada pelo JavaScript", () => {
+    // new Date("2026-02-30T00:00:00Z") vira 02/03; o round-trip revela a fraude.
+    expect(isoDate.safeParse("2026-02-30").success).toBe(false);
+  });
+
+  it("rejeita mês e dia fora do intervalo", () => {
+    expect(isoDate.safeParse("2026-13-01").success).toBe(false);
+    expect(isoDate.safeParse("2026-00-10").success).toBe(false);
+  });
+
+  it("rejeita formato fora do padrão", () => {
+    expect(isoDate.safeParse("01/12/2026").success).toBe(false);
+    expect(isoDate.safeParse("2026-1-1").success).toBe(false);
   });
 });
 
