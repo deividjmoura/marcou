@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { logoutAction } from "../(auth)/actions";
+
 import { useActionState, useState } from "react";
 import {
   deleteExceptionAction,
@@ -467,6 +470,76 @@ export function AvailabilityManager({
           {exceptionPending ? "Salvando..." : "Adicionar exceção"}
         </button>
       </form>
+    </section>
+  );
+}
+
+
+type ProviderPanelMenuProps = {
+  provider: Provider;
+  services: Service[];
+  rules: AvailabilityRuleRow[];
+  exceptions: AvailabilityExceptionRow[];
+  unreadCount: number;
+};
+
+export function ProviderPanelMenu({
+  provider,
+  services,
+  rules,
+  exceptions,
+  unreadCount,
+}: ProviderPanelMenuProps) {
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuItems = [
+    { id: "business", label: "Dados do negócio", description: "Informações e página pública" },
+    { id: "services", label: "Serviços", description: "Preços, duração e cadastro" },
+    { id: "availability", label: "Horários de atendimento", description: "Expediente e exceções" },
+  ];
+
+  return (
+    <section className="provider-tools">
+      <div className="provider-tools-bar">
+        <div>
+          <span className="eyebrow">GERENCIAR</span>
+          <h2>{activeSection ? menuItems.find((item) => item.id === activeSection)?.label : "Menu do painel"}</h2>
+        </div>
+        <button type="button" className="btn btn-ghost provider-menu-trigger"
+          aria-expanded={menuOpen} aria-controls="provider-panel-menu"
+          onClick={() => setMenuOpen((open) => !open)}>
+          <span aria-hidden="true">☰</span> Menu
+        </button>
+      </div>
+      {menuOpen ? (
+        <nav id="provider-panel-menu" className="provider-menu card" aria-label="Menu do painel">
+          {menuItems.map((item) => (
+            <button key={item.id} type="button" className="provider-menu-item"
+              onClick={() => { setActiveSection(item.id); setMenuOpen(false); }}>
+              <span><strong>{item.label}</strong><small>{item.description}</small></span>
+              <span aria-hidden="true">→</span>
+            </button>
+          ))}
+          <Link className="provider-menu-item" href="/perfil?next=%2Fpainel">
+            <span><strong>Meu perfil</strong><small>Foto, nome, e-mail e telefone</small></span><span aria-hidden="true">→</span>
+          </Link>
+          <Link className="provider-menu-item" href="/notificacoes">
+            <span><strong>Notificações</strong><small>{unreadCount ? `${unreadCount} não lida(s)` : "Suas atualizações"}</small></span><span aria-hidden="true">→</span>
+          </Link>
+          <form action={logoutAction} className="provider-menu-logout">
+            <button type="submit" className="btn btn-ghost">Sair da conta</button>
+          </form>
+        </nav>
+      ) : null}
+      {activeSection ? (
+        <div className="provider-tool-content">
+          <button type="button" className="btn btn-small btn-ghost"
+            onClick={() => setActiveSection(null)}>← Voltar aos agendamentos</button>
+          {activeSection === "business" ? <ProviderForm provider={provider} /> : null}
+          {activeSection === "services" ? <ServicesManager services={services} /> : null}
+          {activeSection === "availability" ? <AvailabilityManager rules={rules} exceptions={exceptions} /> : null}
+        </div>
+      ) : null}
     </section>
   );
 }
