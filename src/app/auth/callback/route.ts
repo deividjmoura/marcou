@@ -78,6 +78,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginRedirectUrl(origin, next));
   }
 
+  // Password recovery already has an authenticated PKCE session. Do not send
+  // the user through profile onboarding: the password page is the destination.
+  if (next === "/redefinir-senha") {
+    return NextResponse.redirect(new URL("/redefinir-senha", origin));
+  }
+
   const { data: profile, error: profileError } = await provisionProfile(
     user,
     supabase,
