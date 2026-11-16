@@ -89,7 +89,7 @@ a { color: inherit; text-decoration: none; }
 .step h3 { margin: 16px 0 8px; font-family: Georgia, serif; font-size: 17px; font-weight: 600; }
 .step p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
 .footer { border-top: 1px solid var(--line); }
-.topbar-actions { position: fixed; top: 18px; right: max(24px, calc((100vw - 1120px) / 2)); z-index: 50; display: flex; align-items: center; gap: 18px; padding: 6px 8px 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--ds-shadow-card); font-size: 14px; animation: access-pill-float 4.2s ease-in-out infinite; }
+.topbar-actions { position: fixed; top: 18px; right: max(24px, calc((100vw - 1120px) / 2)); z-index: 50; display: flex; align-items: center; gap: 18px; padding: 6px 8px 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--ds-shadow-card); font-size: 14px; }
 .topbar-actions a:not(.btn):hover { color: var(--ds-color-brand-strong); }
 .topbar-actions a:not(.btn), .topbar-actions .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .btn {
@@ -103,42 +103,22 @@ a { color: inherit; text-decoration: none; }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn-ghost:hover { background: transparent; border-color: var(--ink); }
 .btn-small { padding: 7px 12px; font-size: 13px; }
-.hero-copy, .hero-card, .step { animation-duration: .65s; animation-timing-function: cubic-bezier(.2,.8,.2,1); animation-fill-mode: both; }
-.hero-copy { animation-name: content-enter-left; }
-.hero-card { animation-name: content-enter-right; animation-delay: .1s; }
-.step { animation-name: content-enter-left; }
-.step:nth-child(2) { animation-delay: .08s; }
-.step:nth-child(3) { animation-delay: .16s; }
-@keyframes access-pill-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-@keyframes content-enter-left { from { opacity: .65; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes content-enter-right { from { opacity: .65; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
-/* Movimento concentrado na mensagem principal, sem fazer o conteúdo desaparecer durante a rolagem. */
-.hero h1 span {
-  display: inline-block;
-  position: relative;
-  animation: phrase-arrive .8s cubic-bezier(.2,.8,.2,1) both;
-  animation-delay: .22s;
-}
-.hero h1 span::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -5px;
-  height: 2px;
-  border-radius: 2px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left center;
-  animation: phrase-underline .75s ease-out both;
-  animation-delay: .72s;
-}
-@keyframes phrase-arrive {
-  from { opacity: .45; transform: translateX(14px); }
+/* O topo permanece estático; o movimento começa na seção de etapas. */
+.step { animation: content-enter-left .8s cubic-bezier(.2,.7,.25,1) both; }
+.step:nth-child(2) { animation-delay: .18s; }
+.step:nth-child(3) { animation-delay: .36s; }
+@keyframes content-enter-left {
+  from { opacity: .72; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
 }
-@keyframes phrase-underline {
-  to { transform: scaleX(1); }
+/* A frase é revelada progressivamente, sem deslizar ou saltar na tela. */
+.hero h1 span {
+  display: inline-block;
+  clip-path: inset(0 100% 0 0);
+  animation: phrase-type 1.9s steps(22, end) .35s forwards;
+}
+@keyframes phrase-type {
+  to { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -271,11 +251,6 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 12px 34px rgb(65 40 49 / 13%);
 }
 @media (hover: hover) and (pointer: fine) {
-  .hero-card:hover {
-    transform: translateY(-3px);
-    border-color: #d9b8c3;
-    box-shadow: 0 28px 76px rgb(65 40 49 / 12%);
-  }
   .step:hover {
     transform: translateY(-3px);
     border-color: #d9b8c3;
