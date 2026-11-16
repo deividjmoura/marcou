@@ -79,6 +79,7 @@ export const providerInputSchema = z.object({
   slug: z
     .string()
     .trim()
+    .toLowerCase()
     .min(3)
     .max(48)
     .regex(
