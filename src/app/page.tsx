@@ -43,7 +43,7 @@ export default function Home() {
       <section className="steps" aria-labelledby="steps-title">
         <div className="section-heading"><span className="eyebrow">SIMPLES DESDE O COMEÇO</span><h2 id="steps-title">Uma rotina mais organizada.</h2></div>
         <div className="steps-grid">
-          {steps.map((step) => <article className="step" key={step.number}><span>{step.number}</span><h3>{step.title}</h3><p>{step.description}</p></article>)}
+          {steps.map((step) => <article className="step" key={step.number}><h3>{step.title}</h3><p>{step.description}</p></article>)}
         </div>
       </section>
 
