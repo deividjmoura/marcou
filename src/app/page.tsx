@@ -2,6 +2,7 @@ import Link from "next/link";
 import StepsSection from "@/components/StepsSection";
 
 const headline = "Mais tempo atendendo.";
+const headlineWords = ["Mais", "tempo", "atendendo."];
 
 export default function Home() {
   return (
@@ -17,7 +18,7 @@ export default function Home() {
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">SUA AGENDA, NO SEU RITMO</span>
-          <h1>Menos tempo<br />organizando.<br /><span className="headline-reveal" aria-label={headline}>{headline.split("").map((character, index) => <span className="smoke-letter" aria-hidden="true" style={{ animationDelay: `${index * 0.075}s` }} key={index}>{character === " " ? "\u00a0" : character}</span>)}</span></h1>
+          <h1>Menos tempo<br />organizando.<br /><span className="headline-reveal" aria-label={headline}>{headlineWords.map((word, wordIndex) => <span className="headline-word" key={word}>{wordIndex > 0 ? " " : ""}{word.split("").map((character, characterIndex) => { const previousLetters = headlineWords.slice(0, wordIndex).reduce((total, item) => total + item.length, 0) + wordIndex; return <span className="smoke-letter" aria-hidden="true" style={{ animationDelay: `${(previousLetters + characterIndex) * 0.075}s` }} key={characterIndex}>{character}</span>; })}</span>)}</span></h1>
           <p>
             O Marcou está sendo preparado para ajudar prestadores de serviço a
             organizar horários e facilitar a vida de quem precisa marcar.
