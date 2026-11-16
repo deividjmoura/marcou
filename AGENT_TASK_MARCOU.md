@@ -1109,3 +1109,23 @@ Quando o responsável disser, por exemplo, “agente A fica com BOOKING”, esse
 - **#30 PLATFORM:** issue permanece aberta; PR #32 precisa corrigir os bloqueios acima.
 
 Nenhuma migration foi aplicada no Supabase remoto e nenhuma configuração de produção/Vercel foi alterada nesta auditoria.
+
+
+---
+
+## Entrega em andamento — Issue #27 DESIGN-SYSTEM
+
+- **Branch:** feat/27-design-system.
+- **Escopo inicial:** tokens semânticos de cor, tipografia, espaçamento, bordas, elevação e foco em src/styles/design-tokens.css; carregamento no layout raiz; documentação em docs/DESIGN-SYSTEM.md.
+- **Auditoria:** a main usa atualmente destaque verde (#b9e36a / #7aa52e), enquanto a Issue #27 registra direção bege/branco/rosé. A implementação inicial preserva o visual atual e registra a divergência para decisão, sem trocar a paleta silenciosamente.
+- **Acessibilidade:** foco visível global e respeito a prefers-reduced-motion incluídos; auditoria completa WCAG e validação por tela permanecem pendentes.
+- **Limites:** nenhuma dependência, fonte externa ou asset animado foi adicionado. A PR deverá permanecer aberta até CI e revisão visual.
+
+
+## Continuidade — Issue #27 DESIGN-SYSTEM (15/11/2026)
+
+- PR [#36](https://github.com/deividjmoura/marcou/pull/36), branch `feat/27-design-system`, permanece aberta em draft; head `b549a9fce6aa47975ce94900565bde13e90272ca` antes desta atualização.
+- CI run [#43777461982](https://github.com/deividjmoura/marcou/actions/runs/43777461982) passou integralmente: lint, typecheck, testes, test:db e build. Preview Vercel reportado como Ready.
+- Continuação desta entrega: aplicar tokens semânticos de bege/branco/rosé à folha global existente, preservando nomes de classes e fluxos; documentar paleta aplicada e pendências de contraste/revisão visual.
+- Permanecem pendentes auditoria WCAG por combinação de estado, revisão visual manual mobile/desktop, decisão fundamentada sobre fonte e ícones animados/licenças. Não declarar Issue #27 concluída até esses itens serem validados.
+- Nenhuma dependência externa, fonte, asset, migration, configuração remota ou deploy de produção foi adicionado/alterado.

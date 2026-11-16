@@ -1,11 +1,11 @@
 :root {
   color-scheme: light;
-  --ink: #20211f;
-  --muted: #777a72;
-  --paper: #f7f7f2;
-  --green: #b9e36a;
-  --line: #e6e8df;
-  --surface: #ffffff;
+  --ink: var(--ds-color-ink);
+  --muted: var(--ds-color-muted);
+  --paper: var(--ds-color-paper);
+  --green: var(--ds-color-brand);
+  --line: var(--ds-color-line);
+  --surface: var(--ds-color-surface);
 }
 
 * {
@@ -20,7 +20,7 @@ html {
 body {
   margin: 0;
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--ds-font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -49,7 +49,7 @@ a {
 }
 
 .brand span {
-  color: #7aa52e;
+  color: var(--ds-color-brand-strong);
 }
 
 .topbar-note,
@@ -68,7 +68,7 @@ a {
 
 .eyebrow,
 .muted-label {
-  color: #718b42;
+  color: var(--ds-color-brand-strong);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.7px;
@@ -82,7 +82,7 @@ a {
 }
 
 .hero h1 span {
-  color: #789d3c;
+  color: var(--ds-color-brand-strong);
 }
 
 .hero-copy > p {
@@ -97,7 +97,7 @@ a {
   align-items: center;
   gap: 9px;
   margin-top: 24px;
-  color: #555b4b;
+  color: var(--ds-color-muted);
   font-size: 12px;
   font-weight: 700;
 }
@@ -106,8 +106,8 @@ a {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #8db64a;
-  box-shadow: 0 0 0 4px #e6efd5;
+  background: #a85f78;
+  box-shadow: 0 0 0 4px #f4e2e8;
 }
 
 .hero-card {
@@ -115,7 +115,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--surface);
-  box-shadow: 0 24px 70px rgb(45 54 30 / 7%);
+  box-shadow: var(--ds-shadow-card);
 }
 
 .card-heading {
@@ -147,7 +147,7 @@ a {
   margin: 28px 0 18px;
   padding: 16px;
   border-radius: 13px;
-  background: #f5f7ef;
+  background: #f8f0f2;
 }
 
 .calendar-date span,
@@ -174,9 +174,9 @@ a {
   display: grid;
   gap: 5px;
   padding: 13px 15px;
-  border-left: 3px solid #91b84c;
+  border-left: 3px solid #a85f78;
   border-radius: 0 9px 9px 0;
-  background: #f4f8e9;
+  background: var(--ds-color-brand-soft);
 }
 
 .schedule-event strong,
@@ -197,13 +197,13 @@ a {
 .schedule-open {
   padding: 13px 15px;
   color: var(--muted);
-  border: 1px dashed #d9ddcf;
+  border: 1px dashed #e5d7dc;
   border-radius: 9px;
 }
 
 .card-footnote {
   margin: 20px 0 0;
-  color: #9a9d93;
+  color: #9b8b91;
   font-size: 10px;
   text-align: right;
 }
@@ -233,7 +233,7 @@ a {
 }
 
 .step > span {
-  color: #83a84a;
+  color: var(--ds-color-brand-strong);
   font-size: 12px;
   font-weight: 800;
 }
@@ -300,7 +300,7 @@ a {
 }
 
 .topbar-actions a:not(.btn):hover {
-  color: #7aa52e;
+  color: var(--ds-color-brand-strong);
 }
 
 .btn {
@@ -377,7 +377,7 @@ a {
 }
 
 .auth-footnote a {
-  color: #7aa52e;
+  color: var(--ds-color-brand-strong);
   font-weight: 700;
 }
 
@@ -442,11 +442,11 @@ a {
   font-weight: 400;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  outline: 2px solid var(--green);
-  outline-offset: 1px;
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  outline: 2px solid var(--ds-focus-color);
+  outline-offset: 2px;
   border-color: transparent;
 }
 
@@ -877,7 +877,7 @@ a {
 }
 
 .notification-bell:hover {
-  border-color: #cfd3c4;
+  border-color: #d9b8c3;
 }
 
 .notification-badge {
@@ -912,8 +912,8 @@ a {
 }
 
 .notification-row.is-unread {
-  border-color: #d7e6b4;
-  background: #fbfdf5;
+  border-color: var(--ds-color-brand);
+  background: var(--ds-color-brand-soft);
 }
 
 .notification-main {
