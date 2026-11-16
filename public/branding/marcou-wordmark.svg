@@ -1,11 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-labelledby="title desc">
-<title id="title">Marcou.</title><desc id="desc">Lettering ornamental em creme, com curvas e pequenos brilhos.</desc>
-<g fill="none" stroke="#f5e6d2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M42 139 C77 112 93 74 121 56 C145 41 170 57 158 81 C147 104 110 110 87 96 C68 84 69 63 85 51 C107 35 133 45 148 65 C170 95 180 135 211 148 C237 159 256 145 276 127" stroke-width="8"/>
-<path d="M78 150 C116 171 159 177 203 165 C242 154 259 124 284 112" stroke-width="6"/>
-<path d="M260 129 C278 88 299 54 326 50 C350 47 358 71 341 83 C326 94 304 87 301 72" stroke-width="7"/>
-<path d="M278 130 C303 151 330 158 356 142 C377 129 383 103 402 83" stroke-width="6"/>
-</g>
-<text x="177" y="143" fill="#f5e6d2" font-family="Georgia, 'Times New Roman', serif" font-size="104" font-style="italic" font-weight="700" letter-spacing="-8">Marcou.</text>
-<g fill="#f5e6d2"><circle cx="52" cy="88" r="5"/><circle cx="566" cy="73" r="5"/><circle cx="521" cy="174" r="4"/><path d="M566 118h5v13h-5zM562 122h13v5h-13zM105 20h5v13h-5zM101 24h13v5h-13z"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" role="img" aria-labelledby="title desc">
+  <title id="title">Marcou.</title>
+  <desc id="desc">Logotipo Marcou em lettering serifado preto, limpo e elegante.</desc>
+  <text x="320" y="126" text-anchor="middle" fill="#111111"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="116" font-style="italic" font-weight="700"
+    letter-spacing="-7">Marcou.</text>
 </svg>
