@@ -102,7 +102,7 @@ describe("GET /auth/callback", () => {
     mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
 
     const response = await GET(
-      callbackRequest("?code=recovery-code&next=%2Fredefinir-senha"),
+      callbackRequest("?code=recovery-code&flow=recovery&next=%2Fredefinir-senha"),
     );
 
     expect(response.headers.get("location")).toBe(
@@ -110,6 +110,20 @@ describe("GET /auth/callback", () => {
     );
     expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("recovery-code");
     expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("não trata um destino isolado como recuperação de senha", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
+    mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
+
+    const response = await GET(
+      callbackRequest("?code=abc&next=%2Fredefinir-senha"),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      `${ORIGIN}/perfil?next=%2Fredefinir-senha`,
+    );
+    expect(mocks.upsert).toHaveBeenCalled();
   });
 
   it("não sobrescreve um nome já escolhido pelo usuário", async () => {
