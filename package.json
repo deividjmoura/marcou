@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "node scripts/db-check.mjs"
+    "test:db": "node scripts/db-check.mjs",
+    "audit": "node scripts/quality-audit.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

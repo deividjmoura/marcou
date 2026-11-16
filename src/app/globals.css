@@ -203,7 +203,7 @@ a {
 
 .card-footnote {
   margin: 20px 0 0;
-  color: #9b8b91;
+  color: var(--muted);
   font-size: 10px;
   text-align: right;
 }

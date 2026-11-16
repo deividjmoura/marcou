@@ -1,3 +1,43 @@
+# ✅ Entrega registrada — auditoria de qualidade (Issue #31) — 16/11/2026
+
+**Status: implementado e verificado.** Escopo limitado à Issue #31 (QUALITY): testes automatizados, verificação de RLS/segurança, acessibilidade (contraste) e evidências de performance/E2E. Nenhuma funcionalidade de pagamento ou de calendário foi tocada; PR #38 e Issue #4 não foram alteradas.
+
+## O que entrou
+- `scripts/db-check.mjs`: nova seção `[segurança e RLS]` (8 verificações) — RLS em todas as tabelas, `search_path` fixo em `SECURITY DEFINER`, matriz de grants, escrita cross-tenant bloqueada e políticas de `notifications` com `auth.uid()`.
+- `src/styles/design-tokens.test.ts`: auditoria de contraste WCAG que lê os CSS publicados, resolve os tokens e mede os pares texto/fundo (falha abaixo de 4.5:1).
+- `scripts/quality-audit.mjs` + `npm run audit`: varredura de segredos em arquivos rastreados e verificação de que páginas que usam Supabase tratem a ausência de env.
+- `docs/QUALITY-AUDIT.md`: relatório com medições, severidade e bloqueios.
+- `package.json`: script `audit`.
+
+## Correções de acessibilidade aplicadas
+- `.card-footnote` (texto de 10px) usava `#9b8b91`: 3.23:1 no cartão e 2.94:1 no papel. Trocada para `var(--muted)`.
+- `--ds-color-muted` `#76686d` → `#736368`: 4.49:1 → 4.80:1 sobre `--ds-color-brand-soft`.
+
+## Validação executada (resultados reais)
+- `npm run lint` — sem erros.
+- `npm run typecheck` — sem erros.
+- `npm test` — 55/55 (6 arquivos; inclui 3 testes de contraste novos).
+- `npm run test:db` — 53/53 (45 anteriores + 8 de segurança/RLS).
+- `npm run audit` — 0 falhas, 2 avisos (páginas sem guarda de env; ver achado S1).
+- `npm run build` — OK.
+
+## Achados
+- **S1 (baixa):** `/perfil` e `/redefinir-senha` quebram sem Supabase configurado. Deixado para a Issue #23 (IDENTITY) — não corrigido aqui para não invadir o escopo do outro agente. O `npm run audit` os detecta.
+- **S2/S3 (informativos):** `authenticated` tem `UPDATE` em `notifications` (RLS limita ao próprio destinatário) e as RPCs de reserva são `SECURITY DEFINER` com autorização interna. Aceitos.
+
+## Bloqueios documentados (não resolvidos por falta de infraestrutura)
+- **E2E real:** requer Supabase configurado + navegador; não há Playwright/Cypress no repositório.
+- **Core Web Vitals/Lighthouse:** requer deploy autorizado.
+- **Rate limiting:** não implementado; responsabilidade da Issue #30.
+- **Cobertura de testes:** não medida (Vitest sem `--coverage`).
+
+## Git
+- Branch `arena/a07661c5-marcou`, base `main` = `db0fd8d`, commit `d3317b4`.
+- PR #42 (https://github.com/deividjmoura/marcou/pull/42), aberta para `main` e vinculada à Issue #31.
+- **Sem merge** — aguardando autorização do responsável.
+
+---
+
 # ✅ Entrega registrada — calendário e consulta de disponibilidade resilientes (15/11/2026)
 
 ## Origem e diagnóstico
@@ -232,10 +272,11 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       ]
     },
     "QUALITY": {
-      "status": "backlog_open",
+      "status": "em_andamento",
       "issues": [
         31
-      ]
+      ],
+      "note": "Auditoria de seguranca/RLS e contraste implementadas e verificadas; E2E e Core Web Vitals bloqueados por infraestrutura."
     }
   },
   "pull_requests": [
@@ -457,6 +498,16 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
       "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7",
       "url": "https://github.com/deividjmoura/marcou/pull/33",
       "note": "Implementação integrada; configuração Google Cloud/Supabase e validação SMTP permanecem pendentes."
+    },
+    {
+      "number": 37,
+      "title": "fix: calendário e consulta de disponibilidade resilientes (PR #4 rebaseada na main)",
+      "status": "merged",
+      "head": "arena/c21c5188-marcou",
+      "base": "main",
+      "merge_commit": "db0fd8d84e7f5a1a1b41385a9abb1cd2e4f3c63f",
+      "url": "https://github.com/deividjmoura/marcou/pull/37",
+      "note": "Substitui a PR #4; validação 55/55, 53/53, build OK."
     }
   ],
   "supabase": {
@@ -596,6 +647,44 @@ Concluir a fundação do Design System do Marcou: tokens visuais, tipografia, co
     ],
     "merge_commit": "8c1e85808d55e149e32213b1b4ce7e69e5259bc7"
   },
+  "quality_delivery": {
+    "status": "implementado_verificado",
+    "issue": 31,
+    "branch": "arena/a07661c5-marcou",
+    "report": "docs/QUALITY-AUDIT.md",
+    "artifacts": [
+      "scripts/db-check.mjs ([segurança e RLS], 8 verificações)",
+      "src/styles/design-tokens.test.ts (contraste WCAG)",
+      "scripts/quality-audit.mjs + npm run audit"
+    ],
+    "fixes": [
+      ".card-footnote: #9b8b91 -> var(--muted)",
+      "--ds-color-muted: #76686d -> #736368"
+    ],
+    "tests": {
+      "lint": "success",
+      "typecheck": "success",
+      "unit": "55/55",
+      "database": "53/53",
+      "build": "success",
+      "audit": "0 falhas, 2 avisos"
+    },
+    "blocked": [
+      "E2E real (requer Supabase configurado e navegador)",
+      "Core Web Vitals/Lighthouse (requer deploy autorizado)",
+      "Rate limiting (Issue #30)",
+      "Cobertura de testes (Vitest sem --coverage)"
+    ],
+    "findings": [
+      {
+        "id": "S1",
+        "severity": "baixa",
+        "summary": "/perfil e /redefinir-senha quebram sem Supabase configurado",
+        "owner": "Issue #23 (IDENTITY)",
+        "status": "documentado_nao_corrigido"
+      }
+    ]
+  },
   "audit_2026_11_15": {
     "merged_prs": [
       {
@@ -727,7 +816,8 @@ Depois do JSON, manter em Markdown:
 
 ## Trabalho em andamento — respeitar branches de outros agentes
 
-- **PR #4 — calendário resiliente:** era um rascunho divergente (head `109f7ad`, merge-base `03ac75b`), com conflito apenas em `AGENT_TASK_MARCOU.md`. O conteúdo foi reaplicado e validado na branch `arena/c21c5188-marcou` (ver "Entrega registrada" no topo); a PR #4 original continua aberta e não foi alterada.
+- **PR #4 — calendário resiliente:** era um rascunho divergente (head `109f7ad`, merge-base `03ac75b`), com conflito apenas em `AGENT_TASK_MARCOU.md`. O conteúdo foi reaplicado e validado na branch `arena/c21c5188-marcou` e integrado pela **PR #37** (merge commit `db0fd8d`); a PR #4 original continua aberta e não foi alterada.
+- **PR #42 — QUALITY (Issue #31):** auditoria de segurança/RLS, contraste e verificações de repositório. Aberta, aguardando revisão.
 - **PR #1 e #2 — prévia visual pública/calendário:** rascunhos com dados demonstrativos; não tratar como fluxo real nem substituir o fluxo funcional.
 - Verificar novamente o estado das PRs e branches antes de iniciar, pois podem ter recebido commits desde esta atualização.
 

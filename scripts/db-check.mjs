@@ -46,6 +46,14 @@ async function expectError(name, fn, messagePart) {
 
 const iso = (value) => new Date(value).toISOString();
 
+async function hasPrivilege(role, table, privilege) {
+  const result = await db.query(
+    `select has_table_privilege($1, $2, $3) as allowed`,
+    [role, `public.${table}`, privilege],
+  );
+  return Boolean(result.rows[0].allowed);
+}
+
 const databaseDir = path.join(os.tmpdir(), "marcou-pg-data");
 await rm(databaseDir, { recursive: true, force: true });
 
@@ -748,6 +756,145 @@ console.log("\n[notificações]");
   await outsiderNClient.end();
   await anonN.end();
   await serviceRole.end();
+}
+
+console.log("\n[segurança e RLS]");
+{
+  // 1. Toda tabela de negócio precisa ter RLS habilitada.
+  const tables = (
+    await db.query(`
+      select c.relname as name, c.relrowsecurity as rls
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'
+      order by c.relname
+    `)
+  ).rows;
+  const withoutRls = tables.filter((row) => !row.rls).map((row) => row.name);
+  check(
+    "todas as tabelas públicas têm RLS habilitada",
+    withoutRls.length === 0,
+    withoutRls.length ? `sem RLS: ${withoutRls.join(", ")}` : "",
+  );
+
+  // 2. Funções SECURITY DEFINER precisam fixar search_path (evita sequestro).
+  const definer = (
+    await db.query(`
+      select p.proname as name, p.proconfig as config
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.prosecdef
+      order by p.proname
+    `)
+  ).rows;
+  const unlocked = definer.filter(
+    (row) => !(row.config ?? []).some((entry) => String(entry).startsWith("search_path=")),
+  );
+  check(
+    "toda função SECURITY DEFINER fixa search_path",
+    unlocked.length === 0,
+    unlocked.length ? `sem search_path: ${unlocked.map((row) => row.name).join(", ")}` : "",
+  );
+
+  // 3. anon não pode escrever em nenhuma tabela; authenticated não escreve
+  //    em reservas/eventos/notificações (esses fluxos passam por RPC/trigger).
+  const businessTables = [
+    "profiles",
+    "providers",
+    "services",
+    "availability_rules",
+    "availability_exceptions",
+    "bookings",
+    "booking_events",
+    "notifications",
+  ];
+  const rpcOnlyTables = ["bookings", "booking_events", "notifications"];
+  const writePrivileges = ["INSERT", "UPDATE", "DELETE", "TRUNCATE"];
+  const anonWrites = [];
+  const authenticatedWrites = [];
+  for (const table of businessTables) {
+    for (const privilege of writePrivileges) {
+      if (await hasPrivilege("anon", table, privilege)) {
+        anonWrites.push(`${table}.${privilege}`);
+      }
+      // UPDATE de notifications é permitido ao próprio destinatário (RPC/RLS);
+      // INSERT/DELETE e escrita em reservas/eventos passam por RPC/trigger.
+      const notificationUpdate = table === "notifications" && privilege === "UPDATE";
+      if (
+        rpcOnlyTables.includes(table) &&
+        !notificationUpdate &&
+        (await hasPrivilege("authenticated", table, privilege))
+      ) {
+        authenticatedWrites.push(`${table}.${privilege}`);
+      }
+    }
+  }
+  check(
+    "anon não tem privilégios de escrita",
+    anonWrites.length === 0,
+    anonWrites.join(", "),
+  );
+  check(
+    "authenticated não insere/apaga reservas, eventos ou notificações",
+    authenticatedWrites.length === 0,
+    authenticatedWrites.join(", "),
+  );
+
+  // 4. RLS bloqueia escrita de outro estabelecimento (não só leitura).
+  const crossTenantUpdate = await ownerAClient
+    .query(`update public.providers set display_name = 'Invadido' where id = $1`, [
+      providerB,
+    ])
+    .catch(() => ({ rowCount: -1 }));
+  check(
+    "prestador A não atualiza o negócio de B",
+    crossTenantUpdate.rowCount === 0,
+    `rowCount=${crossTenantUpdate.rowCount}`,
+  );
+
+  const crossTenantService = await ownerAClient
+    .query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents)
+       values ($1, 'Serviço invasor', 30, 1000)`,
+      [providerB],
+    )
+    .then(() => true)
+    .catch(() => false);
+  check("prestador A não cria serviço em B", crossTenantService === false);
+
+  // 5. Notificações: sem insert/delete direto para autenticados e RLS por destinatário.
+  const notificationPolicies = (
+    await db.query(`
+      select polname, polcmd, pg_get_expr(polqual, polrelid) as using_expr
+      from pg_policy
+      where polrelid = 'public.notifications'::regclass
+      order by polname
+    `)
+  ).rows;
+  const recipientScoped = notificationPolicies.filter((row) =>
+    /auth\.uid\(\)/.test(row.using_expr ?? ""),
+  );
+  check(
+    "políticas de notifications usam auth.uid()",
+    notificationPolicies.length > 0 &&
+      recipientScoped.length === notificationPolicies.length,
+    notificationPolicies.map((row) => `${row.polname}:${row.using_expr}`).join(" | "),
+  );
+
+  // 6. A política de escrita não pode escapar do próprio destinatário.
+  const withCheck = (
+    await db.query(`
+      select polname, pg_get_expr(polwithcheck, polrelid) as check_expr
+      from pg_policy
+      where polrelid = 'public.notifications'::regclass and polwithcheck is not null
+    `)
+  ).rows;
+  check(
+    "políticas de update de notifications têm with check",
+    withCheck.length > 0 &&
+      withCheck.every((row) => /auth\.uid\(\)/.test(row.check_expr ?? "")),
+    withCheck.map((row) => `${row.polname}:${row.check_expr}`).join(" | "),
+  );
 }
 
 await ownerAClient.end();
