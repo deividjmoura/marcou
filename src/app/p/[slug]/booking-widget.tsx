@@ -227,10 +227,10 @@ export function BookingWidget({
             </div>
           </section>
 
-          <section className="booking-times-section" aria-labelledby="booking-times-title">
+          <section key={date} className="booking-times-section" aria-labelledby="booking-times-title">
             <div className="booking-times-heading">
               <h3 id="booking-times-title">Horários disponíveis</h3>
-              <span>{formatDate(date, { weekday: "short", day: "numeric", month: "short" })}</span>
+              <span aria-live="polite">{formatDate(date, { weekday: "short", day: "numeric", month: "short" })}</span>
             </div>
 
             {loading ? (
