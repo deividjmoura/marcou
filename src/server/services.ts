@@ -241,6 +241,7 @@ export async function createProvider(
       owner_id: ownerId,
       slug: input.slug,
       display_name: input.displayName,
+      description: input.description || null,
       timezone: input.timezone,
       is_published: input.isPublished,
       booking_hold_minutes: input.bookingHoldMinutes,
