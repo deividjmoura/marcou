@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <main className="page-shell">
       <nav className="topbar" aria-label="Navegação principal">
-        <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-wordmark.svg" alt="Marcou." /></Link>
+        <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-logo.svg" alt="Marcou." /></Link>
         <div className="topbar-actions">
           <Link href="/login">Entrar</Link>
           <Link href="/cadastro" className="btn btn-small">Criar conta</Link>
@@ -48,7 +48,7 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-wordmark.svg" alt="Marcou." /></Link>
+        <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-logo.svg" alt="Marcou." /></Link>
         <p>Feito para deixar os encontros mais simples.</p>
       </footer>
     </main>
