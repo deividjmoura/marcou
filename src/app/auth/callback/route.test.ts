@@ -112,12 +112,35 @@ describe("GET /auth/callback", () => {
     expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
-  it("não trata um destino isolado como recuperação de senha", async () => {
+  it("preserva a tela de redefinição quando o provedor omite o parâmetro flow", async () => {
     mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
     mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
 
     const response = await GET(
       callbackRequest("?code=abc&next=%2Fredefinir-senha"),
+    );
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/redefinir-senha`);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("reconhece o tipo recovery enviado pelo Supabase", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const response = await GET(
+      callbackRequest("?code=abc&type=recovery&next=%2Fredefinir-senha"),
+    );
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/redefinir-senha`);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("não trata outro fluxo com destino de redefinição como recuperação", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
+    mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
+
+    const response = await GET(
+      callbackRequest("?code=abc&flow=signup&next=%2Fredefinir-senha"),
     );
 
     expect(response.headers.get("location")).toBe(
