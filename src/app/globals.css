@@ -115,7 +115,7 @@ a { color: inherit; text-decoration: none; }
 .hero h1 span {
   display: inline-block;
   clip-path: inset(0 100% 0 0);
-  animation: phrase-type 1.9s steps(22, end) .35s forwards;
+  animation: phrase-type 1.9s steps(21, end) .35s forwards;
 }
 @keyframes phrase-type {
   to { clip-path: inset(0 0 0 0); }
