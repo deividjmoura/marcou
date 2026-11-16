@@ -4,7 +4,9 @@ import {
   loginRedirectUrl,
   normalizePhone,
   oauthErrorMessage,
+  passwordLoginErrorMessage,
   safeNextPath,
+  signupErrorMessage,
 } from "./identity";
 
 describe("identity helpers", () => {
@@ -44,6 +46,27 @@ describe("identity helpers", () => {
     );
     expect(oauthErrorMessage(null)).toBe(
       "Não foi possível concluir a autenticação. Tente novamente.",
+    );
+  });
+
+  it("explains confirmation-email and login rate-limit errors safely", () => {
+    expect(signupErrorMessage("email_address_not_authorized")).toContain(
+      "configurar o serviço de e-mail",
+    );
+    expect(signupErrorMessage("over_email_send_rate_limit")).toContain(
+      "limite de e-mails",
+    );
+    expect(signupErrorMessage("email_exists")).toBe(
+      "Não foi possível criar a conta com esses dados.",
+    );
+    expect(passwordLoginErrorMessage("email_not_confirmed")).toContain(
+      "ainda não foi confirmado",
+    );
+    expect(passwordLoginErrorMessage("over_request_rate_limit")).toContain(
+      "Muitas tentativas",
+    );
+    expect(passwordLoginErrorMessage("invalid_credentials")).toBe(
+      "E-mail ou senha incorretos.",
     );
   });
 
