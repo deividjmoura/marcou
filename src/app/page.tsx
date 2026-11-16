@@ -1,10 +1,5 @@
 import Link from "next/link";
-
-const steps = [
-  { number: "01", title: "Apresente seus serviços", description: "Organize serviços, duração e valores em um catálogo simples." },
-  { number: "02", title: "Compartilhe seus horários", description: "Deixe seus clientes encontrarem os horários disponíveis." },
-  { number: "03", title: "Cuide da sua agenda", description: "Acompanhe solicitações e confirmações em um só lugar." },
-];
+import StepsSection from "@/components/StepsSection";
 
 const headline = "Mais tempo atendendo.";
 
@@ -42,12 +37,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="steps" aria-labelledby="steps-title">
-        <div className="section-heading"><span className="eyebrow">SIMPLES DESDE O COMEÇO</span><h2 id="steps-title">Uma rotina mais organizada.</h2></div>
-        <div className="steps-grid">
-          {steps.map((step) => <article className="step" key={step.number}><h3>{step.title}</h3><p>{step.description}</p></article>)}
-        </div>
-      </section>
+      <StepsSection />
 
       <footer className="footer">
         <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-logo.svg" alt="Marcou." /></Link>
