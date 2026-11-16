@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   bookSlotAction,
   fetchSlotsAction,
@@ -74,6 +74,8 @@ export function BookingWidget({
     initialSlot ?? null,
   );
   const [picked, setPicked] = useState(false);
+  const [showStickyContinue, setShowStickyContinue] = useState(false);
+  const bookingFormRef = useRef<HTMLFormElement>(null);
 
   const [bookState, bookAction, bookingPending] = useActionState(
     bookSlotAction,
@@ -132,6 +134,13 @@ export function BookingWidget({
     setDate(nextDate);
     setSelectedSlot(null);
     setPicked(false);
+    setShowStickyContinue(false);
+  }
+
+  function continueToDetails() {
+    setShowStickyContinue(false);
+    bookingFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    bookingFormRef.current?.querySelector<HTMLInputElement>('input[name="customerName"]')?.focus({ preventScroll: true });
   }
 
   return (
@@ -153,6 +162,7 @@ export function BookingWidget({
                 setServiceId(event.target.value);
                 setSelectedSlot(null);
                 setPicked(false);
+                setShowStickyContinue(false);
               }}
             >
               {services.map((item) => (
@@ -273,6 +283,7 @@ export function BookingWidget({
                       onClick={() => {
                         setSelectedSlot(slot.startsAt);
                         setPicked(true);
+                        setShowStickyContinue(true);
                       }}
                     >
                       <span className="booking-time-value">{label}</span>
@@ -295,12 +306,24 @@ export function BookingWidget({
             )}
           </section>
 
+          {picked && selectedSlot && showStickyContinue ? (
+            <div className="booking-sticky-continue">
+              <div className="booking-sticky-summary" aria-live="polite">
+                <span>HORÁRIO ESCOLHIDO</span>
+                <strong>{formatDate(date, { weekday: "short", day: "2-digit", month: "short" })} · {formatInstantInZone(selectedSlot, timeZone, { hour: "2-digit", minute: "2-digit" })}</strong>
+              </div>
+              <button type="button" className="btn booking-sticky-button" onClick={continueToDetails}>
+                Preencher dados <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          ) : null}
+
           {bookState.error ? (
             <p className="alert alert-error" role="alert">{bookState.error}</p>
           ) : null}
 
           {picked && selectedSlot ? (
-            <form action={bookAction} className="form-stack booking-confirm">
+            <form ref={bookingFormRef} action={bookAction} className="form-stack booking-confirm">
               <input type="hidden" name="slug" value={slug} />
               <input type="hidden" name="serviceId" value={serviceId} />
               <input type="hidden" name="date" value={date} />
