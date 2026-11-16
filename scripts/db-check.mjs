@@ -116,7 +116,7 @@ for (const file of migrations) {
   console.log(`aplicada: ${file}`);
 }
 
-console.log("\\n[permissões de funções SECURITY DEFINER]");
+console.log("\n[permissões de funções SECURITY DEFINER]");
 {
   const permissions = (
     await db.query(`
@@ -138,8 +138,11 @@ console.log("\\n[permissões de funções SECURITY DEFINER]");
         has_function_privilege('anon', 'public.mark_all_notifications_read()', 'EXECUTE') as anon_mark_all,
         has_function_privilege('authenticated', 'public.mark_all_notifications_read()', 'EXECUTE') as authenticated_mark_all,
         has_function_privilege('anon', 'public.is_interval_available(uuid, timestamptz, timestamptz)', 'EXECUTE') as anon_interval_helper,
+        has_function_privilege('authenticated', 'public.is_interval_available(uuid, timestamptz, timestamptz)', 'EXECUTE') as authenticated_interval_helper,
         has_function_privilege('anon', 'public.notification_payloads(text, public.bookings, public.providers, text)', 'EXECUTE') as anon_notification_payloads,
-        has_function_privilege('anon', 'public.notify_on_booking_event()', 'EXECUTE') as anon_notification_trigger
+        has_function_privilege('authenticated', 'public.notification_payloads(text, public.bookings, public.providers, text)', 'EXECUTE') as authenticated_notification_payloads,
+        has_function_privilege('anon', 'public.notify_on_booking_event()', 'EXECUTE') as anon_notification_trigger,
+        has_function_privilege('authenticated', 'public.notify_on_booking_event()', 'EXECUTE') as authenticated_notification_trigger
     `)
   ).rows[0];
 
@@ -159,8 +162,11 @@ console.log("\\n[permissões de funções SECURITY DEFINER]");
     !permissions.anon_mark_all && permissions.authenticated_mark_all);
   check("helpers SECURITY DEFINER não são executáveis por anon",
     !permissions.anon_interval_helper &&
+    !permissions.authenticated_interval_helper &&
     !permissions.anon_notification_payloads &&
-    !permissions.anon_notification_trigger);
+    !permissions.authenticated_notification_payloads &&
+    !permissions.anon_notification_trigger &&
+    !permissions.authenticated_notification_trigger);
 }
 
 function clientFor(role) {
