@@ -128,8 +128,7 @@ export default async function PainelPage() {
         rules={rules}
         exceptions={exceptions}
         unreadCount={unread}
-      />
-
+        bookingsContent={(
       <section className="card">
         <h2>Agendamentos</h2>
         {bookings.length === 0 ? (
@@ -188,6 +187,8 @@ export default async function PainelPage() {
           </div>
         )}
       </section>
+        )}
+      />
     </main>
   );
 }
