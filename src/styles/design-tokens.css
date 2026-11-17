@@ -23,6 +23,7 @@
   --ds-font-size-md: 1rem;
   --ds-font-size-lg: 1.125rem;
   --ds-font-size-xl: 1.5rem;
+  --ds-font-size-display: clamp(1.75rem, 4vw, 2.25rem);
   --ds-line-height-body: 1.6;
   --ds-line-height-heading: 1.15;
   --ds-space-1: 0.25rem;
