@@ -1,5 +1,3 @@
-"use client";
-
 interface CalendarDownloadButtonProps {
   bookingId: string;
   startsAt: string;
