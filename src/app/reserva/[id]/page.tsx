@@ -6,13 +6,13 @@ import {
   getBooking,
   getProviderById,
   requireUser,
+  type BookingStatus,
 } from "@/server/bookings";
 import { ReservationActions } from "./reservation-actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
 import { countUnreadNotifications } from "@/server/notifications";
-import type { BookingStatus } from "@/server/bookings";
 import { CalendarDownloadButton } from "./calendar-download";
 
 const RESERVATION_FEEDBACK: Record<BookingStatus, { title: string; description: string }> = {
