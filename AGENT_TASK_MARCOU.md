@@ -1,6 +1,22 @@
 # Marcou — estado atual e continuidade
 
-Última atualização: 16/11/2026
+Última atualização: 18/11/2026
+
+## Correção da recuperação de senha — 18/11/2026
+
+**Sintoma relatado:** o link de recuperação enviado por e-mail leva à landing page em vez de `/redefinir-senha`.
+
+**Causa:** o Supabase valida o `redirectTo` contra Authentication → URL Configuration → Redirect URLs comparando a URL completa (query string incluída) e, quando não casa, **substitui silenciosamente pelo Site URL**. O `redirectTo` era `<origem>/auth/callback?flow=recovery&next=/redefinir-senha`; uma entrada exata `/auth/callback` não casava, então o link caía na raiz do site com um `code` que nada consumia.
+
+**Correção (branch `arena/ee322640-marcou`):**
+- `requestPasswordResetAction` agora envia `redirectTo: <origem>/auth/callback` (sem query), casando com a entrada exata mais simples.
+- `/auth/callback` reconhece recuperação por `redirectType === "recovery"` (devolvido pela troca do code), além de manter o marcador `flow`/`next` antigo.
+- O callback usa `sb_flow_id` quando presente e tem mensagem própria para verificador PKCE ausente (link aberto em outro navegador).
+- `proxy.ts` encaminha para `/auth/callback` qualquer `code` recebido em caminho comum (landing, `/login`, etc.), com `cache-control: no-store`. É a rede de segurança para o caso de a allowlist ainda estar faltando.
+- **Bug encontrado na revisão:** o proxy estava em `proxy.ts` na raiz, mas com `src/app` o Next 16 só reconhece `src/proxy.ts` (ele scanneia o pai de `appDir`). O proxy nunca rodou — a renovação de sessão do Supabase não acontecia. O arquivo foi movido para `src/proxy.ts`; o build passou a listar `Proxy (Middleware)` e o fallback responde 307 em produção.
+- Testes: 85 passando (10 arquivos), incluindo fallback de code no proxy, recuperação por `redirectType` e ausência de verificador. `lint`, `typecheck`, `build`, `test:db` (53) e `audit` sem falhas.
+
+**Ação do responsável (Supabase Dashboard):** Site URL `https://marcoou.netlify.app` e Redirect URLs `http://localhost:3000/**` + `https://marcoou.netlify.app/**`. Detalhes em `docs/IDENTITY.md`. Mesmo sem isso, o proxy já resgata o link; a allowlist evita a dependência do fallback.
 
 ## Limpeza de branches já mergeadas — 16/11/2026
 

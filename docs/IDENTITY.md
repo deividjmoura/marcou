@@ -30,9 +30,22 @@ O cadastro envia `emailRedirectTo` como o destino final permitido no próprio do
 
 ## PKCE (verificado em código)
 
-O cliente Supabase é criado sempre por `@supabase/ssr` (`src/lib/supabase/server.ts` e `src/lib/supabase/client.ts`). A versão instalada (`@supabase/ssr@0.7.0`) fixa `auth.flowType: "pkce"` e `detectSessionInUrl: false` no cliente de servidor, então o callback recebe `?code=...` e a troca usa o `code_verifier` guardado em cookie (`*-code-verifier`). O fluxo implícito (token no fragmento) não é usado: ele não funcionaria com um callback em rota de servidor.
+O cliente Supabase é criado sempre por `@supabase/ssr` (`src/lib/supabase/server.ts` e `src/lib/supabase/client.ts`). A versão instalada (`@supabase/ssr@0.12.7`) fixa `auth.flowType: "pkce"` e `detectSessionInUrl: false` no cliente de servidor, então o callback recebe `?code=...` e a troca usa o `code_verifier` guardado em cookie (`*-code-verifier`). O fluxo implícito (token no fragmento) não é usado: ele não funcionaria com um callback em rota de servidor.
 
 `npm run audit` passou a falhar se algum arquivo de `src/` importar `createClient` direto de `@supabase/supabase-js`, que tem `flowType: "implicit"` como padrão.
+
+## Recuperação de senha e a lista de Redirect URLs
+
+O Supabase valida o `redirectTo` contra **Authentication → URL Configuration → Redirect URLs** comparando a URL completa, **inclusive a query string**. Se a URL não corresponder a uma entrada exata ou a um wildcard, o Supabase **substitui silenciosamente o destino pelo Site URL** — o link de recuperação chega à landing page e o `code` enviado junto não é consumido. Não há erro na requisição; o e-mail é enviado normalmente.
+
+Por isso:
+
+- Cadastre as entradas com wildcard de caminho, que aceitam query string: `http://localhost:3000/**` e `https://marcoou.netlify.app/**` (mais as URLs de preview da Netlify, se quiser testar nelas). Entradas exatas só casam se forem idênticas à URL enviada, query string incluída.
+- Confira também o **Site URL**: ele é o destino de fallback. Em produção, deve ser `https://marcoou.netlify.app` — nunca `http://localhost:3000`.
+
+O código não depende apenas disso. `requestPasswordResetAction` envia `redirectTo: <origem>/auth/callback` (sem query) para casar com a entrada exata mais simples, e `/auth/callback` reconhece a recuperação pelo `redirectType` devolvido pela troca do code, não por `flow`/`next` na URL. Como rede de segurança, o proxy (`src/proxy.ts` — com `src/app`, o Next 16 só reconhece o proxy dentro de `src/`) encaminha para `/auth/callback` qualquer `code` que chegue em um caminho comum (por exemplo `/` ou `/login`), com `cache-control: no-store`. Assim, mesmo com a allowlist faltando, o link não se perde mais.
+
+O fluxo continua exigindo que o link seja aberto **no mesmo navegador** em que a recuperação foi solicitada, porque o `code_verifier` fica em cookie. Se o verificador não estiver presente, o callback mostra a mensagem "Abra o link no mesmo navegador em que solicitou a recuperação." em vez de um erro genérico.
 
 ## Modelo e autorização
 
@@ -61,7 +74,7 @@ Projeto Supabase: `peornypgltuueubmsucm` (São Paulo). Client ID público: `5635
 3. Em **Supabase Dashboard → Authentication → Providers → Google**, habilite Google e informe o Client ID e o **Client Secret** obtidos no Google Cloud.
 4. **Rotacione o Client Secret antes de ativar** se ele já tiver sido compartilhado por chat, e-mail ou qualquer registro. O Client Secret não deve ser solicitado, reproduzido, registrado ou armazenado no repositório, em issues, em PRs ou neste documento.
 5. Cadastre no Google Cloud como **Authorized redirect URI** o callback do Supabase: `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`. Não use `/auth/callback` da aplicação como redirect URI do Google; esse é o callback final da aplicação, depois do Supabase.
-6. Em **Supabase Dashboard → Authentication → URL Configuration**, defina o Site URL e inclua os Redirect URLs da aplicação para local, Preview e produção, incluindo `/auth/callback` (por exemplo `http://localhost:3000/auth/callback`, `https://deploy-preview-<pr>--marcoou.netlify.app/auth/callback`, `https://<prod>/auth/callback`). O Supabase valida a URL final contra essa lista, então a entrada precisa existir antes do primeiro login.
+6. Em **Supabase Dashboard → Authentication → URL Configuration**, defina o **Site URL** como `https://marcoou.netlify.app` e inclua Redirect URLs com wildcard de caminho: `http://localhost:3000/**`, `https://marcoou.netlify.app/**` e, se for testar nos previews, `https://deploy-preview-<pr>--marcoou.netlify.app/**`. A comparação inclui a query string: sem o wildcard, uma entrada exata como `https://marcoou.netlify.app/auth/callback` só casaria se o `redirectTo` fosse exatamente ela. Veja "Recuperação de senha e a lista de Redirect URLs".
 7. Defina `NEXT_PUBLIC_SITE_URL` por ambiente com a origem pública da aplicação. Sem ela, `getAppOrigin()` (`src/app/(auth)/actions.ts`) usa o header `x-forwarded-host`, que depende do proxy; em Preview/produção é recomendável fixar a variável.
 8. Teste cadastro, login Google, confirmação de e-mail e recuperação em cada ambiente configurado.
 

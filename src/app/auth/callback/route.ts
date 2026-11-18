@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
+import { isSafeAuthCode } from "@/lib/auth-url";
 import {
   loginRedirectUrl,
   oauthErrorMessage,
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const next = safeNextPath(searchParams.get("next"));
   const flow = searchParams.get("flow");
+  const flowId = searchParams.get("sb_flow_id");
   const providerError = searchParams.get("error");
 
   if (!isSupabaseConfigured()) {
@@ -67,12 +69,22 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchangeData, error } = await supabase.auth.exchangeCodeForSession(
+    code,
+    isSafeAuthCode(flowId) ? { flowId } : undefined,
+  );
   if (error) {
-    return NextResponse.redirect(
-      loginRedirectUrl(origin, next, oauthErrorMessage()),
-    );
+    const message =
+      error.name === "AuthPKCECodeVerifierMissingError"
+        ? "Abra o link no mesmo navegador em que iniciou o processo."
+        : oauthErrorMessage();
+    return NextResponse.redirect(loginRedirectUrl(origin, next, message));
   }
+  // O auth-js entrega `redirectType` em tempo de execução, mas o tipo público
+  // ainda não o inclui. Ele distingue recuperação (`recovery`) de login.
+  const redirectType =
+    (exchangeData as { redirectType?: string | null } | null)?.redirectType ??
+    null;
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) {
@@ -81,7 +93,13 @@ export async function GET(request: NextRequest) {
 
   // Password recovery already has an authenticated PKCE session. Do not send
   // the user through profile onboarding: the password page is the destination.
-  if (flow === "recovery" && next === "/redefinir-senha") {
+  // O redirectType vem do verificador PKCE armazenado quando a recuperação foi
+  // solicitada, então funciona mesmo se o Supabase caiu na landing page e o
+  // proxy apenas encaminhou o code.
+  if (
+    redirectType === "recovery" ||
+    (flow === "recovery" && next === "/redefinir-senha")
+  ) {
     return NextResponse.redirect(new URL("/redefinir-senha", origin));
   }
 

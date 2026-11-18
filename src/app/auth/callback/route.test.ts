@@ -38,6 +38,10 @@ function callbackRequest(search: string) {
 describe("GET /auth/callback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: { redirectType: null },
+      error: null,
+    });
     mocks.maybeSingle.mockResolvedValue({
       data: { display_name: null },
       error: null,
@@ -108,8 +112,54 @@ describe("GET /auth/callback", () => {
     expect(response.headers.get("location")).toBe(
       `${ORIGIN}/redefinir-senha`,
     );
-    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("recovery-code");
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith(
+      "recovery-code",
+      undefined,
+    );
     expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("reconhece a recuperação pelo redirectType, mesmo sem flow/next na URL", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: { redirectType: "recovery" },
+      error: null,
+    });
+
+    // É o formato que chega quando o Supabase cai na landing page e o proxy
+    // apenas encaminha o code para o callback.
+    const response = await GET(callbackRequest("?code=recovery-code"));
+
+    expect(response.headers.get("location")).toBe(
+      `${ORIGIN}/redefinir-senha`,
+    );
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("usa o flow id do callback para trocar o code", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: { redirectType: null },
+      error: null,
+    });
+
+    await GET(
+      callbackRequest("?code=abc&next=%2Fpainel&sb_flow_id=flow-123"),
+    );
+
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("abc", {
+      flowId: "flow-123",
+    });
+  });
+
+  it("explica quando o verificador PKCE está ausente (outro navegador)", async () => {
+    const error = new Error("PKCE code verifier not found");
+    error.name = "AuthPKCECodeVerifierMissingError";
+    mocks.exchangeCodeForSession.mockResolvedValue({ error });
+
+    const response = await GET(callbackRequest("?code=abc&next=%2Fp%2Fstudio"));
+
+    const location = response.headers.get("location") ?? "";
+    expect(location.startsWith(`${ORIGIN}/login?`)).toBe(true);
+    expect(location).toContain("mesmo+navegador");
   });
 
   it("não trata um destino isolado como recuperação de senha", async () => {
