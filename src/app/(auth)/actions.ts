@@ -286,8 +286,12 @@ export async function requestPasswordResetAction(
 
   const origin = await getAppOrigin();
   const supabase = await createClient();
+  // O Supabase compara o redirectTo com a lista de Redirect URLs incluindo a
+  // query string. Usamos o callback "limpo" para casar com a entrada exata que
+  // a documentação orienta cadastrar; o callback identifica a recuperação pelo
+  // redirectType devolvido na troca do code.
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${origin}/auth/callback?flow=recovery&next=/redefinir-senha`,
+    redirectTo: `${origin}/auth/callback`,
   });
 
   if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
