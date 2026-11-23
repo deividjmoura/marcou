@@ -69,6 +69,9 @@ As migrations estão em `supabase/migrations/`:
 6. `202611230001_legal_documents_and_acceptances.sql` — metadata versionada dos
    documentos e recibos de aceite protegidos por RLS/RPC. As versões semeadas
    são minutas e não exigem aceite.
+7. `20261123130000_social_rollout_foundation.sql` — feature flags sociais
+   fail-closed, ambiente por projeto, coortes/overrides privados e avaliadores
+   server-side. Convenções e rollback em `docs/FUNDACAO-ROLLOUT-SOCIAL.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura

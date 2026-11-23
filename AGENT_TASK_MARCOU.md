@@ -2,6 +2,22 @@
 
 Última atualização: 23/11/2026
 
+## Fundação de rollout social — Issue #82 — 23/11/2026
+
+- Migration aditiva `20261123130000_social_rollout_foundation.sql` cria ambiente
+  por projeto, sete flags sociais fail-closed e overrides privados por
+  conta/provider. A avaliação deriva o ator de `auth.uid()` e valida ownership;
+  flag nunca substitui autorização ou RLS.
+- Helpers server-side e budgets de paginação ficam em
+  `src/server/feature-flags.ts` e `src/lib/social-pagination.ts`.
+- `scripts/social-foundation-check.mjs`, encadeado por `npm run test:db`, aplica
+  todas as migrations e testa grants, kill switch, ambiente, coortes e
+  isolamento entre dois usuários/providers sem alterar o harness de booking.
+- Convenções de migration/backfill, ativação, query budgets e rollback estão em
+  `docs/FUNDACAO-ROLLOUT-SOCIAL.md`.
+- Nenhuma flag foi ativada e nenhuma alteração foi aplicada a Supabase, Netlify
+  ou produção.
+
 ## Planejamento Marcou Social — 23/11/2026
 
 - O Marcou passa a ter um roadmap para rede social de apresentação de serviços
