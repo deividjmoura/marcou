@@ -72,6 +72,9 @@ As migrations estão em `supabase/migrations/`:
 7. `20261123130000_social_rollout_foundation.sql` — feature flags sociais
    fail-closed, ambiente por projeto, coortes/overrides privados e avaliadores
    server-side. Convenções e rollback em `docs/FUNDACAO-ROLLOUT-SOCIAL.md`.
+8. `20261123133000_harden_security_definer_grants.sql` — remove o grant implícito
+   de `PUBLIC` das funções privilegiadas e restabelece a matriz de menor
+   privilégio descrita em `docs/SECURITY-DEFINER-GRANTS.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura

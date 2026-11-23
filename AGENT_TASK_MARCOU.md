@@ -2,6 +2,20 @@
 
 Última atualização: 23/11/2026
 
+## Hardening de funções SECURITY DEFINER — 23/11/2026
+
+- A migration `20261123133000_harden_security_definer_grants.sql` remove o
+  `EXECUTE` herdado de `PUBLIC` de todas as funções privilegiadas existentes e
+  restabelece grants mínimos por papel.
+- Jobs de expiração/lembrete ficam exclusivos de `service_role`; agenda pública
+  continua disponível; comandos de booking, notificações, aceite e flags mantêm
+  apenas os papéis necessários.
+- O harness PostgreSQL agora falha se qualquer função `SECURITY DEFINER` atual ou
+  futura conservar grant para `PUBLIC`, além de validar a matriz conhecida e
+  chamadas reais dos jobs.
+- Contrato e rollback: `docs/SECURITY-DEFINER-GRANTS.md`. Nenhuma migration foi
+  aplicada remotamente e nenhum secret/configuração foi alterado.
+
 ## Fundação de rollout social — Issue #82 — 23/11/2026
 
 - Migration aditiva `20261123130000_social_rollout_foundation.sql` cria ambiente
