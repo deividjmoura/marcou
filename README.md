@@ -4,6 +4,17 @@ Plataforma de agendamento online para prestadores de serviços.
 
 **Aplicação publicada:** https://marcoou.netlify.app
 
+## Evolução: Marcou Social
+
+O roadmap para transformar o Marcou em uma rede social de serviços integrada ao
+motor de agendamentos está na [Issue #72](https://github.com/deividjmoura/marcou/issues/72).
+A implementação será incremental; a stack e o motor de reservas atuais continuam
+canônicos.
+
+- [Decisão de arquitetura](docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md)
+- [Árvore de milestones, issues e PRs](docs/ROADMAP-MARCOU-SOCIAL.md)
+- [Prompt para agentes colaboradores](docs/PROMPT-AGENTE-MARCOU-SOCIAL.md)
+
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript.

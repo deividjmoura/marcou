@@ -1,6 +1,26 @@
 # Marcou — estado atual e continuidade
 
-Última atualização: 16/11/2026
+Última atualização: 23/11/2026
+
+## Planejamento Marcou Social — 23/11/2026
+
+- O Marcou passa a ter um roadmap para rede social de apresentação de serviços
+  integrada ao motor de agendamentos. A Zelora foi usada como referência de
+  produto, marketplace, confiança e LGPD; sua stack Firebase/Vite não será
+  importada.
+- O Marcou permanece como base canônica: Next.js, Supabase Auth/PostgreSQL,
+  Storage, RLS e o motor de reservas atual.
+- A árvore real no GitHub parte da Issue #72, com 7 epics (#73–#79), 33 leaf
+  issues (#80–#112), 6 milestones e subissues nativas. Cada leaf issue planeja
+  uma PR principal; PRs vazias não foram abertas.
+- Documentos: `docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md`,
+  `docs/ROADMAP-MARCOU-SOCIAL.md` e
+  `docs/PROMPT-AGENTE-MARCOU-SOCIAL.md`.
+- Issues legadas relacionadas foram apenas marcadas com
+  `initiative:marcou-social`; não tiveram corpo, prioridade ou milestone
+  alterados.
+- Nenhum código de produto, migration, Supabase remoto, Netlify ou produção foi
+  alterado neste planejamento.
 
 ## Limpeza de branches já mergeadas — 16/11/2026
 
