@@ -47,7 +47,7 @@ Substitua o link padrão dos templates pelos exemplos acima. Não acrescente `er
 
 Os clientes são criados por `@supabase/ssr` em `src/lib/supabase/server.ts` e `src/lib/supabase/client.ts`, com `flowType: "pkce"`. No login Google, o Supabase guarda o `code_verifier` em cookie; o provedor retorna ao callback da aplicação com `code`, e `/auth/callback` troca esse code por uma sessão por meio de `exchangeCodeForSession`. O fluxo implícito com tokens em fragmento não é utilizado.
 
-O entrypoint `proxy.ts` na raiz do repositório chama `src/lib/supabase/proxy.ts`, que valida claims e propaga os cookies renovados. O callback e a confirmação mantêm a escrita de cookies no adaptador SSR. O logout chama `auth.signOut()` e redireciona para a página pública.
+O entrypoint `src/proxy.ts`, ao lado de `src/app` conforme a estrutura Next.js 16 do projeto, chama `src/lib/supabase/proxy.ts`, que valida claims e propaga os cookies renovados. O callback e a confirmação mantêm a escrita de cookies no adaptador SSR. O logout chama `auth.signOut()` e redireciona para a página pública.
 
 Falhas de consentimento, troca de code, confirmação ou carregamento de perfil resultam em mensagens genéricas escritas pelo Marcou. `error_description` não é lido nem encaminhado. Destinos dos links são restringidos a caminhos da própria aplicação por `safeNextPath`/`safeNextPathFromUrl` em `src/lib/identity.ts`.
 
@@ -56,11 +56,11 @@ Falhas de consentimento, troca de code, confirmação ou carregamento de perfil 
 - **Identidade única:** `auth.users.id` é a identidade da pessoa.
 - **Perfil privado:** `public.profiles.id` referencia `auth.users.id` 1:1 e contém `display_name` e telefone. RLS limita a leitura/escrita à própria conta. O nome de Google/cadastro só preenche um perfil sem nome; o telefone não é inferido.
 - **Negócio profissional:** `public.providers.owner_id` referencia a mesma identidade e é único. Os campos comerciais ficam em `providers`; a leitura pública continua condicionada às políticas existentes (por exemplo, negócio publicado), e ações profissionais dependem de ownership.
-- **Preferência privada de navegação:** `public.account_preferences.preferred_mode` aceita somente `customer` ou `provider`. A migration `20261123140000_private_account_mode_preferences.sql` cria a tabela privada e as RPCs `get_preferred_mode()`/`set_preferred_mode(text)`. Ambas derivam o ator de `auth.uid()`; a leitura retorna `customer` para contas sem provider próprio, e a escrita só grava `provider` se houver `providers.owner_id = auth.uid()`.
+- **Preferência privada de navegação:** `public.account_preferences.preferred_mode` aceita somente `customer` ou `provider`. A migration `20261123140000_account_modes.sql` cria a tabela privada e as RPCs `get_preferred_mode()`/`set_preferred_mode(text)`. Ambas derivam o ator de `auth.uid()`; a leitura retorna `customer` para contas sem provider próprio, e a escrita só grava `provider` se houver `providers.owner_id = auth.uid()`.
 - **Preferência não é autorização:** nenhum `role`, `user_id` ou `provider_id` do navegador concede acesso. `/painel` e suas ações continuam buscando o negócio do usuário autenticado no servidor e o banco/RLS continuam sendo a fronteira de autorização.
 - **Hub e seletor:** `/inicio` oferece as áreas Cliente e Profissional. O seletor também aparece em `/minha-conta` e `/painel`. Sem provider próprio, a preferência efetiva permanece Cliente; a opção Profissional leva ao setup, sem persistir o modo. Depois da criação, a ação pode salvar a preferência Profissional pela RPC (que valida o ownership no banco). Criar o negócio usa o mesmo `auth.users.id`, não cria outra conta e mantém `/minha-conta` e agendamentos de cliente disponíveis.
 
-A migration é aditiva, usa timestamp UTC único posterior a `20261123130000` e não altera as flags sociais nem o motor de reservas. Ela não foi aplicada a nenhum projeto Supabase remoto por esta entrega.
+A migration `20261123140000_account_modes.sql` é aditiva, usa timestamp UTC único de 14 dígitos posterior a `20261123133000_harden_security_definer_grants.sql` e não altera as flags sociais nem o motor de reservas. Cada RPC nova `SECURITY DEFINER` fixa `search_path = pg_catalog, public`, revoga `EXECUTE` de `public`, `anon` e `authenticated` na própria migration e concede somente a `authenticated`; não depende do hardening anterior. A migration não foi aplicada a nenhum projeto Supabase remoto por esta entrega.
 
 ## Configuração de ambiente — ação do responsável
 
@@ -85,7 +85,7 @@ Em **Authentication → URL Configuration**:
 3. Inclua a origem de produção, localhost de desenvolvimento e os domínios de Deploy Preview/Branch Deploy autorizados. Prefira URLs exatas por ambiente; se uma wildcard for necessária, limite-a ao domínio Netlify controlado pelo Marcou e somente aos caminhos necessários. Não use wildcard de qualquer host nem permita domínio externo.
 4. A lista precisa incluir os destinos de retorno enviados pelo app (`/auth/confirm` ou `/auth/callback` com query local) antes de testar o fluxo. O Supabase valida esses destinos contra a allowlist.
 
-A configuração Supabase do projeto tem ref `peornypgltuueubmsucm`; confirme o projeto/ambiente alvo antes de editar o painel. Nenhuma URL de Site/Redirect foi alterada nesta entrega.
+A documentação histórica registra o ref `peornypgltuueubmsucm`, mas esta entrega não o confirmou no Dashboard. Confirme o projeto/ambiente alvo antes de editar o painel. Nenhuma URL de Site/Redirect foi alterada nesta entrega.
 
 ### Google Cloud e provider Google no Supabase
 
@@ -108,6 +108,32 @@ No DNS do domínio de envio:
 
 Personalize os templates **Confirm signup** e **Reset Password** com os links `/auth/confirm` acima. Confira o remetente, assunto, idioma, validade do link e URLs geradas em cada ambiente. Mensagens válidas e inválidas devem receber resposta indistinguível nas ações de reenvio e recuperação.
 
+## Handoff de coordenação cloud (sem secrets)
+
+Nenhuma configuração de Google Cloud, Supabase remoto, Netlify ou SMTP foi alterada. Os valores abaixo são metadados públicos registrados no repositório ou fornecidos como referência histórica; **não foram verificados nos painéis remotos nesta entrega**. A outra frente deve confirmar o projeto/ambiente antes de aplicar mudanças.
+
+| Item | Valor de handoff | Estado |
+|---|---|---|
+| Supabase project ref | `peornypgltuueubmsucm` | Ref registrada na documentação histórica; confirmação no Dashboard do Supabase ainda pendente. |
+| Google Authorized redirect URI esperado | `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback` | Esperado para o ref acima; validar em Google Cloud e no provider Google do Supabase. Este é o callback do Supabase, não `/auth/callback` da aplicação. |
+| Google OAuth Client ID público esperado | `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com` | Referência histórica fornecida; confirmar igualdade nos dois painéis. Nenhum Client Secret foi acessado ou registrado. |
+| Site URL de produção esperado | `https://marcoou.netlify.app` | README identifica esta URL como aplicação publicada; confirmar que continua sendo a origem canônica ativa. |
+| Redirect URLs — produção | `https://marcoou.netlify.app/auth/callback` e `https://marcoou.netlify.app/auth/confirm` | Allowlist esperada do Supabase; confirmar no projeto correto. |
+| Redirect URLs — Netlify Deploy Preview | `https://deploy-preview-<número>--marcoou.netlify.app/auth/callback` e `/auth/confirm` | Preferir entradas exatas por preview ativo. Se usar wildcard, restringir a `https://deploy-preview-*-marcoou.netlify.app/auth/callback` e `/auth/confirm`; não usar wildcard de host genérico. |
+| Redirect URLs — localhost | `http://localhost:3000/auth/callback` e `http://localhost:3000/auth/confirm` | Para desenvolvimento local. |
+| Escopos OAuth | `openid`, `email`, `profile` | Escopos esperados; a aplicação não solicita escopos adicionais. Confirmar consent screen/provider. |
+| Templates de e-mail | Confirm signup deve enviar `RedirectTo` + `TokenHash` + `type=email`; Reset Password deve enviar `RedirectTo` + `TokenHash` + `type=recovery`. | Os snippets estão documentados acima; estado remoto dos templates, SMTP, remetente e entregabilidade não verificado. |
+
+### Round-trip publicado ainda necessário
+
+- Cadastro e confirmação por e-mail com template ativo; comparar respostas de endereço novo, existente, confirmado e reenvio sem revelar existência.
+- Recuperação enviada por SMTP, aberta em outro navegador, chegada obrigatória a `/redefinir-senha`, troca de senha e novo login; testar token expirado/reutilizado.
+- Google OAuth real: consentimento, callback Supabase → `/auth/callback`, sessão PKCE/cookies e cancelamento com retorno local seguro.
+- Refresh de sessão e logout no deploy; confirmar `NEXT_PUBLIC_SITE_URL`, allowlist de produção/preview/localhost e cabeçalhos `private, no-store` publicados.
+- Aplicação da migration `20261123140000_account_modes.sql` no Supabase alvo e validação do hub/modos contra ownership real.
+
+Não declare Google, confirmação de e-mail, recovery ou SMTP funcionais até esses cenários completarem o round-trip publicado. Não cole Client Secret, senha SMTP, service-role, cookie, code, `token_hash` ou URL integral de e-mail em Issues, PRs ou logs.
+
 ## Roteiro de validação publicada
 
 Este roteiro precisa ser executado pelo responsável depois de configurar Netlify, Supabase, Google Cloud, SMTP, DNS e templates. Não se deve declarar os fluxos externos comprovados antes de completar o teste publicado.
@@ -122,6 +148,6 @@ Este roteiro precisa ser executado pelo responsável depois de configurar Netlif
 
 ## Validação automatizada e estado externo
 
-O código inclui testes unitários para redirects/normalização, não enumeração de cadastro/reenvio/recuperação, callback, confirmação, no-store e o hub de identidade. `npm run test:db` também executa o harness PostgreSQL separado `scripts/identity-check.mjs`, que testa RLS, isolamento por usuário, grants da RPC e tentativas de elevação de privilégio.
+O código inclui testes unitários para redirects/normalização, origens confiáveis, não enumeração de cadastro/reenvio/recuperação, callback, confirmação, no-store e o hub de identidade. `npm run test:db` executa `scripts/social-foundation-check.mjs`, que aplica todas as migrations (inclusive as futuras) e falha se qualquer `SECURITY DEFINER` conservar `EXECUTE` para `PUBLIC`, além do harness isolado `scripts/identity-check.mjs` para RLS, isolamento por usuário, grants das RPCs de modo e tentativas de elevação de privilégio.
 
 A validação real publicada de Google, SMTP, confirmação e recovery depende das configurações acima. Nenhuma configuração remota foi alterada ou verificada nesta entrega, nenhum e-mail real foi enviado e nenhum fluxo externo deve ser tratado como comprovado até o roteiro ser executado com evidência segura. Issues relacionadas continuam abertas: [#23](https://github.com/deividjmoura/marcou/issues/23), [#70](https://github.com/deividjmoura/marcou/issues/70) e [#83](https://github.com/deividjmoura/marcou/issues/83). PR #69 foi consultada apenas como referência funcional, sem cherry-pick ou merge.

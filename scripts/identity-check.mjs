@@ -134,13 +134,22 @@ try {
   const duplicateTimestamps = timestamps.filter(
     (timestamp, index) => timestamps.indexOf(timestamp) !== index,
   );
-  const identityMigration = migrationNames.find((name) => name.startsWith("20261123140000_"));
+  const hardeningMigration = migrationNames.find(
+    (name) => name === "20261123133000_harden_security_definer_grants.sql",
+  );
+  const identityMigration = migrationNames.find(
+    (name) => name === "20261123140000_account_modes.sql",
+  );
+  const hardeningTimestamp = hardeningMigration?.match(migrationPattern)?.[1];
+  const identityTimestamp = identityMigration?.match(migrationPattern)?.[1];
   check(
-    "migrations seguem a convenção histórica e o novo timestamp UTC é único de 14 dígitos",
+    "migrations seguem a convenção e account_modes usa timestamp UTC único de 14 dígitos posterior ao hardening",
     invalidNames.length === 0 &&
       duplicateTimestamps.length === 0 &&
-      Boolean(identityMigration),
-    `${invalidNames.join(", ")} ${duplicateTimestamps.join(", ")}`,
+      identityTimestamp?.length === 14 &&
+      hardeningTimestamp !== undefined &&
+      Number(identityTimestamp) > Number(hardeningTimestamp),
+    `${invalidNames.join(", ")} ${duplicateTimestamps.join(", ")} ${identityMigration ?? "missing account_modes"}`,
   );
 
   for (const name of migrationNames) {

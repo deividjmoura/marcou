@@ -57,8 +57,10 @@ begin
 end;
 $$;
 
-revoke all on function public.get_preferred_mode() from public, anon;
-grant execute on function public.get_preferred_mode() to authenticated;
+revoke all on function public.get_preferred_mode()
+  from public, anon, authenticated;
+grant execute on function public.get_preferred_mode()
+  to authenticated;
 
 create or replace function public.set_preferred_mode(p_mode text)
 returns text
@@ -102,8 +104,10 @@ begin
 end;
 $$;
 
-revoke all on function public.set_preferred_mode(text) from public, anon;
-grant execute on function public.set_preferred_mode(text) to authenticated;
+revoke all on function public.set_preferred_mode(text)
+  from public, anon, authenticated;
+grant execute on function public.set_preferred_mode(text)
+  to authenticated;
 
 comment on table public.account_preferences is
   'Private per-user navigation preference; it does not grant professional authorization.';
