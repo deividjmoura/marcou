@@ -35,6 +35,10 @@ export interface Provider {
 export interface Service {
   id: string;
   provider_id: string;
+  category_id: string;
+  delivery_modes: Array<
+    "provider_location" | "customer_location" | "remote"
+  >;
   name: string;
   description: string | null;
   duration_minutes: number;

@@ -2,6 +2,32 @@
 
 Última atualização: 23/11/2026
 
+## Descoberta: taxonomia e áreas — Issue #87 — 23/11/2026
+
+- A migration aditiva `20261123143000_discovery_taxonomy_service_areas.sql`
+  cria taxonomia versionada/moderada, modalidades de serviço e áreas por
+  cidade, bairro ou raio aproximado; serviços antigos recebem defaults
+  compatíveis.
+- O painel gerencia áreas e sugestões de categoria sob a flag
+  `social_discovery`; a página pública usa uma RPC fail-closed com projeção
+  mínima. Rua, número, CEP e coordenadas exatas não fazem parte do schema.
+- RLS deriva ownership de `providers.owner_id`; o browser não autoaprova
+  categoria, não forja fonte verificada e não remove a última área usada por um
+  serviço ativo no local do cliente.
+- `scripts/discovery-check.mjs`, encadeado em `npm run test:db`, cobre 40
+  invariantes de constraints, concorrência, versionamento, filtros, RLS, grants
+  e privacidade. Painel e página pública também foram inspecionados em navegador
+  headless a 1440 px e 390 px, sem overflow horizontal ou erro de console.
+  Contrato e rollout: `docs/DISCOVERY-TAXONOMY.md`.
+- Nenhuma migration foi aplicada remotamente e nenhuma flag/configuração de
+  Supabase, Netlify ou produção foi alterada.
+- A PR de identidade `#118` foi mesclada em `main` (`920ea06`) e integrada à
+  `#119`. Os conflitos em `package.json` e `painel/page.tsx` foram conciliados
+  preservando os quatro harnesses DB, o seletor Cliente/Profissional e toda a
+  descoberta. Validação local pós-integração: lint, typecheck, 117 testes
+  Vitest, DB legado `69/0`, social `47/0`, identidade `28/0` e descoberta
+  `40/0`, audit e build aprovados.
+
 ## Hardening de funções SECURITY DEFINER — 23/11/2026
 
 - A migration `20261123133000_harden_security_definer_grants.sql` remove o

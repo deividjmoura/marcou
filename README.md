@@ -14,6 +14,7 @@ canônicos.
 - [Decisão de arquitetura](docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md)
 - [Árvore de milestones, issues e PRs](docs/ROADMAP-MARCOU-SOCIAL.md)
 - [Prompt para agentes colaboradores](docs/PROMPT-AGENTE-MARCOU-SOCIAL.md)
+- [Taxonomia e áreas de atendimento](docs/DISCOVERY-TAXONOMY.md)
 
 ## Stack
 
@@ -75,6 +76,12 @@ As migrations estão em `supabase/migrations/`:
 8. `20261123133000_harden_security_definer_grants.sql` — remove o grant implícito
    de `PUBLIC` das funções privilegiadas e restabelece a matriz de menor
    privilégio descrita em `docs/SECURITY-DEFINER-GRANTS.md`.
+9. `20261123140000_account_modes.sql` — preferência privada de navegação entre
+   os espaços Cliente e Profissional, sem transformar preferência em autorização.
+   Detalhes em `docs/IDENTITY.md`.
+10. `20261123143000_discovery_taxonomy_service_areas.sql` — catálogo versionado,
+    modalidades de serviço, áreas aproximadas, moderação e projeção pública
+    mínima. Detalhes em `docs/DISCOVERY-TAXONOMY.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
@@ -102,13 +109,16 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
 
 1. Cadastro e login do prestador (e-mail/senha e Google).
 2. Criação e configuração do negócio (nome, slug, fuso, prazo da reserva).
-3. Cadastro de serviços (duração, preço, sinal, intervalo).
-4. Expediente semanal, vigências e exceções (bloqueio/horário especial).
-5. Página pública `/p/[slug]` com os serviços do negócio.
-6. Escolha de serviço, data e horário pelo cliente.
-7. Criação da reserva temporária e página de acompanhamento `/reserva/[id]`.
-8. Painel do prestador com agendamentos, confirmação e cancelamento.
-9. Notificações no aplicativo (`/notificacoes`) para cliente e prestador,
+3. Cadastro de serviços (duração, preço, sinal, intervalo e, sob rollout,
+   categoria/modalidades).
+4. Gestão de áreas aproximadas e sugestões moderadas de categoria sob a flag
+   `social_discovery`.
+5. Expediente semanal, vigências e exceções (bloqueio/horário especial).
+6. Página pública `/p/[slug]` com os serviços do negócio.
+7. Escolha de serviço, data e horário pelo cliente.
+8. Criação da reserva temporária e página de acompanhamento `/reserva/[id]`.
+9. Painel do prestador com agendamentos, confirmação e cancelamento.
+10. Notificações no aplicativo (`/notificacoes`) para cliente e prestador,
    geradas pelos eventos de agendamento.
 
 ## Documentos e políticas

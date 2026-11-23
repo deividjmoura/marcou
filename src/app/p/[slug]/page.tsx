@@ -3,6 +3,8 @@ import { getProvider, listActiveServices } from "@/server/bookings";
 import { BookingWidget } from "./booking-widget";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
+import { getPublicProviderDiscovery } from "@/server/discovery";
+import { DELIVERY_MODE_LABELS } from "@/domain/discovery/discovery";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +37,13 @@ export default async function ProviderPage({
   const provider = await getProvider(slug);
   if (!provider) notFound();
 
-  const services = await listActiveServices(provider.id);
+  const [services, discovery] = await Promise.all([
+    listActiveServices(provider.id),
+    getPublicProviderDiscovery(provider.slug),
+  ]);
+  const discoveryByService = new Map(
+    (discovery?.services ?? []).map((service) => [service.serviceId, service]),
+  );
 
   return (
     <main className="page-shell page-provider">
@@ -47,6 +55,32 @@ export default async function ProviderPage({
             {provider.description ||
               "Escolha o serviço e o horário. A confirmação chega depois da validação do sinal."}
           </p>
+          {discovery && discovery.serviceAreas.length > 0 ? (
+            <section
+              className="provider-service-areas"
+              aria-labelledby="provider-service-areas-title"
+            >
+              <strong id="provider-service-areas-title">Áreas de atendimento</strong>
+              <ul>
+                {discovery.serviceAreas.map((area) => {
+                  const place = area.neighborhood
+                    ? `${area.neighborhood}, ${area.city}`
+                    : area.city;
+                  const radius =
+                    area.precision === "radius" && area.radiusKm != null
+                      ? ` · até ${area.radiusKm.toLocaleString("pt-BR")} km aproximadamente`
+                      : "";
+                  return (
+                    <li
+                      key={`${area.stateCode}:${area.city}:${area.neighborhood ?? ""}:${area.radiusKm ?? ""}`}
+                    >
+                      {place} — {area.stateCode}{radius}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
         </div>
       </header>
 
@@ -54,14 +88,21 @@ export default async function ProviderPage({
         <BookingWidget
           slug={provider.slug}
           timeZone={provider.timezone}
-          services={services.map((service) => ({
-            id: service.id,
-            name: service.name,
-            description: service.description,
-            durationMinutes: service.duration_minutes,
-            priceCents: service.price_cents,
-            bufferMinutes: service.buffer_minutes,
-          }))}
+          services={services.map((service) => {
+            const serviceDiscovery = discoveryByService.get(service.id);
+            return {
+              id: service.id,
+              name: service.name,
+              description: service.description,
+              durationMinutes: service.duration_minutes,
+              priceCents: service.price_cents,
+              bufferMinutes: service.buffer_minutes,
+              categoryName: serviceDiscovery?.category.name,
+              deliveryLabels: serviceDiscovery?.deliveryModes.map(
+                (mode) => DELIVERY_MODE_LABELS[mode],
+              ),
+            };
+          })}
           initialServiceId={query.service}
           initialDate={query.date}
           initialSlot={query.slot}
