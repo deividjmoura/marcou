@@ -42,7 +42,15 @@ export default function Home() {
 
       <footer className="footer">
         <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-logo.svg" alt="Marcou." /></Link>
-        <p>Feito para deixar os encontros mais simples.</p>
+        <div className="footer-content">
+          <p>Feito para deixar os encontros mais simples.</p>
+          <nav className="footer-links" aria-label="Documentos e políticas">
+            <Link href="/documentos">Documentos</Link>
+            <Link href="/termos">Termos</Link>
+            <Link href="/privacidade">Privacidade</Link>
+            <Link href="/diretrizes-da-comunidade">Comunidade</Link>
+          </nav>
+        </div>
       </footer>
     </main>
   );

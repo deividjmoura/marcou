@@ -115,6 +115,9 @@ const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
   "supabase/migrations/202611150002_booking_operations.sql",
   "supabase/migrations/202611150003_notifications.sql",
+  "supabase/migrations/202611160001_provider_description.sql",
+  "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
+  "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
 ];
 
 for (const file of migrations) {
@@ -758,6 +761,241 @@ console.log("\n[notificações]");
   await serviceRole.end();
 }
 
+console.log("\n[documentos legais e aceite versionado]");
+{
+  const anonLegal = await asRole("anon");
+  const visibleDocuments = await anonLegal.query(
+    `select document_key, version, status, requires_acceptance
+       from public.legal_documents
+      order by document_key`,
+  );
+  check(
+    "metadados das quatro minutas são públicos",
+    visibleDocuments.rows.length === 4,
+    `obteve ${visibleDocuments.rows.length}`,
+  );
+  check(
+    "minutas não exigem aceite",
+    visibleDocuments.rows.every(
+      (row) => row.status === "draft" && row.requires_acceptance === false,
+    ),
+  );
+  await anonLegal.end();
+
+  const initialStatus = await customerCClient.query(
+    `select public.has_current_legal_acceptances() as current`,
+  );
+  check(
+    "sem documento publicado não existe bloqueio de aceite",
+    initialStatus.rows[0].current === true,
+  );
+
+  const publishedTerms = (
+    await db.query(`
+      update public.legal_documents
+         set status = 'published',
+             requires_acceptance = true,
+             published_at = now() - interval '2 minutes',
+             effective_at = now() - interval '1 minute'
+       where document_key = 'terms' and version = '0.1-draft'
+       returning id, document_key, version, content_sha256
+    `)
+  ).rows[0];
+
+  const pending = await customerCClient.query(
+    `select * from public.get_pending_legal_documents()`,
+  );
+  check(
+    "documento material publicado fica pendente",
+    pending.rows.length === 1 && pending.rows[0].document_key === "terms",
+  );
+  check(
+    "aceite atual passa a ser obrigatório",
+    (
+      await customerCClient.query(
+        `select public.has_current_legal_acceptances() as current`,
+      )
+    ).rows[0].current === false,
+  );
+
+  await expectError(
+    "hash forjado não pode ser aceito",
+    () => customerCClient.query(
+      `select public.record_legal_acceptances($1::jsonb)`,
+      [JSON.stringify([{
+        documentKey: publishedTerms.document_key,
+        version: publishedTerms.version,
+        contentHash: "0".repeat(64),
+      }])],
+    ),
+    "legal_document_not_current",
+  );
+
+  await expectError(
+    "payload duplicado não pode simular seleção completa",
+    () => customerCClient.query(
+      `select public.record_legal_acceptances($1::jsonb)`,
+      [JSON.stringify([
+        {
+          documentKey: publishedTerms.document_key,
+          version: publishedTerms.version,
+          contentHash: publishedTerms.content_sha256,
+        },
+        {
+          documentKey: publishedTerms.document_key,
+          version: publishedTerms.version,
+          contentHash: publishedTerms.content_sha256,
+        },
+      ])],
+    ),
+    "legal_acceptance_set_mismatch",
+  );
+
+  const exactReceipt = JSON.stringify([{
+    documentKey: publishedTerms.document_key,
+    version: publishedTerms.version,
+    contentHash: publishedTerms.content_sha256,
+  }]);
+  const accepted = await customerCClient.query(
+    `select public.record_legal_acceptances($1::jsonb) as count`,
+    [exactReceipt],
+  );
+  check("aceite exato é registrado", accepted.rows[0].count === 1);
+  check(
+    "repetir aceite é idempotente",
+    (
+      await customerCClient.query(
+        `select public.record_legal_acceptances($1::jsonb) as count`,
+        [exactReceipt],
+      )
+    ).rows[0].count === 0,
+  );
+  check(
+    "usuário que aceitou fica em dia",
+    (
+      await customerCClient.query(
+        `select public.has_current_legal_acceptances() as current`,
+      )
+    ).rows[0].current === true,
+  );
+  check(
+    "outro usuário continua pendente",
+    (
+      await customerDClient.query(
+        `select public.has_current_legal_acceptances() as current`,
+      )
+    ).rows[0].current === false,
+  );
+  check(
+    "RLS oculta recibo de outro usuário",
+    (
+      await customerDClient.query(
+        `select count(*)::integer as count from public.legal_acceptances`,
+      )
+    ).rows[0].count === 0,
+  );
+
+  const directInsertWorked = await customerDClient
+    .query(
+      `insert into public.legal_acceptances (
+         user_id, document_id, document_key, document_version, content_sha256
+       ) values ($1, $2, $3, $4, $5)`,
+      [
+        customerD,
+        publishedTerms.id,
+        publishedTerms.document_key,
+        publishedTerms.version,
+        publishedTerms.content_sha256,
+      ],
+    )
+    .then(() => true)
+    .catch(() => false);
+  check("authenticated não insere recibo diretamente", directInsertWorked === false);
+
+  await db.query("begin");
+  let nextTerms;
+  try {
+    await db.query(`
+      update public.legal_documents
+         set status = 'retired', retired_at = now()
+       where id = $1
+    `, [publishedTerms.id]);
+    nextTerms = (
+      await db.query(`
+        insert into public.legal_documents (
+          document_key,
+          version,
+          title,
+          public_path,
+          status,
+          content_sha256,
+          requires_acceptance,
+          material_change_summary,
+          published_at,
+          effective_at
+        ) values (
+          'terms',
+          '0.2-test',
+          'Termos de Uso',
+          '/termos',
+          'published',
+          $1,
+          true,
+          'Alteração material criada apenas pelo teste de integração.',
+          now() - interval '2 minutes',
+          now() - interval '1 minute'
+        ) returning document_key, version, content_sha256
+      `, ["a".repeat(64)])
+    ).rows[0];
+    await db.query("commit");
+  } catch (error) {
+    await db.query("rollback");
+    throw error;
+  }
+
+  check(
+    "nova versão material exige novo aceite",
+    (
+      await customerCClient.query(
+        `select public.has_current_legal_acceptances() as current`,
+      )
+    ).rows[0].current === false,
+  );
+  await customerCClient.query(
+    `select public.record_legal_acceptances($1::jsonb)`,
+    [JSON.stringify([{
+      documentKey: nextTerms.document_key,
+      version: nextTerms.version,
+      contentHash: nextTerms.content_sha256,
+    }])],
+  );
+  check(
+    "novo aceite regulariza a versão material",
+    (
+      await customerCClient.query(
+        `select public.has_current_legal_acceptances() as current`,
+      )
+    ).rows[0].current === true,
+  );
+
+  await db.query(`
+    update public.legal_documents
+       set status = 'published',
+           requires_acceptance = false,
+           published_at = now() - interval '2 minutes',
+           effective_at = now() - interval '1 minute'
+     where document_key = 'privacy' and version = '0.1-draft'
+  `);
+  check(
+    "versão informativa não material não força novo aceite",
+    (
+      await customerCClient.query(
+        `select public.has_current_legal_acceptances() as current`,
+      )
+    ).rows[0].current === true,
+  );
+}
+
 console.log("\n[segurança e RLS]");
 {
   // 1. Toda tabela de negócio precisa ter RLS habilitada.
@@ -797,7 +1035,7 @@ console.log("\n[segurança e RLS]");
   );
 
   // 3. anon não pode escrever em nenhuma tabela; authenticated não escreve
-  //    em reservas/eventos/notificações (esses fluxos passam por RPC/trigger).
+  //    diretamente em tabelas controladas por RPC, trigger ou publicação legal.
   const businessTables = [
     "profiles",
     "providers",
@@ -807,8 +1045,16 @@ console.log("\n[segurança e RLS]");
     "bookings",
     "booking_events",
     "notifications",
+    "legal_documents",
+    "legal_acceptances",
   ];
-  const rpcOnlyTables = ["bookings", "booking_events", "notifications"];
+  const rpcOnlyTables = [
+    "bookings",
+    "booking_events",
+    "notifications",
+    "legal_documents",
+    "legal_acceptances",
+  ];
   const writePrivileges = ["INSERT", "UPDATE", "DELETE", "TRUNCATE"];
   const anonWrites = [];
   const authenticatedWrites = [];
@@ -835,7 +1081,7 @@ console.log("\n[segurança e RLS]");
     anonWrites.join(", "),
   );
   check(
-    "authenticated não insere/apaga reservas, eventos ou notificações",
+    "authenticated não escreve diretamente em tabelas controladas",
     authenticatedWrites.length === 0,
     authenticatedWrites.join(", "),
   );

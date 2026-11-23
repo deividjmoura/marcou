@@ -115,6 +115,16 @@ export default async function MinhaContaPage() {
             </span>
             <span className={styles.arrow} aria-hidden="true">→</span>
           </Link>
+          <Link href="/documentos" className={styles.shortcut}>
+            <svg className={styles.shortcutIcon} aria-hidden="true" viewBox="0 0 48 48">
+              <use href="/icons/navigation/sprite.svg#ic-ajustes" />
+            </svg>
+            <span className={styles.shortcutText}>
+              <strong>Documentos e privacidade</strong>
+              <small>Consulte versões, situação e políticas do Marcou.</small>
+            </span>
+            <span className={styles.arrow} aria-hidden="true">→</span>
+          </Link>
         </nav>
       </section>
 

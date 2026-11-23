@@ -63,6 +63,12 @@ As migrations estão em `supabase/migrations/`:
 3. `202611150003_notifications.sql` — notificações no aplicativo: tabela,
    RLS, trigger sobre `booking_events`, RPC de lembrete e RPCs para marcar como
    lida. Detalhes em `docs/NOTIFICACOES.md`.
+4. `202611160001_provider_description.sql` — frase pública opcional do negócio.
+5. `20261116035000_fix_booking_idempotency_authorization.sql` — autorização
+   obrigatória antes de reproduzir resultados idempotentes de booking.
+6. `202611230001_legal_documents_and_acceptances.sql` — metadata versionada dos
+   documentos e recibos de aceite protegidos por RLS/RPC. As versões semeadas
+   são minutas e não exigem aceite.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
@@ -98,6 +104,16 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
 8. Painel do prestador com agendamentos, confirmação e cancelamento.
 9. Notificações no aplicativo (`/notificacoes`) para cliente e prestador,
    geradas pelos eventos de agendamento.
+
+## Documentos e políticas
+
+As rotas `/documentos`, `/termos`, `/privacidade`,
+`/diretrizes-da-comunidade` e `/politica-de-conteudo-e-avaliacoes` publicam
+versões auditáveis dos textos. As versões atuais são **minutas não vigentes** e
+não exigem aceite. A infraestrutura de aceite registra usuário, versão, hash e
+instante somente para uma versão futura publicada, efetiva e marcada como
+obrigatória. Consulte `docs/legal/README.md` e o checklist antes de promover
+qualquer documento.
 
 ## Notificações
 
