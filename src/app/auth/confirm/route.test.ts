@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({
@@ -37,8 +37,16 @@ function confirmationRequest(search: string) {
   return new NextRequest(`${ORIGIN}/auth/confirm${search}`);
 }
 
+function expectPrivateNoStore(response: Response) {
+  expect(response.headers.get("cache-control")).toContain("private, no-store");
+  expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+}
+
 describe("GET /auth/confirm", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
   beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", ORIGIN);
     vi.clearAllMocks();
     mocks.verifyOtp.mockResolvedValue({ error: null });
     mocks.getUser.mockResolvedValue({
@@ -63,7 +71,7 @@ describe("GET /auth/confirm", () => {
     }));
   });
 
-  it("confirma o token PKCE e retorna ao destino permitido", async () => {
+  it("confirma o token hash e retorna ao destino permitido", async () => {
     const response = await GET(
       confirmationRequest(
         "?token_hash=token-123&type=email&next=https%3A%2F%2Fmarcoou.netlify.app%2Fmeus-agendamentos",
@@ -77,6 +85,7 @@ describe("GET /auth/confirm", () => {
     expect(response.headers.get("location")).toBe(
       `${ORIGIN}/meus-agendamentos`,
     );
+    expectPrivateNoStore(response);
   });
 
   it("encaminha para completar perfil quando o telefone está ausente", async () => {
@@ -89,16 +98,35 @@ describe("GET /auth/confirm", () => {
     expect(response.headers.get("location")).toBe(
       `${ORIGIN}/perfil?next=%2Fpainel`,
     );
+    expectPrivateNoStore(response);
   });
 
-  it("rejeita tipos diferentes de confirmação de e-mail", async () => {
+  it("rejeita tipos de token que não são confirmação nem recuperação", async () => {
     const response = await GET(
-      confirmationRequest("?token_hash=token-123&type=recovery&next=%2Fpainel"),
+      confirmationRequest("?token_hash=token-123&type=magiclink&next=%2Fpainel"),
     );
 
     expect(mocks.verifyOtp).not.toHaveBeenCalled();
     expect(response.headers.get("location")).toContain("/login?");
     expect(response.headers.get("location")).toContain("link+de+confirma%C3%A7%C3%A3o");
+    expectPrivateNoStore(response);
+  });
+
+  it("envia qualquer recuperação válida sempre para redefinir a senha", async () => {
+    const response = await GET(
+      confirmationRequest(
+        "?token_hash=recovery-token&type=recovery&next=https%3A%2F%2Fevil.example%2Fsteal",
+      ),
+    );
+
+    expect(mocks.verifyOtp).toHaveBeenCalledWith({
+      token_hash: "recovery-token",
+      type: "recovery",
+    });
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/redefinir-senha`);
+    expectPrivateNoStore(response);
+    expect(mocks.getUser).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
   it("não permite redirecionamento para outro domínio", async () => {
@@ -108,7 +136,8 @@ describe("GET /auth/confirm", () => {
       ),
     );
 
-    expect(response.headers.get("location")).toBe(`${ORIGIN}/painel`);
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/inicio`);
+    expectPrivateNoStore(response);
   });
 
   it("retorna ao login quando o token expirou ou já foi usado", async () => {
@@ -120,6 +149,7 @@ describe("GET /auth/confirm", () => {
 
     expect(response.headers.get("location")).toContain("/login?");
     expect(response.headers.get("location")).toContain("expirou");
+    expectPrivateNoStore(response);
   });
 
   it("não sobrescreve o nome já escolhido no perfil", async () => {

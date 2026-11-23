@@ -5,5 +5,11 @@ import { getSupabasePublicEnv } from "@/lib/env";
 
 export function createClient() {
   const { url, publishableKey } = getSupabasePublicEnv();
-  return createBrowserClient(url, publishableKey);
+  return createBrowserClient(url, publishableKey, {
+    auth: {
+      flowType: "pkce",
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+    },
+  });
 }
