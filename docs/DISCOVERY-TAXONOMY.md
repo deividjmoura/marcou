@@ -162,8 +162,11 @@ npm run test:db
 npm run build
 ```
 
-`discovery-check.mjs` cobre catálogo/versionamento, defaults legados,
-constraints de categoria e modalidade, duplicatas, filtros por região,
-proteção concorrente da última área, RLS entre dois tenants, moderação, grants,
-índices e a projeção pública sem campos de endereço exato ou UUID interno de
-categoria.
+`npm run test:db` executa quatro harnesses em sequência: booking legado,
+fundação social, identidade/account modes e descoberta. `discovery-check.mjs`
+cobre catálogo/versionamento, defaults legados, constraints de categoria e
+modalidade, duplicatas, filtros por região, proteção concorrente da última área,
+RLS entre dois tenants, moderação, grants, índices e a projeção pública sem
+campos de endereço exato ou UUID interno de categoria. A migration de identidade
+`20261123140000_account_modes.sql` é aplicada antes da migration de descoberta
+`20261123143000_discovery_taxonomy_service_areas.sql`.
