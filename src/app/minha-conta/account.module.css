@@ -79,6 +79,10 @@
   font-size: 13px;
 }
 
+.modeSwitcher {
+  margin-top: 22px;
+}
+
 .section {
   padding: 38px 0 34px;
 }

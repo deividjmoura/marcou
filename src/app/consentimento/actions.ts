@@ -8,6 +8,8 @@ import {
   type LegalAcceptanceInput,
 } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
+import { safeNextPath } from "@/lib/identity";
 import {
   listPendingLegalDocuments,
   recordLegalAcceptances,
@@ -18,9 +20,9 @@ export type LegalConsentState = {
 };
 
 function safeNext(value: FormDataEntryValue | null): string {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/minha-conta";
+  return safeNextPath(
+    typeof value === "string" && value.length > 0 ? value : "/minha-conta",
+  );
 }
 
 export async function acceptLegalDocumentsAction(
@@ -78,6 +80,7 @@ export async function acceptLegalDocumentsAction(
 }
 
 export async function declineLegalDocumentsAction(): Promise<never> {
+  if (!isSupabaseConfigured()) redirect("/login");
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login?consentimento=recusado");

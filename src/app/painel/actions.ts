@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isSupabaseConfigured } from "@/lib/env";
+import { createClient } from "@/lib/supabase/server";
 import {
   providerInputSchema,
   providerSettingsSchema,
@@ -82,7 +83,16 @@ export async function saveProviderAction(
     const parsed = providerInputSchema.safeParse(raw);
     if (!parsed.success) return { error: firstIssue(parsed.error) };
     await createProvider(user.id, parsed.data);
+    try {
+      const supabase = await createClient();
+      await supabase.rpc("set_preferred_mode", { p_mode: "provider" });
+    } catch {
+      // The provider is still created under the same auth.users identity. The
+      // preference is only navigation and can be changed again from the hub.
+    }
     revalidatePath("/painel");
+    revalidatePath("/minha-conta");
+    revalidatePath("/inicio");
     return { success: "Negócio criado. Agora cadastre seus serviços." };
   } catch (error) {
     return {

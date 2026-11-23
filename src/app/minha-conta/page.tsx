@@ -5,7 +5,10 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { logoutAction } from "../(auth)/actions";
 import { NotificationBell } from "@/components/notification-bell";
+import { AccountModeSwitcher } from "@/components/account-mode-switcher";
 import { countUnreadNotifications } from "@/server/notifications";
+import { getOwnedProvider } from "@/server/bookings";
+import { getPreferredMode } from "@/server/identity";
 import styles from "./account.module.css";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +26,16 @@ export default async function MinhaContaPage() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) redirect("/login?next=%2Fminha-conta");
 
-  const [{ data: profile }, unread] = await Promise.all([
+  const [{ data: profile }, unread, provider] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, phone, created_at")
       .eq("id", user.id)
       .maybeSingle(),
     countUnreadNotifications(),
+    getOwnedProvider(user.id),
   ]);
+  const activeMode = await getPreferredMode();
 
   const metadataName = user.user_metadata?.display_name;
   const name: string =
@@ -58,6 +63,7 @@ export default async function MinhaContaPage() {
         </div>
         <div className={styles.headerActions}>
           <NotificationBell unreadCount={unread} />
+          <Link href="/inicio" className="btn btn-ghost">Trocar área</Link>
           <form action={logoutAction}>
             <button type="submit" className="btn btn-ghost">Sair</button>
           </form>
@@ -75,6 +81,13 @@ export default async function MinhaContaPage() {
           Editar dados
         </Link>
       </section>
+
+      <div className={styles.modeSwitcher}>
+        <AccountModeSwitcher
+          activeMode={activeMode}
+          hasProvider={Boolean(provider)}
+        />
+      </div>
 
       <section className={styles.section} aria-labelledby="account-shortcuts">
         <div className={styles.sectionHeading}>

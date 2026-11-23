@@ -6,6 +6,7 @@ import {
   googleLoginAction,
   loginAction,
   requestPasswordResetAction,
+  resendSignupConfirmationAction,
   saveProfileAction,
   signupAction,
   updatePasswordAction,
@@ -22,6 +23,40 @@ function GoogleButton({ next }: { next?: string }) {
         Continuar com Google
       </button>
     </form>
+  );
+}
+
+function ResendConfirmationForm({ next }: { next?: string }) {
+  const [state, formAction, pending] = useActionState(
+    resendSignupConfirmationAction,
+    initialState,
+  );
+
+  return (
+    <form action={formAction} className="form-stack">
+      <input type="hidden" name="next" value={next ?? ""} />
+      {state.error ? <p className="alert alert-error">{state.error}</p> : null}
+      {state.success ? <p className="alert alert-success">{state.success}</p> : null}
+      <label className="field">
+        <span>E-mail usado no cadastro</span>
+        <input type="email" name="email" required autoComplete="email" />
+      </label>
+      <button type="submit" className="btn btn-ghost" disabled={pending}>
+        {pending ? "Enviando..." : "Reenviar confirmação"}
+      </button>
+    </form>
+  );
+}
+
+function ResendConfirmationPanel({ next }: { next?: string }) {
+  return (
+    <details className="auth-resend">
+      <summary>Não recebeu o e-mail de confirmação?</summary>
+      <p className="muted small">
+        Informe o endereço usado no cadastro. A resposta não confirma se a conta existe.
+      </p>
+      <ResendConfirmationForm next={next} />
+    </details>
   );
 }
 
@@ -60,10 +95,11 @@ export function LoginForm({
       </form>
 
       <p className="auth-footnote"><Link href="/esqueci-senha">Esqueci minha senha</Link></p>
+      <ResendConfirmationPanel next={next} />
       <div className="divider"><span>ou</span></div>
       <GoogleButton next={next} />
       <p className="auth-footnote">
-        Ainda não tem conta? <Link href="/cadastro">Cadastre-se</Link>
+        Ainda não tem conta? <Link href={next ? `/cadastro?next=${encodeURIComponent(next)}` : "/cadastro"}>Cadastre-se</Link>
       </p>
     </div>
   );
@@ -98,9 +134,10 @@ export function SignupForm({ next }: { next?: string }) {
         </button>
       </form>
 
+      <ResendConfirmationPanel next={next} />
       <div className="divider"><span>ou</span></div>
       <GoogleButton next={next} />
-      <p className="auth-footnote">Já tem conta? <Link href="/login">Entrar</Link></p>
+      <p className="auth-footnote">Já tem conta? <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>Entrar</Link></p>
     </div>
   );
 }

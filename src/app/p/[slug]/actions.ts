@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { bookingInputSchema, isoDate } from "@/lib/validation";
+import { safeNextPath } from "@/lib/identity";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
   BookingOperationError,
@@ -78,7 +79,7 @@ export async function bookSlotAction(
       date,
       slot: startsAt,
     });
-    const target = `/p/${slug}?${query.toString()}`;
+    const target = safeNextPath(`/p/${slug}?${query.toString()}`);
     redirect(`/login?next=${encodeURIComponent(target)}`);
   }
 

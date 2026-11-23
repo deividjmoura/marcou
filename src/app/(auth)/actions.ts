@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +10,7 @@ import {
   normalizePhone,
   passwordLoginErrorMessage,
   safeNextPath,
+  trustedAppOrigin,
   signupErrorMessage,
 } from "@/lib/identity";
 
@@ -43,26 +43,20 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-async function getAppOrigin() {
-  const headerStore = await headers();
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) {
-    try {
-      const url = new URL(configured);
-      if (url.protocol === "https:" || url.hostname === "localhost") return url.origin;
-    } catch {
-      // Usa a origem encaminhada pela requisição quando a configuração é inválida.
-    }
-  }
-
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  if (!host || /[\s/@\\]/.test(host)) return "http://localhost:3000";
-  const forwardedProto = headerStore.get("x-forwarded-proto");
-  const proto = forwardedProto === "http" && host.startsWith("localhost")
-    ? "http"
-    : "https";
-  return `${proto}://${host}`;
+function getAppOrigin() {
+  return trustedAppOrigin();
 }
+
+function emailConfirmationRedirect(origin: string, next: string): string {
+  const redirectTo = new URL("/auth/confirm", origin);
+  redirectTo.searchParams.set("next", safeNextPath(next));
+  return redirectTo.toString();
+}
+
+const GENERIC_CONFIRMATION_MESSAGE =
+  "Se for necessário confirmar esse endereço, enviaremos instruções por e-mail. Você também pode tentar entrar normalmente.";
+const GENERIC_RECOVERY_MESSAGE =
+  "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Verifique também a caixa de spam ou lixo eletrônico, pois a mensagem pode ser direcionada para lá.";
 
 const SUPABASE_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
@@ -183,34 +177,68 @@ export async function signupAction(
     password: parsed.data.password,
     options: {
       data: { display_name: parsed.data.name },
-      emailRedirectTo: new URL(
-        `/auth/callback?next=${encodeURIComponent(next)}`,
-        origin,
-      ).toString(),
+      emailRedirectTo: emailConfirmationRedirect(origin, next),
     },
   });
 
   if (error) {
+    if (error.code === "email_exists" || error.code === "user_already_exists") {
+      return { success: GENERIC_CONFIRMATION_MESSAGE };
+    }
     return { error: signupErrorMessage(error.code) };
   }
 
   if (!data.user) {
-    return { error: "Não foi possível criar a conta." };
+    return { success: GENERIC_CONFIRMATION_MESSAGE };
   }
 
   if (data.session) {
     try {
       await saveAuthProfile(data.user);
     } catch {
-      return { error: "A conta foi criada, mas não foi possível preparar o perfil. Entre novamente." };
+      // Do not turn profile setup into an account-enumeration side channel.
     }
-    const next = safeNextPath(String(formData.get("next") ?? ""));
-    redirect(`/perfil?next=${encodeURIComponent(next)}`);
+    try {
+      // A signup without email confirmation may return a session. Clear it so
+      // the public signup response stays indistinguishable; login continues the
+      // normal profile/onboarding flow.
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // Keep the generic signup response even if local sign-out needs retry.
+    }
   }
 
-  return {
-    success: "Conta criada. Confirme o e-mail enviado; depois complete seu perfil para continuar.",
-  };
+  return { success: GENERIC_CONFIRMATION_MESSAGE };
+}
+
+export async function resendSignupConfirmationAction(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  const email = z.string().trim().email("Informe um e-mail válido.").safeParse(formData.get("email"));
+  if (!email.success) {
+    return { error: email.error.issues[0]?.message ?? "Informe um e-mail válido." };
+  }
+
+  try {
+    const origin = await getAppOrigin();
+    const next = safeNextPath(String(formData.get("next") ?? ""));
+    const supabase = await createClient();
+    // Supabase errors are intentionally not reflected in the response: the
+    // message is identical whether the address is unknown, confirmed, or
+    // temporarily rate-limited.
+    await supabase.auth.resend({
+      type: "signup",
+      email: email.data,
+      options: { emailRedirectTo: emailConfirmationRedirect(origin, next) },
+    });
+  } catch {
+    // Keep the response non-enumerating even when the provider is unavailable.
+  }
+
+  return { success: GENERIC_CONFIRMATION_MESSAGE };
 }
 
 export async function googleLoginAction(formData: FormData): Promise<void> {
@@ -284,14 +312,19 @@ export async function requestPasswordResetAction(
   const email = z.string().trim().email("Informe um e-mail válido.").safeParse(formData.get("email"));
   if (!email.success) return { error: email.error.issues[0]?.message ?? "E-mail inválido." };
 
-  const origin = await getAppOrigin();
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${origin}/auth/callback?flow=recovery&next=/redefinir-senha`,
-  });
+  try {
+    const origin = await getAppOrigin();
+    const supabase = await createClient();
+    const redirectTo = new URL("/auth/confirm", origin);
+    redirectTo.searchParams.set("next", "/redefinir-senha");
+    await supabase.auth.resetPasswordForEmail(email.data, {
+      redirectTo: redirectTo.toString(),
+    });
+  } catch {
+    // A recovery request must not reveal whether the account exists.
+  }
 
-  if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
-  return { success: "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Verifique também a caixa de spam ou lixo eletrônico, pois a mensagem pode ser direcionada para lá." };
+  return { success: GENERIC_RECOVERY_MESSAGE };
 }
 
 export async function updatePasswordAction(
