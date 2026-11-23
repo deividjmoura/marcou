@@ -183,6 +183,7 @@ try {
   const ownerAClient = await asRole("authenticated", ownerA);
   const ownerBClient = await asRole("authenticated", ownerB);
   const anonClient = await asRole("anon");
+  const serviceRoleClient = await asRole("service_role");
 
   const accountFlag = async (client, providerId = null, flag = "social_profile") =>
     Boolean((
@@ -198,6 +199,148 @@ try {
         [flag],
       )
     ).rows[0].enabled);
+
+  console.log("\n[permissões de funções SECURITY DEFINER]");
+
+  const publicDefinerGrants = (
+    await db.query(`
+      select distinct p.oid::regprocedure::text as signature
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+        cross join lateral aclexplode(
+          coalesce(p.proacl, acldefault('f', p.proowner))
+        ) acl
+       where n.nspname = 'public'
+         and p.prosecdef
+         and acl.grantee = 0
+         and acl.privilege_type = 'EXECUTE'
+       order by signature
+    `)
+  ).rows.map((row) => row.signature);
+  check(
+    "nenhuma função definer herda EXECUTE de PUBLIC",
+    publicDefinerGrants.length === 0,
+    publicDefinerGrants.join(", "),
+  );
+
+  const grantExpectations = [
+    {
+      label: "expiração em lote é exclusiva de service_role",
+      signature: "public.expire_stale_bookings()",
+      roles: { anon: false, authenticated: false, service_role: true },
+    },
+    {
+      label: "lembretes em lote são exclusivos de service_role",
+      signature: "public.create_booking_reminders(integer)",
+      roles: { anon: false, authenticated: false, service_role: true },
+    },
+    {
+      label: "criação de reserva exige autenticação",
+      signature: "public.create_booking(text,uuid,timestamptz,text,text,text)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "transição de reserva exige autenticação",
+      signature: "public.transition_booking(uuid,text,text)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "agenda permanece pública",
+      signature: "public.get_provider_schedule(text,uuid,date,timestamptz,timestamptz)",
+      roles: { anon: true, authenticated: true },
+    },
+    {
+      label: "marcar notificação exige autenticação",
+      signature: "public.mark_notification_read(uuid)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "marcar todas notificações exige autenticação",
+      signature: "public.mark_all_notifications_read()",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "helper de intervalo não é API de cliente",
+      signature: "public.is_interval_available(uuid,timestamptz,timestamptz)",
+      roles: { anon: false, authenticated: false },
+    },
+    {
+      label: "helper de payload não é API de cliente",
+      signature: "public.notification_payloads(text,public.bookings,public.providers,text)",
+      roles: { anon: false, authenticated: false },
+    },
+    {
+      label: "função de trigger não é API de cliente",
+      signature: "public.notify_on_booking_event()",
+      roles: { anon: false, authenticated: false },
+    },
+    {
+      label: "status de aceite exige autenticação",
+      signature: "public.has_current_legal_acceptances()",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "pendências legais exigem autenticação",
+      signature: "public.get_pending_legal_documents()",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "registro de aceite exige autenticação",
+      signature: "public.record_legal_acceptances(jsonb)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "flag segmentada exige autenticação",
+      signature: "public.is_feature_enabled(text,uuid)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "flag pública preserva leitura anônima",
+      signature: "public.is_public_feature_enabled(text)",
+      roles: { anon: true, authenticated: true },
+    },
+  ];
+
+  for (const expectation of grantExpectations) {
+    const observed = {};
+    for (const [role, expected] of Object.entries(expectation.roles)) {
+      observed[role] = Boolean((
+        await db.query(
+          `select has_function_privilege($1, $2, 'EXECUTE') as allowed`,
+          [role, expectation.signature],
+        )
+      ).rows[0].allowed);
+      if (observed[role] !== expected) break;
+    }
+    check(
+      expectation.label,
+      Object.entries(expectation.roles).every(
+        ([role, expected]) => observed[role] === expected,
+      ),
+      `${expectation.signature}: ${JSON.stringify(observed)}`,
+    );
+  }
+
+  await expectError(
+    "anon não dispara job de expiração",
+    () => anonClient.query(`select public.expire_stale_bookings()`),
+    "permission denied",
+  );
+  await expectError(
+    "authenticated não dispara geração de lembretes",
+    () => ownerAClient.query(`select public.create_booking_reminders(24)`),
+    "permission denied",
+  );
+  const serviceExpireResult = await serviceRoleClient.query(
+    `select public.expire_stale_bookings()`,
+  );
+  const serviceReminderResult = await serviceRoleClient.query(
+    `select public.create_booking_reminders(24)`,
+  );
+  check(
+    "service_role executa os dois jobs autorizados",
+    serviceExpireResult.rowCount === 1 && serviceReminderResult.rowCount === 1,
+  );
 
   console.log("\n[fundação de rollout social]");
 
@@ -505,6 +648,56 @@ try {
        set deployment_environment = 'local', updated_at = now()
      where singleton = true;
   `);
+
+  const bookingAfterHardening = (
+    await ownerBClient.query(
+      `select * from public.create_booking(
+         'social-prov-a',
+         $1,
+         '2026-12-01T12:00:00Z',
+         'Cliente ACL',
+         '47999999999',
+         $2
+       )`,
+      [serviceA, `acl-${crypto.randomUUID()}`],
+    )
+  ).rows[0];
+  check(
+    "booking autenticado continua funcional após hardening",
+    bookingAfterHardening?.status === "pending_payment",
+  );
+  const bookingNotifications = (
+    await db.query(
+      `select id, recipient_id
+         from public.notifications
+        where booking_id = $1
+        order by recipient_id`,
+      [bookingAfterHardening.id],
+    )
+  ).rows;
+  check(
+    "trigger interno continua gerando notificações",
+    bookingNotifications.length === 2 &&
+      bookingNotifications.some((row) => row.recipient_id === ownerA) &&
+      bookingNotifications.some((row) => row.recipient_id === ownerB),
+    `obteve ${bookingNotifications.length}`,
+  );
+  const customerNotification = bookingNotifications.find(
+    (row) => row.recipient_id === ownerB,
+  );
+  let markedNotification = null;
+  if (customerNotification) {
+    markedNotification = (
+      await ownerBClient.query(
+        `select * from public.mark_notification_read($1)`,
+        [customerNotification.id],
+      )
+    ).rows[0];
+  }
+  check(
+    "RPC autenticada de notificação continua funcional",
+    markedNotification?.read_at != null,
+  );
 
   const publicProvider = await anonClient.query(
     `select id from public.providers where slug = 'social-prov-a'`,
