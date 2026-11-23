@@ -18,6 +18,7 @@ import { logoutAction } from "../(auth)/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
+import { AccountModeSwitcher } from "@/components/account-mode-switcher";
 import { countUnreadNotifications } from "@/server/notifications";
 import { isSocialFeatureEnabled } from "@/server/feature-flags";
 import {
@@ -25,6 +26,7 @@ import {
   listProviderServiceAreas,
   listServiceCategories,
 } from "@/server/discovery";
+import { getPreferredMode } from "@/server/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +85,10 @@ export default async function PainelPage() {
 
   const user = await requireUser("/painel");
   const provider = await getOwnedProvider(user.id);
-  const unread = await countUnreadNotifications();
+  const [unread, activeMode] = await Promise.all([
+    countUnreadNotifications(),
+    getPreferredMode(),
+  ]);
 
   if (!provider) {
     return (
@@ -106,6 +111,7 @@ export default async function PainelPage() {
           </div>
         </header>
 
+        <AccountModeSwitcher activeMode={activeMode} hasProvider={false} />
         <ProviderForm provider={null} />
       </main>
     );
@@ -137,6 +143,8 @@ export default async function PainelPage() {
           <p className="muted">Acompanhe e gerencie seus agendamentos.</p>
         </div>
       </header>
+
+      <AccountModeSwitcher activeMode={activeMode} hasProvider />
 
       <ProviderPanelMenu
         provider={provider}

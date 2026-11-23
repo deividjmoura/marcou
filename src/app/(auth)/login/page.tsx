@@ -1,4 +1,5 @@
 import { LoginForm } from "../forms";
+import { safeLoginErrorMessage } from "@/lib/identity";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 
@@ -21,7 +22,7 @@ export default async function LoginPage({
   return (
     <LoginForm
       next={params.next}
-      errorMessage={params.error}
+      errorMessage={safeLoginErrorMessage(params.error)}
       successMessage={
         params.passwordUpdated === "1"
           ? "Senha atualizada com sucesso. Entre com sua nova senha."

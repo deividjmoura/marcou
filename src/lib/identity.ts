@@ -1,8 +1,150 @@
+const DEFAULT_NEXT_PATH = "/inicio";
+const LOCAL_ORIGIN = "https://marcou.invalid";
+const LOCAL_APP_ORIGIN = "http://localhost:3000";
+
+function parseConfiguredOrigin(value: string | null | undefined): string | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    if (
+      url.username !== "" ||
+      url.password !== "" ||
+      (url.protocol !== "https:" && url.hostname !== "localhost")
+    ) {
+      return null;
+    }
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Email and callback redirects must use a configured public origin. Only allow
+ * the request origin as a development fallback for localhost; never reflect an
+ * arbitrary Host or forwarded-host value into an auth link or redirect.
+ */
+export function trustedAppOrigin(requestOrigin?: string): string {
+  const configured = parseConfiguredOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+  if (configured) return configured;
+
+  const localRequestOrigin = parseConfiguredOrigin(requestOrigin);
+  if (localRequestOrigin && new URL(localRequestOrigin).hostname === "localhost") {
+    return localRequestOrigin;
+  }
+  return LOCAL_APP_ORIGIN;
+}
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+
+/** Decode nested percent-encoding so encoded slashes and backslashes cannot
+ * turn into a network-path redirect after a later URL parse. */
+function decodeRepeatedly(value: string): string | null {
+  let decoded = value;
+
+  for (let attempt = 0; attempt <= value.length; attempt += 1) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return null;
+    }
+
+    if (next === decoded) return decoded.normalize("NFC");
+    decoded = next;
+  }
+
+  return null;
+}
+
+function hasUnsafePathShape(value: string): boolean {
+  if (
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\") ||
+    CONTROL_CHARACTERS.test(value)
+  ) {
+    return true;
+  }
+
+  try {
+    const normalized = new URL(value, LOCAL_ORIGIN);
+    if (normalized.origin !== LOCAL_ORIGIN || normalized.pathname.startsWith("//")) {
+      return true;
+    }
+
+    const decodedPath = decodeRepeatedly(normalized.pathname);
+    if (
+      !decodedPath ||
+      !decodedPath.startsWith("/") ||
+      decodedPath.startsWith("//") ||
+      decodedPath.includes("\\") ||
+      CONTROL_CHARACTERS.test(decodedPath)
+    ) {
+      return true;
+    }
+
+    // Resolve encoded dot segments and separators once more after decoding.
+    const normalizedDecodedPath = new URL(decodedPath, LOCAL_ORIGIN);
+    return (
+      normalizedDecodedPath.origin !== LOCAL_ORIGIN ||
+      normalizedDecodedPath.pathname.startsWith("//")
+    );
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Accepts only a normalized, same-origin application path. Decoding and URL
+ * normalization are validated before returning the local path so nested
+ * percent-encoding, dot segments and backslashes cannot become open redirects.
+ */
 export function safeNextPath(value: string | null | undefined): string {
-  if (!value) return "/painel";
-  return value.startsWith("/") && !value.startsWith("//") && !value.includes("\\")
-    ? value
-    : "/painel";
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > 4096 ||
+    hasUnsafePathShape(value)
+  ) {
+    return DEFAULT_NEXT_PATH;
+  }
+
+  const decoded = decodeRepeatedly(value);
+  if (!decoded || hasUnsafePathShape(decoded)) return DEFAULT_NEXT_PATH;
+
+  try {
+    const normalized = new URL(value, LOCAL_ORIGIN);
+    if (normalized.origin !== LOCAL_ORIGIN) return DEFAULT_NEXT_PATH;
+    return `${normalized.pathname}${normalized.search}${normalized.hash}`;
+  } catch {
+    return DEFAULT_NEXT_PATH;
+  }
+}
+
+/** Accepts either a local path or an absolute URL on the current app origin. */
+export function safeNextPathFromUrl(
+  value: string | null | undefined,
+  origin: string,
+): string {
+  if (!value) return DEFAULT_NEXT_PATH;
+
+  try {
+    const expectedOrigin = new URL(origin).origin;
+    const target = new URL(value, expectedOrigin);
+    if (target.origin !== expectedOrigin) return DEFAULT_NEXT_PATH;
+
+    // Older confirmation templates used the app callback as RedirectTo. Keep
+    // that return destination local and unwrap its own validated `next` value.
+    if (target.pathname === "/auth/callback") {
+      const callbackNext = target.searchParams.get("next");
+      if (callbackNext) return safeNextPath(callbackNext);
+    }
+
+    return safeNextPath(`${target.pathname}${target.search}${target.hash}`);
+  } catch {
+    return DEFAULT_NEXT_PATH;
+  }
 }
 
 export function normalizePhone(value: string): string {
@@ -25,11 +167,28 @@ export function oauthErrorMessage(error?: string | null): string {
   return "Não foi possível concluir a autenticação. Tente novamente.";
 }
 
+const SAFE_LOGIN_ERRORS = new Set([
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
+  "O login com Google foi cancelado. Tente novamente quando quiser.",
+  "Não foi possível concluir a autenticação. Tente novamente.",
+  "Não foi possível iniciar o login com Google.",
+  "Não foi possível carregar seu perfil.",
+  "O link de confirmação é inválido ou está incompleto. Solicite um novo e-mail.",
+  "O link de confirmação expirou ou já foi utilizado. Solicite um novo e-mail.",
+  "E-mail confirmado, mas não foi possível carregar seu perfil.",
+]);
+
+/** Only callback messages generated by this application may be shown from a URL. */
+export function safeLoginErrorMessage(
+  value: string | null | undefined,
+): string | undefined {
+  return value && SAFE_LOGIN_ERRORS.has(value) ? value : undefined;
+}
+
 /**
  * Monta o destino de retorno para o login preservando o caminho original.
- * Usado quando o callback OAuth falha (consentimento cancelado, link expirado
- * ou provedor indisponível) para que o usuário não perca o agendamento que
- * estava tentando fazer.
+ * Usado quando o callback OAuth falha para que o usuário não perca o fluxo
+ * que estava tentando concluir.
  */
 export function loginRedirectUrl(
   origin: string,
@@ -38,7 +197,7 @@ export function loginRedirectUrl(
 ): string {
   const url = new URL("/login", origin);
   if (error) url.searchParams.set("error", error);
-  url.searchParams.set("next", next);
+  url.searchParams.set("next", safeNextPath(next));
   return url.toString();
 }
 

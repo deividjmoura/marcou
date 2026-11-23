@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeNextPath } from "@/lib/identity";
 import { timeStringToMinutes } from "@/lib/time";
 import {
   generateSlots,
@@ -150,7 +151,8 @@ export async function getCurrentUser() {
 export async function requireUser(next?: string) {
   const user = await getCurrentUser();
   if (!user) {
-    redirect(next ?? "/login");
+    const destination = safeNextPath(next);
+    redirect(`/login?next=${encodeURIComponent(destination)}`);
   }
   return user;
 }

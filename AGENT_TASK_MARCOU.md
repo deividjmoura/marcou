@@ -21,10 +21,12 @@
   Contrato e rollout: `docs/DISCOVERY-TAXONOMY.md`.
 - Nenhuma migration foi aplicada remotamente e nenhuma flag/configuração de
   Supabase, Netlify ou produção foi alterada.
-- PR rascunho: `#119`, commit `df2af58`; GitHub Actions `quality` está verde. A
-  integração aguarda a PR de identidade `#118`. Depois do merge da dependência,
-  atualizar esta branch sobre `main`, conciliar painel/CSS/scripts, repetir toda
-  a matriz e só então retirar o rascunho.
+- A PR de identidade `#118` foi mesclada em `main` (`920ea06`) e integrada à
+  `#119`. Os conflitos em `package.json` e `painel/page.tsx` foram conciliados
+  preservando os quatro harnesses DB, o seletor Cliente/Profissional e toda a
+  descoberta. Validação local pós-integração: lint, typecheck, 117 testes
+  Vitest, DB legado `69/0`, social `47/0`, identidade `28/0` e descoberta
+  `40/0`, audit e build aprovados.
 
 ## Hardening de funções SECURITY DEFINER — 23/11/2026
 

@@ -1,14 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
+import { markPrivateNoStore } from "@/lib/http";
 import {
   loginRedirectUrl,
   oauthErrorMessage,
   safeNextPath,
+  trustedAppOrigin,
 } from "@/lib/identity";
 
 const AUTH_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
+function redirectNoStore(url: string) {
+  return markPrivateNoStore(NextResponse.redirect(url));
+}
 
 /**
  * Monta o perfil de um usuário recém-autenticado sem sobrescrever um nome
@@ -47,14 +53,15 @@ async function provisionProfile(
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  const origin = trustedAppOrigin(request.nextUrl.origin);
   const code = searchParams.get("code");
   const next = safeNextPath(searchParams.get("next"));
   const flow = searchParams.get("flow");
   const providerError = searchParams.get("error");
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.redirect(
+    return redirectNoStore(
       loginRedirectUrl(origin, next, AUTH_UNAVAILABLE_MESSAGE),
     );
   }
@@ -63,41 +70,67 @@ export async function GET(request: NextRequest) {
     const message = providerError
       ? oauthErrorMessage(providerError)
       : "Não foi possível concluir a autenticação. Tente novamente.";
-    return NextResponse.redirect(loginRedirectUrl(origin, next, message));
+    return redirectNoStore(loginRedirectUrl(origin, next, message));
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
-    return NextResponse.redirect(
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+  try {
+    supabase = await createClient();
+  } catch {
+    return redirectNoStore(
+      loginRedirectUrl(origin, next, "Não foi possível concluir a autenticação. Tente novamente."),
+    );
+  }
+
+  try {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return redirectNoStore(
+        loginRedirectUrl(origin, next, oauthErrorMessage()),
+      );
+    }
+  } catch {
+    return redirectNoStore(
       loginRedirectUrl(origin, next, oauthErrorMessage()),
     );
   }
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    return NextResponse.redirect(loginRedirectUrl(origin, next));
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"];
+  try {
+    const result = await supabase.auth.getUser();
+    if (result.error || !result.data.user) {
+      return redirectNoStore(loginRedirectUrl(origin, next));
+    }
+    user = result.data.user;
+  } catch {
+    return redirectNoStore(loginRedirectUrl(origin, next));
   }
 
-  // Password recovery already has an authenticated PKCE session. Do not send
-  // the user through profile onboarding: the password page is the destination.
-  if (flow === "recovery" && next === "/redefinir-senha") {
-    return NextResponse.redirect(new URL("/redefinir-senha", origin));
+  // Legacy PKCE recovery links may return a code here. Recovery never falls
+  // through to profile onboarding or to a caller-controlled destination.
+  if (flow === "recovery") {
+    return redirectNoStore(new URL("/redefinir-senha", origin).toString());
   }
 
-  const { data: profile, error: profileError } = await provisionProfile(
-    user,
-    supabase,
-  );
+  try {
+    const { data: profile, error: profileError } = await provisionProfile(
+      user,
+      supabase,
+    );
 
-  if (profileError) {
-    return NextResponse.redirect(
+    if (profileError) {
+      return redirectNoStore(
+        loginRedirectUrl(origin, next, "Não foi possível carregar seu perfil."),
+      );
+    }
+
+    const destination = profile.phone
+      ? next
+      : `/perfil?next=${encodeURIComponent(next)}`;
+    return redirectNoStore(new URL(destination, origin).toString());
+  } catch {
+    return redirectNoStore(
       loginRedirectUrl(origin, next, "Não foi possível carregar seu perfil."),
     );
   }
-
-  const destination = profile.phone
-    ? next
-    : `/perfil?next=${encodeURIComponent(next)}`;
-  return NextResponse.redirect(new URL(destination, origin));
 }
