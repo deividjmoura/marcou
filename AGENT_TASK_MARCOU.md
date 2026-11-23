@@ -21,6 +21,10 @@
   Contrato e rollout: `docs/DISCOVERY-TAXONOMY.md`.
 - Nenhuma migration foi aplicada remotamente e nenhuma flag/configuração de
   Supabase, Netlify ou produção foi alterada.
+- PR rascunho: `#119`, commit `df2af58`; GitHub Actions `quality` está verde. A
+  integração aguarda a PR de identidade `#118`. Depois do merge da dependência,
+  atualizar esta branch sobre `main`, conciliar painel/CSS/scripts, repetir toda
+  a matriz e só então retirar o rascunho.
 
 ## Hardening de funções SECURITY DEFINER — 23/11/2026
 
