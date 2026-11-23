@@ -66,6 +66,9 @@ function firstIssue(error: { issues?: Array<{ message?: string }> }): string {
   return error.issues?.[0]?.message ?? "Dados inválidos.";
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+
 export async function saveProviderAction(
   _prev: PainelActionState,
   formData: FormData,
@@ -172,22 +175,35 @@ export async function saveServiceAction(
   }
 }
 
-export async function toggleServiceAction(formData: FormData): Promise<void> {
-  if (!isSupabaseConfigured()) return revalidatePath("/painel");
-
-  const provider = await ownedProviderOrError();
-  if (!provider) return revalidatePath("/painel");
+export async function toggleServiceAction(
+  _prev: PainelActionState,
+  formData: FormData,
+): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
 
   const serviceId = String(formData.get("serviceId") ?? "");
-  const isActive = formData.get("isActive") === "true";
-
-  try {
-    await setServiceActive(provider.id, serviceId, isActive);
-  } catch {
-    // A UI será atualizada com o estado atual do servidor.
+  const requestedState = String(formData.get("isActive") ?? "");
+  if (!UUID_PATTERN.test(serviceId) || !["true", "false"].includes(requestedState)) {
+    return { error: "Serviço ou estado inválido." };
   }
 
-  revalidatePath("/painel");
+  try {
+    const provider = await ownedProviderOrError();
+    if (!provider) return { error: "Você ainda não configurou seu negócio." };
+
+    const isActive = requestedState === "true";
+    await setServiceActive(provider.id, serviceId, isActive);
+    revalidatePath("/painel");
+    revalidatePath(`/p/${provider.slug}`);
+    return { success: isActive ? "Serviço ativado." : "Serviço desativado." };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível alterar o serviço.",
+    };
+  }
 }
 
 export async function saveServiceAreaAction(
@@ -231,7 +247,7 @@ export async function deleteServiceAreaAction(
   if (!isSupabaseConfigured()) return unavailableState();
 
   const areaId = String(formData.get("areaId") ?? "");
-  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(areaId)) {
+  if (!UUID_PATTERN.test(areaId)) {
     return { error: "Área de atendimento inválida." };
   }
 

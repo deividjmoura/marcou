@@ -52,6 +52,8 @@ const stateCodeSchema = z.enum(BRAZIL_STATE_CODES, {
   message: "Selecione uma UF válida.",
 });
 const areaPrecisionSchema = z.enum(["city", "neighborhood", "radius"]);
+const ADDRESS_LIKE_PLACE_TOKEN =
+  /(^|-)(rua|r|avenida|av|avda|travessa|trav|rodovia|rod|estrada|estr|alameda|servidao|viela|beco|quadra|lote|condominio)(-|$)/;
 const placeNameSchema = z
   .string()
   .trim()
@@ -63,10 +65,9 @@ const placeNameSchema = z
   )
   .refine(
     (value) =>
-      !/(^|-)(rua|avenida|av|travessa|rodovia|estrada|alameda|logradouro)(-|$)/.test(
-        normalizeDiscoveryKey(value),
-      ),
-    "Informe apenas cidade ou bairro, nunca rua ou endereço exato.",
+      !/\d/.test(value) &&
+      !ADDRESS_LIKE_PLACE_TOKEN.test(normalizeDiscoveryKey(value)),
+    "Informe apenas cidade ou bairro, sem rua, número ou endereço exato.",
   );
 
 function optionalNumber(value: unknown): unknown {
@@ -178,7 +179,6 @@ const publicServiceAreaSchema = z.object({
 const publicServiceDiscoverySchema = z.object({
   serviceId: z.string().uuid(),
   category: z.object({
-    id: z.string().uuid(),
     slug: z.string().min(1).max(80),
     name: z.string().min(1).max(80),
     version: z.coerce.number().int().positive(),

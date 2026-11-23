@@ -71,6 +71,12 @@ registro interno. Chaves normalizadas e índices evitam duplicatas e preparam
 filtros por UF, cidade, bairro e modalidade. Nenhuma geocodificação exata é
 feita nesta entrega.
 
+Como os nomes declarados podem aparecer publicamente, a validação é
+conservadora: cidade e bairro rejeitam algarismos, separadores típicos de
+endereço e tokens de logradouro, inclusive abreviações. Um bairro legítimo com
+numeral deve ser escrito por extenso ou representado pela cidade/raio. Essa
+restrição evita que número residencial seja disfarçado em um campo de região.
+
 ## 3. Autorização e exposição pública
 
 - categorias publicadas são catálogo público sem PII;
@@ -82,10 +88,11 @@ feita nesta entrega.
   `get_public_provider_discovery(provider_slug)`;
 - a RPC exige prestador publicado e rollout público de 100% da flag
   `social_discovery`;
-- a resposta inclui somente categoria atual, modalidades e cidade/bairro/raio
+- a resposta inclui somente o identificador público já usado no agendamento,
+  categoria atual por slug/nome/versão, modalidades e cidade/bairro/raio
   aproximado;
-- source, chaves internas, timestamps e dados de ownership não entram na
-  resposta.
+- UUID interno da categoria, source, chaves normalizadas, timestamps e dados de
+  ownership não entram na resposta.
 
 Feature flag é controle de lançamento, não autorização. RLS, ownership,
 constraints e projeção mínima continuam válidos quando a flag está ligada.
@@ -157,5 +164,6 @@ npm run build
 
 `discovery-check.mjs` cobre catálogo/versionamento, defaults legados,
 constraints de categoria e modalidade, duplicatas, filtros por região,
-proteção da última área, RLS entre dois tenants, moderação, grants, índices e a
-projeção pública sem campos de endereço exato.
+proteção concorrente da última área, RLS entre dois tenants, moderação, grants,
+índices e a projeção pública sem campos de endereço exato ou UUID interno de
+categoria.

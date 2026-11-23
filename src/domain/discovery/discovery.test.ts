@@ -116,16 +116,28 @@ describe("serviceAreaInputSchema", () => {
     ).toBe(false);
   });
 
-  it("não aceita texto com formato de endereço completo no campo cidade", () => {
-    const result = serviceAreaInputSchema.safeParse({
-      stateCode: "SC",
-      city: "Rua Exemplo 123",
-      precision: "city",
-      neighborhood: "",
-      radiusKm: "",
-    });
+  it("não aceita logradouro nem número residencial em cidade ou bairro", () => {
+    for (const city of ["Rua Exemplo 123", "R. das Flores", "Itajaí 45"]) {
+      expect(
+        serviceAreaInputSchema.safeParse({
+          stateCode: "SC",
+          city,
+          precision: "city",
+          neighborhood: "",
+          radiusKm: "",
+        }).success,
+      ).toBe(false);
+    }
 
-    expect(result.success).toBe(false);
+    expect(
+      serviceAreaInputSchema.safeParse({
+        stateCode: "SC",
+        city: "Itajaí",
+        precision: "neighborhood",
+        neighborhood: "Centro 123",
+        radiusKm: "",
+      }).success,
+    ).toBe(false);
   });
 });
 

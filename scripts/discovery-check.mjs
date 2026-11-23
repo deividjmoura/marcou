@@ -146,6 +146,7 @@ try {
   }
 
   const ownerAClient = await asRole("authenticated", ownerA);
+  const ownerAConcurrentClient = await asRole("authenticated", ownerA);
   const ownerBClient = await asRole("authenticated", ownerB);
   const anonClient = await asRole("anon");
 
@@ -313,6 +314,26 @@ try {
     ),
     "provider_service_area_city_is_not_address",
   );
+  await expectError(
+    "abreviação de logradouro também é rejeitada",
+    () => ownerAClient.query(
+      `insert into public.provider_service_areas (
+         provider_id, state_code, city_name, precision
+       ) values ($1, 'SC', 'R. das Flores', 'city')`,
+      [providerA],
+    ),
+    "provider_service_area_city_is_not_address",
+  );
+  await expectError(
+    "número residencial não pode ser disfarçado como bairro",
+    () => ownerAClient.query(
+      `insert into public.provider_service_areas (
+         provider_id, state_code, city_name, neighborhood_name, precision
+       ) values ($1, 'SC', 'Navegantes', 'Centro 123', 'neighborhood')`,
+      [providerA],
+    ),
+    "provider_service_area_neighborhood_is_not_address",
+  );
 
   await expectError(
     "área duplicada é bloqueada após normalização",
@@ -405,6 +426,58 @@ try {
     removedArea.rows[0]?.id === areaA.id && Boolean(areaB),
   );
 
+  // Reproduz a corrida entre ativar um serviço móvel e apagar a última área.
+  // Os dois triggers precisam serializar pelo mesmo provider para que ambas as
+  // transações não confirmem com snapshots incompatíveis.
+  await ownerAClient.query(
+    `update public.services set is_active = false where id = $1`,
+    [customerService],
+  );
+  await ownerAClient.query("begin");
+  await ownerAClient.query(
+    `update public.services set is_active = true where id = $1`,
+    [customerService],
+  );
+  await ownerAConcurrentClient.query("begin");
+  const concurrentAreaDeletion = ownerAConcurrentClient.query(
+    `delete from public.provider_service_areas where id = $1`,
+    [areaB],
+  );
+  await new Promise((resolve) => setTimeout(resolve, 75));
+  const lockState = (
+    await db.query(
+      `select wait_event_type, wait_event
+         from pg_stat_activity
+        where pid = $1`,
+      [ownerAConcurrentClient.processID],
+    )
+  ).rows[0];
+  check(
+    "remoção concorrente aguarda a validação do mesmo prestador",
+    lockState?.wait_event_type === "Lock",
+    JSON.stringify(lockState),
+  );
+  await ownerAClient.query("commit");
+  await expectError(
+    "corrida não deixa serviço móvel ativo sem área",
+    () => concurrentAreaDeletion,
+    "service_area_in_use_by_customer_location",
+  );
+  await ownerAConcurrentClient.query("rollback");
+  const concurrentInvariant = (
+    await db.query(
+      `select
+         exists(select 1 from public.services where id = $1 and is_active) as service_active,
+         exists(select 1 from public.provider_service_areas where id = $2 and is_active) as area_active`,
+      [customerService, areaB],
+    )
+  ).rows[0];
+  check(
+    "estado confirmado mantém serviço e área compatíveis",
+    concurrentInvariant.service_active && concurrentInvariant.area_active,
+    JSON.stringify(concurrentInvariant),
+  );
+
   const forbiddenColumns = (
     await db.query(`
       select column_name
@@ -424,6 +497,17 @@ try {
   );
 
   console.log("\n[moderação e isolamento]");
+
+  await expectError(
+    "sugestão exige justificativa mesmo fora da action do painel",
+    () => ownerAClient.query(
+      `insert into public.service_category_suggestions (
+         provider_id, proposed_name, rationale
+       ) values ($1, 'Sugestão sem contexto', null)`,
+      [providerA],
+    ),
+    "not-null constraint",
+  );
 
   const suggestion = (
     await ownerAClient.query(
@@ -512,6 +596,14 @@ try {
      where flag_key = 'social_discovery';
   `);
 
+  const invalidSlugProjection = await anonClient.query(
+    `select public.get_public_provider_discovery('discovery-a/../segredo') as value`,
+  );
+  check(
+    "RPC pública rejeita slug fora do contrato antes da consulta",
+    invalidSlugProjection.rows[0].value === null,
+  );
+
   const publicProjection = (
     await anonClient.query(
       `select public.get_public_provider_discovery('discovery-a') as value`,
@@ -533,6 +625,7 @@ try {
 
   const serializedProjection = JSON.stringify(publicProjection).toLowerCase();
   const forbiddenPublicKeys = [
+    "id",
     "owner_id",
     "source",
     "city_key",

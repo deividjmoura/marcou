@@ -62,7 +62,7 @@ function ServiceAreaDeleteForm({
   const [state, action, pending] = useActionState(deleteServiceAreaAction, {});
 
   return (
-    <form action={action} className="area-delete-form">
+    <form action={action} className="inline-action-form area-delete-form">
       <Alert state={state} />
       <input type="hidden" name="areaId" value={areaId} />
       <button
@@ -76,6 +76,35 @@ function ServiceAreaDeleteForm({
         }
       >
         {pending ? "Removendo..." : "Remover"}
+      </button>
+    </form>
+  );
+}
+
+function ServiceToggleForm({ service }: { service: Service }) {
+  const [state, action, pending] = useActionState(toggleServiceAction, {});
+
+  return (
+    <form action={action} className="inline-action-form">
+      <Alert state={state} />
+      <input type="hidden" name="serviceId" value={service.id} />
+      <input
+        type="hidden"
+        name="isActive"
+        value={service.is_active ? "false" : "true"}
+      />
+      <button
+        type="submit"
+        className="btn btn-small btn-ghost"
+        disabled={pending}
+      >
+        {pending
+          ? service.is_active
+            ? "Desativando..."
+            : "Ativando..."
+          : service.is_active
+            ? "Desativar"
+            : "Ativar"}
       </button>
     </form>
   );
@@ -237,17 +266,7 @@ export function ServicesManager({
                 >
                   Editar
                 </button>
-                <form action={toggleServiceAction}>
-                  <input type="hidden" name="serviceId" value={service.id} />
-                  <input
-                    type="hidden"
-                    name="isActive"
-                    value={service.is_active ? "false" : "true"}
-                  />
-                  <button type="submit" className="btn btn-small btn-ghost">
-                    {service.is_active ? "Desativar" : "Ativar"}
-                  </button>
-                </form>
+                <ServiceToggleForm service={service} />
               </div>
             </li>
           ))}
@@ -297,6 +316,11 @@ export function ServicesManager({
                     editing?.category_id ?? DEFAULT_SERVICE_CATEGORY_ID
                   }
                 >
+                  {editing && !categoryLabels.has(editing.category_id) ? (
+                    <option value={editing.category_id}>
+                      Categoria anterior (fora do catálogo atual)
+                    </option>
+                  ) : null}
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {categoryLabels.get(category.id) ?? category.name}

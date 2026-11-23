@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  normalizeDiscoveryKey,
   publicProviderDiscoverySchema,
   type CategorySuggestion,
   type CategorySuggestionInput,
@@ -173,14 +172,4 @@ export async function getPublicProviderDiscovery(
   if (error || data == null) return null;
   const parsed = publicProviderDiscoverySchema.safeParse(data);
   return parsed.success ? parsed.data : null;
-}
-
-export function normalizedAreaIdentity(input: ServiceAreaInput): string {
-  return [
-    input.stateCode,
-    normalizeDiscoveryKey(input.city),
-    normalizeDiscoveryKey(input.neighborhood || ""),
-    input.precision,
-    input.radiusKm ?? "",
-  ].join(":");
 }

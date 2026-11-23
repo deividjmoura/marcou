@@ -115,8 +115,8 @@ create table public.service_category_suggestions (
   normalized_name text generated always as (
     public.normalize_discovery_key(proposed_name)
   ) stored,
-  rationale text
-    check (rationale is null or char_length(btrim(rationale)) between 8 and 500),
+  rationale text not null
+    check (char_length(btrim(rationale)) between 8 and 500),
   status public.category_suggestion_status not null default 'pending',
   submitted_by uuid not null default auth.uid()
     references auth.users (id) on delete restrict,
@@ -180,14 +180,14 @@ create table public.provider_service_areas (
     or (precision = 'radius' and radius_km is not null)
   ),
   constraint provider_service_area_city_is_not_address check (
-    city_name !~ '[,;/#]'
-    and city_key !~ '(^|-)(rua|avenida|av|travessa|rodovia|estrada|alameda|logradouro)(-|$)'
+    city_name !~ '[[:digit:],;/#]'
+    and city_key !~ '(^|-)(rua|r|avenida|av|avda|travessa|trav|rodovia|rod|estrada|estr|alameda|logradouro|servidao|viela|beco|quadra|lote|condominio)(-|$)'
   ),
   constraint provider_service_area_neighborhood_is_not_address check (
     neighborhood_name is null
     or (
-      neighborhood_name !~ '[,;/#]'
-      and neighborhood_key !~ '(^|-)(rua|avenida|av|travessa|rodovia|estrada|alameda|logradouro)(-|$)'
+      neighborhood_name !~ '[[:digit:],;/#]'
+      and neighborhood_key !~ '(^|-)(rua|r|avenida|av|avda|travessa|trav|rodovia|rod|estrada|estr|alameda|logradouro|servidao|viela|beco|quadra|lote|condominio)(-|$)'
     )
   )
 );
@@ -306,6 +306,14 @@ security definer
 set search_path = pg_catalog, public
 as $$
 begin
+  -- Serializa alterações de modalidade com remoções da última área do mesmo
+  -- prestador. Sem esse lock, duas transações concorrentes poderiam validar
+  -- snapshots diferentes e confirmar um serviço móvel sem área ativa.
+  perform provider.id
+    from public.providers provider
+   where provider.id = new.provider_id
+   for update;
+
   if tg_op = 'INSERT'
      or new.category_id is distinct from old.category_id
      or (new.is_active and not old.is_active) then
@@ -358,6 +366,13 @@ as $$
 declare
   v_loses_active_area boolean;
 begin
+  -- Usa o mesmo lock da validação de serviços para manter a invariável também
+  -- sob concorrência entre ativação de modalidade e remoção de área.
+  perform provider.id
+    from public.providers provider
+   where provider.id = old.provider_id
+   for update;
+
   v_loses_active_area := old.is_active and (
     tg_op = 'DELETE'
     or not new.is_active
@@ -531,7 +546,8 @@ join public.service_category_versions version
 where category.status = 'published';
 
 -- Projeção pública deliberadamente pequena e condicionada ao rollout total.
--- Não retorna source, chaves internas, timestamps, endereço, CEP ou coordenada.
+-- Não retorna UUID interno de categoria, source, chaves normalizadas,
+-- timestamps, endereço, CEP ou coordenada.
 create or replace function public.get_public_provider_discovery(
   p_provider_slug text
 )
@@ -586,7 +602,6 @@ begin
       jsonb_build_object(
         'serviceId', service.id,
         'category', jsonb_build_object(
-          'id', category.id,
           'slug', category.stable_key,
           'name', version.name,
           'version', version.version

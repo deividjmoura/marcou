@@ -14,8 +14,10 @@
 - RLS deriva ownership de `providers.owner_id`; o browser não autoaprova
   categoria, não forja fonte verificada e não remove a última área usada por um
   serviço ativo no local do cliente.
-- `scripts/discovery-check.mjs`, encadeado em `npm run test:db`, cobre 33
-  invariantes de constraints, versionamento, filtros, RLS, grants e privacidade.
+- `scripts/discovery-check.mjs`, encadeado em `npm run test:db`, cobre 40
+  invariantes de constraints, concorrência, versionamento, filtros, RLS, grants
+  e privacidade. Painel e página pública também foram inspecionados em navegador
+  headless a 1440 px e 390 px, sem overflow horizontal ou erro de console.
   Contrato e rollout: `docs/DISCOVERY-TAXONOMY.md`.
 - Nenhuma migration foi aplicada remotamente e nenhuma flag/configuração de
   Supabase, Netlify ou produção foi alterada.

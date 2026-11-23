@@ -216,8 +216,8 @@ a { color: inherit; text-decoration: none; }
 .provider-dashboard-content > .discovery-manager .discovery-card { margin: 0; }
 .discovery-card .card-heading { align-items: flex-start; }
 .discovery-card .card-heading p { max-width: 620px; margin: 4px 0 0; line-height: 1.5; }
-.area-delete-form { display: flex; align-items: flex-end; gap: 8px; }
-.area-delete-form .alert { max-width: 260px; }
+.inline-action-form { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.inline-action-form .alert { max-width: 260px; }
 .compact-list { margin-top: 14px; }
 .tag { padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; }
 .tag-on { background: #eef7dd; color: #4c6b1e; }
@@ -280,6 +280,9 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 900px) {
   .provider-layout, .discovery-manager { grid-template-columns: 1fr; }
   .painel-header, .notification-row { flex-direction: column; }
+  .discovery-card .item-row { align-items: flex-start; flex-direction: column; }
+  .discovery-card .inline-action-form { width: 100%; }
+  .discovery-card .inline-action-form .alert { max-width: 100%; }
 }
 
 /* Microinterações da landing: feedback discreto sem depender de scroll. */
