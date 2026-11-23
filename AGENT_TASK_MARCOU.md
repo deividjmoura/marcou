@@ -2,6 +2,24 @@
 
 Última atualização: 23/11/2026
 
+## Descoberta: taxonomia e áreas — Issue #87 — 23/11/2026
+
+- A migration aditiva `20261123143000_discovery_taxonomy_service_areas.sql`
+  cria taxonomia versionada/moderada, modalidades de serviço e áreas por
+  cidade, bairro ou raio aproximado; serviços antigos recebem defaults
+  compatíveis.
+- O painel gerencia áreas e sugestões de categoria sob a flag
+  `social_discovery`; a página pública usa uma RPC fail-closed com projeção
+  mínima. Rua, número, CEP e coordenadas exatas não fazem parte do schema.
+- RLS deriva ownership de `providers.owner_id`; o browser não autoaprova
+  categoria, não forja fonte verificada e não remove a última área usada por um
+  serviço ativo no local do cliente.
+- `scripts/discovery-check.mjs`, encadeado em `npm run test:db`, cobre 33
+  invariantes de constraints, versionamento, filtros, RLS, grants e privacidade.
+  Contrato e rollout: `docs/DISCOVERY-TAXONOMY.md`.
+- Nenhuma migration foi aplicada remotamente e nenhuma flag/configuração de
+  Supabase, Netlify ou produção foi alterada.
+
 ## Hardening de funções SECURITY DEFINER — 23/11/2026
 
 - A migration `20261123133000_harden_security_definer_grants.sql` remove o

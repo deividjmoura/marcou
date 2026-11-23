@@ -7,9 +7,18 @@ import type {
   ProviderSettingsInput,
   ServiceInput,
 } from "@/lib/validation";
+import type { ServiceDiscoveryInput } from "@/domain/discovery/discovery";
 import type { AvailabilityExceptionRow, AvailabilityRuleRow, Provider, Service } from "./bookings";
 
 function fail(error: { message?: string | null } | null): never {
+  if (error?.message?.includes("customer_location_requires_service_area")) {
+    throw new Error(
+      "Cadastre uma área de atendimento antes de oferecer serviço no local do cliente.",
+    );
+  }
+  if (error?.message?.includes("service_category_not_published")) {
+    throw new Error("Selecione uma categoria publicada e disponível.");
+  }
   throw new Error(error?.message ?? "Não foi possível concluir a operação.");
 }
 
@@ -31,6 +40,7 @@ export async function listServicesForOwner(
 export async function createService(
   providerId: string,
   input: ServiceInput,
+  discovery?: ServiceDiscoveryInput,
 ): Promise<Service> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -44,6 +54,12 @@ export async function createService(
       deposit_cents: input.depositCents,
       buffer_minutes: input.bufferMinutes,
       is_active: true,
+      ...(discovery
+        ? {
+            category_id: discovery.categoryId,
+            delivery_modes: discovery.deliveryModes,
+          }
+        : {}),
     })
     .select()
     .single();
@@ -56,6 +72,7 @@ export async function updateService(
   providerId: string,
   serviceId: string,
   input: ServiceInput,
+  discovery?: ServiceDiscoveryInput,
 ): Promise<Service> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -67,6 +84,12 @@ export async function updateService(
       price_cents: input.priceCents,
       deposit_cents: input.depositCents,
       buffer_minutes: input.bufferMinutes,
+      ...(discovery
+        ? {
+            category_id: discovery.categoryId,
+            delivery_modes: discovery.deliveryModes,
+          }
+        : {}),
     })
     .eq("id", serviceId)
     .eq("provider_id", providerId)

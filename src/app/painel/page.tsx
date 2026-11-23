@@ -19,6 +19,12 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
 import { countUnreadNotifications } from "@/server/notifications";
+import { isSocialFeatureEnabled } from "@/server/feature-flags";
+import {
+  listCategorySuggestions,
+  listProviderServiceAreas,
+  listServiceCategories,
+} from "@/server/discovery";
 
 export const dynamic = "force-dynamic";
 
@@ -105,12 +111,22 @@ export default async function PainelPage() {
     );
   }
 
-  const [services, rules, exceptions, bookings] = await Promise.all([
-    listServicesForOwner(provider.id),
-    listRules(provider.id),
-    listExceptions(provider.id),
-    listProviderBookings(provider.id),
-  ]);
+  const [services, rules, exceptions, bookings, discoveryEnabled] =
+    await Promise.all([
+      listServicesForOwner(provider.id),
+      listRules(provider.id),
+      listExceptions(provider.id),
+      listProviderBookings(provider.id),
+      isSocialFeatureEnabled("social_discovery", { providerId: provider.id }),
+    ]);
+
+  const [categories, serviceAreas, categorySuggestions] = discoveryEnabled
+    ? await Promise.all([
+        listServiceCategories(),
+        listProviderServiceAreas(provider.id),
+        listCategorySuggestions(provider.id),
+      ])
+    : [[], [], []];
 
   return (
     <main className="page-shell page-painel">
@@ -127,6 +143,10 @@ export default async function PainelPage() {
         services={services}
         rules={rules}
         exceptions={exceptions}
+        discoveryEnabled={discoveryEnabled}
+        categories={categories}
+        serviceAreas={serviceAreas}
+        categorySuggestions={categorySuggestions}
         unreadCount={unread}
         bookingsContent={(
       <section className="card">

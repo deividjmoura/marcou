@@ -17,6 +17,8 @@ export interface WidgetService {
   durationMinutes: number;
   priceCents: number;
   bufferMinutes: number;
+  categoryName?: string;
+  deliveryLabels?: string[];
 }
 
 interface BookingWidgetProps {
@@ -192,6 +194,16 @@ export function BookingWidget({
                     <span className="booking-service-content">
                       <strong>{item.name}</strong>
                       {item.description ? <span className="booking-service-description">{item.description}</span> : null}
+                      {item.categoryName || item.deliveryLabels?.length ? (
+                        <span className="booking-service-discovery">
+                          {[
+                            item.categoryName,
+                            ...(item.deliveryLabels ?? []),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      ) : null}
                       <span className="booking-service-meta">
                         {item.durationMinutes} min <span aria-hidden="true">·</span> {formatCents(item.priceCents)}
                       </span>
