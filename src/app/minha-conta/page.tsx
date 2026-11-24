@@ -8,7 +8,11 @@ import { NotificationBell } from "@/components/notification-bell";
 import { AccountModeSwitcher } from "@/components/account-mode-switcher";
 import { countUnreadNotifications } from "@/server/notifications";
 import { getOwnedProvider } from "@/server/bookings";
-import { getPreferredMode } from "@/server/identity";
+import {
+  getPreferredMode,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 import styles from "./account.module.css";
 
 export const dynamic = "force-dynamic";
@@ -22,20 +26,42 @@ export default async function MinhaContaPage() {
     );
   }
 
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) redirect("/login?next=%2Fminha-conta");
+  const { user, profile, unread, provider, activeMode } = await measureAuthFlow(
+    "account_bootstrap",
+    async (setOutcome) => {
+      const supabase = await measureAuthStep("supabase_client", () =>
+        createClient(),
+      );
+      const {
+        data: { user: currentUser },
+        error,
+      } = await measureAuthStep("auth_get_user", () => supabase.auth.getUser());
+      if (error || !currentUser) redirect("/login?next=%2Fminha-conta");
 
-  const [{ data: profile }, unread, provider, activeMode] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("display_name, phone, created_at")
-      .eq("id", user.id)
-      .maybeSingle(),
-    countUnreadNotifications(),
-    getOwnedProvider(user.id),
-    getPreferredMode(),
-  ]);
+      const [{ data: profileRow }, unreadCount, ownedProvider, preferredMode] =
+        await measureAuthStep("load_account_context", () =>
+          Promise.all([
+            supabase
+              .from("profiles")
+              .select("display_name, phone, created_at")
+              .eq("id", currentUser.id)
+              .maybeSingle(),
+            countUnreadNotifications(),
+            getOwnedProvider(currentUser.id),
+            getPreferredMode(supabase),
+          ]),
+        );
+
+      setOutcome("loaded");
+      return {
+        user: currentUser,
+        profile: profileRow,
+        unread: unreadCount,
+        provider: ownedProvider,
+        activeMode: preferredMode,
+      };
+    },
+  );
 
   const metadataName = user.user_metadata?.display_name;
   const name: string =

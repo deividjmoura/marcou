@@ -35,7 +35,8 @@ Toda Pull Request que introduza mudanças **funcionais**, **visuais**,
    PRs que alterem arquivos em `src/` (exceto arquivos exclusivos de teste),
    `public/`, `supabase/`, `scripts/`, `.github/workflows/` ou arquivos raiz de
    configuração falham automaticamente se `CHANGELOG.md` não receber uma entrada
-   correspondente.
+   correspondente **dentro da seção `## [Unreleased]`** (e sob uma subseção `###`
+   válida).
 4. Alterações exclusivamente documentais (`docs/`, `README.md`,
    `CONTRIBUTING.md`, `AGENT_TASK_MARCOU.md`) ou restritas a arquivos `*.test.ts`
    são dispensadas da exigência automática, podendo ainda registrar notas quando

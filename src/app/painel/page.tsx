@@ -26,7 +26,11 @@ import {
   listProviderServiceAreas,
   listServiceCategories,
 } from "@/server/discovery";
-import { getPreferredMode } from "@/server/identity";
+import {
+  getPreferredMode,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -83,12 +87,29 @@ export default async function PainelPage() {
     );
   }
 
-  const user = await requireUser("/painel");
-  const [provider, unread, activeMode] = await Promise.all([
-    getOwnedProvider(user.id),
-    countUnreadNotifications(),
-    getPreferredMode(),
-  ]);
+  const { provider, unread, activeMode } = await measureAuthFlow(
+    "account_bootstrap",
+    async (setOutcome) => {
+      const currentUser = await measureAuthStep("auth_get_user", () =>
+        requireUser("/painel"),
+      );
+      const [ownedProvider, unreadCount, preferredMode] = await measureAuthStep(
+        "load_account_context",
+        () =>
+          Promise.all([
+            getOwnedProvider(currentUser.id),
+            countUnreadNotifications(),
+            getPreferredMode(),
+          ]),
+      );
+      setOutcome("loaded");
+      return {
+        provider: ownedProvider,
+        unread: unreadCount,
+        activeMode: preferredMode,
+      };
+    },
+  );
 
   if (!provider) {
     return (

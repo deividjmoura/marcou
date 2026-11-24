@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   ensureAuthProfile,
+  measureAuthFlow,
   measureAuthStep,
+  serializeSafeAuthFlowTiming,
+  withAuthFlowCollector,
   withAuthTimingCollector,
+  type AuthFlowTiming,
   type AuthStepTiming,
   type ServerSupabaseClient,
 } from "./identity";
@@ -307,5 +311,65 @@ describe("ensureAuthProfile", () => {
     expect(serialized).not.toContain("segredo");
     expect(serialized).not.toContain("senha");
     expect(serialized).not.toContain("tok-a");
+  });
+
+  it("serializa fluxo completo somente com enums permitidos e durações numéricas", async () => {
+    const reports: AuthFlowTiming[] = [];
+
+    await withAuthFlowCollector(
+      (report) => reports.push(report),
+      async () => {
+        await measureAuthFlow("password_login", async (setOutcome) => {
+          await measureAuthStep("validate_input", () => ({
+            email: "nao-registrar@example.com",
+          }));
+          await measureAuthStep("auth_sign_in", () => ({
+            token: "jwt-secreto",
+          }));
+          await measureAuthStep(
+            "ensure_profile",
+            () => ({ wroteProfile: false, phone: "47999991111" }),
+            (res) => ({ profileWritten: res.wroteProfile }),
+          );
+          setOutcome("redirect_next");
+        });
+      },
+    );
+
+    expect(reports).toHaveLength(1);
+    const unsafeCandidate = {
+      ...reports[0]!,
+      email: "vazamento@example.com",
+      steps: [
+        ...reports[0]!.steps,
+        {
+          step: "etapa_desconhecida_com_email@example.com" as AuthStepTiming["step"],
+          durationMs: 5,
+        },
+      ],
+    } as AuthFlowTiming;
+
+    const json = serializeSafeAuthFlowTiming(unsafeCandidate);
+    const parsed = JSON.parse(json);
+
+    expect(parsed).toEqual({
+      event: "marcou.auth_timing",
+      flow: "password_login",
+      outcome: "redirect_next",
+      totalMs: expect.any(Number),
+      steps: [
+        { step: "validate_input", durationMs: expect.any(Number) },
+        { step: "auth_sign_in", durationMs: expect.any(Number) },
+        {
+          step: "ensure_profile",
+          durationMs: expect.any(Number),
+          profileWritten: false,
+        },
+      ],
+    });
+    expect(json).not.toContain("vazamento");
+    expect(json).not.toContain("nao-registrar");
+    expect(json).not.toContain("jwt-secreto");
+    expect(json).not.toContain("47999991111");
   });
 });

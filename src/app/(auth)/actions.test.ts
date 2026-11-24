@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  withAuthFlowCollector,
   withAuthTimingCollector,
+  type AuthFlowTiming,
   type AuthStepTiming,
 } from "@/server/identity";
 
@@ -243,18 +245,23 @@ describe("email and OAuth identity actions", () => {
       };
     });
 
+    const returningFlows: AuthFlowTiming[] = [];
     const returningTimings: AuthStepTiming[] = [];
     await expect(
-      withAuthTimingCollector(
-        (entry) => returningTimings.push(entry),
+      withAuthFlowCollector(
+        (report) => returningFlows.push(report),
         () =>
-          loginAction(
-            {},
-            form({
-              email: "privado@example.com",
-              password: "senha-ultra-secreta-999",
-              next: "/inicio",
-            }),
+          withAuthTimingCollector(
+            (entry) => returningTimings.push(entry),
+            () =>
+              loginAction(
+                {},
+                form({
+                  email: "privado@example.com",
+                  password: "senha-ultra-secreta-999",
+                  next: "/inicio",
+                }),
+              ),
           ),
       ),
     ).rejects.toThrow("NEXT_REDIRECT:/inicio");
@@ -269,41 +276,74 @@ describe("email and OAuth identity actions", () => {
       return { data: { display_name: "Pessoa Teste", phone: null }, error: null };
     });
 
+    vi.stubEnv("AUTH_TIMING_LOG", "1");
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    const firstLoginFlows: AuthFlowTiming[] = [];
     const firstLoginTimings: AuthStepTiming[] = [];
     await expect(
-      withAuthTimingCollector(
-        (entry) => firstLoginTimings.push(entry),
+      withAuthFlowCollector(
+        (report) => firstLoginFlows.push(report),
         () =>
-          loginAction(
-            {},
-            form({
-              email: "privado@example.com",
-              password: "senha-ultra-secreta-999",
-              next: "/inicio",
-            }),
+          withAuthTimingCollector(
+            (entry) => firstLoginTimings.push(entry),
+            () =>
+              loginAction(
+                {},
+                form({
+                  email: "privado@example.com",
+                  password: "senha-ultra-secreta-999",
+                  next: "/inicio",
+                }),
+              ),
           ),
       ),
     ).rejects.toThrow("NEXT_REDIRECT:/perfil?next=%2Finicio");
+    const loggedPayload = String(infoSpy.mock.calls[0]?.[0] ?? "");
+    infoSpy.mockRestore();
 
     expect(returningTimings.map((t) => t.step)).toEqual([
       "validate_input",
+      "supabase_client",
       "auth_sign_in",
       "ensure_profile",
     ]);
-    expect(returningTimings[2]?.profileWritten).toBe(false);
-    expect(firstLoginTimings[2]?.profileWritten).toBe(true);
+    expect(returningTimings[3]?.profileWritten).toBe(false);
+    expect(firstLoginTimings[3]?.profileWritten).toBe(true);
 
-    const returningProfileMs = returningTimings[2]?.durationMs ?? 0;
-    const firstLoginProfileMs = firstLoginTimings[2]?.durationMs ?? 0;
+    expect(returningFlows[0]?.flow).toBe("password_login");
+    expect(returningFlows[0]?.outcome).toBe("redirect_next");
+    expect(returningFlows[0]?.totalMs).toBeGreaterThanOrEqual(25);
+    expect(firstLoginFlows[0]?.flow).toBe("password_login");
+    expect(firstLoginFlows[0]?.outcome).toBe("redirect_profile_onboarding");
+    expect(firstLoginFlows[0]?.totalMs).toBeGreaterThan(
+      returningFlows[0]?.totalMs ?? 0,
+    );
+
+    const returningProfileMs = returningTimings[3]?.durationMs ?? 0;
+    const firstLoginProfileMs = firstLoginTimings[3]?.durationMs ?? 0;
     expect(returningProfileMs).toBeGreaterThanOrEqual(12);
     expect(firstLoginProfileMs).toBeGreaterThan(returningProfileMs);
 
-    const serialized = JSON.stringify({ returningTimings, firstLoginTimings });
+    expect(JSON.parse(loggedPayload)).toMatchObject({
+      event: "marcou.auth_timing",
+      flow: "password_login",
+      outcome: "redirect_profile_onboarding",
+    });
+
+    const serialized = JSON.stringify({
+      returningTimings,
+      firstLoginTimings,
+      returningFlows,
+      firstLoginFlows,
+      loggedPayload,
+    });
     expect(serialized).not.toContain("privado@example.com");
     expect(serialized).not.toContain("senha-ultra-secreta-999");
     expect(serialized).not.toContain("secret-jwt-token");
     expect(serialized).not.toContain("user-measured");
     expect(serialized).not.toContain("47999990000");
+    expect(serialized).not.toContain("/inicio");
+    expect(serialized).not.toContain("/perfil");
   });
 
   it("builds Google OAuth redirectTo using configured production origin and safe next path", async () => {

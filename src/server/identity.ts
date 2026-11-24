@@ -5,7 +5,60 @@ export type AccountMode = "customer" | "provider";
 
 export type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
-export type AuthStepName = "validate_input" | "auth_sign_in" | "ensure_profile";
+export type AuthStepName =
+  | "validate_input"
+  | "supabase_client"
+  | "auth_sign_in"
+  | "auth_exchange_code"
+  | "auth_verify_otp"
+  | "auth_get_user"
+  | "ensure_profile"
+  | "load_account_context";
+
+export type AuthFlowName =
+  | "password_login"
+  | "oauth_callback"
+  | "email_confirm"
+  | "account_bootstrap";
+
+export type AuthFlowOutcome =
+  | "redirect_next"
+  | "redirect_profile_onboarding"
+  | "redirect_recovery"
+  | "validation_failed"
+  | "auth_failed"
+  | "profile_failed"
+  | "unconfigured"
+  | "loaded";
+
+const ALLOWED_STEPS = new Set<AuthStepName>([
+  "validate_input",
+  "supabase_client",
+  "auth_sign_in",
+  "auth_exchange_code",
+  "auth_verify_otp",
+  "auth_get_user",
+  "ensure_profile",
+  "load_account_context",
+]);
+
+const ALLOWED_FLOWS = new Set<AuthFlowName>([
+  "password_login",
+  "oauth_callback",
+  "email_confirm",
+  "account_bootstrap",
+]);
+
+const ALLOWED_OUTCOMES = new Set<AuthFlowOutcome>([
+  "redirect_next",
+  "redirect_profile_onboarding",
+  "redirect_recovery",
+  "validation_failed",
+  "auth_failed",
+  "profile_failed",
+  "unconfigured",
+  "loaded",
+]);
 
 /**
  * Métrica de etapa de autenticação estritamente livre de PII/segredos.
@@ -18,15 +71,81 @@ export interface AuthStepTiming {
   profileWritten?: boolean;
 }
 
+/**
+ * Resumo completo de um fluxo de autenticação/bootstrap no servidor, contendo
+ * exclusivamente enums fixos e durações numéricas — sem e-mail, senha, token,
+ * `code`, `token_hash`, `user_id`, telefone, cookies ou URLs de destino.
+ */
+export interface AuthFlowTiming {
+  flow: AuthFlowName;
+  outcome: AuthFlowOutcome;
+  totalMs: number;
+  steps: AuthStepTiming[];
+}
+
 export type AuthTimingCollector = (entry: AuthStepTiming) => void;
+export type AuthFlowCollector = (report: AuthFlowTiming) => void;
 
 const authTimingStorage = new AsyncLocalStorage<AuthTimingCollector>();
+const authFlowStorage = new AsyncLocalStorage<AuthFlowCollector>();
+
+function sanitizeDuration(value: number): number {
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return Number(value.toFixed(3));
+}
+
+export function sanitizeAuthFlowTiming(report: AuthFlowTiming): AuthFlowTiming {
+  if (!ALLOWED_FLOWS.has(report.flow)) {
+    throw new Error("Invalid auth flow name.");
+  }
+  const outcome: AuthFlowOutcome = ALLOWED_OUTCOMES.has(report.outcome)
+    ? report.outcome
+    : "auth_failed";
+
+  const steps: AuthStepTiming[] = [];
+  for (const item of report.steps) {
+    if (!ALLOWED_STEPS.has(item.step)) continue;
+    const sanitizedStep: AuthStepTiming = {
+      step: item.step,
+      durationMs: sanitizeDuration(item.durationMs),
+    };
+    if (typeof item.profileWritten === "boolean") {
+      sanitizedStep.profileWritten = item.profileWritten;
+    }
+    steps.push(sanitizedStep);
+  }
+
+  return {
+    flow: report.flow,
+    outcome,
+    totalMs: sanitizeDuration(report.totalMs),
+    steps,
+  };
+}
+
+export function serializeSafeAuthFlowTiming(report: AuthFlowTiming): string {
+  const safe = sanitizeAuthFlowTiming(report);
+  return JSON.stringify({
+    event: "marcou.auth_timing",
+    flow: safe.flow,
+    outcome: safe.outcome,
+    totalMs: safe.totalMs,
+    steps: safe.steps,
+  });
+}
 
 export function withAuthTimingCollector<T>(
   collector: AuthTimingCollector,
   fn: () => Promise<T>,
 ): Promise<T> {
   return authTimingStorage.run(collector, fn);
+}
+
+export function withAuthFlowCollector<T>(
+  collector: AuthFlowCollector,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return authFlowStorage.run(collector, fn);
 }
 
 export async function measureAuthStep<T>(
@@ -42,20 +161,61 @@ export async function measureAuthStep<T>(
   const startedAt = performance.now();
   try {
     const result = await fn();
-    const durationMs = Number((performance.now() - startedAt).toFixed(3));
+    const durationMs = sanitizeDuration(performance.now() - startedAt);
     const meta = extractMeta ? extractMeta(result) : undefined;
     collector({
       step,
       durationMs,
-      ...(meta?.profileWritten !== undefined
+      ...(typeof meta?.profileWritten === "boolean"
         ? { profileWritten: meta.profileWritten }
         : {}),
     });
     return result;
   } catch (error) {
-    const durationMs = Number((performance.now() - startedAt).toFixed(3));
+    const durationMs = sanitizeDuration(performance.now() - startedAt);
     collector({ step, durationMs });
     throw error;
+  }
+}
+
+export async function measureAuthFlow<T>(
+  flow: AuthFlowName,
+  fn: (setOutcome: (outcome: AuthFlowOutcome) => void) => Promise<T>,
+): Promise<T> {
+  const flowCollector = authFlowStorage.getStore();
+  const outerStepCollector = authTimingStorage.getStore();
+  const logEnabled = process.env.AUTH_TIMING_LOG === "1";
+
+  if (!flowCollector && !outerStepCollector && !logEnabled) {
+    return await fn(() => {});
+  }
+
+  let outcome: AuthFlowOutcome = "auth_failed";
+  const steps: AuthStepTiming[] = [];
+  const startedAt = performance.now();
+
+  const combinedStepCollector: AuthTimingCollector = (entry) => {
+    steps.push(entry);
+    outerStepCollector?.(entry);
+  };
+
+  try {
+    return await authTimingStorage.run(combinedStepCollector, () =>
+      fn((nextOutcome) => {
+        outcome = nextOutcome;
+      }),
+    );
+  } finally {
+    const report = sanitizeAuthFlowTiming({
+      flow,
+      outcome,
+      totalMs: performance.now() - startedAt,
+      steps,
+    });
+    flowCollector?.(report);
+    if (logEnabled) {
+      console.info(serializeSafeAuthFlowTiming(report));
+    }
   }
 }
 
@@ -194,9 +354,11 @@ export async function ensureAuthProfile(
 
 /** Reads only the caller's effective navigation preference through an RPC that
  * derives auth.uid() and provider ownership inside PostgreSQL. */
-export async function getPreferredMode(): Promise<AccountMode> {
+export async function getPreferredMode(
+  existingClient?: ServerSupabaseClient,
+): Promise<AccountMode> {
   try {
-    const supabase = await createClient();
+    const supabase = existingClient ?? (await createClient());
     const { data, error } = await supabase.rpc("get_preferred_mode");
     if (error || data !== "provider") return "customer";
     return "provider";

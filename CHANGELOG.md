@@ -14,14 +14,19 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - `CHANGELOG.md` na raiz do repositório, `CONTRIBUTING.md` com o processo
   obrigatório de registro de mudanças e verificação automatizada
   (`scripts/changelog-check.mjs` / `npm run check:changelog`) integrada ao
-  GitHub Actions (`.github/workflows/ci.yml`).
-- Instrumentação de medição de etapas de login estritamente livre de PII,
-  senhas ou tokens (`withAuthTimingCollector` e `measureAuthStep` em
-  `src/server/identity.ts`) e medição comparativa real em PostgreSQL embutido
-  (`scripts/identity-check.mjs`).
+  GitHub Actions (`.github/workflows/ci.yml`), exigindo que novas entradas da PR
+  estejam dentro de `## [Unreleased]` sob subseção válida.
+- Instrumentação de medição de fluxo completo no servidor estritamente livre de
+  PII, senhas ou tokens (`measureAuthFlow`, `withAuthFlowCollector`,
+  `withAuthTimingCollector`, `measureAuthStep` e emissão opt-in
+  `AUTH_TIMING_LOG=1` em `src/server/identity.ts`), além de benchmark SQL local
+  em PostgreSQL embutido (`scripts/identity-check.mjs`) para evidenciar a
+  redução de consultas em `profiles`.
 - Cobertura de testes unitários para `googleLoginAction`, `saveProfileAction`,
-  `ensureAuthProfile` (caminho rápido, primeiro login, backfill CAS e colisões
-  concorrentes) e validador de changelog (`src/lib/changelog-check.test.ts`).
+  `setPreferredModeAction` (troca entre Cliente e Profissional), bootstrap
+  pós-login em `/inicio`, `ensureAuthProfile` (caminho rápido, primeiro login,
+  backfill CAS e colisões concorrentes) e validador de changelog
+  (`src/lib/changelog-check.test.ts`).
 - Matriz canônica de requisitos de produto e sequência de dependências das
   Issues `#84`, `#91` e `#93` registrada em `docs/ROADMAP-MARCOU-SOCIAL.md`,
   preservando a arquitetura da Issue `#72`.

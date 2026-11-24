@@ -4,7 +4,11 @@ import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
-import { getPreferredMode } from "@/server/identity";
+import {
+  getPreferredMode,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 import { logoutAction } from "../(auth)/actions";
 
 export const dynamic = "force-dynamic";
@@ -24,23 +28,44 @@ export default async function InicioPage({
     );
   }
 
-  const user = await requireUser("/inicio");
-  const supabase = await createClient();
-  const [provider, { data: profile }, activeMode] = await Promise.all([
-    getOwnedProvider(user.id),
-    supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .maybeSingle(),
-    getPreferredMode(),
-  ]);
+  const { name, provider, activeMode } = await measureAuthFlow(
+    "account_bootstrap",
+    async (setOutcome) => {
+      const user = await measureAuthStep("auth_get_user", () =>
+        requireUser("/inicio"),
+      );
+      const supabase = await measureAuthStep("supabase_client", () =>
+        createClient(),
+      );
+      const [ownedProvider, { data: profile }, preferredMode] =
+        await measureAuthStep("load_account_context", () =>
+          Promise.all([
+            getOwnedProvider(user.id),
+            supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", user.id)
+              .maybeSingle(),
+            getPreferredMode(supabase),
+          ]),
+        );
 
-  const metadataName = user.user_metadata?.display_name ?? user.user_metadata?.name;
-  const name =
-    (typeof profile?.display_name === "string" && profile.display_name.trim()) ||
-    (typeof metadataName === "string" && metadataName.trim()) ||
-    "sua conta";
+      const metadataName =
+        user.user_metadata?.display_name ?? user.user_metadata?.name;
+      const resolvedName =
+        (typeof profile?.display_name === "string" &&
+          profile.display_name.trim()) ||
+        (typeof metadataName === "string" && metadataName.trim()) ||
+        "sua conta";
+
+      setOutcome("loaded");
+      return {
+        name: resolvedName,
+        provider: ownedProvider,
+        activeMode: preferredMode,
+      };
+    },
+  );
 
   return (
     <main className="page-shell page-account-home">

@@ -13,7 +13,11 @@ import {
   trustedAppOrigin,
   signupErrorMessage,
 } from "@/lib/identity";
-import { ensureAuthProfile, measureAuthStep } from "@/server/identity";
+import {
+  ensureAuthProfile,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 
 export interface AuthState {
   error?: string;
@@ -76,43 +80,57 @@ export async function loginAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  if (!isSupabaseConfigured()) return unavailableState();
+  return measureAuthFlow("password_login", async (setOutcome) => {
+    if (!isSupabaseConfigured()) {
+      setOutcome("unconfigured");
+      return unavailableState();
+    }
 
-  const parsed = await measureAuthStep("validate_input", () =>
-    loginSchema.safeParse({
-      email: formData.get("email"),
-      password: formData.get("password"),
-    }),
-  );
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await measureAuthStep("auth_sign_in", () =>
-    supabase.auth.signInWithPassword(parsed.data),
-  );
-
-  if (error || !data.user) {
-    return { error: passwordLoginErrorMessage(error?.code) };
-  }
-
-  let needsPhone: boolean;
-  try {
-    const profile = await measureAuthStep(
-      "ensure_profile",
-      () => ensureAuthProfile(supabase, data.user),
-      (result) => ({ profileWritten: result.wroteProfile }),
+    const parsed = await measureAuthStep("validate_input", () =>
+      loginSchema.safeParse({
+        email: formData.get("email"),
+        password: formData.get("password"),
+      }),
     );
-    needsPhone = profile.needsPhone;
-  } catch {
-    return { error: "Não foi possível carregar seu perfil. Tente novamente." };
-  }
 
-  const next = safeNextPath(String(formData.get("next") ?? ""));
-  if (needsPhone) redirect(`/perfil?next=${encodeURIComponent(next)}`);
-  redirect(next);
+    if (!parsed.success) {
+      setOutcome("validation_failed");
+      return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+    }
+
+    const supabase = await measureAuthStep("supabase_client", () =>
+      createClient(),
+    );
+    const { data, error } = await measureAuthStep("auth_sign_in", () =>
+      supabase.auth.signInWithPassword(parsed.data),
+    );
+
+    if (error || !data.user) {
+      setOutcome("auth_failed");
+      return { error: passwordLoginErrorMessage(error?.code) };
+    }
+
+    let needsPhone: boolean;
+    try {
+      const profile = await measureAuthStep(
+        "ensure_profile",
+        () => ensureAuthProfile(supabase, data.user),
+        (result) => ({ profileWritten: result.wroteProfile }),
+      );
+      needsPhone = profile.needsPhone;
+    } catch {
+      setOutcome("profile_failed");
+      return { error: "Não foi possível carregar seu perfil. Tente novamente." };
+    }
+
+    const next = safeNextPath(String(formData.get("next") ?? ""));
+    if (needsPhone) {
+      setOutcome("redirect_profile_onboarding");
+      redirect(`/perfil?next=${encodeURIComponent(next)}`);
+    }
+    setOutcome("redirect_next");
+    redirect(next);
+  });
 }
 
 export async function signupAction(

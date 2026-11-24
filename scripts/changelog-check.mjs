@@ -3,8 +3,9 @@
  *
  * 1. Valida sempre a existência e a estrutura mínima do `CHANGELOG.md`.
  * 2. Em Pull Requests (`GITHUB_EVENT_NAME=pull_request`) ou quando `--base <ref>`
- *    é informado, exige entrada real no `CHANGELOG.md` sempre que houver
- *    mudanças funcionais, visuais, estruturais ou de banco de dados.
+ *    é informado, exige entrada real adicionada dentro de `## [Unreleased]`
+ *    (sob subseção válida) sempre que houver mudanças funcionais, visuais,
+ *    estruturais ou de banco de dados.
  *
  * Uso:
  *   node scripts/changelog-check.mjs
@@ -59,6 +60,139 @@ export function isRelevantChangePath(filePath) {
 }
 
 /**
+ * Analisa as linhas 1-indexadas do `CHANGELOG.md`, ignorando blocos de código
+ * cercados (```), e identifica os limites exatos da seção `## [Unreleased]`
+ * e a subseção `### <Categoria>` ativa em cada linha.
+ */
+export function inspectChangelogStructure(markdown) {
+  const lines = String(markdown ?? "").split(/\r?\n/);
+  let inCodeFence = false;
+  let hasTitle = false;
+  let firstVersionHeadingLine = null;
+  let unreleasedStartLine = null;
+  let unreleasedEndLine = null;
+  let activeSubsection = null;
+  let bulletCount = 0;
+
+  const invalidSubsections = [];
+  const misplacedBullets = [];
+  const subsectionByLine = new Map();
+  const codeFenceLines = new Set();
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const lineNumber = i + 1;
+    const trimmed = lines[i].trim();
+
+    if (/^```/.test(trimmed)) {
+      inCodeFence = !inCodeFence;
+      codeFenceLines.add(lineNumber);
+      continue;
+    }
+    if (inCodeFence) {
+      codeFenceLines.add(lineNumber);
+      continue;
+    }
+
+    if (/^#\s+Changelog\b/i.test(trimmed)) {
+      hasTitle = true;
+      continue;
+    }
+
+    if (/^##\s+/.test(trimmed)) {
+      if (firstVersionHeadingLine === null) {
+        firstVersionHeadingLine = lineNumber;
+      }
+      if (unreleasedStartLine !== null && unreleasedEndLine === null) {
+        unreleasedEndLine = lineNumber;
+      }
+      if (/^##\s+\[Unreleased\]\s*$/i.test(trimmed) && unreleasedStartLine === null) {
+        unreleasedStartLine = lineNumber;
+      }
+      activeSubsection = null;
+      continue;
+    }
+
+    const subMatch = trimmed.match(/^###\s+(.+)$/);
+    if (subMatch) {
+      const heading = subMatch[1].trim();
+      activeSubsection = heading;
+      if (!ALLOWED_SECTIONS.has(heading)) {
+        invalidSubsections.push(heading);
+      }
+      subsectionByLine.set(lineNumber, activeSubsection);
+      continue;
+    }
+
+    subsectionByLine.set(lineNumber, activeSubsection);
+
+    if (/^-\s+\S+/.test(trimmed)) {
+      bulletCount += 1;
+      const beforeAnySection =
+        firstVersionHeadingLine === null || lineNumber < firstVersionHeadingLine;
+      const inUnreleasedWithoutSubsection =
+        unreleasedStartLine !== null &&
+        lineNumber > unreleasedStartLine &&
+        (unreleasedEndLine === null || lineNumber < unreleasedEndLine) &&
+        !activeSubsection;
+
+      if (beforeAnySection || inUnreleasedWithoutSubsection) {
+        misplacedBullets.push(lineNumber);
+      }
+    }
+  }
+
+  if (unreleasedStartLine !== null && unreleasedEndLine === null) {
+    unreleasedEndLine = lines.length + 1;
+  }
+
+  return {
+    lines,
+    hasTitle,
+    unreleasedStartLine,
+    unreleasedEndLine,
+    bulletCount,
+    invalidSubsections,
+    misplacedBullets,
+    subsectionByLine,
+    codeFenceLines,
+  };
+}
+
+/**
+ * Extrai cada linha adicionada (`+`) de um diff unificado do Git mapeando seu
+ * número de linha 1-indexado no arquivo resultante (`+newStart[,newCount]`).
+ */
+export function extractAddedLinesFromDiff(changelogDiff) {
+  const diffLines = String(changelogDiff ?? "").split(/\r?\n/);
+  const added = [];
+  let currentNewLine = null;
+
+  for (const rawLine of diffLines) {
+    const hunkMatch = rawLine.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/);
+    if (hunkMatch) {
+      currentNewLine = Number.parseInt(hunkMatch[1], 10);
+      continue;
+    }
+
+    if (currentNewLine === null) continue;
+    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
+    if (rawLine.startsWith("\\")) continue;
+
+    if (rawLine.startsWith("+")) {
+      added.push({
+        lineNumber: currentNewLine,
+        text: rawLine.slice(1),
+      });
+      currentNewLine += 1;
+    } else if (rawLine.startsWith(" ")) {
+      currentNewLine += 1;
+    }
+  }
+
+  return added;
+}
+
+/**
  * Valida a estrutura mínima do `CHANGELOG.md`.
  */
 export function validateChangelogContent(markdown) {
@@ -68,32 +202,29 @@ export function validateChangelogContent(markdown) {
     return { valid: false, errors };
   }
 
-  const lines = markdown.split(/\r?\n/);
-  const hasTitle = lines.some((line) => /^#\s+Changelog\b/i.test(line.trim()));
-  if (!hasTitle) {
+  const info = inspectChangelogStructure(markdown);
+
+  if (!info.hasTitle) {
     errors.push("CHANGELOG.md precisa conter o título principal '# Changelog'.");
   }
 
-  const unreleasedIndex = lines.findIndex((line) =>
-    /^##\s+\[Unreleased\]\s*$/i.test(line.trim()),
-  );
-  if (unreleasedIndex === -1) {
+  if (info.unreleasedStartLine === null) {
     errors.push("CHANGELOG.md precisa conter a seção '## [Unreleased]'.");
   }
 
-  for (const rawLine of lines) {
-    const match = rawLine.trim().match(/^###\s+(.+)$/);
-    if (!match) continue;
-    const heading = match[1].trim();
-    if (!ALLOWED_SECTIONS.has(heading)) {
-      errors.push(
-        `Subseção inválida '### ${heading}' em CHANGELOG.md. Use: ${Array.from(ALLOWED_SECTIONS).join(", ")}.`,
-      );
-    }
+  for (const heading of info.invalidSubsections) {
+    errors.push(
+      `Subseção inválida '### ${heading}' em CHANGELOG.md. Use: ${Array.from(ALLOWED_SECTIONS).join(", ")}.`,
+    );
   }
 
-  const hasAnyBullet = lines.some((line) => /^-\s+\S+/.test(line.trim()));
-  if (!hasAnyBullet) {
+  if (info.misplacedBullets.length > 0) {
+    errors.push(
+      `Entradas fora de subseção válida em CHANGELOG.md nas linhas: ${info.misplacedBullets.join(", ")}.`,
+    );
+  }
+
+  if (info.bulletCount === 0) {
     errors.push("CHANGELOG.md precisa conter ao menos um item documentado ('- ...').");
   }
 
@@ -104,12 +235,13 @@ export function validateChangelogContent(markdown) {
 }
 
 /**
- * Verifica se o diff de uma PR contém atualização real em `CHANGELOG.md`
- * quando há arquivos relevantes modificados.
+ * Verifica se o diff de uma PR contém atualização real dentro de `## [Unreleased]`
+ * em `CHANGELOG.md` quando há arquivos relevantes modificados.
  */
 export function evaluatePullRequestChangelog({
   changedFiles,
   changelogDiff,
+  changelogContent,
 }) {
   const relevantFiles = changedFiles.filter(isRelevantChangePath);
   if (relevantFiles.length === 0) {
@@ -135,17 +267,72 @@ export function evaluatePullRequestChangelog({
     };
   }
 
-  const hasAddedEntry = String(changelogDiff ?? "")
-    .split(/\r?\n/)
-    .some((line) => /^\+\s*-\s+\S+/.test(line) && !line.startsWith("+++"));
+  if (typeof changelogContent !== "string" || !changelogContent.trim()) {
+    return {
+      required: true,
+      valid: false,
+      relevantFiles,
+      errors: [
+        "Conteúdo atual de CHANGELOG.md ausente para validar a seção '## [Unreleased]'.",
+      ],
+    };
+  }
 
-  if (!hasAddedEntry) {
+  const structure = inspectChangelogStructure(changelogContent);
+  if (structure.unreleasedStartLine === null || structure.unreleasedEndLine === null) {
+    return {
+      required: true,
+      valid: false,
+      relevantFiles,
+      errors: ["CHANGELOG.md precisa conter a seção '## [Unreleased]'."],
+    };
+  }
+
+  const addedBullets = extractAddedLinesFromDiff(changelogDiff).filter(
+    ({ lineNumber, text }) =>
+      !structure.codeFenceLines.has(lineNumber) && /^-\s+\S+/.test(text.trim()),
+  );
+
+  if (addedBullets.length === 0) {
     return {
       required: true,
       valid: false,
       relevantFiles,
       errors: [
         "CHANGELOG.md foi tocado, mas nenhuma entrada ('- ...') foi adicionada para descrever as mudanças da PR.",
+      ],
+    };
+  }
+
+  const bulletsInUnreleased = addedBullets.filter(
+    ({ lineNumber }) =>
+      lineNumber > structure.unreleasedStartLine &&
+      lineNumber < structure.unreleasedEndLine,
+  );
+
+  if (bulletsInUnreleased.length === 0) {
+    return {
+      required: true,
+      valid: false,
+      relevantFiles,
+      errors: [
+        "As entradas adicionadas pela PR em CHANGELOG.md devem estar dentro da seção '## [Unreleased]', e não fora dela ou em versões já lançadas.",
+      ],
+    };
+  }
+
+  const bulletsInValidSubsection = bulletsInUnreleased.filter(({ lineNumber }) => {
+    const subsection = structure.subsectionByLine.get(lineNumber);
+    return Boolean(subsection && ALLOWED_SECTIONS.has(subsection));
+  });
+
+  if (bulletsInValidSubsection.length === 0) {
+    return {
+      required: true,
+      valid: false,
+      relevantFiles,
+      errors: [
+        `A entrada adicionada em '## [Unreleased]' deve estar sob uma subseção válida (${Array.from(ALLOWED_SECTIONS).map((s) => `'### ${s}'`).join(", ")}).`,
       ],
     };
   }
@@ -240,13 +427,14 @@ function runCli() {
 
   const changelogDiff = execFileSync(
     "git",
-    ["diff", diffRange, "--", "CHANGELOG.md"],
+    ["diff", "--no-ext-diff", "--unified=0", diffRange, "--", "CHANGELOG.md"],
     { encoding: "utf8" },
   );
 
   const prResult = evaluatePullRequestChangelog({
     changedFiles,
     changelogDiff,
+    changelogContent: content,
   });
 
   if (!prResult.valid) {
@@ -259,7 +447,7 @@ function runCli() {
 
   if (prResult.required) {
     console.log(
-      `  ok   CHANGELOG.md atualizado para ${prResult.relevantFiles.length} arquivo(s) relevante(s) em ${diffRange}`,
+      `  ok   CHANGELOG.md atualizado em [Unreleased] para ${prResult.relevantFiles.length} arquivo(s) relevante(s) em ${diffRange}`,
     );
   } else {
     console.log(

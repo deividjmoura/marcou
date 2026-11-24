@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { withAuthFlowCollector, type AuthFlowTiming } from "@/server/identity";
 
 const mocks = vi.hoisted(() => ({
   verifyOtp: vi.fn(),
@@ -207,5 +208,43 @@ describe("GET /auth/confirm", () => {
 
     expect(mocks.upsert).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("mede confirmação de e-mail e recuperação sem registrar token_hash, user_id ou telefone", async () => {
+    const reports: AuthFlowTiming[] = [];
+
+    await withAuthFlowCollector(
+      (report) => reports.push(report),
+      async () => {
+        await GET(
+          confirmationRequest("?token_hash=hash-secreto-email&type=email&next=%2Fpainel"),
+        );
+        await GET(
+          confirmationRequest("?token_hash=hash-secreto-rec&type=recovery&next=%2Fpainel"),
+        );
+      },
+    );
+
+    expect(reports).toHaveLength(2);
+    expect(reports[0]).toMatchObject({
+      flow: "email_confirm",
+      outcome: "redirect_next",
+      steps: [
+        { step: "supabase_client" },
+        { step: "auth_verify_otp" },
+        { step: "ensure_profile", profileWritten: false },
+      ],
+    });
+    expect(reports[1]).toMatchObject({
+      flow: "email_confirm",
+      outcome: "redirect_recovery",
+      steps: [{ step: "supabase_client" }, { step: "auth_verify_otp" }],
+    });
+
+    const raw = JSON.stringify(reports);
+    expect(raw).not.toContain("hash-secreto");
+    expect(raw).not.toContain("user-1");
+    expect(raw).not.toContain("47999991234");
+    expect(raw).not.toContain("/painel");
   });
 });

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { withAuthFlowCollector, type AuthFlowTiming } from "@/server/identity";
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForSession: vi.fn(),
@@ -211,5 +212,30 @@ describe("GET /auth/callback", () => {
 
     expect(mocks.update).toHaveBeenCalledWith({ display_name: "Ana" });
     expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("mede o fluxo completo de callback OAuth sem registrar code, user_id ou destino", async () => {
+    const reports: AuthFlowTiming[] = [];
+    const response = await withAuthFlowCollector(
+      (report) => reports.push(report),
+      () => GET(callbackRequest("?code=pkce-secret-code&next=%2Fminha-conta")),
+    );
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/minha-conta`);
+    expect(reports).toHaveLength(1);
+    expect(reports[0]).toMatchObject({
+      flow: "oauth_callback",
+      outcome: "redirect_next",
+      steps: [
+        { step: "supabase_client" },
+        { step: "auth_exchange_code" },
+        { step: "ensure_profile", profileWritten: false },
+      ],
+    });
+    const raw = JSON.stringify(reports);
+    expect(raw).not.toContain("pkce-secret-code");
+    expect(raw).not.toContain("user-1");
+    expect(raw).not.toContain("47999991234");
+    expect(raw).not.toContain("/minha-conta");
   });
 });

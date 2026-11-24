@@ -99,6 +99,16 @@ Não confunda os dois callbacks envolvidos no OAuth 2.0:
   `https://marcoou.netlify.app/auth/callback?next=...` (ou `http://localhost:3000/auth/callback?next=...` em ambiente local)
   — **este fica na allowlist do Supabase Auth (`Redirect URLs`), nunca no Google Cloud Console.**
 
+#### O que foi comprovado na requisição vs. o que depende de conferência manual no Google Cloud
+
+- **Comprovado diretamente (requisição pública e código):**
+  - `NEXT_PUBLIC_SITE_URL` está configurada em produção na Netlify como `https://marcoou.netlify.app` (verificado pelo redirecionamento de `/auth/callback` via `trustedAppOrigin`).
+  - `googleLoginAction` monta `redirectTo = https://marcoou.netlify.app/auth/callback?next=<caminho-local-seguro>` (callback final Supabase → Marcou).
+  - Ao iniciar `/auth/v1/authorize?provider=google` no projeto `peornypgltuueubmsucm`, o Supabase redireciona ao Google enviando `client_id = 563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com` e `redirect_uri = https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`, e o Google devolve `Erro 400: redirect_uri_mismatch` indicando esse `redirect_uri`.
+- **Não consultado diretamente (depende de conferência nos painéis externos):**
+  - A lista cadastrada em **Authorized redirect URIs** no Google Cloud Console **não foi consultada diretamente**. O erro `redirect_uri_mismatch` comprova que o `redirect_uri` enviado na requisição não coincide com uma entrada autorizada naquela credencial hoje, mas confirmar se o URI está ausente, com grafia/barra final/protocolo divergente ou se foi cadastrado o `/auth/callback` da Netlify exige conferência direta no Google Cloud Console.
+  - O estado da **OAuth consent screen** (*Testing* vs. *In production*, *Test users* e escopos) e os valores internos do **Supabase Dashboard** (`Site URL`, entradas em `Redirect URLs` e Client Secret vigente) também dependem de conferência direta pelo responsável.
+
 #### Instruções de conferência manual (Google Cloud Console + Supabase)
 
 1. Acesse **Google Cloud Console → APIs & Services → Credentials** no projeto proprietário do OAuth Client ID `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com`.
@@ -113,25 +123,32 @@ Não confunda os dois callbacks envolvidos no OAuth 2.0:
 
 ### SMTP, DNS e entregabilidade
 
-#### Situação diagnosticada (código vs. configuração externa)
+#### 1. Evidências observadas (código e cabeçalhos RFC somente-leitura)
 
-- **No código da aplicação:** o Marcou delega o disparo de confirmação e recuperação exclusivamente ao Supabase Auth (`signUp`, `resend`, `resetPasswordForEmail`), construindo `emailRedirectTo` com origem confiável (`NEXT_PUBLIC_SITE_URL`) para `/auth/confirm?next=...`. Não há envio SMTP direto pela aplicação Next.js nem defeito de código causando classificação como spam.
-- **Na configuração externa atual (verificada por cabeçalhos RFC de entrega):**
-  - O projeto Supabase `peornypgltuueubmsucm` não está mais no SMTP padrão `supabase.io`, mas está configurado com relay `smtp.gmail.com` usando uma caixa pessoal/gratuita `Marcou <appmarcou@gmail.com>` (`Return-Path: <appmarcou@gmail.com>`).
-  - Embora `SPF`, `DKIM` e `DMARC` passem tecnicamente para `gmail.com` (`dmarc=pass p=NONE header.from=gmail.com`), o envio automatizado de e-mails transacionais de marca comercial a partir de `@gmail.com` com links apontando para outro domínio (`marcoou.netlify.app` / `peornypgltuueubmsucm.supabase.co`) sofre **desalinhamento cruzado de domínios** e aciona filtros anti-phishing/spam, além de sujeitar a conta Google a limites baixos e bloqueio.
-  - O assunto do template **Confirm signup** encontra-se em inglês (`Confirm your email address`) enquanto o corpo HTML está em português (`Confirme seu e-mail...`), e a mensagem sai apenas como `text/html` sem parte texto puro — fatores adicionais de pontuação de spam.
+- **No código da aplicação:** o Marcou delega o disparo de confirmação e recuperação exclusivamente ao Supabase Auth (`signUp`, `resend`, `resetPasswordForEmail`), construindo `emailRedirectTo` com origem confiável (`NEXT_PUBLIC_SITE_URL`) para `/auth/confirm?next=...` e respostas não enumeráveis. Não há envio SMTP direto pela aplicação Next.js nem exposição de credenciais no repositório.
+- **Nos cabeçalhos RFC de uma mensagem real de confirmação (inspeção somente-leitura de metadados, sem ler corpo completo nem expor tokens):**
+  - Disparo originado pelo projeto `peornypgltuueubmsucm` via `smtp.gmail.com` (`UTF8SMTPSA`), com `From: Marcou <appmarcou@gmail.com>` e `Return-Path: <appmarcou@gmail.com>`.
+  - Autenticação no destino: `spf=pass`, `dkim=pass (header.d=gmail.com)` e `dmarc=pass (p=NONE header.from=gmail.com)`.
+  - Cabeçalhos de template/formato: `Subject: Confirm your email address` (em inglês) e `Content-Type: text/html; charset=UTF-8` (sem parte `text/plain`).
+- **Alcance da evidência:** `SPF`, `DKIM` e `DMARC` passando atestam apenas que a mensagem transitou legitimamente pelo `gmail.com` e **não garantem entrega na caixa de entrada**; por outro lado, os cabeçalhos públicos não revelam o score interno do filtro anti-spam do provedor destinatário e **não comprovam que o uso do SMTP Gmail seja isoladamente a única causa** da queda em spam.
 
-#### Ações externas necessárias para sair do spam de forma definitiva
+#### 2. Hipóteses técnicas plausíveis (fatores combinados de filtragem)
 
-1. **Domínio próprio do Marcou:** adquirir/utilizar domínio próprio (ex.: `marcou.com.br`), evitando depender de `@gmail.com` como remetente e, idealmente, também associando o domínio próprio à aplicação na Netlify para alinhar marca, remetente e links de confirmação.
+- **Desalinhamento entre remetente, marca e links de ação:** envio automatizado de e-mails transacionais exibindo nome comercial (`Marcou`) a partir de conta gratuita `@gmail.com`, disparado de infraestrutura em nuvem e apontando links CTA para domínios distintos (`marcoou.netlify.app` / `peornypgltuueubmsucm.supabase.co`).
+- **Reputação/histórico de envio e limites operacionais:** baixo histórico de engajamento positivo (aberturas/cliques/respostas) ou marcações anteriores como spam no endereço remetente, além dos limites rígidos de envio automatizado em contas pessoais no `smtp.gmail.com`.
+- **Sinais de template e formato MIME:** divergência de idioma entre o assunto em inglês (`Confirm your email address`) e o corpo em português, envio somente em `text/html` sem `text/plain` e presença de URLs longas de confirmação.
+
+#### 3. Recomendações práticas (ações externas pendentes)
+
+1. **Domínio próprio do Marcou:** adotar domínio próprio (ex.: `marcou.com.br`), alinhando gradualmente o domínio remetente e o domínio da aplicação na Netlify.
 2. **Provedor SMTP transacional dedicado:** configurar em **Supabase Dashboard → Project Settings → Authentication → SMTP Settings** um provedor transacional próprio (Resend, Postmark, Amazon SES ou SendGrid) enviando com remetente do domínio do Marcou (ex.: `Marcou <nao-responda@marcou.com.br>` ou subdomínio dedicado `nao-responda@mail.marcou.com.br`). Guardar host, porta, usuário e senha/API key exclusivamente no painel do Supabase.
-3. **Autenticação DNS do domínio de envio:**
+3. **Autenticação DNS alinhada ao domínio próprio:**
    - **SPF:** publicar um único registro TXT SPF autorizando o provedor transacional escolhido, sem registros SPF duplicados;
    - **DKIM:** publicar as chaves CNAME/TXT de assinatura DKIM do provedor no domínio do Marcou e validar status verificado;
    - **DMARC:** publicar `_dmarc.<domínio>` alinhado ao `From` (iniciando com `v=DMARC1; p=none; rua=mailto:...` para monitoramento e evoluindo para `p=quarantine` / `p=reject` após validar alinhamento).
-4. **Revisão dos Email Templates no Supabase:**
+4. **Revisão dos Email Templates e teste em múltiplos provedores:**
    - padronizar o **Subject** em português coerente com o corpo (ex.: `Confirme seu e-mail no Marcou` e `Redefinição de senha no Marcou`);
-   - manter os links apontando para `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (cadastro) e `type=recovery` (recuperação), sem encurtadores nem domínios divergentes.
+   - manter os links apontando para `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (cadastro) e `type=recovery` (recuperação), sem encurtadores, e validar entrega real em Gmail, Outlook/Hotmail e Yahoo.
 
 ## Handoff de coordenação cloud (sem secrets)
 
@@ -142,14 +159,14 @@ Nenhuma configuração de Google Cloud, Supabase remoto, Netlify ou SMTP foi alt
 | Supabase project ref | `peornypgltuueubmsucm` | **Confirmado ativo** (`peornypgltuueubmsucm.supabase.co`). |
 | `NEXT_PUBLIC_SITE_URL` na Netlify (produção) | `https://marcoou.netlify.app` | **Confirmado configurado** em produção (`/auth/callback` resolve `trustedAppOrigin` para `https://marcoou.netlify.app` com destino padrão `/inicio`). |
 | `redirectTo` montado por `googleLoginAction` | `https://marcoou.netlify.app/auth/callback?next=<caminho-seguro>` | **Correto no código** (callback final do Supabase para o Marcou). |
-| `redirect_uri` real enviado ao Google OAuth | `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback` | **Confirmado na requisição OAuth real**, mas **ausente/divergente no Google Cloud Console** (causa direta do `Erro 400: redirect_uri_mismatch`). |
-| Google OAuth Client ID público em uso | `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com` | **Confirmado ativo** na requisição OAuth do Supabase; cadastrar nele o URI `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`. |
-| Site URL esperado no Supabase | `https://marcoou.netlify.app` | Conferir em **Authentication → URL Configuration**. |
-| Redirect URLs — produção | `https://marcoou.netlify.app/auth/callback**` e `https://marcoou.netlify.app/auth/confirm**` | Conferir no Supabase com `**` para aceitar `?next=...`. |
+| `redirect_uri` real enviado ao Google OAuth | `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback` | **Comprovado na requisição OAuth real** (Google retorna `Erro 400: redirect_uri_mismatch` para esse URI). A lista cadastrada em **Authorized redirect URIs** no Google Cloud **não foi consultada diretamente** e precisa ser conferida manualmente. |
+| Google OAuth Client ID público em uso | `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com` | **Comprovado na requisição OAuth do Supabase**; conferir no Google Cloud Console que `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback` está autorizado nessa credencial. |
+| Site URL esperado no Supabase | `https://marcoou.netlify.app` | **Depende de conferência direta** em **Authentication → URL Configuration**. |
+| Redirect URLs — produção | `https://marcoou.netlify.app/auth/callback**` e `https://marcoou.netlify.app/auth/confirm**` | **Depende de conferência direta** no Supabase com `**` para aceitar `?next=...`. |
 | Redirect URLs — Netlify Deploy Preview | `https://deploy-preview-*--marcoou.netlify.app/auth/callback**` e `/auth/confirm**` | Preferir preview exato ativo ou restringir ao padrão com duplo hífen `--` da Netlify. |
 | Redirect URLs — localhost | `http://localhost:3000/auth/callback**` e `http://localhost:3000/auth/confirm**` | Para desenvolvimento local com `?next=...`. |
-| Escopos OAuth | `openid`, `email`, `profile` | Escopos básicos esperados na consent screen. |
-| SMTP e remetente atuais | `smtp.gmail.com` com `Marcou <appmarcou@gmail.com>` e assunto em inglês (`Confirm your email address`) | **Causa externa da queda em spam**; migrar para domínio próprio + SMTP transacional dedicado + SPF/DKIM/DMARC + assunto em português. |
+| Escopos e consent screen OAuth | `openid`, `email`, `profile` | **Depende de conferência direta** na OAuth consent screen (*Testing*/*In production* e *Test users*). |
+| SMTP e cabeçalhos observados | `smtp.gmail.com` com `Marcou <appmarcou@gmail.com>`, `SPF/DKIM/DMARC pass` em `gmail.com`, assunto em inglês (`Confirm your email address`) e `text/html` puro | **Evidência observada nos cabeçalhos** (sem provar causa única isolada). Recomendação externa: domínio próprio + SMTP transacional dedicado + SPF/DKIM/DMARC alinhados + assunto em português. |
 
 ### Round-trip publicado ainda necessário
 
@@ -173,8 +190,14 @@ Este roteiro precisa ser executado pelo responsável depois de configurar Netlif
 6. Teste expiração/reuso do link, logout, renovação após expiração do access token e acesso anônimo a `/minha-conta`, `/painel`, `/inicio`, `/meus-agendamentos` e `/notificacoes`.
 7. Verifique os cabeçalhos `private, no-store` nos handlers de callback/confirm, as rotas finais e a configuração de allowlist. Não cole URL completa de e-mail, `token_hash`, code ou cookie em ferramentas de diagnóstico.
 
+## Medição de desempenho sem PII ou credenciais
+
+- **Escopo do benchmark PostgreSQL local (`scripts/identity-check.mjs`):** mede exclusivamente as operações SQL em `public.profiles` sob RLS (`3 queries` sequenciais com `UPSERT` vs. `1 SELECT` no caminho rápido de login recorrente). Ele serve como evidência da redução de consultas e escritas redundantes no banco, **e não representa o tempo total de login em produção** (que inclui latência do navegador até a Netlify, `signInWithPassword`/bcrypt no Supabase Auth, HTTP/TLS do PostgREST e RTT WAN até `us-east-1`).
+- **Medição do fluxo completo no servidor (`src/server/identity.ts`):** `measureAuthFlow` e `withAuthFlowCollector` medem o ciclo completo de cada requisição no servidor (`password_login`, `oauth_callback`, `email_confirm` e `account_bootstrap` nas páginas pós-redirect `/inicio`, `/minha-conta` e `/painel`). Quando a variável de servidor `AUTH_TIMING_LOG=1` é habilitada em ambiente controlado, o sistema emite JSON sanitizado por allowlist (`event: "marcou.auth_timing"`) contendo apenas `{ flow, outcome, totalMs, steps: [{ step, durationMs, profileWritten? }] }` — sem jamais serializar e-mail, senha, `user_id`, telefone, `code`, `token_hash`, cookies ou URLs.
+- **Fronteira de rede do navegador:** como o login por Server Action responde com redirecionamento HTTP para a rota de destino, o tempo total percebido pela pessoa usuária em ambiente publicado soma duas requisições (`POST` da ação + `GET` da página destino) mais o RTT entre navegador e borda da Netlify; em homologação publicada, esse trecho externo pode ser aferido por teste sintético/Navigation Timing combinado a `AUTH_TIMING_LOG=1`, sem capturar campos de formulário.
+
 ## Validação automatizada e estado externo
 
 O código inclui testes unitários para redirects/normalização, origens confiáveis, não enumeração de cadastro/reenvio/recuperação, callback, confirmação, no-store e o hub de identidade. `npm run test:db` executa quatro harnesses na ordem: bookings legado (`scripts/db-check.mjs`), fundação social (`scripts/social-foundation-check.mjs`), identidade (`scripts/identity-check.mjs`) e descoberta (`scripts/discovery-check.mjs`). O harness social aplica todas as migrations e falha se qualquer `SECURITY DEFINER` conservar `EXECUTE` para `PUBLIC`; os harnesses de identidade e descoberta também validam RLS, grants e isolamento. A migration `20261123140000_account_modes.sql` precede a migration `20261123143000_discovery_taxonomy_service_areas.sql`.
 
-A validação real publicada de Google, SMTP, confirmação e recovery depende das configurações acima. Nenhuma configuração remota foi alterada ou verificada nesta entrega, nenhum e-mail real foi enviado e nenhum fluxo externo deve ser tratado como comprovado até o roteiro ser executado com evidência segura. Issues relacionadas continuam abertas: [#23](https://github.com/deividjmoura/marcou/issues/23), [#70](https://github.com/deividjmoura/marcou/issues/70) e [#83](https://github.com/deividjmoura/marcou/issues/83). PR #69 foi consultada apenas como referência funcional, sem cherry-pick ou merge.
+A validação real publicada de Google, SMTP, confirmação e recovery depende das configurações acima. Nenhuma configuração remota foi alterada nesta entrega (o diagnóstico limitou-se à requisição pública e a metadados RFC somente-leitura, sem acesso direto aos painéis do Google Cloud ou Supabase), e nenhum fluxo externo deve ser tratado como concluído até as configurações manuais e o roteiro publicado serem executados com evidência segura. Issues relacionadas continuam abertas: [#23](https://github.com/deividjmoura/marcou/issues/23), [#70](https://github.com/deividjmoura/marcou/issues/70) e [#83](https://github.com/deividjmoura/marcou/issues/83). PR #69 foi consultada apenas como referência funcional, sem cherry-pick ou merge.

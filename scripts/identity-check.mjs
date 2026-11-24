@@ -568,7 +568,7 @@ try {
   const fastTotalMs = performance.now() - fastStart;
 
   console.log(
-    `  info medição PostgreSQL local (${iterations} logins recorrentes, sem PII): sequência anterior 3 queries=${legacyTotalMs.toFixed(2)}ms (${(legacyTotalMs / iterations).toFixed(2)}ms/login) vs caminho rápido 1 SELECT=${fastTotalMs.toFixed(2)}ms (${(fastTotalMs / iterations).toFixed(2)}ms/login)`,
+    `  info medição SQL local em profiles (${iterations} logins recorrentes sob RLS, sem rede/Auth HTTP e sem PII): sequência anterior 3 queries=${legacyTotalMs.toFixed(2)}ms (${(legacyTotalMs / iterations).toFixed(2)}ms/login) vs caminho rápido 1 SELECT=${fastTotalMs.toFixed(2)}ms (${(fastTotalMs / iterations).toFixed(2)}ms/login)`,
   );
   check(
     "caminho rápido de login recorrente é mais veloz que a sequência anterior em PostgreSQL real",
