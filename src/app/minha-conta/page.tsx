@@ -26,7 +26,7 @@ export default async function MinhaContaPage() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) redirect("/login?next=%2Fminha-conta");
 
-  const [{ data: profile }, unread, provider] = await Promise.all([
+  const [{ data: profile }, unread, provider, activeMode] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, phone, created_at")
@@ -34,8 +34,8 @@ export default async function MinhaContaPage() {
       .maybeSingle(),
     countUnreadNotifications(),
     getOwnedProvider(user.id),
+    getPreferredMode(),
   ]);
-  const activeMode = await getPreferredMode();
 
   const metadataName = user.user_metadata?.display_name;
   const name: string =

@@ -43,13 +43,22 @@ coloque chaves secretas ou service-role no navegador nem no repositório.
 ## Comandos
 
 ```bash
-npm run dev        # ambiente de desenvolvimento
-npm run lint       # eslint
-npm run typecheck  # tsc --noEmit
-npm run test       # testes de domínio (vitest)
-npm run test:db    # testes de integração em PostgreSQL real (embedded-postgres)
-npm run build      # build de produção
+npm run dev              # ambiente de desenvolvimento
+npm run check:changelog  # valida formato e exigência de CHANGELOG.md
+npm run lint             # eslint
+npm run typecheck        # tsc --noEmit
+npm run test             # testes de domínio (vitest)
+npm run test:db          # testes de integração em PostgreSQL real (embedded-postgres)
+npm run build            # build de produção
 ```
+
+## Processo obrigatório de Changelog
+
+Toda Pull Request com mudanças **funcionais**, **visuais**, **estruturais** ou de
+**banco de dados** deve atualizar [`CHANGELOG.md`](CHANGELOG.md) na seção
+`## [Unreleased]` antes da revisão. O CI executa `npm run check:changelog`
+automaticamente em toda PR contra `main`. Consulte as diretrizes completas em
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Banco de dados
 

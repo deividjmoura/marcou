@@ -7,6 +7,7 @@ import {
   safeNextPathFromUrl,
   trustedAppOrigin,
 } from "@/lib/identity";
+import { ensureAuthProfile } from "@/server/identity";
 
 const AUTH_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
@@ -14,38 +15,6 @@ const RECOVERY_PATH = "/redefinir-senha";
 
 function redirectNoStore(url: string) {
   return markPrivateNoStore(NextResponse.redirect(url));
-}
-
-async function provisionProfile(
-  user: { id: string; user_metadata?: Record<string, unknown> },
-  supabase: Awaited<ReturnType<typeof createClient>>,
-) {
-  const displayName =
-    user.user_metadata?.display_name ??
-    user.user_metadata?.full_name ??
-    user.user_metadata?.name ??
-    null;
-
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (
-    !existing?.display_name &&
-    typeof displayName === "string" &&
-    displayName.trim()
-  ) {
-    profileRow.display_name = displayName.trim().slice(0, 80);
-  }
-
-  return supabase
-    .from("profiles")
-    .upsert(profileRow, { onConflict: "id" })
-    .select("phone")
-    .single();
 }
 
 /**
@@ -86,8 +55,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  let verifiedUser: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] = null;
   try {
-    const { error: verifyError } = await supabase.auth.verifyOtp({
+    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type,
     });
@@ -101,6 +71,7 @@ export async function GET(request: NextRequest) {
         ),
       );
     }
+    verifiedUser = verifyData?.user ?? null;
   } catch {
     return redirectNoStore(
       loginRedirectUrl(
@@ -118,33 +89,23 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    let user = verifiedUser;
+    if (!user) {
+      const {
+        data: { user: fetchedUser },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-    if (userError || !user) {
-      return redirectNoStore(loginRedirectUrl(origin, next));
+      if (userError || !fetchedUser) {
+        return redirectNoStore(loginRedirectUrl(origin, next));
+      }
+      user = fetchedUser;
     }
 
-    const { data: profile, error: profileError } = await provisionProfile(
-      user,
-      supabase,
-    );
-
-    if (profileError || !profile) {
-      return redirectNoStore(
-        loginRedirectUrl(
-          origin,
-          next,
-          "E-mail confirmado, mas não foi possível carregar seu perfil.",
-        ),
-      );
-    }
-
-    const destination = profile.phone
-      ? next
-      : `/perfil?next=${encodeURIComponent(next)}`;
+    const profile = await ensureAuthProfile(supabase, user);
+    const destination = profile.needsPhone
+      ? `/perfil?next=${encodeURIComponent(next)}`
+      : next;
     return redirectNoStore(new URL(destination, origin).toString());
   } catch {
     return redirectNoStore(

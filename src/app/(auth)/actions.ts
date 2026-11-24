@@ -13,6 +13,7 @@ import {
   trustedAppOrigin,
   signupErrorMessage,
 } from "@/lib/identity";
+import { ensureAuthProfile, measureAuthStep } from "@/server/identity";
 
 export interface AuthState {
   error?: string;
@@ -53,6 +54,12 @@ function emailConfirmationRedirect(origin: string, next: string): string {
   return redirectTo.toString();
 }
 
+function oauthCallbackRedirect(origin: string, next: string): string {
+  const redirectTo = new URL("/auth/callback", origin);
+  redirectTo.searchParams.set("next", safeNextPath(next));
+  return redirectTo.toString();
+}
+
 const GENERIC_CONFIRMATION_MESSAGE =
   "Se for necessário confirmar esse endereço, enviaremos instruções por e-mail. Você também pode tentar entrar normalmente.";
 const GENERIC_RECOVERY_MESSAGE =
@@ -60,55 +67,6 @@ const GENERIC_RECOVERY_MESSAGE =
 
 const SUPABASE_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
-
-/**
- * Cria o perfil quando ainda não existe e preenche o nome vindo do provedor
- * (Google) ou do cadastro. Um nome já escolhido pelo usuário em `/perfil` não
- * é sobrescrito pelo nome do provedor a cada login.
- */
-async function saveAuthProfile(
-  user: { id: string; user_metadata?: Record<string, unknown> },
-) {
-  const supabase = await createClient();
-  const displayName =
-    user.user_metadata?.display_name ??
-    user.user_metadata?.full_name ??
-    user.user_metadata?.name ??
-    null;
-
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (
-    !existing?.display_name &&
-    typeof displayName === "string" &&
-    displayName.trim()
-  ) {
-    profileRow.display_name = displayName.trim().slice(0, 80);
-  }
-
-  const { error } = await supabase.from("profiles").upsert(profileRow, {
-    onConflict: "id",
-    ignoreDuplicates: false,
-  });
-  if (error) throw new Error("Não foi possível preparar seu perfil.");
-}
-
-async function profileNeedsPhone(userId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("phone")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (error) throw new Error("Não foi possível verificar seu perfil.");
-  return !data?.phone;
-}
 
 function unavailableState(): AuthState {
   return { error: SUPABASE_UNAVAILABLE_MESSAGE };
@@ -120,35 +78,39 @@ export async function loginAction(
 ): Promise<AuthState> {
   if (!isSupabaseConfigured()) return unavailableState();
 
-  const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
+  const parsed = await measureAuthStep("validate_input", () =>
+    loginSchema.safeParse({
+      email: formData.get("email"),
+      password: formData.get("password"),
+    }),
+  );
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await measureAuthStep("auth_sign_in", () =>
+    supabase.auth.signInWithPassword(parsed.data),
+  );
 
   if (error || !data.user) {
     return { error: passwordLoginErrorMessage(error?.code) };
   }
 
+  let needsPhone: boolean;
   try {
-    await saveAuthProfile(data.user);
+    const profile = await measureAuthStep(
+      "ensure_profile",
+      () => ensureAuthProfile(supabase, data.user),
+      (result) => ({ profileWritten: result.wroteProfile }),
+    );
+    needsPhone = profile.needsPhone;
   } catch {
     return { error: "Não foi possível carregar seu perfil. Tente novamente." };
   }
 
   const next = safeNextPath(String(formData.get("next") ?? ""));
-  let needsPhone: boolean;
-  try {
-    needsPhone = await profileNeedsPhone(data.user.id);
-  } catch {
-    return { error: "Não foi possível verificar seu perfil. Tente novamente." };
-  }
   if (needsPhone) redirect(`/perfil?next=${encodeURIComponent(next)}`);
   redirect(next);
 }
@@ -169,7 +131,7 @@ export async function signupAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
-  const origin = await getAppOrigin();
+  const origin = getAppOrigin();
   const next = safeNextPath(String(formData.get("next") ?? ""));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -194,7 +156,7 @@ export async function signupAction(
 
   if (data.session) {
     try {
-      await saveAuthProfile(data.user);
+      await ensureAuthProfile(supabase, data.user);
     } catch {
       // Do not turn profile setup into an account-enumeration side channel.
     }
@@ -223,7 +185,7 @@ export async function resendSignupConfirmationAction(
   }
 
   try {
-    const origin = await getAppOrigin();
+    const origin = getAppOrigin();
     const next = safeNextPath(String(formData.get("next") ?? ""));
     const supabase = await createClient();
     // Supabase errors are intentionally not reflected in the response: the
@@ -242,7 +204,7 @@ export async function resendSignupConfirmationAction(
 }
 
 export async function googleLoginAction(formData: FormData): Promise<void> {
-  const origin = await getAppOrigin();
+  const origin = getAppOrigin();
   const next = safeNextPath(String(formData.get("next") ?? ""));
 
   if (!isSupabaseConfigured()) {
@@ -253,7 +215,7 @@ export async function googleLoginAction(formData: FormData): Promise<void> {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: oauthCallbackRedirect(origin, next),
     },
   });
 
@@ -313,7 +275,7 @@ export async function requestPasswordResetAction(
   if (!email.success) return { error: email.error.issues[0]?.message ?? "E-mail inválido." };
 
   try {
-    const origin = await getAppOrigin();
+    const origin = getAppOrigin();
     const supabase = await createClient();
     const redirectTo = new URL("/auth/confirm", origin);
     redirectTo.searchParams.set("next", "/redefinir-senha");

@@ -25,11 +25,9 @@ export default async function InicioPage({
   }
 
   const user = await requireUser("/inicio");
-  const [provider, supabase] = await Promise.all([
+  const supabase = await createClient();
+  const [provider, { data: profile }, activeMode] = await Promise.all([
     getOwnedProvider(user.id),
-    createClient(),
-  ]);
-  const [{ data: profile }, activeMode] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name")

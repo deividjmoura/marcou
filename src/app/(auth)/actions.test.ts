@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  withAuthTimingCollector,
+  type AuthStepTiming,
+} from "@/server/identity";
 
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
@@ -6,11 +10,15 @@ const mocks = vi.hoisted(() => ({
   resend: vi.fn(),
   resetPasswordForEmail: vi.fn(),
   signInWithPassword: vi.fn(),
+  signInWithOAuth: vi.fn(),
   getUser: vi.fn(),
   updateUser: vi.fn(),
   signOut: vi.fn(),
-  profileMaybeSingle: vi.fn(),
-  profileUpsert: vi.fn(),
+  profileSelectMaybeSingle: vi.fn(),
+  profileSelectSingle: vi.fn(),
+  profileUpsertMaybeSingle: vi.fn(),
+  profileUpsertDirect: vi.fn(),
+  profileUpdateMaybeSingle: vi.fn(),
   from: vi.fn(),
   redirect: vi.fn(),
 }));
@@ -24,10 +32,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 import {
+  googleLoginAction,
   loginAction,
   logoutAction,
   requestPasswordResetAction,
   resendSignupConfirmationAction,
+  saveProfileAction,
   signupAction,
   updatePasswordAction,
 } from "./actions";
@@ -38,27 +48,66 @@ function form(fields: Record<string, string>) {
   return data;
 }
 
-describe("email identity actions", () => {
+describe("email and OAuth identity actions", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     mocks.redirect.mockImplementation((destination: string) => {
       throw new Error(`NEXT_REDIRECT:${destination}`);
     });
-    mocks.profileMaybeSingle.mockResolvedValue({ data: null, error: null });
-    mocks.profileUpsert.mockResolvedValue({ error: null });
+    mocks.profileSelectMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mocks.profileSelectSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
+    mocks.profileUpsertMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: null },
+      error: null,
+    });
+    mocks.profileUpsertDirect.mockResolvedValue({ error: null });
+    mocks.profileUpdateMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
+
     mocks.from.mockImplementation(() => ({
       select: () => ({
-        eq: () => ({ maybeSingle: mocks.profileMaybeSingle }),
+        eq: () => ({
+          maybeSingle: mocks.profileSelectMaybeSingle,
+          single: mocks.profileSelectSingle,
+        }),
       }),
-      upsert: mocks.profileUpsert,
+      upsert: (payload: unknown, options?: { ignoreDuplicates?: boolean }) => {
+        if (options && "ignoreDuplicates" in options) {
+          return {
+            select: () => ({ maybeSingle: mocks.profileUpsertMaybeSingle }),
+          };
+        }
+        return mocks.profileUpsertDirect(payload, options);
+      },
+      update: () => ({
+        eq: () => ({
+          is: () => ({
+            select: () => ({ maybeSingle: mocks.profileUpdateMaybeSingle }),
+          }),
+          eq: () => ({
+            select: () => ({ maybeSingle: mocks.profileUpdateMaybeSingle }),
+          }),
+        }),
+      }),
     }));
+
     mocks.createClient.mockResolvedValue({
       auth: {
         signUp: mocks.signUp,
         resend: mocks.resend,
         resetPasswordForEmail: mocks.resetPasswordForEmail,
         signInWithPassword: mocks.signInWithPassword,
+        signInWithOAuth: mocks.signInWithOAuth,
         getUser: mocks.getUser,
         updateUser: mocks.updateUser,
         signOut: mocks.signOut,
@@ -73,7 +122,7 @@ describe("email identity actions", () => {
     mocks.resetPasswordForEmail.mockResolvedValue({ error: null });
   });
 
-  it("authenticates with e-mail/password, provisions the profile, and returns locally", async () => {
+  it("authenticates returning user with 1 single profile SELECT and 0 redundant writes", async () => {
     mocks.signInWithPassword.mockResolvedValue({
       data: {
         user: {
@@ -83,9 +132,10 @@ describe("email identity actions", () => {
       },
       error: null,
     });
-    mocks.profileMaybeSingle
-      .mockResolvedValueOnce({ data: { display_name: "Ana" }, error: null })
-      .mockResolvedValueOnce({ data: { phone: "47999991234" }, error: null });
+    mocks.profileSelectMaybeSingle.mockResolvedValueOnce({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
 
     await expect(
       loginAction(
@@ -97,10 +147,50 @@ describe("email identity actions", () => {
         }),
       ),
     ).rejects.toThrow("NEXT_REDIRECT:/minha-conta");
+
+    expect(mocks.createClient).toHaveBeenCalledTimes(1);
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({
       email: "ana@example.com",
       password: "senha-segura-123",
     });
+    expect(mocks.profileSelectMaybeSingle).toHaveBeenCalledTimes(1);
+    expect(mocks.profileUpsertMaybeSingle).not.toHaveBeenCalled();
+    expect(mocks.profileUpdateMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it("provisions missing profile on first login and redirects to /perfil when phone is missing", async () => {
+    mocks.signInWithPassword.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-new",
+          user_metadata: { display_name: "Ana" },
+        },
+      },
+      error: null,
+    });
+    mocks.profileSelectMaybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: null,
+    });
+    mocks.profileUpsertMaybeSingle.mockResolvedValueOnce({
+      data: { display_name: "Ana", phone: null },
+      error: null,
+    });
+
+    await expect(
+      loginAction(
+        {},
+        form({
+          email: "ana@example.com",
+          password: "senha-segura-123",
+          next: "/painel",
+        }),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT:/perfil?next=%2Fpainel");
+
+    expect(mocks.createClient).toHaveBeenCalledTimes(1);
+    expect(mocks.profileSelectMaybeSingle).toHaveBeenCalledTimes(1);
+    expect(mocks.profileUpsertMaybeSingle).toHaveBeenCalledTimes(1);
   });
 
   it("does not redirect a successful login to an external destination", async () => {
@@ -108,9 +198,10 @@ describe("email identity actions", () => {
       data: { user: { id: "user-1" } },
       error: null,
     });
-    mocks.profileMaybeSingle
-      .mockResolvedValueOnce({ data: { display_name: "Ana" }, error: null })
-      .mockResolvedValueOnce({ data: { phone: "47999991234" }, error: null });
+    mocks.profileSelectMaybeSingle.mockResolvedValueOnce({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
 
     await expect(
       loginAction(
@@ -122,6 +213,169 @@ describe("email identity actions", () => {
         }),
       ),
     ).rejects.toThrow("NEXT_REDIRECT:/inicio");
+  });
+
+  it("measures login stages under simulated latency without logging passwords, tokens, or PII", async () => {
+    const SIMULATED_RTT_MS = 18;
+    const sleep = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+
+    mocks.signInWithPassword.mockImplementation(async () => {
+      await sleep(SIMULATED_RTT_MS);
+      return {
+        data: {
+          user: {
+            id: "user-measured",
+            user_metadata: { display_name: "Pessoa Teste" },
+          },
+          session: { access_token: "secret-jwt-token" },
+        },
+        error: null,
+      };
+    });
+
+    // Cenário 1: usuário recorrente (1 Auth RTT + 1 DB SELECT RTT, 0 escritas)
+    mocks.profileSelectMaybeSingle.mockImplementationOnce(async () => {
+      await sleep(SIMULATED_RTT_MS);
+      return {
+        data: { display_name: "Pessoa Teste", phone: "47999990000" },
+        error: null,
+      };
+    });
+
+    const returningTimings: AuthStepTiming[] = [];
+    await expect(
+      withAuthTimingCollector(
+        (entry) => returningTimings.push(entry),
+        () =>
+          loginAction(
+            {},
+            form({
+              email: "privado@example.com",
+              password: "senha-ultra-secreta-999",
+              next: "/inicio",
+            }),
+          ),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT:/inicio");
+
+    // Cenário 2: primeiro acesso (1 Auth RTT + 1 DB SELECT RTT + 1 DB INSERT RTT)
+    mocks.profileSelectMaybeSingle.mockImplementationOnce(async () => {
+      await sleep(SIMULATED_RTT_MS);
+      return { data: null, error: null };
+    });
+    mocks.profileUpsertMaybeSingle.mockImplementationOnce(async () => {
+      await sleep(SIMULATED_RTT_MS);
+      return { data: { display_name: "Pessoa Teste", phone: null }, error: null };
+    });
+
+    const firstLoginTimings: AuthStepTiming[] = [];
+    await expect(
+      withAuthTimingCollector(
+        (entry) => firstLoginTimings.push(entry),
+        () =>
+          loginAction(
+            {},
+            form({
+              email: "privado@example.com",
+              password: "senha-ultra-secreta-999",
+              next: "/inicio",
+            }),
+          ),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT:/perfil?next=%2Finicio");
+
+    expect(returningTimings.map((t) => t.step)).toEqual([
+      "validate_input",
+      "auth_sign_in",
+      "ensure_profile",
+    ]);
+    expect(returningTimings[2]?.profileWritten).toBe(false);
+    expect(firstLoginTimings[2]?.profileWritten).toBe(true);
+
+    const returningProfileMs = returningTimings[2]?.durationMs ?? 0;
+    const firstLoginProfileMs = firstLoginTimings[2]?.durationMs ?? 0;
+    expect(returningProfileMs).toBeGreaterThanOrEqual(12);
+    expect(firstLoginProfileMs).toBeGreaterThan(returningProfileMs);
+
+    const serialized = JSON.stringify({ returningTimings, firstLoginTimings });
+    expect(serialized).not.toContain("privado@example.com");
+    expect(serialized).not.toContain("senha-ultra-secreta-999");
+    expect(serialized).not.toContain("secret-jwt-token");
+    expect(serialized).not.toContain("user-measured");
+    expect(serialized).not.toContain("47999990000");
+  });
+
+  it("builds Google OAuth redirectTo using configured production origin and safe next path", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
+    mocks.signInWithOAuth.mockResolvedValue({
+      data: {
+        url: "https://peornypgltuueubmsucm.supabase.co/auth/v1/authorize?provider=google",
+      },
+      error: null,
+    });
+
+    await expect(
+      googleLoginAction(form({ next: "/p/studio-ana?service=corte" })),
+    ).rejects.toThrow(
+      "NEXT_REDIRECT:https://peornypgltuueubmsucm.supabase.co/auth/v1/authorize?provider=google",
+    );
+
+    expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo:
+          "https://marcoou.netlify.app/auth/callback?next=%2Fp%2Fstudio-ana%3Fservice%3Dcorte",
+      },
+    });
+  });
+
+  it("sanitizes untrusted next parameter in Google OAuth and handles provider startup errors", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
+    mocks.signInWithOAuth.mockResolvedValue({
+      data: { url: null },
+      error: new Error("oauth_disabled"),
+    });
+
+    await expect(
+      googleLoginAction(form({ next: "https://evil.example/phish" })),
+    ).rejects.toThrow(
+      "NEXT_REDIRECT:https://marcoou.netlify.app/login?error=N%C3%A3o+foi+poss%C3%ADvel+iniciar+o+login+com+Google.&next=%2Finicio",
+    );
+
+    expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: "https://marcoou.netlify.app/auth/callback?next=%2Finicio",
+      },
+    });
+  });
+
+  it("saves profile with normalized phone and redirects to safe destination", async () => {
+    mocks.getUser.mockResolvedValue({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
+
+    await expect(
+      saveProfileAction(
+        {},
+        form({
+          name: "Ana Paula",
+          phone: "(47) 99999-1234",
+          next: "/minha-conta",
+        }),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT:/minha-conta");
+
+    expect(mocks.profileUpsertDirect).toHaveBeenCalledWith(
+      {
+        id: "user-1",
+        display_name: "Ana Paula",
+        phone: "47999991234",
+      },
+      { onConflict: "id" },
+    );
   });
 
   it("updates a recovered password and ends the recovery session", async () => {
@@ -205,7 +459,7 @@ describe("email identity actions", () => {
       },
       error: null,
     });
-    mocks.profileMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mocks.profileSelectMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.signOut.mockResolvedValue({ error: null });
 
     const result = await signupAction(
@@ -221,6 +475,7 @@ describe("email identity actions", () => {
       success:
         "Se for necessário confirmar esse endereço, enviaremos instruções por e-mail. Você também pode tentar entrar normalmente.",
     });
+    expect(mocks.createClient).toHaveBeenCalledTimes(1);
     expect(mocks.signOut).toHaveBeenCalledWith({ scope: "local" });
   });
 

@@ -80,49 +80,76 @@ No Netlify, cadastre os valores em **Site configuration → Environment variable
 
 Em **Authentication → URL Configuration**:
 
-1. Defina **Site URL** como a origem canônica de produção.
+1. Defina **Site URL** como a origem canônica de produção (`https://marcoou.netlify.app`).
 2. Permita somente os callbacks da aplicação que serão usados: `/auth/callback` (Google/PKCE) e `/auth/confirm` (e-mail e recuperação) para local e ambientes oficiais.
-3. Inclua a origem de produção, localhost de desenvolvimento e os domínios de Deploy Preview/Branch Deploy autorizados. Prefira URLs exatas por ambiente; se uma wildcard for necessária, limite-a ao domínio Netlify controlado pelo Marcou e somente aos caminhos necessários. Não use wildcard de qualquer host nem permita domínio externo.
-4. A lista precisa incluir os destinos de retorno enviados pelo app (`/auth/confirm` ou `/auth/callback` com query local) antes de testar o fluxo. O Supabase valida esses destinos contra a allowlist.
-
-A documentação histórica registra o ref `peornypgltuueubmsucm`, mas esta entrega não o confirmou no Dashboard. Confirme o projeto/ambiente alvo antes de editar o painel. Nenhuma URL de Site/Redirect foi alterada nesta entrega.
+3. Como `googleLoginAction`, `signupAction`, `resendSignupConfirmationAction` e `requestPasswordResetAction` anexam a query `?next=<caminho-local-seguro>` ao callback, e o Supabase Auth valida `redirect_to` com `glob.MustCompile(uri, '.', '/')` sobre a URL completa (incluindo query string) para qualquer origem fora do `Site URL`, cadastre as entradas da allowlist com sufixo `**` nos dois caminhos autorizados:
+   - Produção: `https://marcoou.netlify.app/auth/callback**` e `https://marcoou.netlify.app/auth/confirm**`
+   - Localhost: `http://localhost:3000/auth/callback**` e `http://localhost:3000/auth/confirm**`
+   - Deploy Previews da Netlify (quando utilizados): entradas exatas `https://deploy-preview-<número>--marcoou.netlify.app/auth/callback**` e `/auth/confirm**`, ou restrito a `https://deploy-preview-*--marcoou.netlify.app/auth/callback**` e `/auth/confirm**` (observe o duplo hífen `--` usado pela Netlify; nunca use wildcard de host genérico).
+4. Sem o sufixo `**`, o matcher glob rejeita `?next=...` em origens fora do `Site URL` e faz fallback silencioso para a raiz do `Site URL`.
 
 ### Google Cloud e provider Google no Supabase
 
-1. No Google Cloud Console, configure a tela de consentimento OAuth e os domínios autorizados; use apenas escopos básicos `openid`, `email` e `profile`.
-2. Crie uma credencial OAuth do tipo **Web application**.
-3. Em **Supabase Dashboard → Authentication → Providers → Google**, habilite o provider e cadastre o Client ID e o Client Secret nos campos do painel.
-4. No Google Cloud, registre como **Authorized redirect URI** o callback do Supabase, no formato `https://<project-ref>.supabase.co/auth/v1/callback` (para o projeto citado acima: `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`). Não configure `/auth/callback` da aplicação como redirect URI do Google: esse é o callback final, após o Supabase.
+Não confunda os dois callbacks envolvidos no OAuth 2.0:
+
+- **Callback do Google para o Supabase (`redirect_uri` enviado ao Google):**
+  `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`
+  — **este é o único URI de callback que deve estar em Authorized redirect URIs no Google Cloud Console.**
+- **Callback final do Supabase para a aplicação Marcou (`redirectTo` enviado ao Supabase):**
+  `https://marcoou.netlify.app/auth/callback?next=...` (ou `http://localhost:3000/auth/callback?next=...` em ambiente local)
+  — **este fica na allowlist do Supabase Auth (`Redirect URLs`), nunca no Google Cloud Console.**
+
+#### Instruções de conferência manual (Google Cloud Console + Supabase)
+
+1. Acesse **Google Cloud Console → APIs & Services → Credentials** no projeto proprietário do OAuth Client ID `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com`.
+2. Abra essa credencial **OAuth 2.0 Client ID (Web application)** e confira em **Authorized redirect URIs** que consta exatamente (sem barra final `/`, sem espaços e usando `https`):
+   ```text
+   https://peornypgltuueubmsucm.supabase.co/auth/v1/callback
+   ```
+   Remova eventuais entradas incorretas que apontem diretamente para `/auth/callback` da Netlify se tiverem sido cadastradas por engano no Google Cloud.
+3. Em **Google Auth Platform / OAuth consent screen**, confirme os escopos básicos (`openid`, `email`, `profile`), os domínios autorizados (`supabase.co` e `netlify.app` / domínio próprio futuro) e se o status de publicação da tela de consentimento está em **In production** (ou se as contas de teste estão listadas em **Test users** enquanto em modo Testing).
+4. Em **Supabase Dashboard → Authentication → Providers → Google** (projeto `peornypgltuueubmsucm`), confirme que o provider está **Enabled** e que o **Client ID** é exatamente `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com`, com o respectivo Client Secret vigente.
 5. Nunca solicite, copie, imprima ou registre Client Secret, service-role, credenciais SMTP, cookies ou tokens em chat, código, Issues ou PRs. Se um segredo for exposto fora do painel protegido, rotacione-o antes de habilitar o provider.
 
 ### SMTP, DNS e entregabilidade
 
-Em **Supabase Dashboard → Project Settings → Authentication → SMTP Settings**, habilite um SMTP próprio adequado ao volume e domínio de envio do Marcou. Use o painel/gerenciador de segredos para host, porta, usuário e senha SMTP; não os coloque em `.env.example`, no repositório, em Issues, PRs ou logs.
+#### Situação diagnosticada (código vs. configuração externa)
 
-No DNS do domínio de envio:
+- **No código da aplicação:** o Marcou delega o disparo de confirmação e recuperação exclusivamente ao Supabase Auth (`signUp`, `resend`, `resetPasswordForEmail`), construindo `emailRedirectTo` com origem confiável (`NEXT_PUBLIC_SITE_URL`) para `/auth/confirm?next=...`. Não há envio SMTP direto pela aplicação Next.js nem defeito de código causando classificação como spam.
+- **Na configuração externa atual (verificada por cabeçalhos RFC de entrega):**
+  - O projeto Supabase `peornypgltuueubmsucm` não está mais no SMTP padrão `supabase.io`, mas está configurado com relay `smtp.gmail.com` usando uma caixa pessoal/gratuita `Marcou <appmarcou@gmail.com>` (`Return-Path: <appmarcou@gmail.com>`).
+  - Embora `SPF`, `DKIM` e `DMARC` passem tecnicamente para `gmail.com` (`dmarc=pass p=NONE header.from=gmail.com`), o envio automatizado de e-mails transacionais de marca comercial a partir de `@gmail.com` com links apontando para outro domínio (`marcoou.netlify.app` / `peornypgltuueubmsucm.supabase.co`) sofre **desalinhamento cruzado de domínios** e aciona filtros anti-phishing/spam, além de sujeitar a conta Google a limites baixos e bloqueio.
+  - O assunto do template **Confirm signup** encontra-se em inglês (`Confirm your email address`) enquanto o corpo HTML está em português (`Confirme seu e-mail...`), e a mensagem sai apenas como `text/html` sem parte texto puro — fatores adicionais de pontuação de spam.
 
-- publique exatamente os registros SPF indicados pelo provedor, sem criar registros SPF concorrentes;
-- configure DKIM e valide a assinatura das mensagens;
-- publique uma política DMARC alinhada com o domínio `From` (comece em monitoramento se a política operacional exigir, depois avance conforme os relatórios);
-- verifique domínio, remetente, quotas, limites de envio e pastas de spam antes do lançamento.
+#### Ações externas necessárias para sair do spam de forma definitiva
 
-Personalize os templates **Confirm signup** e **Reset Password** com os links `/auth/confirm` acima. Confira o remetente, assunto, idioma, validade do link e URLs geradas em cada ambiente. Mensagens válidas e inválidas devem receber resposta indistinguível nas ações de reenvio e recuperação.
+1. **Domínio próprio do Marcou:** adquirir/utilizar domínio próprio (ex.: `marcou.com.br`), evitando depender de `@gmail.com` como remetente e, idealmente, também associando o domínio próprio à aplicação na Netlify para alinhar marca, remetente e links de confirmação.
+2. **Provedor SMTP transacional dedicado:** configurar em **Supabase Dashboard → Project Settings → Authentication → SMTP Settings** um provedor transacional próprio (Resend, Postmark, Amazon SES ou SendGrid) enviando com remetente do domínio do Marcou (ex.: `Marcou <nao-responda@marcou.com.br>` ou subdomínio dedicado `nao-responda@mail.marcou.com.br`). Guardar host, porta, usuário e senha/API key exclusivamente no painel do Supabase.
+3. **Autenticação DNS do domínio de envio:**
+   - **SPF:** publicar um único registro TXT SPF autorizando o provedor transacional escolhido, sem registros SPF duplicados;
+   - **DKIM:** publicar as chaves CNAME/TXT de assinatura DKIM do provedor no domínio do Marcou e validar status verificado;
+   - **DMARC:** publicar `_dmarc.<domínio>` alinhado ao `From` (iniciando com `v=DMARC1; p=none; rua=mailto:...` para monitoramento e evoluindo para `p=quarantine` / `p=reject` após validar alinhamento).
+4. **Revisão dos Email Templates no Supabase:**
+   - padronizar o **Subject** em português coerente com o corpo (ex.: `Confirme seu e-mail no Marcou` e `Redefinição de senha no Marcou`);
+   - manter os links apontando para `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (cadastro) e `type=recovery` (recuperação), sem encurtadores nem domínios divergentes.
 
 ## Handoff de coordenação cloud (sem secrets)
 
-Nenhuma configuração de Google Cloud, Supabase remoto, Netlify ou SMTP foi alterada. Os valores abaixo são metadados públicos registrados no repositório ou fornecidos como referência histórica; **não foram verificados nos painéis remotos nesta entrega**. A outra frente deve confirmar o projeto/ambiente antes de aplicar mudanças.
+Nenhuma configuração de Google Cloud, Supabase remoto, Netlify ou SMTP foi alterada pelo repositório. A tabela consolida o estado verificado de forma somente-leitura e as ações manuais pendentes:
 
-| Item | Valor de handoff | Estado |
+| Item | Valor observado / esperado | Estado |
 |---|---|---|
-| Supabase project ref | `peornypgltuueubmsucm` | Ref registrada na documentação histórica; confirmação no Dashboard do Supabase ainda pendente. |
-| Google Authorized redirect URI esperado | `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback` | Esperado para o ref acima; validar em Google Cloud e no provider Google do Supabase. Este é o callback do Supabase, não `/auth/callback` da aplicação. |
-| Google OAuth Client ID público esperado | `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com` | Referência histórica fornecida; confirmar igualdade nos dois painéis. Nenhum Client Secret foi acessado ou registrado. |
-| Site URL de produção esperado | `https://marcoou.netlify.app` | README identifica esta URL como aplicação publicada; confirmar que continua sendo a origem canônica ativa. |
-| Redirect URLs — produção | `https://marcoou.netlify.app/auth/callback` e `https://marcoou.netlify.app/auth/confirm` | Allowlist esperada do Supabase; confirmar no projeto correto. |
-| Redirect URLs — Netlify Deploy Preview | `https://deploy-preview-<número>--marcoou.netlify.app/auth/callback` e `/auth/confirm` | Preferir entradas exatas por preview ativo. Se usar wildcard, restringir a `https://deploy-preview-*-marcoou.netlify.app/auth/callback` e `/auth/confirm`; não usar wildcard de host genérico. |
-| Redirect URLs — localhost | `http://localhost:3000/auth/callback` e `http://localhost:3000/auth/confirm` | Para desenvolvimento local. |
-| Escopos OAuth | `openid`, `email`, `profile` | Escopos esperados; a aplicação não solicita escopos adicionais. Confirmar consent screen/provider. |
-| Templates de e-mail | Confirm signup deve enviar `RedirectTo` + `TokenHash` + `type=email`; Reset Password deve enviar `RedirectTo` + `TokenHash` + `type=recovery`. | Os snippets estão documentados acima; estado remoto dos templates, SMTP, remetente e entregabilidade não verificado. |
+| Supabase project ref | `peornypgltuueubmsucm` | **Confirmado ativo** (`peornypgltuueubmsucm.supabase.co`). |
+| `NEXT_PUBLIC_SITE_URL` na Netlify (produção) | `https://marcoou.netlify.app` | **Confirmado configurado** em produção (`/auth/callback` resolve `trustedAppOrigin` para `https://marcoou.netlify.app` com destino padrão `/inicio`). |
+| `redirectTo` montado por `googleLoginAction` | `https://marcoou.netlify.app/auth/callback?next=<caminho-seguro>` | **Correto no código** (callback final do Supabase para o Marcou). |
+| `redirect_uri` real enviado ao Google OAuth | `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback` | **Confirmado na requisição OAuth real**, mas **ausente/divergente no Google Cloud Console** (causa direta do `Erro 400: redirect_uri_mismatch`). |
+| Google OAuth Client ID público em uso | `563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com` | **Confirmado ativo** na requisição OAuth do Supabase; cadastrar nele o URI `https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`. |
+| Site URL esperado no Supabase | `https://marcoou.netlify.app` | Conferir em **Authentication → URL Configuration**. |
+| Redirect URLs — produção | `https://marcoou.netlify.app/auth/callback**` e `https://marcoou.netlify.app/auth/confirm**` | Conferir no Supabase com `**` para aceitar `?next=...`. |
+| Redirect URLs — Netlify Deploy Preview | `https://deploy-preview-*--marcoou.netlify.app/auth/callback**` e `/auth/confirm**` | Preferir preview exato ativo ou restringir ao padrão com duplo hífen `--` da Netlify. |
+| Redirect URLs — localhost | `http://localhost:3000/auth/callback**` e `http://localhost:3000/auth/confirm**` | Para desenvolvimento local com `?next=...`. |
+| Escopos OAuth | `openid`, `email`, `profile` | Escopos básicos esperados na consent screen. |
+| SMTP e remetente atuais | `smtp.gmail.com` com `Marcou <appmarcou@gmail.com>` e assunto em inglês (`Confirm your email address`) | **Causa externa da queda em spam**; migrar para domínio próprio + SMTP transacional dedicado + SPF/DKIM/DMARC + assunto em português. |
 
 ### Round-trip publicado ainda necessário
 

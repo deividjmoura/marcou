@@ -84,8 +84,8 @@ export default async function PainelPage() {
   }
 
   const user = await requireUser("/painel");
-  const provider = await getOwnedProvider(user.id);
-  const [unread, activeMode] = await Promise.all([
+  const [provider, unread, activeMode] = await Promise.all([
+    getOwnedProvider(user.id),
     countUnreadNotifications(),
     getPreferredMode(),
   ]);

@@ -8,48 +8,13 @@ import {
   safeNextPath,
   trustedAppOrigin,
 } from "@/lib/identity";
+import { ensureAuthProfile } from "@/server/identity";
 
 const AUTH_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 
 function redirectNoStore(url: string) {
   return markPrivateNoStore(NextResponse.redirect(url));
-}
-
-/**
- * Monta o perfil de um usuário recém-autenticado sem sobrescrever um nome
- * escolhido pelo próprio usuário em `/perfil`.
- */
-async function provisionProfile(
-  user: { id: string; user_metadata?: Record<string, unknown> },
-  supabase: Awaited<ReturnType<typeof createClient>>,
-) {
-  const displayName =
-    user.user_metadata?.display_name ??
-    user.user_metadata?.full_name ??
-    user.user_metadata?.name ??
-    null;
-
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (
-    !existing?.display_name &&
-    typeof displayName === "string" &&
-    displayName.trim()
-  ) {
-    profileRow.display_name = displayName.trim().slice(0, 80);
-  }
-
-  return supabase
-    .from("profiles")
-    .upsert(profileRow, { onConflict: "id" })
-    .select("phone")
-    .single();
 }
 
 export async function GET(request: NextRequest) {
@@ -82,28 +47,31 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] = null;
   try {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: exchangeData, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       return redirectNoStore(
         loginRedirectUrl(origin, next, oauthErrorMessage()),
       );
     }
+    user = exchangeData?.user ?? null;
   } catch {
     return redirectNoStore(
       loginRedirectUrl(origin, next, oauthErrorMessage()),
     );
   }
 
-  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"];
-  try {
-    const result = await supabase.auth.getUser();
-    if (result.error || !result.data.user) {
+  if (!user) {
+    try {
+      const result = await supabase.auth.getUser();
+      if (result.error || !result.data.user) {
+        return redirectNoStore(loginRedirectUrl(origin, next));
+      }
+      user = result.data.user;
+    } catch {
       return redirectNoStore(loginRedirectUrl(origin, next));
     }
-    user = result.data.user;
-  } catch {
-    return redirectNoStore(loginRedirectUrl(origin, next));
   }
 
   // Legacy PKCE recovery links may return a code here. Recovery never falls
@@ -113,20 +81,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { data: profile, error: profileError } = await provisionProfile(
-      user,
-      supabase,
-    );
-
-    if (profileError) {
-      return redirectNoStore(
-        loginRedirectUrl(origin, next, "Não foi possível carregar seu perfil."),
-      );
-    }
-
-    const destination = profile.phone
-      ? next
-      : `/perfil?next=${encodeURIComponent(next)}`;
+    const profile = await ensureAuthProfile(supabase, user);
+    const destination = profile.needsPhone
+      ? `/perfil?next=${encodeURIComponent(next)}`
+      : next;
     return redirectNoStore(new URL(destination, origin).toString());
   } catch {
     return redirectNoStore(

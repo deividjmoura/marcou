@@ -467,6 +467,114 @@ try {
     `)
   ).rows;
   check("RPC SECURITY DEFINER fixa search_path", unsafeDefiners.length === 0);
+
+  console.log("\n[provisionamento de perfil e medição sem PII]");
+  const freshUser = uuid();
+  await db.query(`insert into auth.users (id) values ($1)`, [freshUser]);
+  const freshClient = await asRole("authenticated", freshUser);
+
+  const insertedProfile = (
+    await freshClient.query(
+      `insert into public.profiles (id, display_name)
+       values ($1, 'Inicial')
+       on conflict (id) do nothing
+       returning display_name, phone`,
+      [freshUser],
+    )
+  ).rows;
+  check(
+    "primeiro login insere perfil sob RLS com ON CONFLICT DO NOTHING",
+    insertedProfile.length === 1 &&
+      insertedProfile[0].display_name === "Inicial" &&
+      insertedProfile[0].phone === null,
+  );
+
+  const conflictNoop = (
+    await freshClient.query(
+      `insert into public.profiles (id, display_name)
+       values ($1, 'Tentativa de sobrescrita')
+       on conflict (id) do nothing
+       returning display_name, phone`,
+      [freshUser],
+    )
+  ).rows;
+  const preservedAfterConflict = (
+    await freshClient.query(
+      `select display_name, phone from public.profiles where id = $1`,
+      [freshUser],
+    )
+  ).rows[0];
+  check(
+    "conflito concorrente não sobrescreve nome já salvo no perfil",
+    conflictNoop.length === 0 && preservedAfterConflict.display_name === "Inicial",
+  );
+
+  await freshClient.query(
+    `update public.profiles set display_name = null, phone = '47999990000' where id = $1`,
+    [freshUser],
+  );
+  const casUpdated = (
+    await freshClient.query(
+      `update public.profiles
+          set display_name = 'Backfill Provedor'
+        where id = $1 and display_name is null
+        returning display_name, phone`,
+      [freshUser],
+    )
+  ).rows;
+  const casSkipped = (
+    await freshClient.query(
+      `update public.profiles
+          set display_name = 'Outro Nome'
+        where id = $1 and display_name is null
+        returning display_name, phone`,
+      [freshUser],
+    )
+  ).rows;
+  check(
+    "guarda CAS preenche nome ausente apenas uma vez sob RLS",
+    casUpdated.length === 1 &&
+      casUpdated[0].display_name === "Backfill Provedor" &&
+      casUpdated[0].phone === "47999990000" &&
+      casSkipped.length === 0,
+  );
+
+  const iterations = 50;
+  const legacyStart = performance.now();
+  for (let i = 0; i < iterations; i += 1) {
+    await freshClient.query(
+      `select display_name from public.profiles where id = $1`,
+      [freshUser],
+    );
+    await freshClient.query(
+      `insert into public.profiles (id) values ($1)
+       on conflict (id) do update set id = excluded.id`,
+      [freshUser],
+    );
+    await freshClient.query(
+      `select phone from public.profiles where id = $1`,
+      [freshUser],
+    );
+  }
+  const legacyTotalMs = performance.now() - legacyStart;
+
+  const fastStart = performance.now();
+  for (let i = 0; i < iterations; i += 1) {
+    await freshClient.query(
+      `select display_name, phone from public.profiles where id = $1`,
+      [freshUser],
+    );
+  }
+  const fastTotalMs = performance.now() - fastStart;
+
+  console.log(
+    `  info medição PostgreSQL local (${iterations} logins recorrentes, sem PII): sequência anterior 3 queries=${legacyTotalMs.toFixed(2)}ms (${(legacyTotalMs / iterations).toFixed(2)}ms/login) vs caminho rápido 1 SELECT=${fastTotalMs.toFixed(2)}ms (${(fastTotalMs / iterations).toFixed(2)}ms/login)`,
+  );
+  check(
+    "caminho rápido de login recorrente é mais veloz que a sequência anterior em PostgreSQL real",
+    fastTotalMs < legacyTotalMs,
+    `legacy=${legacyTotalMs.toFixed(2)}ms fast=${fastTotalMs.toFixed(2)}ms`,
+  );
 } catch (error) {
   failed += 1;
   console.error("  FAIL erro não tratado no harness de identidade", error);

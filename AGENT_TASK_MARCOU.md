@@ -1,6 +1,45 @@
 # Marcou — estado atual e continuidade
 
-Última atualização: 23/11/2026
+Última atualização: 24/11/2026
+
+## Estabilização de autenticação, velocidade de login e changelog obrigatório — 24/11/2026
+
+- **Diagnóstico real do Google OAuth (`Erro 400: redirect_uri_mismatch`):**
+  confirmado em modo somente-leitura que `NEXT_PUBLIC_SITE_URL=https://marcoou.netlify.app`
+  está configurada em produção, que `googleLoginAction` envia `redirectTo` para
+  `https://marcoou.netlify.app/auth/callback?next=<caminho-seguro>` (callback
+  final da aplicação) e que o Supabase (`peornypgltuueubmsucm`) envia ao Google
+  `client_id=563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com`
+  e `redirect_uri=https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`. O
+  erro 400 ocorre porque esse URI do Supabase ainda precisa ser cadastrado em
+  **Authorized redirect URIs** no Google Cloud Console. Padrões de allowlist no
+  Supabase também foram corrigidos em `docs/IDENTITY.md` com `**` para query
+  strings e `--` para Deploy Previews da Netlify.
+- **Diagnóstico de entregabilidade de e-mail (spam):** confirmado por cabeçalhos
+  RFC (sem leitura/registro de tokens ou segredos) que o projeto usa
+  `smtp.gmail.com` com remetente gratuito `Marcou <appmarcou@gmail.com>` e
+  assunto em inglês (`Confirm your email address`) com corpo HTML em português,
+  causando desalinhamento com links em `netlify.app`/`supabase.co`. Requer ação
+  externa: domínio próprio + provedor SMTP transacional dedicado + SPF/DKIM/DMARC
+  alinhados + revisão de assunto nos templates.
+- **Velocidade de login e segurança de perfil:** `ensureAuthProfile` em
+  `src/server/identity.ts` unifica leitura de `display_name, phone` em 1 único
+  `SELECT` para logins recorrentes (0 escritas e eliminação da segunda consulta
+  `profileNeedsPhone`), protege inserção/backfill contra corrida (`ON CONFLICT DO NOTHING`
+  e guarda CAS), reaproveita o `user` retornado por `exchangeCodeForSession`/`verifyOtp`
+  e paraleliza as consultas pós-login em `/inicio`, `/minha-conta` e `/painel`.
+- **Processo obrigatório de changelog:** criados `CHANGELOG.md`, `CONTRIBUTING.md`
+  e `scripts/changelog-check.mjs` (`npm run check:changelog`), encadeado em
+  `.github/workflows/ci.yml` com `fetch-depth: 0`.
+- **Marcou Social preservado:** requisitos de produto (feed de profissionais,
+  vínculo a serviços reais, Web Share API + alternativas, imagem obrigatória e
+  adequada em novos serviços, OCR/bloqueio de telefone/contato/preço em imagens,
+  moderação/denúncia, perfil único e acesso ao feed pelo espaço Cliente) e a
+  verificação de dependências das Issues `#84`, `#91` e `#93` foram registrados
+  em `docs/ROADMAP-MARCOU-SOCIAL.md` sem duplicar issues nem criar arquitetura
+  paralela.
+- Nenhuma migration foi criada/aplicada em produção e nenhuma configuração remota
+  de Google Cloud, Supabase ou Netlify foi alterada.
 
 ## Descoberta: taxonomia e áreas — Issue #87 — 23/11/2026
 

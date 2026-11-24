@@ -4,9 +4,12 @@ import { NextRequest } from "next/server";
 const mocks = vi.hoisted(() => ({
   verifyOtp: vi.fn(),
   getUser: vi.fn(),
-  maybeSingle: vi.fn(),
-  single: vi.fn(),
+  selectMaybeSingle: vi.fn(),
+  selectSingle: vi.fn(),
   upsert: vi.fn(),
+  upsertMaybeSingle: vi.fn(),
+  update: vi.fn(),
+  updateMaybeSingle: vi.fn(),
 }));
 
 vi.mock("@/lib/env", () => ({ isSupabaseConfigured: () => true }));
@@ -18,13 +21,14 @@ vi.mock("@/lib/supabase/server", () => ({
       getUser: mocks.getUser,
     },
     from: vi.fn(() => ({
-      select: vi.fn((columns: string) => {
-        if (columns === "display_name") {
-          return { eq: vi.fn(() => ({ maybeSingle: mocks.maybeSingle })) };
-        }
-        return { single: mocks.single };
-      }),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: mocks.selectMaybeSingle,
+          single: mocks.selectSingle,
+        })),
+      })),
       upsert: mocks.upsert,
+      update: mocks.update,
     })),
   })),
 }));
@@ -48,7 +52,15 @@ describe("GET /auth/confirm", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", ORIGIN);
     vi.clearAllMocks();
-    mocks.verifyOtp.mockResolvedValue({ error: null });
+    mocks.verifyOtp.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          user_metadata: { display_name: "Ana" },
+        },
+      },
+      error: null,
+    });
     mocks.getUser.mockResolvedValue({
       data: {
         user: {
@@ -58,20 +70,38 @@ describe("GET /auth/confirm", () => {
       },
       error: null,
     });
-    mocks.maybeSingle.mockResolvedValue({
-      data: { display_name: "Ana" },
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
       error: null,
     });
-    mocks.single.mockResolvedValue({
-      data: { phone: "47999991234" },
+    mocks.selectSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
+    mocks.upsertMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: null },
       error: null,
     });
     mocks.upsert.mockImplementation(() => ({
-      select: () => ({ single: mocks.single }),
+      select: () => ({ maybeSingle: mocks.upsertMaybeSingle }),
+    }));
+    mocks.updateMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
+    mocks.update.mockImplementation(() => ({
+      eq: () => ({
+        is: () => ({
+          select: () => ({ maybeSingle: mocks.updateMaybeSingle }),
+        }),
+        eq: () => ({
+          select: () => ({ maybeSingle: mocks.updateMaybeSingle }),
+        }),
+      }),
     }));
   });
 
-  it("confirma o token hash e retorna ao destino permitido", async () => {
+  it("confirma o token hash e retorna ao destino permitido sem regravar perfil existente", async () => {
     const response = await GET(
       confirmationRequest(
         "?token_hash=token-123&type=email&next=https%3A%2F%2Fmarcoou.netlify.app%2Fmeus-agendamentos",
@@ -86,10 +116,16 @@ describe("GET /auth/confirm", () => {
       `${ORIGIN}/meus-agendamentos`,
     );
     expectPrivateNoStore(response);
+    expect(mocks.getUser).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
-  it("encaminha para completar perfil quando o telefone está ausente", async () => {
-    mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
+  it("cria o perfil e encaminha para completar perfil quando o telefone está ausente", async () => {
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: null,
+      error: null,
+    });
 
     const response = await GET(
       confirmationRequest("?token_hash=token-123&type=email&next=%2Fpainel"),
@@ -97,6 +133,10 @@ describe("GET /auth/confirm", () => {
 
     expect(response.headers.get("location")).toBe(
       `${ORIGIN}/perfil?next=%2Fpainel`,
+    );
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      { id: "user-1", display_name: "Ana" },
+      { onConflict: "id", ignoreDuplicates: true },
     );
     expectPrivateNoStore(response);
   });
@@ -141,7 +181,10 @@ describe("GET /auth/confirm", () => {
   });
 
   it("retorna ao login quando o token expirou ou já foi usado", async () => {
-    mocks.verifyOtp.mockResolvedValue({ error: new Error("otp_expired") });
+    mocks.verifyOtp.mockResolvedValue({
+      data: { user: null },
+      error: new Error("otp_expired"),
+    });
 
     const response = await GET(
       confirmationRequest("?token_hash=expired&type=email&next=%2Fpainel"),
@@ -153,8 +196,8 @@ describe("GET /auth/confirm", () => {
   });
 
   it("não sobrescreve o nome já escolhido no perfil", async () => {
-    mocks.maybeSingle.mockResolvedValue({
-      data: { display_name: "Nome escolhido" },
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: { display_name: "Nome escolhido", phone: "47999991234" },
       error: null,
     });
 
@@ -162,9 +205,7 @@ describe("GET /auth/confirm", () => {
       confirmationRequest("?token_hash=token-123&type=email&next=%2Fpainel"),
     );
 
-    expect(mocks.upsert).toHaveBeenCalledWith(
-      { id: "user-1" },
-      { onConflict: "id" },
-    );
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 });
