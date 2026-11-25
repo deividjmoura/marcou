@@ -30,6 +30,31 @@ describe("aggregateBookingServices", () => {
     });
   });
 
+  it("soma o intervalo de cada serviço, inclusive os intermediários", () => {
+    // Regra atual da Issue #21 (sem alteração): o cliente ocupa a soma de
+    // duração + intervalo de todos os serviços do conjunto.
+    const totals = aggregateBookingServices([
+      {
+        name: "Corte",
+        durationMinutes: 30,
+        bufferMinutes: 10,
+        priceCents: 3000,
+        depositCents: 0,
+      },
+      {
+        name: "Barba",
+        durationMinutes: 45,
+        bufferMinutes: 5,
+        priceCents: 2000,
+        depositCents: 0,
+      },
+    ]);
+
+    expect(totals.durationMinutes).toBe(75);
+    expect(totals.bufferMinutes).toBe(15);
+    expect(totals.occupiedMinutes).toBe(90);
+  });
+
   it("mantém o significado de serviço único", () => {
     expect(
       aggregateBookingServices([

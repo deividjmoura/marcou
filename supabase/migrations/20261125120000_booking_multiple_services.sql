@@ -355,6 +355,10 @@ begin
     raise exception 'customer_name_required' using errcode = 'P0001';
   end if;
 
+  -- Regra atual, mantida sem alteração: cada serviço contribui com
+  -- duration_minutes + buffer_minutes, inclusive os intervalos intermediários.
+  -- A eventual mudança para intervalo apenas entre serviços depende de decisão
+  -- do responsável e não faz parte desta migration.
   v_occupied_until := p_starts_at
     + make_interval(mins => (v_totals ->> 'occupiedMinutes')::integer);
 

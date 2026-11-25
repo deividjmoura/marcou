@@ -54,6 +54,16 @@ nova com `uuid[]`. A migração `20261125120000_booking_multiple_services.sql` �
 aditiva e espelha reservas antigas na tabela de vínculos. Handoff:
 `docs/handoffs/21-booking.md`.
 
+### Regra de tempo ocupado (documentação, sem mudança de comportamento)
+
+Hoje o tempo ocupado é `Σ (duração + intervalo) de cada serviço`, inclusive o
+intervalo dos serviços intermediários. Exemplo testado em `npm test` e
+`npm run test:db`: dois serviços de 30 min + 10 min e 45 min + 5 min somam
+75 min de atendimento, 15 min de intervalo e **90 min ocupados** (no banco,
+outro par com 30+15 e 45+20 resulta em 110 min ocupados). Uma eventual regra
+de aplicar intervalo somente entre serviços aguarda decisão do responsável;
+nada foi alterado nesta entrega.
+
 A constraint `bookings_no_overlapping_active_intervals` (GiST, por prestador,
 intervalo semiaberto `[starts_at, occupied_until)`) é a garantia final. Violação
 é convertida em `slot_unavailable`. A chave de idempotência (`p_idempotency_key`)

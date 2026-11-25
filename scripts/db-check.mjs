@@ -55,8 +55,6 @@ async function hasPrivilege(role, table, privilege) {
 }
 
 const databaseDir = path.join(os.tmpdir(), "marcou-pg-data");
-await rm(databaseDir, { recursive: true, force: true });
-
 const postgres = new EmbeddedPostgres({
   databaseDir,
   user: "postgres",
@@ -66,17 +64,23 @@ const postgres = new EmbeddedPostgres({
   autoRehydrateSymlinks: true,
 });
 
-await postgres.initialise();
-await postgres.start();
+let admin;
+let db;
+const roleClients = new Set();
 
-const admin = new Client({
-  host: "127.0.0.1",
-  port: PORT,
-  user: "postgres",
-  password: PASSWORD,
-  database: "postgres",
-});
-await admin.connect();
+try {
+  await rm(databaseDir, { recursive: true, force: true });
+  await postgres.initialise();
+  await postgres.start();
+
+  admin = new Client({
+    host: "127.0.0.1",
+    port: PORT,
+    user: "postgres",
+    password: PASSWORD,
+    database: "postgres",
+  });
+  await admin.connect();
 
 await admin.query(`drop database if exists ${DATABASE}`);
 await admin.query(`create database ${DATABASE}`);
@@ -93,7 +97,7 @@ for (const role of ["anon", "authenticated", "service_role"]) {
   `);
 }
 
-const db = new Client({
+db = new Client({
   host: "127.0.0.1",
   port: PORT,
   user: "postgres",
@@ -140,6 +144,7 @@ function clientFor(role) {
 async function asRole(role, uid) {
   const client = clientFor(role);
   await client.connect();
+  roleClients.add(client);
   if (uid) {
     await client.query("select set_config('request.jwt.claim.sub', $1, false)", [
       uid,
@@ -750,6 +755,324 @@ console.log("\n[múltiplos serviços]");
       .catch(() => false);
     check("cliente não insere diretamente em booking_services", directInsert === false);
   }
+}
+
+console.log("\n[resolução de overload em notação nomeada (PostgREST)]");
+{
+  const anon = await asRole("anon");
+  const dayWindow = ["2026-12-04T00:00:00Z", "2026-12-05T00:00:00Z"];
+
+  // O PostgREST resolve sobrecargas por nome de argumento, não só por tipo.
+  const namedScheduleSingle = (
+    await anon.query(
+      `select public.get_provider_schedule(
+         p_provider_slug => 'prov-a',
+         p_service_id => $1::uuid,
+         p_date => '2026-12-04'::date,
+         p_from => $2::timestamptz,
+         p_to => $3::timestamptz
+       ) as schedule`,
+      [serviceA1, ...dayWindow],
+    )
+  ).rows[0].schedule;
+  const namedScheduleMany = (
+    await anon.query(
+      `select public.get_provider_schedule(
+         p_provider_slug => 'prov-a',
+         p_service_ids => $1::uuid[],
+         p_date => '2026-12-04'::date,
+         p_from => $2::timestamptz,
+         p_to => $3::timestamptz
+       ) as schedule`,
+      [[serviceA1, serviceA2], ...dayWindow],
+    )
+  ).rows[0].schedule;
+
+  check(
+    " p_service_id nomeado cai na assinatura de um serviço",
+    namedScheduleSingle?.timing?.durationMinutes === 60 &&
+      namedScheduleSingle?.services?.length === 1,
+    JSON.stringify(namedScheduleSingle?.timing),
+  );
+  check(
+    " p_service_ids nomeado cai na assinatura agregada",
+    namedScheduleMany?.timing?.durationMinutes === 90 &&
+      namedScheduleMany?.services?.length === 2,
+    JSON.stringify(namedScheduleMany?.timing),
+  );
+  await anon.end();
+
+  const namedB2 = (
+    await db.query(
+      `select id from public.services where provider_id = $1 and name = 'Serviço B 2'`,
+      [providerB],
+    )
+  ).rows[0].id;
+
+  const namedCustomerId = uuid();
+  await db.query(`insert into auth.users (id) values ($1)`, [namedCustomerId]);
+  const namedCustomer = await asRole("authenticated", namedCustomerId);
+
+  // Sábado (12/05) livre no prestador B para as duas criações nomeadas.
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     values ($1, 6, '09:00', '12:00')`,
+    [providerB],
+  );
+
+  const namedLegacy = (
+    await namedCustomer.query(
+      `select * from public.create_booking(
+         p_provider_slug => $1,
+         p_service_id => $2::uuid,
+         p_starts_at => $3::timestamptz,
+         p_customer_name => $4,
+         p_customer_phone => '11999999999',
+         p_idempotency_key => $5
+       )`,
+      ["prov-b", serviceB1, "2026-12-05T12:00:00.000Z", "Nomeado um", `named-legacy-${uuid()}`],
+    )
+  ).rows[0];
+  const namedLegacyRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [namedLegacy.id],
+    )
+  ).rows[0].total;
+  check(
+    " wrapper legado nomeado responde como antes (um serviço)",
+    namedLegacy.status === "pending_payment" &&
+      namedLegacy.service_id === serviceB1 &&
+      namedLegacy.duration_minutes_snapshot === 60 &&
+      namedLegacy.price_cents_snapshot === 5000 &&
+      namedLegacy.buffer_minutes_snapshot === 0 &&
+      namedLegacyRows === 1,
+    JSON.stringify({ status: namedLegacy.status, rows: namedLegacyRows }),
+  );
+
+  const namedArray = (
+    await namedCustomer.query(
+      `select * from public.create_booking(
+         p_provider_slug => $1,
+         p_service_ids => $2::uuid[],
+         p_starts_at => $3::timestamptz,
+         p_customer_name => $4,
+         p_customer_phone => '11999999999',
+         p_idempotency_key => $5
+       )`,
+      ["prov-b", [serviceB1, namedB2], "2026-12-05T13:00:00.000Z", "Nomeado dois", `named-array-${uuid()}`],
+    )
+  ).rows[0];
+  const namedArrayRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [namedArray.id],
+    )
+  ).rows[0].total;
+  check(
+    " assinatura array nomeada cria reserva combinada",
+    namedArray.status === "pending_payment" &&
+      namedArray.duration_minutes_snapshot === 90 &&
+      namedArray.price_cents_snapshot === 8000 &&
+      iso(namedArray.occupied_until) === "2026-12-05T14:30:00.000Z" &&
+      namedArrayRows === 2,
+    JSON.stringify({ occupied: iso(namedArray.occupied_until), rows: namedArrayRows }),
+  );
+
+  const overloads = (
+    await db.query(`
+      select p.proname as name, pg_get_function_identity_arguments(p.oid) as args
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname in ('create_booking', 'get_provider_schedule')
+         and p.prosecdef
+    `)
+  ).rows;
+  const hasBothOverloads = ["create_booking", "get_provider_schedule"].every((name) => {
+    const args = overloads.filter((row) => row.name === name).map((row) => row.args);
+    return (
+      args.some((item) => item.includes("uuid[]")) &&
+      args.some((item) => item.includes("uuid") && !item.includes("uuid[]"))
+    );
+  });
+  check(
+    "quatro assinaturas (legada + array) continuam publicadas",
+    overloads.length === 4 && hasBothOverloads,
+    JSON.stringify(overloads),
+  );
+}
+
+console.log("\n[casos de borda e truncamento]");
+{
+  const anon = await asRole("anon");
+  const dayWindow = ["2026-12-04T00:00:00Z", "2026-12-05T00:00:00Z"];
+  const slot = "2026-12-04T13:45:00.000Z";
+
+  const scheduleIds = (ids) =>
+    anon.query(
+      `select public.get_provider_schedule(
+         p_provider_slug => 'prov-a',
+         p_service_ids => $1::uuid[],
+         p_date => '2026-12-04'::date,
+         p_from => $2::timestamptz,
+         p_to => $3::timestamptz
+       ) as schedule`,
+      [ids, ...dayWindow],
+    );
+
+  check(" array vazio não produz agenda", (await scheduleIds([])).rows[0].schedule === null);
+  check(
+    " array com NULL não produz agenda",
+    (await scheduleIds([serviceA1, null])).rows[0].schedule === null,
+  );
+  check(
+    " array com duplicatas não produz agenda",
+    (await scheduleIds([serviceA1, serviceA1])).rows[0].schedule === null,
+  );
+
+  await db.query(
+    `insert into public.services (provider_id, name, duration_minutes, price_cents)
+     select $1, 'Extra ' || i, 30, 1000 from generate_series(1, 20) as i`,
+    [providerA],
+  );
+  const manyIds = (
+    await db.query(
+      `select id from public.services
+        where provider_id = $1 and is_active
+        order by created_at desc limit 21`,
+      [providerA],
+    )
+  ).rows.map((row) => row.id);
+  check(" 21 serviços distintos não produzem agenda", (await scheduleIds(manyIds)).rows[0].schedule === null);
+  await expectError(
+    " 21 serviços são recusados na criação",
+    () => createBookingMulti(customerDClient, "prov-a", manyIds, slot, `many-${uuid()}`),
+    "service_not_available",
+  );
+  await expectError(
+    " array vazio é recusado na criação",
+    () => createBookingMulti(customerDClient, "prov-a", [], slot, `empty-${uuid()}`),
+    "service_not_available",
+  );
+  await expectError(
+    " array com NULL é recusado na criação",
+    () => createBookingMulti(customerDClient, "prov-a", [serviceA1, null], slot, `null-${uuid()}`),
+    "service_not_available",
+  );
+
+  const inactiveId = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, is_active)
+       values ($1, 'Inativo borda', 30, 1000, false) returning id`,
+      [providerA],
+    )
+  ).rows[0].id;
+  check(
+    " serviço inativo não produz agenda",
+    (await scheduleIds([serviceA1, inactiveId])).rows[0].schedule === null,
+  );
+  await expectError(
+    " serviço inativo é recusado na criação",
+    () =>
+      createBookingMulti(customerDClient, "prov-a", [serviceA1, inactiveId], slot, `inactive-edge-${uuid()}`),
+    "service_not_available",
+  );
+  check(
+    " mistura de negócios não produz agenda",
+    (await scheduleIds([serviceA1, serviceB1])).rows[0].schedule === null,
+  );
+  await expectError(
+    " mistura de negócios é recusada na criação",
+    () =>
+      createBookingMulti(customerDClient, "prov-a", [serviceA1, serviceB1], slot, `mixed-edge-${uuid()}`),
+    "service_not_available",
+  );
+  await anon.end();
+
+  const firstLong = "A".repeat(120);
+  const secondLong = "B".repeat(120);
+  const longA = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents)
+       values ($1, $2, 30, 1000) returning id`,
+      [providerB, firstLong],
+    )
+  ).rows[0].id;
+  const longB = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents)
+       values ($1, $2, 30, 1000) returning id`,
+      [providerB, secondLong],
+    )
+  ).rows[0].id;
+  const longBooking = await createBookingMulti(
+    customerDClient,
+    "prov-b",
+    [longA, longB],
+    "2026-12-04T13:45:00.000Z",
+    `long-${uuid()}`,
+    "Nome longo",
+  );
+  check(
+    " nome combinado é truncado em 180 caracteres",
+    longBooking.service_name_snapshot.length === 180 &&
+      longBooking.service_name_snapshot.startsWith(`${firstLong} + `) &&
+      longBooking.service_name_snapshot.includes("B".repeat(40)),
+    `tamanho=${longBooking.service_name_snapshot.length}`,
+  );
+  const longNotifications = (
+    await db.query(
+      `select title, body from public.notifications
+        where booking_id = $1 order by recipient_id`,
+      [longBooking.id],
+    )
+  ).rows;
+  check(
+    " notificação continua legível após o truncamento",
+    longNotifications.length === 2 &&
+      longNotifications.every(
+        (row) =>
+          row.body.includes("A".repeat(40)) &&
+          row.body.includes("B".repeat(40)) &&
+          row.body.length > 150,
+      ),
+    `notificações=${longNotifications.length}`,
+  );
+
+  // Regra atual (sem mudança de comportamento): cada serviço soma duração +
+  // intervalo, inclusive os intervalos intermediários do conjunto.
+  const timedA = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo A', 30, 2000, 15) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const timedB = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo B', 45, 3000, 20) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const timed = (
+    await db.query(
+      `select public.booking_service_totals($1::uuid, $2::uuid[]) as totals`,
+      [providerB, [timedA, timedB]],
+    )
+  ).rows[0].totals;
+  check(
+    " tempo ocupado soma duração + intervalo dos dois serviços (75 + 35 = 110)",
+    timed.durationMinutes === 75 &&
+      timed.bufferMinutes === 35 &&
+      timed.occupiedMinutes === 110 &&
+      timed.priceCents === 5000,
+    JSON.stringify(timed),
+  );
 }
 
 console.log("\n[idempotência]");
@@ -1423,13 +1746,17 @@ console.log("\n[segurança e RLS]");
   );
 }
 
-await ownerAClient.end();
-await ownerBClient.end();
-await customerCClient.end();
-await customerDClient.end();
-await db.end();
-await admin.end();
-await postgres.stop();
+} catch (error) {
+  failed += 1;
+  console.error("  FAIL erro não tratado no harness de booking", error);
+} finally {
+  // Sempre desliga o cluster, inclusive em falha: a porta 55432 precisa ficar
+  // livre para a próxima execução de `npm run test:db`.
+  await Promise.allSettled([...roleClients].map((client) => client.end()));
+  if (db) await db.end().catch(() => undefined);
+  if (admin) await admin.end().catch(() => undefined);
+  await postgres.stop().catch(() => undefined);
+}
 
 console.log(`\nresultado: ${passed} passaram, ${failed} falharam`);
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;
