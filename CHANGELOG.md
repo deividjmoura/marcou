@@ -66,6 +66,10 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Corrigido
 
+- Página pública (`#22`): reserva criada com sucesso voltava a mostrar "Não foi
+  possível concluir a reserva" porque o `redirect()` do Next.js (que lança uma
+  exceção de controle) estava dentro do `try/catch` de `bookSlotAction`. O
+  redirect agora fica fora do bloco; teste cobre o caso (supera a PR `#40`).
 - Padrões de `Redirect URLs` documentados em `docs/IDENTITY.md` corrigidos para
   contemplar query strings (`**`) no glob matcher do Supabase Auth e o formato
   real de Deploy Preview da Netlify (`--marcoou.netlify.app`).

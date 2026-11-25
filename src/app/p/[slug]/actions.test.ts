@@ -1,7 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAvailableSlots } from "@/server/bookings";
+import { redirect } from "next/navigation";
+import { createBooking, getAvailableSlots, getCurrentUser } from "@/server/bookings";
 import { isSupabaseConfigured } from "@/lib/env";
-import { fetchSlotsAction } from "./actions";
+import { bookSlotAction, fetchSlotsAction } from "./actions";
+
+// Como no Next.js, redirect() interrompe a execução lançando uma exceção.
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw Object.assign(new Error("NEXT_REDIRECT"), { digest: `NEXT_REDIRECT;replace;${url};307;` });
+  }),
+}));
 
 vi.mock("@/lib/env", () => ({ isSupabaseConfigured: vi.fn(() => true) }));
 
@@ -13,6 +21,9 @@ vi.mock("@/server/bookings", () => ({
 }));
 
 const mockedGetAvailableSlots = vi.mocked(getAvailableSlots);
+const mockedCreateBooking = vi.mocked(createBooking);
+const mockedGetCurrentUser = vi.mocked(getCurrentUser);
+const mockedRedirect = vi.mocked(redirect);
 const mockedIsSupabaseConfigured = vi.mocked(isSupabaseConfigured);
 
 const serviceA = "123e4567-e89b-12d3-a456-426614174000";
@@ -153,5 +164,42 @@ describe("fetchSlotsAction", () => {
       totals: null,
     });
     expect(mockedGetAvailableSlots).not.toHaveBeenCalled();
+  });
+});
+
+describe("bookSlotAction", () => {
+  const form = () => {
+    const data = new FormData();
+    data.set("slug", "studio-ana");
+    data.set("date", "2026-12-01");
+    data.set("startsAt", "2026-12-01T12:00:00.000Z");
+    data.append("serviceIds", serviceA);
+    data.set("customerName", "Cliente Teste");
+    data.set("customerPhone", "11999999999");
+    return data;
+  };
+
+  beforeEach(() => {
+    mockedCreateBooking.mockReset();
+    mockedRedirect.mockClear();
+    mockedIsSupabaseConfigured.mockReturnValue(true);
+    mockedGetCurrentUser.mockResolvedValue({ id: "user-1" } as never);
+  });
+
+  it("reserva criada redireciona para a reserva em vez de mostrar erro (#22)", async () => {
+    mockedCreateBooking.mockResolvedValue({ id: "booking-1" } as never);
+
+    await expect(bookSlotAction({}, form())).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(mockedRedirect).toHaveBeenCalledWith("/reserva/booking-1");
+  });
+
+  it("falha ao criar a reserva devolve mensagem e não redireciona", async () => {
+    mockedCreateBooking.mockRejectedValue(new Error("db down"));
+
+    const result = await bookSlotAction({}, form());
+
+    expect(result.error).toBe("Não foi possível concluir a reserva. Tente novamente.");
+    expect(mockedRedirect).not.toHaveBeenCalled();
   });
 });

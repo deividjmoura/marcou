@@ -150,6 +150,7 @@ export async function bookSlotAction(
     };
   }
 
+  let bookingId: string;
   try {
     const booking = await createBooking({
       slug: parsed.data.slug,
@@ -158,11 +159,15 @@ export async function bookSlotAction(
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone ?? "",
     });
-    redirect(`/reserva/${booking.id}`);
+    bookingId = booking.id;
   } catch (error) {
     if (error instanceof BookingOperationError) {
       return { error: error.message };
     }
     return { error: "Não foi possível concluir a reserva. Tente novamente." };
   }
+
+  // redirect() lança a exceção de controle do Next.js: fora do try, para que
+  // uma reserva criada não apareça como falha (Issue #22).
+  redirect(`/reserva/${bookingId}`);
 }
