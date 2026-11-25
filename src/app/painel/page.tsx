@@ -27,6 +27,7 @@ import {
   listServiceCategories,
 } from "@/server/discovery";
 import { getPreferredMode } from "@/server/identity";
+import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +146,14 @@ export default async function PainelPage() {
       </header>
 
       <AccountModeSwitcher activeMode={activeMode} hasProvider />
+
+      {isCalendarFeatureEnabled() ? (
+        <section className="card">
+          <h2>Integrações</h2>
+          <p className="muted">Sincronize os agendamentos confirmados com seu Google Calendar.</p>
+          <Link className="btn btn-ghost" href="/painel/integracoes/calendario">Google Calendar</Link>
+        </section>
+      ) : null}
 
       <ProviderPanelMenu
         provider={provider}
