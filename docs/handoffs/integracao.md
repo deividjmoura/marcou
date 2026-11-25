@@ -24,13 +24,22 @@ não foi editado nesta rodada.
 | B4: dono via ações do cliente em `/reserva/[id]` | mesma PR | corrigido, com testes |
 | PR #32 sem a deleção do doc de continuidade e sem `docs/MOTION.md` | patch de 2 commits comentado na PR #32 | validado localmente; aguarda aplicação pelo responsável |
 
-**B3 (`src/lib/money.ts`).** `parseBrlToCents` aceita ponto como milhar e
-vírgula como decimal (`1.234,56`, `1234,56`, `50,5`), inteiros e o formato
-`1234.56`, que o próprio formulário de edição gera com `toFixed(2)`. O cálculo
-usa só inteiros, sem arredondamento de float. Entradas inválidas, negativas,
-vazias ou ambíguas retornam erro claro em pt-BR. **Mudança de comportamento:**
-campo vazio antes virava `0` silenciosamente; agora é rejeitado. Os inputs já
-são `required`, então isso só afeta requisições forjadas.
+**B3 (`src/lib/money.ts`).** A regra completa está documentada no próprio
+arquivo:
+- **Vírgula** é sempre decimal (1–2 casas).
+- **Ponto com vírgula** é milhar (`1.234,56`).
+- **Ponto sem vírgula:** grupos de exatamente 3 dígitos são milhar (`1.234`);
+  1–2 dígitos depois de um único ponto são decimal (`12.5`, e o `1234.56` que
+  o formulário de edição gera com `toFixed(2)`).
+- **Ambiguidade é recusada com mensagem clara**, sem adivinhar: grupo de milhar
+  iniciado em zero (`0.500`), separadores trocados (`1,234.56`), grupos de
+  tamanho errado e mais de 2 casas.
+- O cálculo usa só inteiros.
+
+**Preço** é obrigatório: vazio é recusado. **Sinal** é opcional: vazio ou
+ausente vira 0 ("sem sinal"), como já permitiam o schema (`min(0)`) e o banco
+(`deposit_cents default 0, check >= 0`). Por isso o input do sinal deixou de
+ser `required` e ganhou um placeholder explicativo.
 
 **B4 (`src/app/reserva/[id]/reservation-role.ts`).** Os rótulos e ações por
 papel ficam num módulo puro. O cliente mantém exatamente o comportamento
@@ -38,7 +47,11 @@ anterior. O dono vê as mesmas ações do painel: "Marcar comprovante recebido",
 "Confirmar pagamento" e "Cancelar reserva do cliente". As duas actions antigas
 viraram `reservationTransitionAction`, com lista fechada de eventos. A
 autorização continua integralmente em `transition_booking`: a interface não
-concede nem retira permissão.
+concede nem retira permissão. **O papel nunca vem do formulário:** a action lê
+apenas `bookingId` e `event`. O papel é derivado no servidor, em `page.tsx`,
+comparando `booking.customer_id`/`provider.owner_id` com o usuário da sessão,
+e no componente serve só para escolher rótulos. Um teste envia `role=owner`
+forjado e confirma que só `{ bookingId, event }` chega à RPC.
 
 ### Não feito (fora do escopo ou impedido)
 
@@ -54,22 +67,65 @@ concede nem retira permissão.
 
 ### Validação local desta branch (resultados reais)
 
-`npm run lint` (0 erros; 3 avisos `<img>` já existentes na `main`),
-`npm run typecheck`, `npm test` (19 arquivos, 199 testes; antes eram 117),
-`npm run test:db` (69/0, social 47/0, identidade 28/0, descoberta 40/0),
-`npm run audit` (0 falhas) e `npm run build`: todos aprovados em 25/11/2026.
+Rodada de 25/11/2026, depois dos ajustes de revisão: ver a descrição da PR #124.
 
 ### Ordem de merge recomendada (para aprovação do responsável)
 
 1. **#122** (auth/CHANGELOG): mergeable, CI verde, 1 commit atrás da `main`.
 2. **#124** (esta PR, B3/B4): sem conflito com a #122.
-3. **#32 corrigida** (patch na PR #32): conflita com a #122 em
-   `.github/workflows/ci.yml`. Se a #122 entrar antes, ao aplicar o patch
-   mantenha os steps novos da #122 e acrescente só concurrency, timeout e
+3. **#32 corrigida** (patch comentado na PR #32). **Não aplicar agora:** ela
+   depende de a #122 ser mesclada primeiro, e o conflito está em
+   `.github/workflows/ci.yml`. Depois do merge da #122, regenerar o patch
+   mantendo os steps novos da #122 e acrescentando só concurrency, timeout e
    nomes dos steps.
 4. **#40** (#22): coordenar com o agente da Issue #21, porque toca em
    `src/app/p/[slug]/actions.ts`.
 5. Rebasear antes de revisar: #38, #39, #68 (ajustar avisos por papel), #67.
-6. Candidatas a fechamento: #41 (provavelmente superada pela #117), #46
-   (superada pela #60), #2 (base órfã da PR #1, já fechada) e #32 original
-   depois de aberta a versão corrigida. #69 e #71: comparar com #66/#122.
+6. #69 e #71: comparar com #66/#122.
+
+### Triagem de PRs candidatas a fechamento (evidência; nada foi fechado)
+
+- **#41, superada pela #117.** Revoga e concede EXECUTE para as mesmas 10
+  funções (`create_booking`, `transition_booking`, `get_provider_schedule`,
+  `expire_stale_bookings`, `create_booking_reminders`, `is_interval_available`,
+  `notification_payloads`, `notify_on_booking_event`,
+  `mark_notification_read`, `mark_all_notifications_read`), que a migration
+  `20261123133000_harden_security_definer_grants.sql` já cobre, com checagem
+  genérica de `PUBLIC`. Além disso, a migration da #41
+  (`202611160001_harden_…`) usa a mesma versão de
+  `202611160001_provider_description.sql`, já na `main`. A descrição da #117
+  diz "Supersedes #41".
+  *Frase para o responsável:* "A #41 pode ser fechada como substituída pela
+  #117, que aplica o mesmo hardening com versão de migration única e cobertura
+  para funções futuras."
+- **#46, superada pela #60.** Um commit (`2372687`) que só acrescenta uma seção
+  ao `AGENT_TASK_MARCOU.md` sobre uma rodada anterior de limpeza no mesmo dia.
+  A `main` já tem o registro consolidado da #60 (`dbc9f2a`, seção "Limpeza de
+  branches já mergeadas — 16/11/2026"). O texto da #46 também ficou
+  incorreto: diz que `design/identidade-visual` foi apagada, mas ela existe de
+  novo e é a head da #67.
+  *Frase para o responsável:* "A #46 pode ser fechada: o registro da limpeza
+  está na main pela #60, e o texto da #46 contém informação já desatualizada."
+- **#2, base órfã.** Aponta para `feat/pagina-publica-agendamento`, head da
+  PR #1, fechada sem merge em 16/11. São 3 commits sobre
+  `src/app/preview/agendamento/` (rota de prévia que nunca existiu na `main`)
+  mais `AGENT_TASK_MARCOU.md`, com merge-base `5d07f16` (15/11), 142 commits
+  atrás. O fluxo equivalente está em `src/app/p/[slug]/booking-widget.tsx`
+  (#49/#51).
+  *Frase para o responsável:* "A #2 pode ser fechada: a base é a branch de uma
+  PR já fechada e o calendário mobile foi entregue no fluxo público pelas
+  #49/#51; se houver algo visual a aproveitar, vale uma PR nova sobre a main."
+- **#32 original:** fechar depois de abrir a versão corrigida (item 3 acima).
+
+### Revisão cruzada da PR #123 (somente leitura)
+
+Comentários deixados na própria #123. Resumo: nenhum bloqueante, quatro
+itens importantes e algumas sugestões. A verificação de privilégios foi feita
+num Postgres embutido local, emulando os default privileges do Supabase, sem
+nenhuma ação remota.
+
+Lacuna pré-existente, fora do escopo da #123 e desta PR: `bookings` e
+`booking_events` mantêm os defaults do Supabase (INSERT/UPDATE/DELETE/TRUNCATE
+para `anon`/`authenticated`). A RLS barra a escrita pela API, mas TRUNCATE
+ignora RLS. Não é explorável via PostgREST/GraphQL, mas vale uma issue de
+hardening própria, com uma migration de `revoke`.
