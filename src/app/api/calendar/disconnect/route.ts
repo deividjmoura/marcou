@@ -4,10 +4,9 @@ import { calendarAdminClient } from "@/server/calendar/admin";
 import { decryptCalendarToken, isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { googleCalendarRequest, refreshGoogleAccessToken, revokeGoogleToken } from "@/server/calendar/google";
 export const runtime = "nodejs";
-export async function POST() {
+export async function POST(request: Request) {
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const requestOrigin = (await import("next/headers")).headers().then((h) => h.get("origin"));
-  const suppliedOrigin = await requestOrigin;
+  const suppliedOrigin = request.headers.get("origin");
   if (suppliedOrigin && suppliedOrigin !== new URL(origin).origin) return NextResponse.json({ error: "origin_forbidden" }, { status: 403 });
   if (!isCalendarFeatureEnabled()) return NextResponse.redirect(new URL("/painel?calendar=disabled", origin));
   const user = await requireUser("/painel"), provider = await getOwnedProvider(user.id);
