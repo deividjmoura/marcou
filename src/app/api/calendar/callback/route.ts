@@ -11,8 +11,9 @@ export async function GET(request: Request) {
   if (url.searchParams.has("error")) return NextResponse.redirect(new URL("/painel?calendar=denied", origin));
   const state = url.searchParams.get("state"), code = url.searchParams.get("code");
   if (!state || !code) return NextResponse.redirect(new URL("/painel?calendar=invalid-callback", origin));
+  const user = await requireUser("/painel");
   try {
-    const user = await requireUser("/painel"), admin = calendarAdminClient();
+    const admin = calendarAdminClient();
     const { data: connection, error } = await admin.from("provider_calendar_connections")
       .select("provider_id,oauth_state_expires_at").eq("oauth_state_hash", hashCalendarState(state)).maybeSingle();
     if (error || !connection?.oauth_state_expires_at || Date.parse(connection.oauth_state_expires_at) < Date.now()) {
