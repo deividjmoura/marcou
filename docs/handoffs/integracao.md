@@ -58,3 +58,18 @@ concede nem retira permissão.
 `npm run typecheck`, `npm test` (19 arquivos, 199 testes; antes eram 117),
 `npm run test:db` (69/0, social 47/0, identidade 28/0, descoberta 40/0),
 `npm run audit` (0 falhas) e `npm run build`: todos aprovados em 25/11/2026.
+
+### Ordem de merge recomendada (para aprovação do responsável)
+
+1. **#122** (auth/CHANGELOG): mergeable, CI verde, 1 commit atrás da `main`.
+2. **#124** (esta PR, B3/B4): sem conflito com a #122.
+3. **#32 corrigida** (patch na PR #32): conflita com a #122 em
+   `.github/workflows/ci.yml`. Se a #122 entrar antes, ao aplicar o patch
+   mantenha os steps novos da #122 e acrescente só concurrency, timeout e
+   nomes dos steps.
+4. **#40** (#22): coordenar com o agente da Issue #21, porque toca em
+   `src/app/p/[slug]/actions.ts`.
+5. Rebasear antes de revisar: #38, #39, #68 (ajustar avisos por papel), #67.
+6. Candidatas a fechamento: #41 (provavelmente superada pela #117), #46
+   (superada pela #60), #2 (base órfã da PR #1, já fechada) e #32 original
+   depois de aberta a versão corrigida. #69 e #71: comparar com #66/#122.
