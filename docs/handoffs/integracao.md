@@ -141,12 +141,8 @@ itens importantes e algumas sugestões. A verificação de privilégios foi feit
 num Postgres embutido local, emulando os default privileges do Supabase, sem
 nenhuma ação remota.
 
-Lacuna pré-existente, fora do escopo da #123 e desta PR: `bookings` e
-`booking_events` mantêm os defaults do Supabase (INSERT/UPDATE/DELETE/TRUNCATE
-para `anon`/`authenticated`). A RLS barra a escrita pela API, mas TRUNCATE
-ignora RLS. Não é explorável via PostgREST/GraphQL, mas vale uma issue de
-hardening própria, com uma migration de `revoke`. O diagnóstico completo
-está em [`privilegios-tabelas.md`](privilegios-tabelas.md): matriz de todas as
-tabelas de `public`, escritas legítimas, rascunho de migration validado
-localmente, desenho do `scripts/privileges-check.mjs` e passo de validação em
-dev. A lacuna atinge 8 tabelas, não só 2.
+Lacuna pré-existente, fora do escopo da #123 e desta PR: privilégios padrão do
+Supabase (inclusive TRUNCATE, que ignora RLS) para `anon`/`authenticated` em 8
+tabelas de `public`. O diagnóstico, o rascunho de migration validado localmente
+e o plano de teste estão na issue **#125** (`[SECURITY]`), não nesta PR. O
+hardening deve ir numa PR própria, a partir da `main`.
