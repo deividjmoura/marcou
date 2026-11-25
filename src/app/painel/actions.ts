@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isSupabaseConfigured } from "@/lib/env";
-import { parseBrlToCents } from "@/lib/money";
+import { parseBrlToCents, parseOptionalBrlToCents } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import {
   providerInputSchema,
@@ -65,7 +65,7 @@ async function discoveryEnabledForProvider(providerId: string): Promise<boolean>
 }
 
 function invalidMoneyMessage(field: string): string {
-  return `Informe ${field} em reais, por exemplo 50, 50,50 ou 1.234,56.`;
+  return `Informe ${field} em reais, por exemplo 50, 50,50 ou 1.234,56. Use vírgula para centavos.`;
 }
 
 function firstIssue(error: { issues?: Array<{ message?: string }> }): string {
@@ -138,7 +138,9 @@ export async function saveServiceAction(
   if (Number.isNaN(priceCents)) {
     return { error: invalidMoneyMessage("o preço") };
   }
-  const depositCents = parseBrlToCents(formData.get("deposit"));
+  // Sinal é opcional: vazio significa "sem sinal" (0), permitido pelo schema
+  // (min 0) e pelo banco (deposit_cents default 0, check >= 0).
+  const depositCents = parseOptionalBrlToCents(formData.get("deposit"));
   if (Number.isNaN(depositCents)) {
     return { error: invalidMoneyMessage("o sinal") };
   }

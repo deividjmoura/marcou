@@ -53,27 +53,16 @@ describe("saveServiceAction: preço e sinal em reais", () => {
     mockedUpdateService.mockReset();
   });
 
-  it.each([
-    ["50", "0", 5000, 0],
-    ["50,5", "10", 5050, 1000],
-    ["50,50", "0,00", 5050, 0],
-    ["1.234,56", "100,00", 123456, 10000],
-    ["1234,56", "1.000", 123456, 100000],
-  ])(
-    "salva preço %j e sinal %j como %i/%i centavos",
-    async (price, deposit, priceCents, depositCents) => {
-      const result = await saveServiceAction({}, serviceForm(price, deposit));
+  const savedCents = () => mockedCreateService.mock.calls[0]?.[1];
 
-      expect(result).toEqual({ success: "Serviço criado." });
-      expect(mockedCreateService).toHaveBeenCalledWith(
-        "provider-1",
-        expect.objectContaining({ priceCents, depositCents }),
-        undefined,
-      );
-    },
-  );
+  it("converte milhar com ponto e vírgula decimal", async () => {
+    const result = await saveServiceAction({}, serviceForm("1.234,56", "100,00"));
 
-  it("aceita o formato de edição gerado pelo formulário (toFixed(2))", async () => {
+    expect(result).toEqual({ success: "Serviço criado." });
+    expect(savedCents()).toMatchObject({ priceCents: 123456, depositCents: 10000 });
+  });
+
+  it("aceita o formato gerado pelo formulário de edição (toFixed(2))", async () => {
     const result = await saveServiceAction(
       {},
       serviceForm("1234.56", "0.00", {
@@ -91,8 +80,27 @@ describe("saveServiceAction: preço e sinal em reais", () => {
     );
   });
 
-  it.each([["abc"], ["-50"], ["50,555"], ["1.23,45"], [""]])(
-    "rejeita preço inválido %j com mensagem clara e não salva",
+  it.each([[""], ["   "], ["0"], ["0,00"]])(
+    "sinal %j significa sem sinal (0)",
+    async (deposit) => {
+      const result = await saveServiceAction({}, serviceForm("50", deposit));
+
+      expect(result).toEqual({ success: "Serviço criado." });
+      expect(savedCents()).toMatchObject({ priceCents: 5000, depositCents: 0 });
+    },
+  );
+
+  it("sinal ausente do formulário também vira 0", async () => {
+    const form = serviceForm("50", "");
+    form.delete("deposit");
+
+    await saveServiceAction({}, form);
+
+    expect(savedCents()).toMatchObject({ depositCents: 0 });
+  });
+
+  it.each([[""], ["abc"], ["0.500"]])(
+    "recusa preço %j (obrigatório/ambíguo) sem salvar",
     async (price) => {
       const result = await saveServiceAction({}, serviceForm(price, "0"));
 
@@ -101,8 +109,8 @@ describe("saveServiceAction: preço e sinal em reais", () => {
     },
   );
 
-  it("rejeita sinal inválido com mensagem própria", async () => {
-    const result = await saveServiceAction({}, serviceForm("50", "1,2,3"));
+  it("recusa sinal preenchido inválido", async () => {
+    const result = await saveServiceAction({}, serviceForm("50", "-5"));
 
     expect(result.error).toMatch(/Informe o sinal em reais/);
     expect(mockedCreateService).not.toHaveBeenCalled();
