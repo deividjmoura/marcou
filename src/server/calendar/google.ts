@@ -8,8 +8,14 @@ export async function refreshGoogleAccessToken(connection: CalendarConnection): 
   const response = await fetch(TOKEN_ENDPOINT, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID ?? "", client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? "", refresh_token: decryptCalendarToken(connection.refresh_token_ciphertext), grant_type: "refresh_token" }), cache: "no-store" });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok || typeof payload.access_token !== "string") throw new Error(payload.error === "invalid_grant" ? "calendar_reconnect_required" : "google_refresh_failed");
-  const { error } = await calendarAdminClient().from("provider_calendar_connections").update({ access_token_ciphertext: encryptCalendarToken(payload.access_token), access_token_expires_at: new Date(Date.now() + Number(payload.expires_in ?? 3600) * 1000).toISOString(), updated_at: new Date().toISOString() }).eq("provider_id", connection.provider_id);
+  if (!response.ok || typeof payload.access_token !== "string") {
+    if (payload.error === "invalid_grant") {
+      await calendarAdminClient().from("provider_calendar_connections").update({ connection_status: "suspended", updated_at: new Date().toISOString() }).eq("provider_id", connection.provider_id);
+      throw new Error("calendar_reconnect_required");
+    }
+    throw new Error("google_refresh_failed");
+  }
+  const { error } = await calendarAdminClient().from("provider_calendar_connections").update({ access_token_ciphertext: encryptCalendarToken(payload.access_token), access_token_expires_at: new Date(Date.now() + Number(payload.expires_in ?? 3600) * 1000).toISOString(), connection_status: "connected", updated_at: new Date().toISOString() }).eq("provider_id", connection.provider_id);
   if (error) throw new Error("calendar_token_save_failed");
   return payload.access_token as string;
 }
