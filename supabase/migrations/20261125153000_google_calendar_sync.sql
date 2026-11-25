@@ -6,7 +6,7 @@ create table public.provider_calendar_connections (
   access_token_ciphertext text,
   access_token_expires_at timestamptz,
   calendar_id text not null default 'primary',
-  granted_scope text not null,
+  granted_scope text not null default '',
   connection_status text not null default 'pending' check (connection_status in ('pending','connected','suspended')),
   oauth_state_hash text,
   oauth_state_expires_at timestamptz,
