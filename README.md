@@ -102,9 +102,10 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
   reservas vencidas conflitantes e insere a reserva com snapshot do serviço.
 - A constraint de exclusão GiST + `pg_advisory_xact_lock` por prestador impedem
   dupla marcação, inclusive sob requisições simultâneas.
-- Uma reserva pode combinar 1 a 20 serviços ativos do mesmo prestador: duração,
-  intervalo e preço são somados no banco e o intervalo combinado é validado por
-  completo; reservas de serviço único seguem compatíveis.
+- Uma reserva pode combinar 1 a 20 serviços ativos do mesmo prestador: duração
+  e preço são somados no banco, o intervalo ocupado é a soma das durações mais o
+  intervalo do último serviço, e o intervalo combinado é validado por completo;
+  reservas de serviço único seguem compatíveis.
 - Transições de estado (`pending_payment`, `pending_review`, `confirmed`,
   `cancelled`, `expired`) são aplicadas por `transition_booking`, com
   autorização, validade e auditoria.

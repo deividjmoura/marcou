@@ -17,7 +17,7 @@ como ele foi realizado nesta codebase.
 
 `generateSlots` recebe data (no fuso do prestador), regras semanais, exceções,
 intervalos já ocupados e o tempo do serviço ou do conjunto de serviços
-(soma das durações + soma dos intervalos, calculada pela RPC). Ele:
+(soma das durações + intervalo do último serviço, calculada pela RPC). Ele:
 
 1. seleciona as janelas do dia (expediente ou horário especial; bloqueio zera o dia);
 2. respeita a vigência (`validFrom`/`validUntil`) e regras inativas;
@@ -37,8 +37,8 @@ usuário (`auth.uid()`). Passos:
 1. exige autenticação e prestador publicado e todos os serviços ativos do mesmo
    prestador (1 a 20, sem duplicatas);
 2. valida nome do cliente e que o início é futuro;
-3. calcula no banco `duration = Σ durações`, `buffer = Σ intervalos`,
-   `price = Σ preços`, `deposit = Σ sinais` e
+3. calcula no banco `duration = Σ durações`, `buffer = intervalo do último
+   serviço`, `price = Σ preços`, `deposit = Σ sinais` e
    `occupied_until = início + duration + buffer`;
 4. valida `is_interval_available` para o intervalo combinado (expediente ou
    horário especial, sem cruzar a meia-noite);
@@ -54,15 +54,15 @@ nova com `uuid[]`. A migração `20261125120000_booking_multiple_services.sql` �
 aditiva e espelha reservas antigas na tabela de vínculos. Handoff:
 `docs/handoffs/21-booking.md`.
 
-### Regra de tempo ocupado (documentação, sem mudança de comportamento)
+### Regra de tempo ocupado (decisão do responsável)
 
-Hoje o tempo ocupado é `Σ (duração + intervalo) de cada serviço`, inclusive o
-intervalo dos serviços intermediários. Exemplo testado em `npm test` e
-`npm run test:db`: dois serviços de 30 min + 10 min e 45 min + 5 min somam
-75 min de atendimento, 15 min de intervalo e **90 min ocupados** (no banco,
-outro par com 30+15 e 45+20 resulta em 110 min ocupados). Uma eventual regra
-de aplicar intervalo somente entre serviços aguarda decisão do responsável;
-nada foi alterado nesta entrega.
+O tempo ocupado é `Σ durações de todos os serviços + intervalo APENAS do último
+serviço da seleção`. Os snapshots por serviço em `booking_services` continuam
+registrando o intervalo individual de cada um; apenas o total agregado segue a
+regra acima. Casos testados em `npm test` e `npm run test:db`: 30+10 e 45+5 ⇒
+75 min de atendimento, 5 min de intervalo, **80 min ocupados**; 30+15 e 45+20 ⇒
+75 min de atendimento, 20 min de intervalo, **95 min ocupados**. Para uma
+reserva de serviço único a regra é a mesma de sempre (duração + seu intervalo).
 
 A constraint `bookings_no_overlapping_active_intervals` (GiST, por prestador,
 intervalo semiaberto `[starts_at, occupied_until)`) é a garantia final. Violação

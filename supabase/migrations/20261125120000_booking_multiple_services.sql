@@ -10,8 +10,12 @@
 -- - `bookings.service_id` continua apontando para o primeiro serviço (chave
 --   legada) e os snapshots agregados de bookings passam a representar o total
 --   da reserva. Reservas de serviço único não mudam de significado.
--- - Duração, intervalo, preço e sinal são sempre calculados no banco a partir
---   de `services`; o navegador envia apenas IDs + início desejado.
+-- - Duração, preço e sinal são sempre calculados no banco a partir de
+--   `services`; o navegador envia apenas IDs + início desejado. O tempo ocupado
+--   é a soma das durações + intervalo APENAS do último serviço (decisão do
+--   responsável).
+-- - Privilégios amplos concedidos por default a tabelas novas são revogados
+--   antes de conceder somente SELECT; a RLS permanece.
 -- - GiST + `pg_advisory_xact_lock` permanecem como barreira final de concorrência.
 
 create table if not exists public.booking_services (
@@ -39,6 +43,7 @@ create index if not exists booking_services_booking_idx
 alter table public.booking_services enable row level security;
 
 -- Leitura apenas para participantes; escrita permanece exclusiva das RPCs.
+drop policy if exists "booking_services_read_participants" on public.booking_services;
 create policy "booking_services_read_participants"
   on public.booking_services for select to authenticated
   using (
@@ -51,8 +56,12 @@ create policy "booking_services_read_participants"
     )
   );
 
-grant select on public.booking_services to anon, authenticated;
-grant all on public.booking_services to service_role;
+-- O Supabase concede privilégios amplos por default a novas tabelas em public.
+-- Revogamos explicitamente antes de conceder só o necessário: a RLS continua
+-- limitando a leitura aos participantes e nenhuma política de escrita existe.
+revoke all on table public.booking_services from public, anon, authenticated;
+grant select on table public.booking_services to authenticated;
+grant all on table public.booking_services to service_role;
 
 -- Preserva o histórico: toda reserva antiga de serviço único passa a ter uma
 -- linha espelho com os snapshots que já estavam persistidos em `bookings`.
@@ -96,7 +105,7 @@ declare
   v_valid_count integer;
   v_services jsonb;
   v_duration integer;
-  v_buffer integer;
+  v_last_buffer integer;
   v_price integer;
   v_deposit integer;
   v_name text;
@@ -127,11 +136,13 @@ begin
       order by ids.ord
     ),
     sum(s.duration_minutes)::integer,
-    sum(s.buffer_minutes)::integer,
+    -- Decisão do responsável: soma das durações + intervalo APENAS do último
+    -- serviço da seleção (maior `ord`), não a soma dos intervalos.
+    (array_agg(s.buffer_minutes order by ids.ord desc))[1]::integer,
     sum(s.price_cents)::integer,
     sum(s.deposit_cents)::integer,
     left(string_agg(s.name, ' + ' order by ids.ord), 180)
-  into v_services, v_duration, v_buffer, v_price, v_deposit, v_name
+  into v_services, v_duration, v_last_buffer, v_price, v_deposit, v_name
   from unnest(p_service_ids) with ordinality as ids(id, ord)
   join public.services s on s.id = ids.id;
 
@@ -140,8 +151,8 @@ begin
     'services', v_services,
     'nameSnapshot', v_name,
     'durationMinutes', v_duration,
-    'bufferMinutes', v_buffer,
-    'occupiedMinutes', v_duration + v_buffer,
+    'bufferMinutes', v_last_buffer,
+    'occupiedMinutes', v_duration + v_last_buffer,
     'priceCents', v_price,
     'depositCents', v_deposit
   );
@@ -355,10 +366,9 @@ begin
     raise exception 'customer_name_required' using errcode = 'P0001';
   end if;
 
-  -- Regra atual, mantida sem alteração: cada serviço contribui com
-  -- duration_minutes + buffer_minutes, inclusive os intervalos intermediários.
-  -- A eventual mudança para intervalo apenas entre serviços depende de decisão
-  -- do responsável e não faz parte desta migration.
+  -- Decisão do responsável: tempo ocupado = soma das durações de todos os
+  -- serviços + intervalo apenas do último serviço da seleção. Os snapshots
+  -- por serviço em `booking_services` continuam registrando cada intervalo.
   v_occupied_until := p_starts_at
     + make_interval(mins => (v_totals ->> 'occupiedMinutes')::integer);
 

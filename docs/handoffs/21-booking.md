@@ -17,16 +17,16 @@ fechada depois que a migration for validada em um Supabase de desenvolvimento).
 1. **Seleção:** 1 a 20 serviços ativos do mesmo estabelecimento, na ordem em
    que o cliente seleciona. O primeiro vira `bookings.service_id` (chave
    legada); os demais ficam em `booking_services`.
-2. **Fonte de verdade:** `public.booking_service_totals` soma duração,
-   intervalo, preço e sinal diretamente de `services`. A UI envia só IDs e
-   início; `get_provider_schedule` devolve os totais agregados para exibição e
-   `create_booking` recalcula tudo no banco antes de gravar.
+2. **Fonte de verdade:** `public.booking_service_totals` soma duração, preço e
+   sinal diretamente de `services` e aplica o intervalo do último serviço. A UI
+   envia só IDs e início; `get_provider_schedule` devolve os totais agregados
+   para exibição e `create_booking` recalcula tudo no banco antes de gravar.
 3. **Snapshots:** `bookings` mantém snapshots agregados (compatíveis com
    reservas de serviço único, onde os valores são idênticos aos atuais) e
    `booking_services` guarda nome/duração/preço/sinal/intervalo de cada serviço.
    Histórico anterior é espelhado na nova tabela pela própria migration.
-4. **Disponibilidade:** um único intervalo `[início, início + Σ(duração +
-   intervalo))` passa por `is_interval_available`, pela expiração de holds
+4. **Disponibilidade:** um único intervalo `[início, início + Σ(durações) +
+   intervalo do último serviço)` passa por `is_interval_available`, pela expiração de holds
    vencidos conflitantes e pelo `pg_advisory_xact_lock` do prestador. A
    constraint GiST existente continua sendo a barreira final; duas transações
    simultâneas não conseguem sobrepor reservas ativas.
@@ -35,16 +35,20 @@ fechada depois que a migration for validada em um Supabase de desenvolvimento).
    delegam para as versões com `uuid[]`. Clientes antigos de serviço único
    seguem funcionando.
 6. **Permissões:** `booking_services` tem RLS de leitura para participantes e
-   nenhuma política de escrita para clientes. Os novos helpers `SECURITY
-   DEFINER` usam `search_path` fixo e não herdam `EXECUTE` de `PUBLIC`.
+   nenhuma política de escrita para clientes; a migration faz `revoke all` de
+   `public`, `anon` e `authenticated` antes de conceder só `SELECT` a
+   `authenticated`, neutralizando os default privileges do Supabase. Os novos
+   helpers `SECURITY DEFINER` usam `search_path` fixo e não herdam `EXECUTE` de
+   `PUBLIC`.
 
-### Regra de tempo ocupado — sem mudança de comportamento
+### Regra de tempo ocupado — decisão do responsável
 
-O intervalo ocupado continua sendo `Σ (duração + intervalo) de cada serviço`,
-inclusive os intervalos dos serviços intermediários. Exemplo: 30 min + 10 min
-e 45 min + 5 min ⇒ 75 min de atendimento, 15 min de intervalo, 90 min
-ocupados. A eventual regra de contar intervalo somente entre serviços aguarda
-decisão do responsável; nada foi alterado aqui.
+O intervalo ocupado é `Σ durações de todos os serviços + intervalo APENAS do
+último serviço da seleção`. Os snapshots por serviço em `booking_services`
+mantêm cada intervalo individual; só o agregado muda. Casos testados: 30+10 e
+45+5 ⇒ 75 min de atendimento, 5 min de intervalo, **80 min ocupados**; 30+15 e
+45+20 ⇒ 75 min de atendimento, 20 min de intervalo, **95 min ocupados**. Serviço
+único continua com duração + seu próprio intervalo.
 
 ## Migration
 
@@ -76,7 +80,8 @@ produção), e nenhuma credencial deve ser colada em código, doc, issue ou PR:
      nome, duração e preço exibidos e a reserva em `/reserva/<id>`.
    - **2 serviços:** selecionar dois do mesmo negócio; conferir o resumo com a
      soma vinda do servidor, a duração combinada nos slots e o
-     `occupied_until` (duração + intervalo de ambos) na reserva criada.
+     `occupied_until` (soma das durações + intervalo do segundo serviço) na
+     reserva criada.
    - **3 serviços:** repetir com três; tentar um horário em que apenas o
      primeiro serviria e confirmar que não é oferecido nem confirmado.
    - Tentar misturar um serviço de outro negócio (por chamada direta à RPC) e
@@ -114,6 +119,9 @@ produção), e nenhuma credencial deve ser colada em código, doc, issue ou PR:
 - PR **#68**: sem sobreposição de arquivos com esta PR; atenção semântica em
   `/reserva/[id]` (a página lê os snapshots de `bookings`) e em
   `src/app/globals.css` (a UI pública usa classes já existentes).
+- PR **#122** continua **aberta** (não mesclada) e a `main` não tem
+  `CHANGELOG.md` nem novo check de CI; não havia entrada de changelog a
+  atender nesta branch.
 
 ## Testes executados
 
@@ -126,3 +134,17 @@ com cinco requisições simultâneas, compatibilidade de reserva antiga, backfil
 e isolamento RLS. O harness de booking agora usa `try/finally` e foi testado
 com uma falha injetada: o processo Postgres foi encerrado e a porta 55432
 ficou livre.
+
+Nesta rodada, atendendo à revisão cruzada do Agente B:
+- privilégios da tabela nova testados com `alter default privileges ... grant
+  all` emulando o Supabase: `anon`/`authenticated` não têm INSERT/UPDATE/
+  DELETE/TRUNCATE/REFERENCES/TRIGGER, `anon` não tem SELECT e `authenticated`
+  tem apenas SELECT; `bookings`/`booking_events` foram comparados antes e
+  depois da migration (inalterados);
+- backfill agora exercitado de verdade: uma reserva legada é criada **antes**
+  da migration com preço snapshot 4500 e o preço atual do serviço 5000, e o
+  testo confirma que o vínculo copiou 4500;
+- matriz de grants do harness social inclui as três novas assinaturas;
+- os 4 itens “importantes” da revisão (privilégios, backfill, matriz de grants
+  e reset do horário no widget) foram tratados; respostas item a item estão na
+  PR #123.

@@ -115,6 +115,7 @@ await db.query(`
     $$;
 `);
 
+const MULTI_MIGRATION = "supabase/migrations/20261125120000_booking_multiple_services.sql";
 const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
   "supabase/migrations/202611150002_booking_operations.sql",
@@ -122,13 +123,119 @@ const migrations = [
   "supabase/migrations/202611160001_provider_description.sql",
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
-  "supabase/migrations/20261125120000_booking_multiple_services.sql",
+  MULTI_MIGRATION,
 ];
 
+async function writePrivileges(table) {
+  const result = await db.query(
+    `select r.rolname as role, p.privilege_type as privilege
+       from pg_roles r
+       cross join unnest(array[
+         'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'
+       ]) as p(privilege_type)
+      where r.rolname in ('anon', 'authenticated')
+        and has_table_privilege(r.oid, ('public.' || $1)::regclass, p.privilege_type)
+      order by 1, 2`,
+    [table],
+  );
+  return result.rows.map((row) => `${row.role}:${row.privilege}`);
+}
+
+let bookingsPrivilegesBefore;
+let bookingEventsPrivilegesBefore;
+let legacyBackfillBookingId;
+let legacyBackfillServiceId;
+
 for (const file of migrations) {
+  if (file === MULTI_MIGRATION) {
+    // Flag antes da migration nova: nada aqui pode alterar bookings antigos.
+    bookingsPrivilegesBefore = await writePrivileges("bookings");
+    bookingEventsPrivilegesBefore = await writePrivileges("booking_events");
+
+    // Emula os default privileges do Supabase para tabelas novas em public.
+    await db.query(
+      `alter default privileges in schema public
+         grant all on tables to anon, authenticated`,
+    );
+
+    // Reserva de serviço único criada ANTES da migration: o backfill precisa
+    // preservar o snapshot histórico, não o preço atual do serviço.
+    const legacyOwner = crypto.randomUUID();
+    const legacyCustomer = crypto.randomUUID();
+    await db.query(`insert into auth.users (id) values ($1), ($2)`, [
+      legacyOwner,
+      legacyCustomer,
+    ]);
+    const legacyProvider = (
+      await db.query(
+        `insert into public.providers
+           (owner_id, slug, display_name, timezone, is_published)
+         values ($1, 'prov-legacy', 'Legado', 'America/Sao_Paulo', true)
+         returning id`,
+        [legacyOwner],
+      )
+    ).rows[0].id;
+    legacyBackfillServiceId = (
+      await db.query(
+        `insert into public.services
+           (provider_id, name, duration_minutes, price_cents, deposit_cents, buffer_minutes)
+         values ($1, 'Serviço legado', 30, 5000, 0, 0) returning id`,
+        [legacyProvider],
+      )
+    ).rows[0].id;
+    legacyBackfillBookingId = (
+      await db.query(
+        `insert into public.bookings (
+           provider_id, customer_id, service_id, starts_at, ends_at,
+           occupied_until, timezone, customer_name, customer_phone,
+           service_name_snapshot, duration_minutes_snapshot,
+           price_cents_snapshot, deposit_cents_snapshot,
+           buffer_minutes_snapshot, status
+         ) values (
+           $1, $2, $3, '2026-12-01T12:00:00Z', '2026-12-01T12:30:00Z',
+           '2026-12-01T12:30:00Z', 'America/Sao_Paulo', 'Cliente legado', '',
+           'Serviço legado', 30, 4500, 0, 0, 'confirmed'
+         ) returning id`,
+        [legacyProvider, legacyCustomer, legacyBackfillServiceId],
+      )
+    ).rows[0].id;
+  }
+
   const sql = await readFile(file, "utf8");
   await db.query(sql);
   console.log(`aplicada: ${file}`);
+}
+
+console.log("\n[privilégios de booking_services]");
+{
+  const inheritedWrite = await writePrivileges("booking_services");
+  check(
+    "tabela nova não herda INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER",
+    inheritedWrite.length === 0,
+    inheritedWrite.join(", "),
+  );
+
+  const hasSelect = async (role) =>
+    Boolean(
+      (
+        await db.query(
+          `select has_table_privilege($1, 'public.booking_services', 'SELECT') as allowed`,
+          [role],
+        )
+      ).rows[0].allowed,
+    );
+  check("anon não recebe SELECT da tabela nova", (await hasSelect("anon")) === false);
+  check(
+    "authenticated recebe só SELECT da tabela nova",
+    (await hasSelect("authenticated")) === true,
+  );
+  check(
+    "privilégios de bookings/booking_events não foram alterados",
+    JSON.stringify(await writePrivileges("bookings")) ===
+      JSON.stringify(bookingsPrivilegesBefore) &&
+      JSON.stringify(await writePrivileges("booking_events")) ===
+        JSON.stringify(bookingEventsPrivilegesBefore),
+  );
 }
 
 function clientFor(role) {
@@ -502,14 +609,14 @@ console.log("\n[múltiplos serviços]");
   const schedule = scheduleResult.rows[0].schedule;
   check(
     " agenda agregada expõe duração e intervalo do banco",
-    schedule?.timing?.durationMinutes === 90 && schedule?.timing?.bufferMinutes === 15,
+    schedule?.timing?.durationMinutes === 90 && schedule?.timing?.bufferMinutes === 0,
     JSON.stringify(schedule?.timing),
   );
   check(
     " totais agregados vêm dos serviços persistidos",
     schedule?.totals?.priceCents === 12000 &&
       schedule?.totals?.depositCents === 2000 &&
-      schedule?.totals?.occupiedMinutes === 105,
+      schedule?.totals?.occupiedMinutes === 90 && schedule?.totals?.bufferMinutes === 0,
     JSON.stringify(schedule?.totals),
   );
   check(
@@ -548,9 +655,9 @@ console.log("\n[múltiplos serviços]");
     "Combo",
   );
   check(
-    " reserva combinada usa fim e intervalo agregados",
+    " reserva combinada usa fim agregado e intervalo do último serviço",
     iso(combo.ends_at) === "2026-12-04T13:30:00.000Z" &&
-      iso(combo.occupied_until) === "2026-12-04T13:45:00.000Z",
+      iso(combo.occupied_until) === "2026-12-04T13:30:00.000Z",
     `${iso(combo.ends_at)} / ${iso(combo.occupied_until)}`,
   );
   check(
@@ -558,7 +665,7 @@ console.log("\n[múltiplos serviços]");
     combo.duration_minutes_snapshot === 90 &&
       combo.price_cents_snapshot === 12000 &&
       combo.deposit_cents_snapshot === 2000 &&
-      combo.buffer_minutes_snapshot === 15,
+      combo.buffer_minutes_snapshot === 0,
   );
   check("service_id permanece como primeiro serviço", combo.service_id === serviceA1);
 
@@ -659,13 +766,22 @@ console.log("\n[múltiplos serviços]");
     )
   ).rows[0].total;
   check("reserva antiga de serviço único continua funcionando", legacyRows === 1);
-  const backfillRows = (
+  const realBackfill = (
     await db.query(
-      `select count(*)::int as total from public.booking_services where booking_id = $1`,
-      [booking1.id],
+      `select service_id, position, service_name_snapshot, price_cents_snapshot
+         from public.booking_services where booking_id = $1`,
+      [legacyBackfillBookingId],
     )
-  ).rows[0].total;
-  check("histórico pré-migration foi espelhado", backfillRows === 1);
+  ).rows;
+  check(
+    "backfill real preserva o snapshot histórico (4500, não 5000)",
+    realBackfill.length === 1 &&
+      realBackfill[0].service_id === legacyBackfillServiceId &&
+      realBackfill[0].position === 0 &&
+      realBackfill[0].service_name_snapshot === "Serviço legado" &&
+      realBackfill[0].price_cents_snapshot === 4500,
+    JSON.stringify(realBackfill),
+  );
 
   const serviceB2 = (
     await db.query(
@@ -1041,8 +1157,8 @@ console.log("\n[casos de borda e truncamento]");
     `notificações=${longNotifications.length}`,
   );
 
-  // Regra atual (sem mudança de comportamento): cada serviço soma duração +
-  // intervalo, inclusive os intervalos intermediários do conjunto.
+  // Decisão do responsável: soma das durações + intervalo APENAS do último
+  // serviço da seleção (ordem de seleção).
   const timedA = (
     await db.query(
       `insert into public.services
@@ -1066,12 +1182,42 @@ console.log("\n[casos de borda e truncamento]");
     )
   ).rows[0].totals;
   check(
-    " tempo ocupado soma duração + intervalo dos dois serviços (75 + 35 = 110)",
+    " intervalo apenas do último serviço (30+15 e 45+20 ⇒ 75 + 20 = 95)",
     timed.durationMinutes === 75 &&
-      timed.bufferMinutes === 35 &&
-      timed.occupiedMinutes === 110 &&
+      timed.bufferMinutes === 20 &&
+      timed.occupiedMinutes === 95 &&
       timed.priceCents === 5000,
     JSON.stringify(timed),
+  );
+
+  const shortA = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo curto A', 30, 1000, 10) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const shortB = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo curto B', 45, 1000, 5) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const shortTotals = (
+    await db.query(
+      `select public.booking_service_totals($1::uuid, $2::uuid[]) as totals`,
+      [providerB, [shortA, shortB]],
+    )
+  ).rows[0].totals;
+  check(
+    " intervalo apenas do último serviço (30+10 e 45+5 ⇒ 75 + 5 = 80)",
+    shortTotals.durationMinutes === 75 &&
+      shortTotals.bufferMinutes === 5 &&
+      shortTotals.occupiedMinutes === 80,
+    JSON.stringify(shortTotals),
   );
 }
 

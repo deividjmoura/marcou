@@ -18,9 +18,9 @@ export interface AggregatedBookingTotals {
 }
 
 /**
- * Soma pura dos valores persistidos dos serviços. No fluxo real a fonte de
- * verdade é a RPC do banco; esta função documenta e testa a regra de negócio
- * usada na validação dos totais devolvidos pela API.
+ * Soma pura dos valores persistidos dos serviços, usada para documentar e
+ * testar a regra em TypeScript. No fluxo real a RPC do banco é a única fonte
+ * de verdade; esta função não participa da validação da API.
  */
 export function aggregateBookingServices(
   services: readonly BookableService[],
@@ -53,11 +53,10 @@ export function aggregateBookingServices(
             ? service.name
             : `${totals.nameSnapshot} + ${service.name}`,
         durationMinutes: totals.durationMinutes + service.durationMinutes,
-        bufferMinutes: totals.bufferMinutes + service.bufferMinutes,
+        // Decisão do responsável: soma das durações + intervalo só do último.
+        bufferMinutes: service.bufferMinutes,
         occupiedMinutes:
-          totals.occupiedMinutes +
-          service.durationMinutes +
-          service.bufferMinutes,
+          totals.durationMinutes + service.durationMinutes + service.bufferMinutes,
         priceCents: totals.priceCents + service.priceCents,
         depositCents: totals.depositCents + service.depositCents,
       };

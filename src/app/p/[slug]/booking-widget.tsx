@@ -113,9 +113,8 @@ export function BookingWidget({
       }
       setLoading(true);
       setSlotsState(initialSlots);
-      setSelectedSlot(null);
-      setPicked(false);
-      setShowStickyContinue(false);
+      // Não limpa o slot aqui: o `?slot=` restaurado após o login precisa
+      // permanecer até o cliente trocar de serviço ou de data.
       try {
         const result = await fetchSlotsAction({ slug, serviceIds, date });
         if (active) setSlotsState(result);
@@ -170,6 +169,12 @@ export function BookingWidget({
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
+    // Reset síncrono: evita um frame com totais/horário da seleção anterior e
+    // também limpa o formulário quando todos os serviços são desmarcados.
+    setSlotsState(initialSlots);
+    setSelectedSlot(null);
+    setPicked(false);
+    setShowStickyContinue(false);
   }
 
   function chooseDate(nextDate: string) {
@@ -246,7 +251,9 @@ export function BookingWidget({
               <strong>{combinedNames}</strong> ·{" "}
               {totals
                 ? `${totals.durationMinutes} min · ${formatCents(totals.priceCents)}`
-                : "calculando duração e preço no servidor..."}
+                : slotsState.error
+                  ? "não foi possível calcular o resumo agora"
+                  : "calculando duração e preço no servidor..."}
             </p>
           ) : null}
 
@@ -357,7 +364,7 @@ export function BookingWidget({
                       key={slot.startsAt}
                       className={isActive ? "booking-time-card is-selected" : "booking-time-card"}
                       aria-pressed={isActive}
-                      aria-label={`${label}, ${combinedNames}, ${totals?.durationMinutes ?? 0} minutos, disponível${isActive ? ", selecionado" : ""}`}
+                      aria-label={`${label}, ${combinedNames}, ${totals ? `${totals.durationMinutes} minutos` : "duração indisponível"}, disponível${isActive ? ", selecionado" : ""}`}
                       onClick={() => {
                         setSelectedSlot(slot.startsAt);
                         setPicked(true);
