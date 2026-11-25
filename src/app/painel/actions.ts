@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isSupabaseConfigured } from "@/lib/env";
+import { parseBrlToCents } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import {
   providerInputSchema,
@@ -61,6 +62,10 @@ async function ownedProviderOrError() {
 
 async function discoveryEnabledForProvider(providerId: string): Promise<boolean> {
   return isSocialFeatureEnabled("social_discovery", { providerId });
+}
+
+function invalidMoneyMessage(field: string): string {
+  return `Informe ${field} em reais, por exemplo 50, 50,50 ou 1.234,56.`;
 }
 
 function firstIssue(error: { issues?: Array<{ message?: string }> }): string {
@@ -129,23 +134,21 @@ export async function saveServiceAction(
   const intent = String(formData.get("intent") ?? "create");
   const serviceId = String(formData.get("serviceId") ?? "");
 
-  const toCents = (value: FormDataEntryValue | null): number => {
-    const normalized = String(value ?? "")
-      .trim()
-      .replace(/\s/g, "")
-      .replace(",", ".");
-    const valueAsNumber = Number(normalized);
-    return Number.isFinite(valueAsNumber)
-      ? Math.round(valueAsNumber * 100)
-      : Number.NaN;
-  };
+  const priceCents = parseBrlToCents(formData.get("price"));
+  if (Number.isNaN(priceCents)) {
+    return { error: invalidMoneyMessage("o preço") };
+  }
+  const depositCents = parseBrlToCents(formData.get("deposit"));
+  if (Number.isNaN(depositCents)) {
+    return { error: invalidMoneyMessage("o sinal") };
+  }
 
   const parsed = serviceInputSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
     durationMinutes: formData.get("durationMinutes"),
-    priceCents: toCents(formData.get("price")),
-    depositCents: toCents(formData.get("deposit")),
+    priceCents,
+    depositCents,
     bufferMinutes: formData.get("bufferMinutes"),
   });
 
