@@ -143,7 +143,7 @@ Nesta rodada, atendendo à revisão cruzada do Agente B:
   depois da migration (inalterados);
 - backfill agora exercitado de verdade: uma reserva legada é criada **antes**
   da migration com preço snapshot 4500 e o preço atual do serviço 5000, e o
-  testo confirma que o vínculo copiou 4500;
+  teste confirma que o vínculo copiou 4500;
 - matriz de grants do harness social inclui as três novas assinaturas;
 - os 4 itens “importantes” da revisão (privilégios, backfill, matriz de grants
   e reset do horário no widget) foram tratados; respostas item a item estão na
