@@ -1,4 +1,4 @@
-import { encryptCalendarToken, decryptCalendarToken } from "./crypto";
+import { encryptCalendarToken, decryptCalendarToken, googleEventIdForBooking } from "./crypto";
 import { calendarAdminClient } from "./admin";
 import { buildCalendarEvent } from "./event-payload";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -58,7 +58,7 @@ export async function runCalendarWorker(limit = 10) {
         const { data: connection, error: connectionError } = await admin.from("provider_calendar_connections").select("provider_id,refresh_token_ciphertext,calendar_id,connection_status").eq("provider_id", booking.provider_id).maybeSingle();
         if (connectionError || !connection || connection.connection_status !== "connected") throw new Error("calendar_connection_missing");
         const calendarId = connection.calendar_id || "primary";
-        const eventId = mapping?.google_event_id ?? "marcou" + (await import("node:crypto")).createHash("sha256").update(booking.id).digest("hex").slice(0, 40);
+        const eventId = mapping?.google_event_id ?? googleEventIdForBooking(booking.id);
         const token = await refreshGoogleAccessToken(connection);
         // Deliberately exclude customer name, phone, email and booking ID from event payload.
         const event = buildCalendarEvent({ id: eventId, serviceName: booking.service_name_snapshot, startsAt: booking.starts_at, endsAt: booking.ends_at, timezone: booking.timezone });
