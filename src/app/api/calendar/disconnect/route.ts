@@ -26,6 +26,13 @@ export async function POST() {
       catch { cleanupIncomplete = true; }
     }
   }
+  const { data: bookings } = await admin.from("bookings").select("id").eq("provider_id", provider.id);
+  const bookingIds = (bookings ?? []).map((booking) => booking.id);
+  if (bookingIds.length) {
+    // Stop queued sync attempts after explicit disconnect; already-created events
+    // are cleaned up above on a best-effort basis.
+    await admin.from("calendar_sync_outbox").update({ status: "succeeded", completed_at: new Date().toISOString(), processing_started_at: null, last_error_code: "provider_disconnected" }).in("booking_id", bookingIds).in("status", ["pending", "failed", "processing"]);
+  }
   await admin.from("booking_calendar_events").delete().eq("provider_id", provider.id);
   await admin.from("provider_calendar_connections").delete().eq("provider_id", provider.id);
   return NextResponse.redirect(new URL(cleanupIncomplete ? "/painel?calendar=disconnected-cleanup-warning" : "/painel?calendar=disconnected", origin));
