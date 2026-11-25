@@ -8,8 +8,8 @@ export default async function CalendarIntegrationPage({ searchParams }: { search
   const params = await searchParams, user = await requireUser("/painel/integracoes/calendario");
   const provider = await getOwnedProvider(user.id);
   const enabled = isCalendarFeatureEnabled();
-  const connected = enabled && provider ? await calendarAdminClient().from("provider_calendar_connections").select("connected_at").eq("provider_id", provider.id).maybeSingle() : null;
-  const isConnected = Boolean(connected?.data?.connected_at);
+  const connected = enabled && provider ? await calendarAdminClient().from("provider_calendar_connections").select("connection_status,connected_at").eq("provider_id", provider.id).maybeSingle() : null;
+  const isConnected = connected?.data?.connection_status === "connected";
   const messages: Record<string,string> = {
     connected: "Google Calendar conectado.", disconnected: "Integração desconectada.",
     "disconnected-cleanup-warning": "Desconectado, mas alguns eventos podem não ter sido removidos. Confira seu Google Calendar.",
