@@ -1,6 +1,50 @@
 # Marcou — estado atual e continuidade
 
-Última atualização: 23/11/2026
+Última atualização: 24/11/2026
+
+## Estabilização de autenticação, velocidade de login e changelog obrigatório — 24/11/2026
+
+- **Diagnóstico real do Google OAuth (`Erro 400: redirect_uri_mismatch`):**
+  comprovado na requisição pública e no código que `NEXT_PUBLIC_SITE_URL=https://marcoou.netlify.app`
+  está configurada em produção, que `googleLoginAction` envia `redirectTo` para
+  `https://marcoou.netlify.app/auth/callback?next=<caminho-seguro>` (callback
+  final da aplicação) e que o Supabase (`peornypgltuueubmsucm`) envia ao Google
+  `client_id=563590504578-mjat63su5ri3seo1d09dbaspkm9vgplk.apps.googleusercontent.com`
+  e `redirect_uri=https://peornypgltuueubmsucm.supabase.co/auth/v1/callback`,
+  recebendo `redirect_uri_mismatch` do Google para esse URI. A lista cadastrada
+  em **Authorized redirect URIs** no Google Cloud Console e o painel interno do
+  Supabase não foram consultados diretamente e dependem de conferência manual.
+  Padrões de allowlist no Supabase também foram corrigidos em `docs/IDENTITY.md`
+  com `**` para query strings e `--` para Deploy Previews da Netlify.
+- **Diagnóstico de entregabilidade de e-mail (spam):** evidenciado nos cabeçalhos
+  RFC somente-leitura (sem leitura/registro de tokens ou segredos) que o envio
+  passa por `smtp.gmail.com` com `Marcou <appmarcou@gmail.com>`, `SPF/DKIM/DMARC pass`
+  em `gmail.com`, assunto em inglês (`Confirm your email address`) e `text/html`
+  sem `text/plain` — o que não garante caixa de entrada nem prova isoladamente
+  uma única causa. Documentados separadamente em `docs/IDENTITY.md` as
+  evidências, hipóteses de filtragem e recomendações externas (domínio próprio,
+  SMTP transacional dedicado, SPF/DKIM/DMARC alinhados e revisão dos templates).
+- **Velocidade de login, medição sem PII e segurança de perfil:** `ensureAuthProfile` em
+  `src/server/identity.ts` unifica leitura de `display_name, phone` em 1 único
+  `SELECT` para logins recorrentes (0 escritas e eliminação da segunda consulta
+  `profileNeedsPhone`), protege inserção/backfill contra corrida (`ON CONFLICT DO NOTHING`
+  e guarda CAS), reaproveita o `user` retornado por `exchangeCodeForSession`/`verifyOtp`,
+  paraleliza as consultas pós-login em `/inicio`, `/minha-conta` e `/painel` e
+  mede o fluxo completo no servidor (`measureAuthFlow` / `AUTH_TIMING_LOG=1`)
+  sem PII ou credenciais.
+- **Processo obrigatório de changelog:** criados `CHANGELOG.md`, `CONTRIBUTING.md`
+  e `scripts/changelog-check.mjs` (`npm run check:changelog`), validando que
+  entradas adicionadas pela PR estejam dentro de `## [Unreleased]` sob subseção
+  válida e encadeado em `.github/workflows/ci.yml` com `fetch-depth: 0`.
+- **Marcou Social preservado:** requisitos de produto (feed de profissionais,
+  vínculo a serviços reais, Web Share API + alternativas, imagem obrigatória e
+  adequada em novos serviços, OCR/bloqueio de telefone/contato/preço em imagens,
+  moderação/denúncia, perfil único e acesso ao feed pelo espaço Cliente) e a
+  verificação de dependências das Issues `#84`, `#91` e `#93` foram registrados
+  em `docs/ROADMAP-MARCOU-SOCIAL.md` sem duplicar issues nem criar arquitetura
+  paralela.
+- Nenhuma migration foi criada/aplicada em produção e nenhuma configuração remota
+  de Google Cloud, Supabase ou Netlify foi alterada.
 
 ## Descoberta: taxonomia e áreas — Issue #87 — 23/11/2026
 

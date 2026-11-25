@@ -8,6 +8,11 @@ import {
   safeNextPath,
   trustedAppOrigin,
 } from "@/lib/identity";
+import {
+  ensureAuthProfile,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 
 const AUTH_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
@@ -16,121 +21,107 @@ function redirectNoStore(url: string) {
   return markPrivateNoStore(NextResponse.redirect(url));
 }
 
-/**
- * Monta o perfil de um usuário recém-autenticado sem sobrescrever um nome
- * escolhido pelo próprio usuário em `/perfil`.
- */
-async function provisionProfile(
-  user: { id: string; user_metadata?: Record<string, unknown> },
-  supabase: Awaited<ReturnType<typeof createClient>>,
-) {
-  const displayName =
-    user.user_metadata?.display_name ??
-    user.user_metadata?.full_name ??
-    user.user_metadata?.name ??
-    null;
-
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (
-    !existing?.display_name &&
-    typeof displayName === "string" &&
-    displayName.trim()
-  ) {
-    profileRow.display_name = displayName.trim().slice(0, 80);
-  }
-
-  return supabase
-    .from("profiles")
-    .upsert(profileRow, { onConflict: "id" })
-    .select("phone")
-    .single();
-}
-
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const origin = trustedAppOrigin(request.nextUrl.origin);
-  const code = searchParams.get("code");
-  const next = safeNextPath(searchParams.get("next"));
-  const flow = searchParams.get("flow");
-  const providerError = searchParams.get("error");
+  return measureAuthFlow("oauth_callback", async (setOutcome) => {
+    const { searchParams } = request.nextUrl;
+    const origin = trustedAppOrigin(request.nextUrl.origin);
+    const code = searchParams.get("code");
+    const next = safeNextPath(searchParams.get("next"));
+    const flow = searchParams.get("flow");
+    const providerError = searchParams.get("error");
 
-  if (!isSupabaseConfigured()) {
-    return redirectNoStore(
-      loginRedirectUrl(origin, next, AUTH_UNAVAILABLE_MESSAGE),
-    );
-  }
+    if (!isSupabaseConfigured()) {
+      setOutcome("unconfigured");
+      return redirectNoStore(
+        loginRedirectUrl(origin, next, AUTH_UNAVAILABLE_MESSAGE),
+      );
+    }
 
-  if (!code) {
-    const message = providerError
-      ? oauthErrorMessage(providerError)
-      : "Não foi possível concluir a autenticação. Tente novamente.";
-    return redirectNoStore(loginRedirectUrl(origin, next, message));
-  }
+    if (!code) {
+      setOutcome("auth_failed");
+      const message = providerError
+        ? oauthErrorMessage(providerError)
+        : "Não foi possível concluir a autenticação. Tente novamente.";
+      return redirectNoStore(loginRedirectUrl(origin, next, message));
+    }
 
-  let supabase: Awaited<ReturnType<typeof createClient>>;
-  try {
-    supabase = await createClient();
-  } catch {
-    return redirectNoStore(
-      loginRedirectUrl(origin, next, "Não foi possível concluir a autenticação. Tente novamente."),
-    );
-  }
+    let supabase: Awaited<ReturnType<typeof createClient>>;
+    try {
+      supabase = await measureAuthStep("supabase_client", () => createClient());
+    } catch {
+      setOutcome("auth_failed");
+      return redirectNoStore(
+        loginRedirectUrl(
+          origin,
+          next,
+          "Não foi possível concluir a autenticação. Tente novamente.",
+        ),
+      );
+    }
 
-  try {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) {
+    let user: Awaited<
+      ReturnType<typeof supabase.auth.getUser>
+    >["data"]["user"] = null;
+    try {
+      const { data: exchangeData, error } = await measureAuthStep(
+        "auth_exchange_code",
+        () => supabase.auth.exchangeCodeForSession(code),
+      );
+      if (error) {
+        setOutcome("auth_failed");
+        return redirectNoStore(
+          loginRedirectUrl(origin, next, oauthErrorMessage()),
+        );
+      }
+      user = exchangeData?.user ?? null;
+    } catch {
+      setOutcome("auth_failed");
       return redirectNoStore(
         loginRedirectUrl(origin, next, oauthErrorMessage()),
       );
     }
-  } catch {
-    return redirectNoStore(
-      loginRedirectUrl(origin, next, oauthErrorMessage()),
-    );
-  }
 
-  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"];
-  try {
-    const result = await supabase.auth.getUser();
-    if (result.error || !result.data.user) {
-      return redirectNoStore(loginRedirectUrl(origin, next));
+    if (!user) {
+      try {
+        const result = await measureAuthStep("auth_get_user", () =>
+          supabase.auth.getUser(),
+        );
+        if (result.error || !result.data.user) {
+          setOutcome("auth_failed");
+          return redirectNoStore(loginRedirectUrl(origin, next));
+        }
+        user = result.data.user;
+      } catch {
+        setOutcome("auth_failed");
+        return redirectNoStore(loginRedirectUrl(origin, next));
+      }
     }
-    user = result.data.user;
-  } catch {
-    return redirectNoStore(loginRedirectUrl(origin, next));
-  }
 
-  // Legacy PKCE recovery links may return a code here. Recovery never falls
-  // through to profile onboarding or to a caller-controlled destination.
-  if (flow === "recovery") {
-    return redirectNoStore(new URL("/redefinir-senha", origin).toString());
-  }
+    // Legacy PKCE recovery links may return a code here. Recovery never falls
+    // through to profile onboarding or to a caller-controlled destination.
+    if (flow === "recovery") {
+      setOutcome("redirect_recovery");
+      return redirectNoStore(new URL("/redefinir-senha", origin).toString());
+    }
 
-  try {
-    const { data: profile, error: profileError } = await provisionProfile(
-      user,
-      supabase,
-    );
-
-    if (profileError) {
+    try {
+      const profile = await measureAuthStep(
+        "ensure_profile",
+        () => ensureAuthProfile(supabase, user),
+        (result) => ({ profileWritten: result.wroteProfile }),
+      );
+      setOutcome(
+        profile.needsPhone ? "redirect_profile_onboarding" : "redirect_next",
+      );
+      const destination = profile.needsPhone
+        ? `/perfil?next=${encodeURIComponent(next)}`
+        : next;
+      return redirectNoStore(new URL(destination, origin).toString());
+    } catch {
+      setOutcome("profile_failed");
       return redirectNoStore(
         loginRedirectUrl(origin, next, "Não foi possível carregar seu perfil."),
       );
     }
-
-    const destination = profile.phone
-      ? next
-      : `/perfil?next=${encodeURIComponent(next)}`;
-    return redirectNoStore(new URL(destination, origin).toString());
-  } catch {
-    return redirectNoStore(
-      loginRedirectUrl(origin, next, "Não foi possível carregar seu perfil."),
-    );
-  }
+  });
 }
