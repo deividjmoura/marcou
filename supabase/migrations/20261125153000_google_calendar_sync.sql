@@ -2,7 +2,7 @@
 -- Additive; not applied to any remote database.
 create table public.provider_calendar_connections (
   provider_id uuid primary key references public.providers(id) on delete cascade,
-  refresh_token_ciphertext text not null,
+  refresh_token_ciphertext text,
   access_token_ciphertext text,
   access_token_expires_at timestamptz,
   calendar_id text not null default 'primary',
@@ -96,7 +96,7 @@ as $$
   with selected as (
     select id
     from public.calendar_sync_outbox
-    where status in ('pending','failed')
+    where (status in ('pending','failed') or (status = 'processing' and processing_started_at < now() - interval '10 minutes'))
       and available_at <= now()
       and attempts < 8
     order by available_at, created_at
