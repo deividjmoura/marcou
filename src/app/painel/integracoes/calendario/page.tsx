@@ -4,8 +4,8 @@ import { calendarAdminClient } from "@/server/calendar/admin";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { CalendarDisconnectForm } from "./disconnect-form";
 export const dynamic = "force-dynamic";
-export default async function CalendarIntegrationPage({ searchParams }: { searchParams: Promise<{ calendar?: string }> }) {
-  const params = await searchParams, user = await requireUser("/painel/integracoes/calendario");
+export default async function CalendarIntegrationPage({ searchParams }: { searchParams: Promise<{ calendar?: string | string[] }> }) {
+  const params = await searchParams, notice = Array.isArray(params.calendar) ? params.calendar[0] : params.calendar, user = await requireUser("/painel/integracoes/calendario");
   const provider = await getOwnedProvider(user.id);
   const enabled = isCalendarFeatureEnabled();
   let isConnected = false, statusUnavailable = false;
@@ -27,7 +27,7 @@ export default async function CalendarIntegrationPage({ searchParams }: { search
     <header className="painel-header"><div><span className="eyebrow">INTEGRAÇÕES</span><h1>Google Calendar</h1><p className="muted">Sincronização unidirecional dos agendamentos confirmados.</p></div></header>
     <section className="card form-stack">
       <Link href="/painel" className="btn btn-ghost">Voltar ao painel</Link>
-      {params.calendar && messages[params.calendar] ? <p className="alert" role="status">{messages[params.calendar]}</p> : null}
+      {notice && messages[notice] ? <p className="alert" role="status">{messages[notice]}</p> : null}
       {!enabled ? <p className="muted">Integração desativada neste ambiente.</p> : !provider ? <p className="muted">Configure seu negócio antes de conectar o calendário.</p> : statusUnavailable ? <p className="alert alert-error">Não foi possível verificar o status da integração. Tente novamente mais tarde.</p> : isConnected ? <>
         <p className="alert alert-success">Conta conectada.</p>
         <p>Somente o nome do serviço e horário são sincronizados. Dados do cliente não são enviados.</p>
