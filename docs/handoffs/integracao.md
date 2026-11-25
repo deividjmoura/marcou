@@ -43,8 +43,18 @@ ser `required` e ganhou um placeholder explicativo.
 
 **B4 (`src/app/reserva/[id]/reservation-role.ts`).** Os rótulos e ações por
 papel ficam num módulo puro. O cliente mantém exatamente o comportamento
-anterior. O dono vê as mesmas ações do painel: "Marcar comprovante recebido",
-"Confirmar pagamento" e "Cancelar reserva do cliente". As duas actions antigas
+anterior. Para o dono, os **eventos e os status** em que cada ação aparece
+são os mesmos do painel (`src/app/painel/page.tsx`). Dois rótulos são **mais
+explícitos de propósito**, porque nesta página o dono está vendo a reserva de
+outra pessoa:
+
+| Evento | Status | Painel | `/reserva/[id]` (dono) |
+| --- | --- | --- | --- |
+| `proof_received` | `pending_payment` | "Marcar comprovante" | "Marcar comprovante recebido" |
+| `payment_approved` | `pending_review` | "Confirmar pagamento" | "Confirmar pagamento" (igual) |
+| `cancel` | `pending_payment`, `pending_review`, `confirmed` | "Cancelar" | "Cancelar reserva do cliente" |
+
+As duas actions antigas
 viraram `reservationTransitionAction`, com lista fechada de eventos. A
 autorização continua integralmente em `transition_booking`: a interface não
 concede nem retira permissão. **O papel nunca vem do formulário:** a action lê
@@ -72,7 +82,14 @@ Rodada de 25/11/2026, depois dos ajustes de revisão: ver a descrição da PR #1
 ### Ordem de merge recomendada (para aprovação do responsável)
 
 1. **#122** (auth/CHANGELOG): mergeable, CI verde, 1 commit atrás da `main`.
-2. **#124** (esta PR, B3/B4): sem conflito com a #122.
+2. **#124** (esta PR, B3/B4). A #122 passa a exigir entrada em `## [Unreleased]`
+   (`npm run check:changelog` no CI). Por isso, a #124 já traz um
+   `CHANGELOG.md` com o cabeçalho e as entradas da #122 idênticos, mais as
+   linhas de B3/B4 em `Alterado`/`Corrigido`. O check da #122, rodado contra
+   esta branch (`--base origin/main`), passa. Depois do merge da #122 haverá
+   um conflito add/add em `CHANGELOG.md`, restrito às linhas novas. Resolução:
+   manter tudo da #122 e acrescentar as 3 entradas da #124. Nenhum outro
+   arquivo conflita (`git merge-tree`).
 3. **#32 corrigida** (patch comentado na PR #32). **Não aplicar agora:** ela
    depende de a #122 ser mesclada primeiro, e o conflito está em
    `.github/workflows/ci.yml`. Depois do merge da #122, regenerar o patch
@@ -128,4 +145,8 @@ Lacuna pré-existente, fora do escopo da #123 e desta PR: `bookings` e
 `booking_events` mantêm os defaults do Supabase (INSERT/UPDATE/DELETE/TRUNCATE
 para `anon`/`authenticated`). A RLS barra a escrita pela API, mas TRUNCATE
 ignora RLS. Não é explorável via PostgREST/GraphQL, mas vale uma issue de
-hardening própria, com uma migration de `revoke`.
+hardening própria, com uma migration de `revoke`. O diagnóstico completo
+está em [`privilegios-tabelas.md`](privilegios-tabelas.md): matriz de todas as
+tabelas de `public`, escritas legítimas, rascunho de migration validado
+localmente, desenho do `scripts/privileges-check.mjs` e passo de validação em
+dev. A lacuna atinge 8 tabelas, não só 2.

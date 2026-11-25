@@ -86,7 +86,8 @@ const OWNER_CANCEL: ReservationActionSpec = {
 /**
  * Cliente: mantém o comportamento anterior (comprovante enquanto aguarda
  * pagamento; cancelamento enquanto não confirmado).
- * Dono: espelha as ações do painel (`src/app/painel/page.tsx`).
+ * Dono: mesmos eventos e status do painel (`src/app/painel/page.tsx`), com
+ * rótulos mais explícitos para "marcar comprovante" e "cancelar".
  */
 export function reservationActionsFor(
   role: ReservationRole,

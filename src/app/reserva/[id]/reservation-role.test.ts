@@ -32,7 +32,7 @@ describe("reservationActionsFor", () => {
     ]],
     ["customer", "pending_review", ["cancel:Cancelar agendamento"]],
     ["customer", "confirmed", []],
-    // Dono: espelha o painel, sem rótulos escritos para o cliente.
+    // Dono: eventos/status do painel, rótulos explícitos e nenhum texto do cliente.
     ["owner", "pending_payment", [
       "proof_received:Marcar comprovante recebido",
       "cancel:Cancelar reserva do cliente",
