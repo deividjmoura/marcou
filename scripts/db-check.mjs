@@ -116,6 +116,8 @@ await db.query(`
 `);
 
 const MULTI_MIGRATION = "supabase/migrations/20261125120000_booking_multiple_services.sql";
+const PRIVILEGES_MIGRATION =
+  "supabase/migrations/20261125130000_table_privileges_matrix.sql";
 const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
   "supabase/migrations/202611150002_booking_operations.sql",
@@ -124,6 +126,7 @@ const migrations = [
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
   MULTI_MIGRATION,
+  PRIVILEGES_MIGRATION,
 ];
 
 async function writePrivileges(table) {
