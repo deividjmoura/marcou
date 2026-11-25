@@ -1,60 +1,115 @@
 -- Google Calendar one-way sync (Issue #29).
 -- Additive; not applied to any remote database.
-create table public.provider_calendar_connections (
+--
+-- Ordem: posterior a 20261125130000_table_privileges_matrix.sql (PR #123), cujo
+-- bloco condicional já reconhece `public.calendar_connections`. As três tabelas
+-- abaixo são exclusivas do servidor (service_role): RLS ligada, nenhuma policy
+-- de cliente e REVOKE explícito para neutralizar os default privileges que o
+-- Supabase concede a anon/authenticated em objetos novos de `public`.
+
+-- ---------------------------------------------------------------------------
+-- Conexões OAuth por prestador (tokens cifrados AES-256-GCM pela aplicação).
+-- ---------------------------------------------------------------------------
+create table public.calendar_connections (
   provider_id uuid primary key references public.providers(id) on delete cascade,
   refresh_token_ciphertext text,
   access_token_ciphertext text,
   access_token_expires_at timestamptz,
   calendar_id text not null default 'primary',
   granted_scope text not null default '',
-  connection_status text not null default 'pending' check (connection_status in ('pending','connected','suspended')),
+  connection_status text not null default 'pending'
+    check (connection_status in ('pending','connected','suspended')),
+  -- Motivo operacional da suspensão (ex.: invalid_grant, disconnect_requested).
+  suspended_reason text,
+  -- State OAuth: só o hash é persistido, preso ao usuário que iniciou o fluxo.
   oauth_state_hash text,
   oauth_state_expires_at timestamptz,
+  oauth_state_user_id uuid,
   connected_at timestamptz,
-  updated_at timestamptz not null default now()
+  -- Desconexão em andamento: tokens são mantidos até todos os eventos
+  -- mapeados serem removidos do Google (ou marcados como órfãos).
+  disconnect_requested_at timestamptz,
+  updated_at timestamptz not null default now(),
+  constraint calendar_connections_state_complete check (
+    (oauth_state_hash is null and oauth_state_expires_at is null and oauth_state_user_id is null)
+    or (oauth_state_hash is not null and oauth_state_expires_at is not null and oauth_state_user_id is not null)
+  ),
+  constraint calendar_connections_disconnect_suspended check (
+    disconnect_requested_at is null or connection_status = 'suspended'
+  )
 );
 
+create unique index calendar_connections_state_hash_key
+  on public.calendar_connections (oauth_state_hash)
+  where oauth_state_hash is not null;
+
+create index calendar_connections_disconnecting_idx
+  on public.calendar_connections (disconnect_requested_at)
+  where disconnect_requested_at is not null;
+
+-- ---------------------------------------------------------------------------
+-- Outbox transacional alimentada por booking_events.
+-- ---------------------------------------------------------------------------
 create table public.calendar_sync_outbox (
   id uuid primary key default gen_random_uuid(),
   booking_id uuid not null references public.bookings(id) on delete cascade,
   booking_event_id uuid not null references public.booking_events(id) on delete cascade,
   operation text not null check (operation in ('upsert','delete')),
-  status text not null default 'pending' check (status in ('pending','processing','succeeded','failed')),
+  -- dead = estado terminal após esgotar tentativas ou erro permanente.
+  status text not null default 'pending'
+    check (status in ('pending','processing','succeeded','failed','dead')),
   attempts integer not null default 0 check (attempts >= 0),
   available_at timestamptz not null default now(),
   processing_started_at timestamptz,
   completed_at timestamptz,
   last_error_code text,
-  created_at timestamptz not null default now(),
+  -- clock_timestamp() ordena jobs da mesma reserva mesmo dentro de uma transação.
+  created_at timestamptz not null default clock_timestamp(),
   unique (booking_event_id)
 );
 
 create index calendar_sync_outbox_ready_idx
   on public.calendar_sync_outbox (available_at, created_at)
-  where status in ('pending','failed');
+  where status in ('pending','failed','processing');
 
+create index calendar_sync_outbox_booking_head_idx
+  on public.calendar_sync_outbox (booking_id, created_at, id)
+  where status in ('pending','failed','processing');
+
+-- ---------------------------------------------------------------------------
+-- Vínculo reserva -> evento do Google.
+-- ---------------------------------------------------------------------------
 create table public.booking_calendar_events (
   booking_id uuid primary key references public.bookings(id) on delete cascade,
   provider_id uuid not null references public.providers(id) on delete cascade,
   calendar_id text not null,
   google_event_id text not null,
+  -- Preenchido quando o evento não pôde ser removido do Google (ex.: token
+  -- revogado durante a desconexão). O vínculo é mantido como rastro.
+  orphaned_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (calendar_id, google_event_id)
 );
 
-alter table public.provider_calendar_connections enable row level security;
+create index booking_calendar_events_provider_idx
+  on public.booking_calendar_events (provider_id);
+
+alter table public.calendar_connections enable row level security;
 alter table public.calendar_sync_outbox enable row level security;
 alter table public.booking_calendar_events enable row level security;
 
 -- No client policies: these tables are server/service-role only.
-revoke all on table public.provider_calendar_connections from public, anon, authenticated;
+revoke all on table public.calendar_connections from public, anon, authenticated;
 revoke all on table public.calendar_sync_outbox from public, anon, authenticated;
 revoke all on table public.booking_calendar_events from public, anon, authenticated;
-grant all on table public.provider_calendar_connections to service_role;
+grant all on table public.calendar_connections to service_role;
 grant all on table public.calendar_sync_outbox to service_role;
 grant all on table public.booking_calendar_events to service_role;
 
+-- ---------------------------------------------------------------------------
+-- Trigger: booking_events -> outbox (mesma transação do evento).
+-- ---------------------------------------------------------------------------
 create or replace function public.enqueue_calendar_sync_from_booking_event()
 returns trigger
 language plpgsql
@@ -82,39 +137,181 @@ begin
 end;
 $$;
 
-revoke all on function public.enqueue_calendar_sync_from_booking_event() from public, anon, authenticated;
+-- Função de trigger: ninguém precisa chamá-la diretamente (o disparo do trigger
+-- não exige EXECUTE de quem insere o booking_event).
+revoke all on function public.enqueue_calendar_sync_from_booking_event() from public, anon, authenticated, service_role;
 
 create trigger booking_events_calendar_outbox
   after insert on public.booking_events
   for each row execute function public.enqueue_calendar_sync_from_booking_event();
 
+-- ---------------------------------------------------------------------------
+-- Claim: no máximo um job por reserva, sempre o mais antigo não terminal.
+-- Reservas cujo job mais antigo ainda está em processing (não vencido) são
+-- ignoradas, então confirmação e cancelamento nunca correm juntos ou
+-- invertidos. Jobs presos em processing após a última tentativa viram dead.
+-- O limite de 8 tentativas espelha CALENDAR_MAX_ATTEMPTS no worker.
+-- ---------------------------------------------------------------------------
 create or replace function public.claim_calendar_sync_jobs(p_limit integer default 10)
 returns setof public.calendar_sync_outbox
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
-  with selected as (
-    select id
-    from public.calendar_sync_outbox
-    where (status in ('pending','failed') or (status = 'processing' and processing_started_at < now() - interval '10 minutes'))
-      and available_at <= now()
-      and attempts < 8
-    order by available_at, created_at
-    for update skip locked
-    limit greatest(1, least(coalesce(p_limit, 10), 25))
-  ), claimed as (
-    update public.calendar_sync_outbox o
-    set status = 'processing',
-        attempts = attempts + 1,
-        processing_started_at = now(),
-        last_error_code = null
-    from selected
-    where o.id = selected.id
-    returning o.*
+declare
+  v_limit integer := greatest(1, least(coalesce(p_limit, 10), 25));
+begin
+  update public.calendar_sync_outbox o
+  set status = 'dead',
+      completed_at = now(),
+      processing_started_at = null,
+      last_error_code = coalesce(o.last_error_code, 'worker_timeout_max_attempts')
+  where o.attempts >= 8
+    and (
+      o.status = 'failed'
+      or (o.status = 'processing' and o.processing_started_at < now() - interval '10 minutes')
+    );
+
+  return query
+  with heads as (
+    select distinct on (h.booking_id) h.id
+    from public.calendar_sync_outbox h
+    where h.status in ('pending','failed','processing')
+    order by h.booking_id, h.created_at, h.id
+  ), selected as (
+    select o.id
+    from public.calendar_sync_outbox o
+    join heads on heads.id = o.id
+    where (
+        o.status in ('pending','failed')
+        or (o.status = 'processing' and o.processing_started_at < now() - interval '10 minutes')
+      )
+      and o.available_at <= now()
+      and o.attempts < 8
+    order by o.available_at, o.created_at, o.id
+    for update of o skip locked
+    limit v_limit
   )
-  select * from claimed;
+  update public.calendar_sync_outbox o
+  set status = 'processing',
+      attempts = o.attempts + 1,
+      processing_started_at = now(),
+      last_error_code = null
+  from selected
+  where o.id = selected.id
+  returning o.*;
+end;
 $$;
 
 revoke all on function public.claim_calendar_sync_jobs(integer) from public, anon, authenticated;
 grant execute on function public.claim_calendar_sync_jobs(integer) to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Consumo atômico do state OAuth. O state é sempre queimado quando encontrado
+-- (inclusive vencido ou de outro usuário), impedindo replay e corrida entre
+-- callbacks simultâneos: o segundo bloqueia no FOR UPDATE e não encontra mais
+-- o hash.
+-- ---------------------------------------------------------------------------
+create or replace function public.consume_calendar_oauth_state(
+  p_state_hash text,
+  p_user_id uuid
+)
+returns table (connection_provider_id uuid, outcome text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_provider uuid;
+  v_user uuid;
+  v_expires timestamptz;
+  v_disconnecting timestamptz;
+begin
+  if p_state_hash is null or p_user_id is null then
+    return query select null::uuid, 'invalid'::text;
+    return;
+  end if;
+
+  select c.provider_id, c.oauth_state_user_id, c.oauth_state_expires_at, c.disconnect_requested_at
+    into v_provider, v_user, v_expires, v_disconnecting
+  from public.calendar_connections c
+  where c.oauth_state_hash = p_state_hash
+  for update;
+
+  if not found then
+    return query select null::uuid, 'invalid'::text;
+    return;
+  end if;
+
+  update public.calendar_connections c
+  set oauth_state_hash = null,
+      oauth_state_expires_at = null,
+      oauth_state_user_id = null,
+      updated_at = now()
+  where c.provider_id = v_provider;
+
+  if v_expires is null or v_expires <= now() then
+    return query select null::uuid, 'expired'::text;
+  elsif v_user is distinct from p_user_id then
+    return query select null::uuid, 'forbidden'::text;
+  elsif v_disconnecting is not null then
+    return query select null::uuid, 'disconnecting'::text;
+  else
+    return query select v_provider, 'ok'::text;
+  end if;
+end;
+$$;
+
+revoke all on function public.consume_calendar_oauth_state(text, uuid) from public, anon, authenticated;
+grant execute on function public.consume_calendar_oauth_state(text, uuid) to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Finalização da desconexão: só apaga a conexão (e os tokens) quando não há
+-- mais vínculo ativo nem job em processing do prestador. Devolve o refresh
+-- token cifrado para revogação best-effort depois do commit.
+-- ---------------------------------------------------------------------------
+create or replace function public.finalize_calendar_disconnect(p_provider_id uuid)
+returns table (finalized boolean, revoke_token_ciphertext text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_ciphertext text;
+begin
+  perform 1
+  from public.calendar_connections c
+  where c.provider_id = p_provider_id
+    and c.disconnect_requested_at is not null
+  for update;
+
+  if not found then
+    return query select false, null::text;
+    return;
+  end if;
+
+  if exists (
+    select 1 from public.booking_calendar_events m
+    where m.provider_id = p_provider_id and m.orphaned_at is null
+  ) or exists (
+    select 1
+    from public.calendar_sync_outbox o
+    join public.bookings b on b.id = o.booking_id
+    where b.provider_id = p_provider_id
+      and o.status = 'processing'
+      and o.processing_started_at >= now() - interval '10 minutes'
+  ) then
+    return query select false, null::text;
+    return;
+  end if;
+
+  delete from public.calendar_connections c
+  where c.provider_id = p_provider_id
+  returning c.refresh_token_ciphertext into v_ciphertext;
+
+  return query select true, v_ciphertext;
+end;
+$$;
+
+revoke all on function public.finalize_calendar_disconnect(uuid) from public, anon, authenticated;
+grant execute on function public.finalize_calendar_disconnect(uuid) to service_role;
