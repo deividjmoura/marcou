@@ -1,7 +1,7 @@
 # Handoff — Issue #29 Google Calendar
 
 ## Current status
-Implementation is on `arena/29-calendar-integration`, based on `main` SHA `67bb5717b2efdf692659bdda17c48e1b0315cacb`. Not merged, no PR opened yet. No remote database migration or deployment performed.
+Implementation is on `feat/29-google-calendar-sync`, based on `main` SHA `67bb5717b2efdf692659bdda17c48e1b0315cacb`. Not merged, no PR opened yet. No remote database migration or deployment performed.
 
 ## Scope / privacy
 One-way Marcou -> Google Calendar. Confirmed bookings enqueue an upsert; cancelled/expired bookings enqueue deletion. Rescheduling/reverse sync are out of scope. Event payload includes only service snapshot, start/end and provider IANA timezone; no customer name, phone, email, or booking UUID.
