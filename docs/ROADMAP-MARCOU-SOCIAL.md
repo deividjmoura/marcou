@@ -251,6 +251,39 @@ flowchart TD
 - não criar moderação apenas na interface: #103–#105 exigem enforcement no
   servidor/banco.
 
+## 6.5 Requisitos de produto consolidados e alocação por etapa
+
+Os requisitos abaixo são **obrigatórios para as entregas sociais** dentro da
+arquitetura canônica da [Issue #72](https://github.com/deividjmoura/marcou/issues/72)
+(sem criar issues duplicadas nem sistema monolítico fora da sequência de
+milestones):
+
+| Requisito de produto | Milestone / etapa de entrada | Issues responsáveis | Regra de implementação e compatibilidade |
+|---|---|---|---|
+| **Perfil único com acesso aos espaços Cliente e Profissional** | Base em `main` (PR #118) + evolução em **M1** | #23, #47, **#83** | Um único `auth.users.id`; preferência privada em `account_preferences`, seletor em `/inicio`, `/minha-conta` e `/painel`, e separação entre dados privados (`profiles`) e vitrine pública (`providers`) em #83. |
+| **Imagem obrigatória para novos serviços** | **M1** (pipeline e catálogo) | #52, **#84** | Novos serviços passam a exigir imagem validada pelo pipeline único de mídia; serviços legados já existentes preservam compatibilidade/placeholder até atualização pelo prestador. |
+| **Imagem adequada ao trabalho realizado** | **M1** (upload/vínculo) + **M4** (política e moderação) | #52, **#84**, #85, #104, #105, #106 | Validação server-side de formato real, dimensões, alt text e vínculo ao serviço próprio em #84/#85; diretrizes em #106 e reprovação/remoção auditável de mídia inadequada ao serviço em #104/#105. |
+| **Bloqueio de imagens com telefone, contato ou preços detectados por OCR e regras de validação** | **M1** (estágio de inspeção no pipeline) + **M4** (OCR e enforcement) | **#84**, **#104**, #105 | #84 prepara o pipeline para validar/reter publicação antes de promover a mídia; #104 aplica OCR e regras de detecção de telefone, WhatsApp, arrobas/links externos e preços embutidos na imagem (evitando vazamento de PII e divergência com `price_cents` do motor), integrando casos suspeitos à moderação (#105). |
+| **Publicações vinculadas a serviços reais** | **M2** (dados e publicação) + **M3** (conversão) | #90, **#91**, #99 | Integridade no banco garantindo que `service_id` pertence ao mesmo `provider_id` (#90), composer/permalink em #91 e CTA conectado ao motor real de agendamento sem confiar em preço/duração do cliente (#99). |
+| **Compartilhamento por links e Web Share API, com alternativas para WhatsApp, Facebook e outras redes quando suportadas** | **M1** (metadados de perfil) + **M2** (posts e ações de share) | #54, #86, **#91**, **#93** | Permalinks canônicos e Open Graph em #86/#91; ação de compartilhamento via Web Share API nativa, cópia de link canônico e fallbacks diretos por URL para WhatsApp, Facebook e redes suportadas (sem SDKs externos invasivos) em #93. |
+| **Feed de publicações de profissionais** | **M2** | #90, **#91**, #94, #95 | Publicação restrita a perfis profissionais no beta (#90/#91), consulta paginada por cursor com ranking determinístico (#94) e interface resiliente (#95). |
+| **Feed acessível pela área do cliente** | **M2** | #47, #89, **#95** | Entrada direta para o feed e descoberta a partir do espaço Cliente (`/inicio` e `/minha-conta`) sob a feature flag `social_feed`, mantendo `Meus agendamentos` e reservas operacionais mesmo com a flag desligada. |
+| **Moderação de conteúdo e mecanismo de denúncia** | **M4** (núcleo) + **M5** (console operacional) | **#103**, **#104**, **#105**, #108 | Denúncia autenticada sem expor o denunciante e bloqueio/silêncio server-side (#103), proteção automatizada/rate-limit/OCR (#104), fila de casos, sanções reversíveis e audit log imutável (#105) e console administrativo (#108) antes do beta (#112). |
+
+### Verificação de dependências das Issues #84, #91 e #93
+
+Estado verificado em 24/11/2026 antes de iniciar implementações sociais:
+
+1. **Issue #84 (`[MEDIA] Criar pipeline seguro para avatar, capa, portfólio e posts` — M1):**
+   - Dependências declaradas: `#82` (concluída), `#83` (aberta), `#52` (aberta) e `#53` (aberta).
+   - Condição de entrada: fechar o contrato de perfil público/privado da `#83` (que depende da estabilização de `#23`, `#43` e `#47`) e alinhar `#52`/`#53` para que **toda** mídia (avatar, capa, imagem obrigatória de novos serviços, portfólio e posts) passe por um único pipeline server-side em `#84`, já prevendo o gancho de validação/OCR detalhado em `#104`.
+2. **Issue #91 (`[POSTS] Implementar publicação de posts com mídia e serviço associado` — M2):**
+   - Dependências declaradas: `#90` (aberta — schema social e RLS, que aguarda `#83`), `#84` (aberta — pipeline de mídia) e `#85` (aberta — portfólio vinculado a serviços, que aguarda `#83`, `#84` e `#52`).
+   - Condição de entrada: **não iniciar antes de `#83` → `#84` → `#85` e `#90`**, evitando criar upload paralelo ou tabela de post sem RLS consolidada.
+3. **Issue #93 (`[ENGAGEMENT] Implementar curtidas, comentários, salvos e compartilhamento` — M2):**
+   - Dependências declaradas: `#90` (aberta — schema social), `#91` (aberta — posts e permalinks) e `#92` (aberta — follow graph, que aguarda `#83`, `#86` e `#90`).
+   - Condição de entrada: **aguardar `#90`, `#91` e `#92`**, entregando curtidas/salvos idempotentes, comentários paginados e compartilhamento via Web Share API + link canônico + alternativas para WhatsApp, Facebook e redes suportadas antes da montagem do feed (`#94`/`#95`).
+
 ## 7. Relação com backlog existente
 
 Estas issues não foram duplicadas nem movidas de milestone:

@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { withAuthFlowCollector, type AuthFlowTiming } from "@/server/identity";
 
 const mocks = vi.hoisted(() => ({
   exchangeCodeForSession: vi.fn(),
   getUser: vi.fn(),
-  maybeSingle: vi.fn(),
-  single: vi.fn(),
+  selectMaybeSingle: vi.fn(),
+  selectSingle: vi.fn(),
   upsert: vi.fn(),
+  upsertMaybeSingle: vi.fn(),
+  update: vi.fn(),
+  updateMaybeSingle: vi.fn(),
 }));
 
 vi.mock("@/lib/env", () => ({ isSupabaseConfigured: () => true }));
@@ -19,10 +23,13 @@ vi.mock("@/lib/supabase/server", () => ({
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({ maybeSingle: mocks.maybeSingle })),
-        single: mocks.single,
+        eq: vi.fn(() => ({
+          maybeSingle: mocks.selectMaybeSingle,
+          single: mocks.selectSingle,
+        })),
       })),
       upsert: mocks.upsert,
+      update: mocks.update,
     })),
   })),
 }));
@@ -46,14 +53,41 @@ describe("GET /auth/callback", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     vi.clearAllMocks();
-    mocks.maybeSingle.mockResolvedValue({
-      data: { display_name: null },
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
       error: null,
     });
-    mocks.single.mockResolvedValue({ data: { phone: "47999991234" }, error: null });
+    mocks.selectSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
+    mocks.upsertMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: null },
+      error: null,
+    });
     mocks.upsert.mockImplementation(() => ({
-      select: () => ({ single: mocks.single }),
+      select: () => ({ maybeSingle: mocks.upsertMaybeSingle }),
     }));
+    mocks.updateMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: "47999991234" },
+      error: null,
+    });
+    mocks.update.mockImplementation(() => ({
+      eq: () => ({
+        is: () => ({
+          select: () => ({ maybeSingle: mocks.updateMaybeSingle }),
+        }),
+        eq: () => ({
+          select: () => ({ maybeSingle: mocks.updateMaybeSingle }),
+        }),
+      }),
+    }));
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: {
+        user: { id: "user-1", user_metadata: { name: "Ana" } },
+      },
+      error: null,
+    });
     mocks.getUser.mockResolvedValue({
       data: { user: { id: "user-1", user_metadata: { name: "Ana" } } },
       error: null,
@@ -88,6 +122,7 @@ describe("GET /auth/callback", () => {
 
   it("preserva o destino quando a troca do code falha", async () => {
     mocks.exchangeCodeForSession.mockResolvedValue({
+      data: { user: null },
       error: new Error("invalid_grant"),
     });
 
@@ -99,18 +134,21 @@ describe("GET /auth/callback", () => {
     expectPrivateNoStore(response);
   });
 
-  it("levam o usuário com telefone para o destino original", async () => {
-    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
-
+  it("leva o usuário recorrente com telefone para o destino original sem chamar getUser nem escrever no banco", async () => {
     const response = await GET(callbackRequest("?code=abc&next=%2Fp%2Fstudio-ana"));
 
     expect(response.headers.get("location")).toBe(`${ORIGIN}/p/studio-ana`);
     expectPrivateNoStore(response);
+    expect(mocks.getUser).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it("encaminha para o perfil quando o telefone ainda falta", async () => {
-    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
-    mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: { display_name: "Ana", phone: null },
+      error: null,
+    });
 
     const response = await GET(callbackRequest("?code=abc&next=%2Fp%2Fstudio-ana"));
 
@@ -120,9 +158,6 @@ describe("GET /auth/callback", () => {
   });
 
   it("envia a recuperação diretamente para redefinir a senha, sem exigir telefone", async () => {
-    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
-    mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
-
     const response = await GET(
       callbackRequest("?code=recovery-code&flow=recovery&next=%2Fpainel"),
     );
@@ -132,12 +167,15 @@ describe("GET /auth/callback", () => {
     );
     expectPrivateNoStore(response);
     expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("recovery-code");
+    expect(mocks.selectMaybeSingle).not.toHaveBeenCalled();
     expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
   it("não trata um destino isolado como recuperação de senha", async () => {
-    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
-    mocks.single.mockResolvedValue({ data: { phone: null }, error: null });
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: null,
+      error: null,
+    });
 
     const response = await GET(
       callbackRequest("?code=abc&next=%2Fredefinir-senha"),
@@ -146,36 +184,58 @@ describe("GET /auth/callback", () => {
     expect(response.headers.get("location")).toBe(
       `${ORIGIN}/perfil?next=%2Fredefinir-senha`,
     );
-    expect(mocks.upsert).toHaveBeenCalled();
-  });
-
-  it("não sobrescreve um nome já escolhido pelo usuário", async () => {
-    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
-    mocks.maybeSingle.mockResolvedValue({
-      data: { display_name: "Nome do usuário" },
-      error: null,
-    });
-
-    await GET(callbackRequest("?code=abc&next=%2Fpainel"));
-
-    expect(mocks.upsert).toHaveBeenCalledWith(
-      { id: "user-1" },
-      { onConflict: "id" },
-    );
-  });
-
-  it("preenche o nome do provedidor apenas quando o perfil ainda não tem nome", async () => {
-    mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
-    mocks.maybeSingle.mockResolvedValue({
-      data: { display_name: null },
-      error: null,
-    });
-
-    await GET(callbackRequest("?code=abc&next=%2Fpainel"));
-
     expect(mocks.upsert).toHaveBeenCalledWith(
       { id: "user-1", display_name: "Ana" },
-      { onConflict: "id" },
+      { onConflict: "id", ignoreDuplicates: true },
     );
+  });
+
+  it("não sobrescreve nem regrava quando o perfil já possui nome escolhido pelo usuário", async () => {
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: { display_name: "Nome do usuário", phone: "47999991234" },
+      error: null,
+    });
+
+    await GET(callbackRequest("?code=abc&next=%2Fpainel"));
+
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("preenche o nome do provedor apenas quando o perfil existente ainda não tem nome", async () => {
+    mocks.selectMaybeSingle.mockResolvedValue({
+      data: { display_name: null, phone: "47999991234" },
+      error: null,
+    });
+
+    await GET(callbackRequest("?code=abc&next=%2Fpainel"));
+
+    expect(mocks.update).toHaveBeenCalledWith({ display_name: "Ana" });
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("mede o fluxo completo de callback OAuth sem registrar code, user_id ou destino", async () => {
+    const reports: AuthFlowTiming[] = [];
+    const response = await withAuthFlowCollector(
+      (report) => reports.push(report),
+      () => GET(callbackRequest("?code=pkce-secret-code&next=%2Fminha-conta")),
+    );
+
+    expect(response.headers.get("location")).toBe(`${ORIGIN}/minha-conta`);
+    expect(reports).toHaveLength(1);
+    expect(reports[0]).toMatchObject({
+      flow: "oauth_callback",
+      outcome: "redirect_next",
+      steps: [
+        { step: "supabase_client" },
+        { step: "auth_exchange_code" },
+        { step: "ensure_profile", profileWritten: false },
+      ],
+    });
+    const raw = JSON.stringify(reports);
+    expect(raw).not.toContain("pkce-secret-code");
+    expect(raw).not.toContain("user-1");
+    expect(raw).not.toContain("47999991234");
+    expect(raw).not.toContain("/minha-conta");
   });
 });
