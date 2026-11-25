@@ -1,3 +1,4 @@
+import { isSupabaseConfigured } from "@/lib/env";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { calendarNoticeRedirect, calendarSiteOrigin } from "@/server/calendar/http";
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const origin = calendarSiteOrigin() ?? url.origin;
   if (!isCalendarFeatureEnabled()) return calendarNoticeRedirect("disabled", origin, 302);
-  if (!isCalendarServerConfigured()) return calendarNoticeRedirect("configuration-error", origin, 302);
+  if (!isSupabaseConfigured() || !isCalendarServerConfigured()) return calendarNoticeRedirect("configuration-error", origin, 302);
   if (url.searchParams.has("error")) return calendarNoticeRedirect("denied", origin, 302);
 
   const state = url.searchParams.get("state");

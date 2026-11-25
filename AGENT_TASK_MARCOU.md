@@ -15,9 +15,14 @@
 - Validação local: lint, typecheck, 204 testes Vitest, `test:db` (legado 69,
   social 47, identidade 32, discovery 40, calendar 83 — todos sem falha) e
   build. Fluxo OAuth real, Google API, scheduler e CI não validados.
-- Pendente da PR #123: ajustes em `scripts/privileges-check.mjs` e
-  `docs/handoffs/privilegios-tabelas.md`, descritos em
-  `docs/handoffs/29-calendar.md`.
+- Branch empilhada sobre a PR #123 (merge de `16f0166`, autorizado): as 3
+  tabelas do Calendar entram na matriz de `scripts/privileges-check.mjs`
+  (fase `before` exclui matriz e Calendar) e em
+  `docs/handoffs/privilegios-tabelas.md`. A #123 precisa ser mesclada antes.
+  Validação empilhada: 214 testes, `test:db` (booking 116, social 50,
+  identidade 32, discovery 40, privilégios 43/49, calendar 84 — sem falhas),
+  `audit` 0/0 e build. Emular defaults do Supabase desde a primeira migration
+  segue dependente da #125.
 
 ## Estabilização de autenticação, velocidade de login e changelog obrigatório — 24/11/2026
 

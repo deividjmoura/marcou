@@ -65,7 +65,7 @@ Funções (`SECURITY DEFINER`, `search_path = public`, sem EXECUTE para `public/
 | `consume_calendar_oauth_state(text, uuid)` | `service_role` |
 | `finalize_calendar_disconnect(uuid)` | `service_role` |
 
-`scripts/calendar-check.mjs` (em `npm run test:db`) aplica todas as migrations emulando os default privileges do Supabase e verifica privilégios, RLS, trigger, ordem/exclusividade do claim (inclusive 8 claims paralelos), `dead`, state OAuth e finalização.
+As três tabelas estão na matriz de `scripts/privileges-check.mjs` (PR #123): ausentes na fase `before`, sem privilégio para `anon`/`authenticated` na `after`. `scripts/calendar-check.mjs` (em `npm run test:db`) aplica todas as migrations emulando os default privileges do Supabase e verifica privilégios, RLS, trigger, ordem/exclusividade do claim (inclusive 8 claims paralelos), `dead`, state OAuth e finalização.
 
 ## Scheduler
 A PR #38 propõe `GET /api/cron`, mas não está mesclada nem tem scheduler ativo. Esta entrega não cria cron concorrente. Depois de deploy, migration e secrets, configurar um job externo para `POST /api/calendar/worker` com `Authorization: Bearer <GOOGLE_CALENDAR_WORKER_SECRET>` (lote de 10 jobs + até 5 desconexões por chamada).

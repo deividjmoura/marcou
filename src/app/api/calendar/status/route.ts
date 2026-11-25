@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { calendarRuntime } from "@/server/calendar/runtime";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!isCalendarFeatureEnabled()) return NextResponse.json({ enabled: false, connected: false }, { status: 404 });
+  if (!isSupabaseConfigured()) return NextResponse.json({ enabled: true, connected: false }, { status: 503 });
   const user = await requireUser("/painel");
   const provider = await getOwnedProvider(user.id);
   if (!provider) return NextResponse.json({ enabled: true, connected: false, state: "not_connected" });

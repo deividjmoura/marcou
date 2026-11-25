@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { calendarNoticeRedirect, calendarSiteOrigin, isTrustedCalendarOrigin } from "@/server/calendar/http";
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "origin_forbidden" }, { status: 403 });
   }
   if (!isCalendarFeatureEnabled()) return calendarNoticeRedirect("disabled", origin);
-  if (!isCalendarServerConfigured()) return calendarNoticeRedirect("configuration-error", origin);
+  if (!isSupabaseConfigured() || !isCalendarServerConfigured()) return calendarNoticeRedirect("configuration-error", origin);
 
   const user = await requireUser("/painel/integracoes/calendario");
   const provider = await getOwnedProvider(user.id);

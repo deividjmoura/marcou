@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CalendarAdminClient } from "./admin";
 import { CalendarSyncError } from "./errors";
 
 export type ConnectionStatus = "pending" | "connected" | "suspended";
@@ -88,7 +88,7 @@ function fail(code: string): never {
   throw new CalendarSyncError(code, true);
 }
 
-export function createSupabaseCalendarStore(admin: SupabaseClient): CalendarStore {
+export function createSupabaseCalendarStore(admin: CalendarAdminClient): CalendarStore {
   const now = () => new Date().toISOString();
 
   async function updateJob(jobId: string, values: Record<string, unknown>, code: string) {

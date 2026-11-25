@@ -92,3 +92,6 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   deixam de ser ignoradas; estado terminal `dead`; `invalid_grant` suspende a
   conexão; desconexão mantém tokens e vínculos até os eventos saírem do Google
   (ou serem marcados como órfãos).
+- Google Calendar (`#29`): cliente service-role do servidor criado via
+  `@supabase/ssr` (sem cookies) e rotas/página do Calendar com guarda de
+  configuração do Supabase; `npm run audit` volta a 0 falhas e 0 avisos.

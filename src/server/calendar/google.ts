@@ -42,6 +42,14 @@ function eventPath(calendarId: string, eventId?: string) {
   return eventId ? `${base}/${encodeURIComponent(eventId)}` : base;
 }
 
+/** Parâmetros do token endpoint com as credenciais OAuth lidas do ambiente. */
+function tokenRequestBody(fields: Record<string, string>): URLSearchParams {
+  const body = new URLSearchParams(fields);
+  body.set("client_id", process.env.GOOGLE_CALENDAR_CLIENT_ID ?? "");
+  body.set("client_secret", process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? "");
+  return body;
+}
+
 export function createGoogleCalendarApi(fetchImpl: FetchLike = fetch): GoogleCalendarApi {
   async function send(prefix: string, input: string, init: RequestInit): Promise<Response> {
     try {
@@ -67,13 +75,7 @@ export function createGoogleCalendarApi(fetchImpl: FetchLike = fetch): GoogleCal
       const response = await send("calendar_oauth_exchange", TOKEN_ENDPOINT, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          code,
-          client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID ?? "",
-          client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? "",
-          redirect_uri: redirectUri,
-          grant_type: "authorization_code",
-        }),
+        body: tokenRequestBody({ code, redirect_uri: redirectUri, grant_type: "authorization_code" }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || typeof payload.access_token !== "string") {
@@ -86,12 +88,7 @@ export function createGoogleCalendarApi(fetchImpl: FetchLike = fetch): GoogleCal
       const response = await send("google_refresh", TOKEN_ENDPOINT, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID ?? "",
-          client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? "",
-          refresh_token: refreshToken,
-          grant_type: "refresh_token",
-        }),
+        body: tokenRequestBody({ refresh_token: refreshToken, grant_type: "refresh_token" }),
       });
       const payload = await response.json().catch(() => ({}));
       if (response.ok && typeof payload.access_token === "string") {

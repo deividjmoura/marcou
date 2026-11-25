@@ -32,13 +32,15 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
 4. **bookings e booking_events:** intactos (`SELECT` para `anon` e
    `authenticated`, o restante via funções de servidor). A comparação
    before/after no harness prova que não houve mudança.
-5. **Ordem em relação ao Calendar (#29):** a migration desta task roda **antes**
-   da migration que criar `public.calendar_connections`. A tabela de tokens já
-   consta da matriz com `anon`/`authenticated` sem acesso e `service_role` com
-   acesso total. Um bloco `DO` condicional na migration aplica esses grants se
-   a tabela já existir em algum ambiente. A migration do Calendar deve criar a
-   tabela com RLS e repita os `REVOKE`/`GRANT` no mesmo arquivo; o check passa a
-   validar a tabela automaticamente assim que ela existir.
+5. **Ordem em relação ao Calendar (#29):** a migration da matriz
+   (`20261125130000`) roda **antes** de
+   `20261125153000_google_calendar_sync.sql`, que cria `calendar_connections`,
+   `calendar_sync_outbox` e `booking_calendar_events` com RLS, `revoke all ...
+   from public, anon, authenticated` e `grant all ... to service_role` no mesmo
+   arquivo. O bloco `DO` condicional da matriz roda quando a tabela ainda não
+   existe e por isso não tem efeito; quem garante os privilégios é a migration
+   do Calendar. Desde a integração da #29, as três tabelas estão em `OBJECTS`
+   e são verificadas na fase `after` (ver seção "Google Calendar (#29)").
 6. **Sem referência de issue na PR:** o responsável escolheu não usar `Refs`
    nesta PR draft (a issue `[SECURITY]` pretendida não foi identificada de
    forma inequívoca: #41 está OPEN e #14 CLOSED, nenhuma fala de matriz de
@@ -72,7 +74,9 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
 | `service_category_catalog` (view) | SELECT | SELECT | SELECT |
 | `service_category_suggestions` | — | SELECT, INSERT | ALL |
 | `provider_service_areas` | — | SELECT, INSERT, UPDATE, DELETE | ALL |
-| `calendar_connections` (futuro, #29) | — | — | ALL |
+| `calendar_connections` (#29, tokens cifrados) | — | — | ALL |
+| `calendar_sync_outbox` (#29) | — | — | ALL |
+| `booking_calendar_events` (#29) | — | — | ALL |
 
 ## Como cada PR futura registra suas tabelas
 
@@ -84,14 +88,29 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
    default privileges do Supabase, que concedem escrita a papéis de API.
 3. Replique a linha neste handoff e, se a tabela tiver tokens, PII ou segredos,
    registre explicitamente por que `anon`/`authenticated` não a leem.
-4. Rode `npm run test:db`. O `scripts/privileges-check.mjs` roda 43 fluxos nas
-   fases **antes** e **depois** das migrations e falha se houver objeto
-   sem matriz ou privilégio diferente do contratado.
+4. Rode `npm run test:db`. O `scripts/privileges-check.mjs` verifica cada
+   objeto da matriz para `anon` e `authenticated` nas fases **antes** (21
+   objetos) e **depois** (24 objetos) das migrations e falha se houver objeto
+   sem matriz ou privilégio diferente do contratado. Se a sua migration for
+   posterior à matriz e criar tabelas, exclua-a também da fase `before` (como
+   o Calendar) e declare as tabelas como adições esperadas na comparação.
 5. Se a mudança for intencional (nova write de cliente, por exemplo), atualize
    a matriz, o handoff e o teste na mesma PR — nunca relaxe o check só para
    fazer o CI passar.
 
 ## Validação executada
+
+### Com o Calendar (#29) empilhado — 25/11/2026
+
+- `node scripts/privileges-check.mjs`: fase `before` 43/0 fluxos (21 objetos ×
+  2 papéis + escrita direta em `notifications`), fase `after` 49/0 (24 objetos
+  × 2 + 1), 25/0 checagens estruturais em cada fase e 3/0 na comparação.
+- `npm run test:db`: booking `116/0`, social `50/0`, identidade `32/0`,
+  descoberta `40/0`, matriz conforme o contrato e calendar `84/0`.
+- `npm test` 214/214; `lint` (3 avisos antigos de `<img>`), `typecheck`,
+  `audit` (0 falhas, 0 avisos), `build` e `check:changelog` sem erro.
+
+### Entrega original da #123
 
 - `node scripts/privileges-check.mjs`: 43 fluxos antes da migration (43/0) e
   43 fluxos depois (43/0), com diferença única e esperada no UPDATE direto de
@@ -111,10 +130,53 @@ head da #123, o responsável autorizou abrir a PR draft de SECURITY contra
 `main` a partir deste mesmo head, aceitando que os commits de SECURITY também
 apareçam no diff da #123. Não houve force-push nem reescrita de histórico.
 
+## Google Calendar (#29)
+
+Integrado na branch `arena/9e68c2bb-marcou`, empilhada sobre esta PR.
+
+- **Tabelas:** as três são exclusivas do servidor. `calendar_connections`
+  guarda refresh/access tokens cifrados (AES-256-GCM) e o hash do state OAuth;
+  `calendar_sync_outbox` e `booking_calendar_events` têm IDs de reservas e de
+  eventos do Google. Por isso `anon`/`authenticated` não têm nenhum privilégio
+  nem policy; o navegador só recebe o estado da conexão por rotas de servidor
+  que nunca devolvem token.
+- **Funções** (todas `SECURITY DEFINER`, `search_path = public`, sem EXECUTE
+  para `PUBLIC`, `anon` ou `authenticated`):
+
+  | Função | EXECUTE |
+  |---|---|
+  | `enqueue_calendar_sync_from_booking_event()` (trigger) | ninguém (nem `service_role`) |
+  | `claim_calendar_sync_jobs(integer)` | `service_role` |
+  | `consume_calendar_oauth_state(text, uuid)` | `service_role` |
+  | `finalize_calendar_disconnect(uuid)` | `service_role` |
+
+- **`scripts/privileges-check.mjs`:**
+  - as 3 tabelas estão na `MATRIX` e em `OBJECTS` (o filtro que excluía
+    `calendar_connections` foi removido);
+  - a fase `before` exclui a migration da matriz **e** a do Calendar, e exige
+    que as tabelas do Calendar ainda não existam;
+  - na fase `after`, os defaults do Supabase (tabelas, sequences e funções)
+    são emulados antes da migration do Calendar, e as tabelas precisam existir
+    sem nenhum privilégio para `anon`/`authenticated` e com ALL para
+    `service_role`;
+  - a comparação aceita as tabelas do Calendar como única adição além de
+    `notifications`, e só se vierem vazias.
+- **Teste negativo:** removendo os `revoke all on table` da migration do
+  Calendar, o check passa a falhar com 7 erros (6 fluxos + comparação). Antes
+  dessa mudança ele continuava verde.
+- **Cobertura complementar:** `scripts/calendar-check.mjs` verifica RLS,
+  ausência de policies e sequences, EXECUTE das 4 funções e acesso direto real
+  como `anon`/`authenticated` (`permission denied`).
+
 ## Riscos e limitações
 
-- A tabela `calendar_connections` ainda não existe; a linha da matriz é uma
-  promessa de contrato para #29, não uma tabela verificável hoje.
+- **Defaults do Supabase desde a primeira migration:** este check só emula os
+  default privileges a partir de `20261125120000` (e reforça antes do
+  Calendar). As 20 tabelas anteriores são verificadas num Postgres limpo, onde
+  `anon`/`authenticated` nunca recebem o `GRANT ALL` do Supabase. Emular desde
+  a primeira migration hoje gera falhas nas tabelas legadas (ver auditoria na
+  #123); a correção depende do hardening proposto na #125 e não faz parte da
+  #29.
 - `CONTRIBUTING.md` e `check:changelog` foram trazidos da PR #122 (aberta) apenas
   na parte necessária à exigência de changelog; conflito textual com essa PR é
   esperado quando ela for integrada.

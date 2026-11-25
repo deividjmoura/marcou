@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { calendarRuntime } from "@/server/calendar/runtime";
@@ -42,6 +44,19 @@ export default async function CalendarIntegrationPage({
 }) {
   const params = await searchParams;
   const notice = Array.isArray(params.calendar) ? params.calendar[0] : params.calendar;
+  if (!isSupabaseConfigured()) {
+    return (
+      <main className="page-shell page-painel">
+        <header className="painel-header">
+          <div>
+            <span className="eyebrow">INTEGRAÇÕES</span>
+            <h1>Google Calendar</h1>
+          </div>
+        </header>
+        <SupabaseConfigWarning />
+      </main>
+    );
+  }
   const user = await requireUser("/painel/integracoes/calendario");
   const provider = await getOwnedProvider(user.id);
   const enabled = isCalendarFeatureEnabled();

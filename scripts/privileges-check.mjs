@@ -2,13 +2,16 @@
  * Verificação da matriz canônica de privilégios de tabelas/views do schema public.
  *
  * Roda duas fases em clusters PostgreSQL embutidos independentes:
- *   before — todas as migrations até a anterior à matriz de privilégios;
- *   after  — todas as migrations, inclusive a matriz de privilégios.
+ *   before — todas as migrations, exceto a matriz de privilégios e a do
+ *            Google Calendar (#29), que é posterior à matriz;
+ *   after  — todas as migrations, inclusive a matriz e o Calendar.
  *
- * Cada fase executa 43 fluxos: 21 objetos x 2 papéis de API (anon e
- * authenticated) mais o fluxo de escrita direta em notifications. A comparação
- * exige que a única diferença entre as fases seja a perda do UPDATE direto de
- * authenticated em notifications, preservando bookings e booking_events.
+ * Fluxos: 2 papéis de API (anon e authenticated) por objeto da matriz — 21
+ * objetos na fase before e 24 na after (as 3 tabelas do Calendar) — mais o
+ * fluxo de escrita direta em notifications. A comparação exige que as únicas
+ * diferenças sejam a perda do UPDATE direto de authenticated em notifications
+ * e o surgimento das tabelas do Calendar sem nenhum privilégio para
+ * anon/authenticated, preservando bookings e booking_events.
  *
  * Uso:
  *   node scripts/privileges-check.mjs             # fases before e after
@@ -24,6 +27,9 @@ import pg from "pg";
 const { Client } = pg;
 const SECURITY_MIGRATION = "20261125130000_table_privileges_matrix.sql";
 const MULTI_MIGRATION = "20261125120000_booking_multiple_services.sql";
+const CALENDAR_MIGRATION = "20261125153000_google_calendar_sync.sql";
+/** Tabelas criadas pela migration do Calendar: só existem na fase after. */
+const CALENDAR_OBJECTS = ["calendar_connections", "calendar_sync_outbox", "booking_calendar_events"];
 const PRIVILEGES = [
   "SELECT",
   "INSERT",
@@ -39,10 +45,11 @@ const PRIVILEGES = [
  * matriz reprova o check — é o mecanismo que impede privilégios padrão do
  * Supabase em tabelas novas sem decisão explícita.
  *
- * `calendar_connections` é a tabela de tokens do Calendar (#29): entra na
- * matriz antes da migration que a cria. A migration desta task é anterior à do
- * Calendar e já contém o bloco condicional que aplica os grants quando ela
- * existir.
+ * As tabelas do Calendar (#29) são exclusivas do servidor: nenhum privilégio
+ * para anon/authenticated e ALL para service_role. A migration do Calendar é
+ * posterior à matriz e faz o próprio REVOKE/GRANT; o bloco condicional da
+ * matriz (`to_regclass('public.calendar_connections')`) roda antes dela e não
+ * tem efeito.
  */
 const MATRIX = {
   account_preferences: { anon: [], authenticated: ["SELECT"], service_role: ["ALL"] },
@@ -106,11 +113,13 @@ const MATRIX = {
     authenticated: ["SELECT", "INSERT", "UPDATE", "DELETE"],
     service_role: ["ALL"],
   },
-  // Objeto futuro: ainda não existe, mas já tem papel e permissões definidos.
+  // Google Calendar (#29): tokens cifrados, outbox e vínculos — só servidor.
   calendar_connections: { anon: [], authenticated: [], service_role: ["ALL"] },
+  calendar_sync_outbox: { anon: [], authenticated: [], service_role: ["ALL"] },
+  booking_calendar_events: { anon: [], authenticated: [], service_role: ["ALL"] },
 };
 
-const OBJECTS = Object.keys(MATRIX).filter((name) => name !== "calendar_connections");
+const OBJECTS = Object.keys(MATRIX);
 const DIRECT_UPDATE_FLOW = "notifications: UPDATE direto de authenticated";
 
 function expectedFor(object, role, phase) {
@@ -223,11 +232,16 @@ async function runPhase(phase) {
     let names = (await readdir(migrationDirectory))
       .filter((name) => name.endsWith(".sql"))
       .sort();
+    for (const required of [SECURITY_MIGRATION, CALENDAR_MIGRATION]) {
+      if (!names.includes(required)) throw new Error(`migration não encontrada: ${required}`);
+    }
+    reportStructural(
+      phase,
+      "migration do Calendar é posterior à matriz de privilégios",
+      names.indexOf(CALENDAR_MIGRATION) > names.indexOf(SECURITY_MIGRATION),
+    );
     if (phase === "before") {
-      if (!names.includes(SECURITY_MIGRATION)) {
-        throw new Error(`migration da matriz não encontrada: ${SECURITY_MIGRATION}`);
-      }
-      names = names.filter((name) => name !== SECURITY_MIGRATION);
+      names = names.filter((name) => name !== SECURITY_MIGRATION && name !== CALENDAR_MIGRATION);
     }
 
     for (const name of names) {
@@ -237,6 +251,15 @@ async function runPhase(phase) {
         await db.query(
           `alter default privileges in schema public grant all on tables to anon, authenticated`,
         );
+      }
+      if (name === CALENDAR_MIGRATION) {
+        // Reforça a emulação dos defaults do Supabase (tabelas, sequences e
+        // funções) para os objetos novos do Calendar.
+        await db.query(`
+          alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+          alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+          alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
+        `);
       }
       const sql = await readFile(path.join(migrationDirectory, name), "utf8");
       await db.query(sql);
@@ -276,6 +299,14 @@ async function runPhase(phase) {
     }
 
     for (const object of OBJECTS) {
+      if (phase === "before" && CALENDAR_OBJECTS.includes(object)) {
+        reportStructural(
+          phase,
+          `public.${object} ainda não existe antes da migration do Calendar`,
+          !objects.includes(object),
+        );
+        continue;
+      }
       if (!objects.includes(object)) {
         reportStructural(phase, `objeto da matriz ausente: public.${object}`, false);
         continue;
@@ -367,26 +398,31 @@ if (!dumpOnly && phases.length === 2) {
   const differences = [...allKeys].filter(
     (key) => before.flows.get(key) !== after.flows.get(key),
   );
+  const calendarFlows = CALENDAR_OBJECTS.flatMap((object) => [`${object}:anon`, `${object}:authenticated`]);
   const expectedDifferences = [
     "notifications:anon",
     "notifications:authenticated",
     DIRECT_UPDATE_FLOW,
+    ...calendarFlows,
   ];
   const unexpected = differences.filter((key) => !expectedDifferences.includes(key));
   reportFlow(
     "diff",
-    "única mudança de privilégio é o UPDATE direto em notifications",
+    "mudanças são só o UPDATE direto em notifications e as tabelas novas do Calendar",
     differences.length > 0 && unexpected.length === 0,
-    `diferenças=${differences.join(", ") || "nenhuma"}`,
+    `diferenças inesperadas=${unexpected.join(", ") || "nenhuma"}`,
   );
   const bookingsChanged = ["bookings:anon", "bookings:authenticated", "booking_events:anon",
     "booking_events:authenticated"].some((key) => differences.includes(key));
   reportFlow("diff", "bookings e booking_events permanecem intactos", !bookingsChanged);
-  const futurePresent = after.flows.has("calendar_connections:anon");
+  const calendarLeaks = calendarFlows.filter(
+    (key) => before.flows.has(key) || after.flows.get(key) !== "",
+  );
   reportFlow(
     "diff",
-    "calendar_connections está na matriz antes da migration do Calendar (#29)",
-    "calendar_connections" in MATRIX && !futurePresent,
+    "tabelas do Calendar (#29) surgem só na fase after, sem privilégio para anon/authenticated",
+    calendarLeaks.length === 0,
+    `divergências=${calendarLeaks.map((key) => `${key}=[${after.flows.get(key) ?? "ausente"}]`).join(", ")}`,
   );
 }
 
