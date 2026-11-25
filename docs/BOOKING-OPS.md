@@ -2,7 +2,9 @@
 
 **Status:** auditoria e documentação operacional com base no código em `main`.  
 **Branch:** `feat/25-booking-ops-lifecycle`  
-**Não faz:** multi-serviço (#21), payments provider (#28), cron remoto (depende de #30/#26 + autorização).
+**Não faz:** payments provider (#28), cron remoto (depende de #30/#26 + autorização).
+Multi-serviço (#21) é tratado em PR separada, em draft; ver
+`docs/handoffs/21-booking.md` e a migration `20261125120000_booking_multiple_services.sql`.
 
 Complementa `docs/MOTOR-RESERVAS.md` e `docs/CONTRATO-DOMINIO-AGENDAMENTOS.md` com a **matriz operacional**, políticas pendentes e checklist de jobs.
 
@@ -160,7 +162,7 @@ Falhas esperadas (aplicação deve mapear mensagens):
 
 | Issue | Relação |
 |-------|---------|
-| #21 multi-serviço | Não alterar aqui; duração combinada afetará create/slots depois |
+| #21 multi-serviço | Implementado em PR separada (draft); não altera esta matriz operacional |
 | #26 notificações | Lembretes e expire job compartilham scheduler |
 | #28 payments | `pending_payment` / comprovante ganham significado financeiro |
 | #30 platform | Provisionar cron + secrets |

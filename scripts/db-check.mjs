@@ -118,6 +118,7 @@ const migrations = [
   "supabase/migrations/202611160001_provider_description.sql",
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
+  "supabase/migrations/20261125120000_booking_multiple_services.sql",
 ];
 
 for (const file of migrations) {
@@ -233,8 +234,16 @@ const D3_11 = "2026-12-03T14:00:00.000Z";
 
 async function createBooking(client, slug, serviceId, startsAt, key, name = "Cliente") {
   const result = await client.query(
-    `select * from public.create_booking($1, $2, $3, $4, '11999999999', $5)`,
+    `select * from public.create_booking($1, $2::uuid, $3, $4, '11999999999', $5)`,
     [slug, serviceId, startsAt, name, key],
+  );
+  return result.rows[0];
+}
+
+async function createBookingMulti(client, slug, serviceIds, startsAt, key, name = "Cliente") {
+  const result = await client.query(
+    `select * from public.create_booking($1, $2::uuid[], $3, $4, '11999999999', $5)`,
+    [slug, serviceIds, startsAt, name, key],
   );
   return result.rows[0];
 }
@@ -248,7 +257,7 @@ console.log("\n[agenda pública]");
 {
   const anon = await asRole("anon");
   const result = await anon.query(
-    `select public.get_provider_schedule('prov-a', $1, '2026-12-01', $2, $3) as schedule`,
+    `select public.get_provider_schedule('prov-a', $1::uuid, '2026-12-01', $2, $3) as schedule`,
     [serviceA1, "2026-12-01T00:00:00Z", "2026-12-02T00:00:00Z"],
   );
   const schedule = result.rows[0].schedule;
@@ -264,7 +273,7 @@ console.log("\n[agenda pública]");
     "agenda não expõe prestador não publicado",
     (
       await anon.query(
-        `select public.get_provider_schedule('prov-b-hidden', $1, '2026-12-01', $2, $3) as schedule`,
+        `select public.get_provider_schedule('prov-b-hidden', $1::uuid, '2026-12-01', $2, $3) as schedule`,
         [serviceA1, "2026-12-01T00:00:00Z", "2026-12-02T00:00:00Z"],
       )
     ).rows[0].schedule === null,
@@ -470,6 +479,277 @@ console.log("\n[transições]");
     await db.query(`select status from public.bookings where id = $1`, [late.id])
   ).rows[0];
   check("expiração tardia foi persistida", lateRow.status === "expired");
+}
+
+console.log("\n[múltiplos serviços]");
+{
+  const anon = await asRole("anon");
+  const D4_09 = "2026-12-04T12:00:00.000Z";
+  const D4_10 = "2026-12-04T13:00:00.000Z";
+  const D4_11 = "2026-12-04T14:00:00.000Z";
+  const D4_1430 = "2026-12-04T14:30:00.000Z";
+  const dayWindow = ["2026-12-04T00:00:00Z", "2026-12-05T00:00:00Z"];
+
+  const scheduleResult = await anon.query(
+    `select public.get_provider_schedule('prov-a', $1::uuid[], '2026-12-04', $2, $3) as schedule`,
+    [[serviceA1, serviceA2], ...dayWindow],
+  );
+  const schedule = scheduleResult.rows[0].schedule;
+  check(
+    " agenda agregada expõe duração e intervalo do banco",
+    schedule?.timing?.durationMinutes === 90 && schedule?.timing?.bufferMinutes === 15,
+    JSON.stringify(schedule?.timing),
+  );
+  check(
+    " totais agregados vêm dos serviços persistidos",
+    schedule?.totals?.priceCents === 12000 &&
+      schedule?.totals?.depositCents === 2000 &&
+      schedule?.totals?.occupiedMinutes === 105,
+    JSON.stringify(schedule?.totals),
+  );
+  check(
+    " agenda devolve os serviços na ordem escolhida",
+    JSON.stringify((schedule?.services ?? []).map((item) => item.id)) ===
+      JSON.stringify([serviceA1, serviceA2]),
+  );
+
+  const legacySchedule = (
+    await anon.query(
+      `select public.get_provider_schedule('prov-a', $1::uuid, '2026-12-04', $2, $3) as schedule`,
+      [serviceA1, ...dayWindow],
+    )
+  ).rows[0].schedule;
+  check(
+    " assinatura legada da agenda continua com um serviço",
+    legacySchedule?.timing?.durationMinutes === 60 &&
+      legacySchedule?.totals?.priceCents === 8000,
+  );
+
+  const mixedSchedule = (
+    await anon.query(
+      `select public.get_provider_schedule('prov-a', $1::uuid[], '2026-12-04', $2, $3) as schedule`,
+      [[serviceA1, serviceB1], ...dayWindow],
+    )
+  ).rows[0].schedule;
+  check("agenda mista entre negócios retorna nulo", mixedSchedule === null);
+  await anon.end();
+
+  const combo = await createBookingMulti(
+    customerCClient,
+    "prov-a",
+    [serviceA1, serviceA2],
+    D4_09,
+    `combo-${uuid()}`,
+    "Combo",
+  );
+  check(
+    " reserva combinada usa fim e intervalo agregados",
+    iso(combo.ends_at) === "2026-12-04T13:30:00.000Z" &&
+      iso(combo.occupied_until) === "2026-12-04T13:45:00.000Z",
+    `${iso(combo.ends_at)} / ${iso(combo.occupied_until)}`,
+  );
+  check(
+    " snapshots agregados refletem o conjunto",
+    combo.duration_minutes_snapshot === 90 &&
+      combo.price_cents_snapshot === 12000 &&
+      combo.deposit_cents_snapshot === 2000 &&
+      combo.buffer_minutes_snapshot === 15,
+  );
+  check("service_id permanece como primeiro serviço", combo.service_id === serviceA1);
+
+  const comboServices = (
+    await db.query(
+      `select service_id, position, duration_minutes_snapshot, price_cents_snapshot
+         from public.booking_services where booking_id = $1 order by position`,
+      [combo.id],
+    )
+  ).rows;
+  check(
+    " cada serviço tem snapshot próprio e posição",
+    comboServices.length === 2 &&
+      comboServices[0].service_id === serviceA1 &&
+      comboServices[0].position === 0 &&
+      comboServices[0].duration_minutes_snapshot === 60 &&
+      comboServices[1].service_id === serviceA2 &&
+      comboServices[1].position === 1 &&
+      comboServices[1].duration_minutes_snapshot === 30,
+    JSON.stringify(comboServices),
+  );
+
+  await expectError(
+    " serviço único que caberia sozinho conflita com o intervalo combinado",
+    () =>
+      createBooking(customerDClient, "prov-a", serviceA2, D4_10, `combo-conflict-${uuid()}`),
+    "slot_unavailable",
+  );
+  await expectError(
+    " combo que não cabe no expediente é recusado",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, serviceA2],
+        D4_1430,
+        `combo-hours-${uuid()}`,
+      ),
+    "outside_working_hours",
+  );
+  await expectError(
+    " serviços de outro prestador são recusados",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, serviceB1],
+        D4_09,
+        `combo-tenant-${uuid()}`,
+      ),
+    "service_not_available",
+  );
+  await expectError(
+    " serviços duplicados são recusados",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, serviceA1],
+        D4_09,
+        `combo-duplicate-${uuid()}`,
+      ),
+    "service_not_available",
+  );
+
+  const inactiveService = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, is_active)
+       values ($1, 'Inativo', 30, 1000, false) returning id`,
+      [providerA],
+    )
+  ).rows[0].id;
+  await expectError(
+    " serviço inativo não entra no combo",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, inactiveService],
+        D4_09,
+        `combo-inactive-${uuid()}`,
+      ),
+    "service_not_available",
+  );
+
+  const legacyAfterMigration = await createBooking(
+    customerDClient,
+    "prov-a",
+    serviceA2,
+    D4_11,
+    `legacy-${uuid()}`,
+  );
+  const legacyRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [legacyAfterMigration.id],
+    )
+  ).rows[0].total;
+  check("reserva antiga de serviço único continua funcionando", legacyRows === 1);
+  const backfillRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [booking1.id],
+    )
+  ).rows[0].total;
+  check("histórico pré-migration foi espelhado", backfillRows === 1);
+
+  const serviceB2 = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Serviço B 2', 30, 3000, 0) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     values ($1, 5, '09:00', '12:00')`,
+    [providerB],
+  );
+
+  const comboAttempts = await Promise.allSettled(
+    customers.map(async (uid, index) => {
+      const client = await asRole("authenticated", uid);
+      try {
+        return await createBookingMulti(
+          client,
+          "prov-b",
+          [serviceB1, serviceB2],
+          D4_09,
+          `race-combo-${uuid()}`,
+          `Concorrente combo ${index}`,
+        );
+      } finally {
+        await client.end();
+      }
+    }),
+  );
+  const comboWinners = comboAttempts.filter((attempt) => attempt.status === "fulfilled");
+  const comboLosers = comboAttempts.filter(
+    (attempt) =>
+      attempt.status === "rejected" &&
+      String(attempt.reason?.message).includes("slot_unavailable"),
+  );
+  check(
+    "apenas uma reserva combinada vence a concorrência",
+    comboWinners.length === 1,
+    `obteve ${comboWinners.length}`,
+  );
+  check(
+    "demais combos concorrentes recebem slot_unavailable",
+    comboLosers.length === customers.length - 1,
+    `obteve ${comboLosers.length}`,
+  );
+
+  if (comboWinners.length === 1) {
+    const winnerId = comboWinners[0].value.id;
+    const winnerServices = (
+      await db.query(
+        `select count(*)::int as total from public.booking_services where booking_id = $1`,
+        [winnerId],
+      )
+    ).rows[0].total;
+    check("reserva vencedora guarda os dois serviços", winnerServices === 2);
+
+    const outsiderRows = await customerCClient.query(
+      `select 1 from public.booking_services where booking_id = $1`,
+      [winnerId],
+    );
+    check("cliente de outro negócio não lê os serviços da reserva", outsiderRows.rows.length === 0);
+
+    const otherProviderRows = await ownerAClient.query(
+      `select 1 from public.booking_services where booking_id = $1`,
+      [winnerId],
+    );
+    check("prestador A não lê serviços da reserva de B", otherProviderRows.rows.length === 0);
+
+    const ownerRows = await ownerBClient.query(
+      `select 1 from public.booking_services where booking_id = $1`,
+      [winnerId],
+    );
+    check("dono da reserva lê os serviços", ownerRows.rows.length === 2);
+
+    const directInsert = await customerCClient
+      .query(
+        `insert into public.booking_services
+           (booking_id, provider_id, service_id, position, service_name_snapshot,
+            duration_minutes_snapshot, price_cents_snapshot, deposit_cents_snapshot,
+            buffer_minutes_snapshot)
+         values ($1, $2, $3, 9, 'Invasor', 30, 100, 0, 0)`,
+        [winnerId, providerB, serviceB1],
+      )
+      .then(() => true)
+      .catch(() => false);
+    check("cliente não insere diretamente em booking_services", directInsert === false);
+  }
 }
 
 console.log("\n[idempotência]");

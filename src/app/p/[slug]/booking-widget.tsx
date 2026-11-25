@@ -25,12 +25,12 @@ interface BookingWidgetProps {
   slug: string;
   timeZone: string;
   services: WidgetService[];
-  initialServiceId?: string;
+  initialServiceIds?: string[];
   initialDate?: string;
   initialSlot?: string;
 }
 
-const initialSlots: SlotsState = { slots: null };
+const initialSlots: SlotsState = { slots: null, services: [], totals: null };
 const initialBook: BookState = {};
 
 function startOfWeek(date: string): string {
@@ -53,23 +53,25 @@ export function BookingWidget({
   slug,
   timeZone,
   services,
-  initialServiceId,
+  initialServiceIds = [],
   initialDate,
   initialSlot,
 }: BookingWidgetProps) {
   const today = todayIsoDate(timeZone);
   const maxDate = useMemo(() => addDaysIsoDate(today, 30), [today]);
   const firstWeek = useMemo(() => startOfWeek(today), [today]);
+  const validInitialIds = useMemo(() => {
+    const available = new Set(services.map((service) => service.id));
+    return [...new Set(initialServiceIds)].filter((id) => available.has(id));
+  }, [services, initialServiceIds]);
 
-  const [serviceId, setServiceId] = useState(
-    initialServiceId ?? services[0]?.id ?? "",
-  );
+  const [serviceIds, setServiceIds] = useState<string[]>(validInitialIds);
   const [date, setDate] = useState(initialDate ?? today);
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(initialDate ?? today),
   );
   const [weekDirection, setWeekDirection] = useState<"next" | "previous">("next");
-  const [slots, setSlots] = useState<SlotsState>(initialSlots);
+  const [slotsState, setSlotsState] = useState<SlotsState>(initialSlots);
   const [loading, setLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(
@@ -86,6 +88,15 @@ export function BookingWidget({
     initialBook,
   );
 
+  const selectionKey = serviceIds.join(",");
+  const selectedServices = useMemo(
+    () =>
+      serviceIds
+        .map((id) => services.find((service) => service.id === id))
+        .filter((service): service is WidgetService => Boolean(service)),
+    [serviceIds, services],
+  );
+
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, index) => addDaysIsoDate(weekStart, index)),
     [weekStart],
@@ -95,19 +106,25 @@ export function BookingWidget({
     let active = true;
 
     async function load() {
-      if (!serviceId || !date) {
-        setSlots({ slots: null });
+      if (serviceIds.length === 0 || !date) {
+        setSlotsState(initialSlots);
+        setLoading(false);
         return;
       }
       setLoading(true);
-      setSlots({ slots: null });
+      setSlotsState(initialSlots);
+      setSelectedSlot(null);
+      setPicked(false);
+      setShowStickyContinue(false);
       try {
-        const result = await fetchSlotsAction({ slug, serviceId, date });
-        if (active) setSlots(result);
+        const result = await fetchSlotsAction({ slug, serviceIds, date });
+        if (active) setSlotsState(result);
       } catch {
         if (active) {
-          setSlots({
+          setSlotsState({
             slots: null,
+            services: [],
+            totals: null,
             error: "Não foi possível carregar os horários. Tente novamente.",
           });
         }
@@ -120,7 +137,9 @@ export function BookingWidget({
     return () => {
       active = false;
     };
-  }, [slug, serviceId, date, retryCount]);
+    // A seleção é comparada por valor, não por identidade do array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, selectionKey, date, retryCount]);
 
   useEffect(() => {
     if (!shouldScrollToSlotsRef.current) return;
@@ -136,10 +155,22 @@ export function BookingWidget({
     });
   }, [date]);
 
-  const service = services.find((item) => item.id === serviceId);
   const monthLabel = formatDate(date, { month: "long", year: "numeric" });
   const canGoBack = weekStart > firstWeek;
   const canGoForward = addDaysIsoDate(weekStart, 7) <= maxDate;
+  const totals = slotsState.totals;
+  const combinedNames =
+    slotsState.services.length > 0
+      ? slotsState.services.map((service) => service.name).join(" + ")
+      : selectedServices.map((service) => service.name).join(" + ");
+
+  function toggleService(id: string) {
+    setServiceIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  }
 
   function chooseDate(nextDate: string) {
     if (nextDate < today || nextDate > maxDate || nextDate === date) return;
@@ -160,7 +191,7 @@ export function BookingWidget({
     <section className={`booking-widget${showStickyContinue ? " has-sticky-continue" : ""}`} aria-labelledby="booking-title">
       <div className="section-heading">
         <span className="eyebrow">AGENDAR</span>
-        <h2 id="booking-title">Escolha o serviço, dia e horário</h2>
+        <h2 id="booking-title">Escolha os serviços, dia e horário</h2>
       </div>
 
       {services.length === 0 ? (
@@ -169,24 +200,19 @@ export function BookingWidget({
         <>
           <section className="booking-services" aria-labelledby="booking-services-title">
             <div className="booking-services-heading">
-              <h3 id="booking-services-title">Escolha seu serviço</h3>
-              <span>Deslize para ver as opções</span>
+              <h3 id="booking-services-title">Escolha um ou mais serviços</h3>
+              <span>{selectedServices.length} selecionado(s)</span>
             </div>
             <div className="booking-service-carousel" role="group" aria-label="Serviços disponíveis">
               {services.map((item) => {
-                const selected = item.id === serviceId;
+                const selected = serviceIds.includes(item.id);
                 return (
                   <button
                     type="button"
                     key={item.id}
                     className={selected ? "booking-service-card is-selected" : "booking-service-card"}
                     aria-pressed={selected}
-                    onClick={() => {
-                      setServiceId(item.id);
-                      setSelectedSlot(null);
-                      setPicked(false);
-                      setShowStickyContinue(false);
-                    }}
+                    onClick={() => toggleService(item.id)}
                   >
                     <span className="booking-service-image" aria-hidden="true">
                       <span>✦</span>
@@ -214,6 +240,15 @@ export function BookingWidget({
               })}
             </div>
           </section>
+
+          {selectedServices.length > 0 ? (
+            <p className="booking-summary" aria-live="polite">
+              <strong>{combinedNames}</strong> ·{" "}
+              {totals
+                ? `${totals.durationMinutes} min · ${formatCents(totals.priceCents)}`
+                : "calculando duração e preço no servidor..."}
+            </p>
+          ) : null}
 
           <section className="booking-date-section" aria-label="Escolha uma data">
             <div className="booking-calendar-heading">
@@ -291,13 +326,15 @@ export function BookingWidget({
               <span aria-live="polite">{formatDate(date, { weekday: "short", day: "numeric", month: "short" })}</span>
             </div>
 
-            {loading ? (
+            {selectedServices.length === 0 ? (
+              <p className="booking-empty-slots">Selecione ao menos um serviço para ver os horários.</p>
+            ) : loading ? (
               <p className="muted" role="status" aria-live="polite">
                 Consultando disponibilidade em tempo real...
               </p>
-            ) : slots.error ? (
+            ) : slotsState.error ? (
               <div className="alert alert-error" role="alert">
-                <p>{slots.error}</p>
+                <p>{slotsState.error}</p>
                 <button
                   type="button"
                   className="btn btn-small"
@@ -306,9 +343,9 @@ export function BookingWidget({
                   Tentar novamente
                 </button>
               </div>
-            ) : slots.slots && slots.slots.length > 0 ? (
+            ) : slotsState.slots && slotsState.slots.length > 0 ? (
               <div className="booking-slot-list">
-                {slots.slots.map((slot) => {
+                {slotsState.slots.map((slot) => {
                   const label = formatInstantInZone(slot.startsAt, timeZone, {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -320,7 +357,7 @@ export function BookingWidget({
                       key={slot.startsAt}
                       className={isActive ? "booking-time-card is-selected" : "booking-time-card"}
                       aria-pressed={isActive}
-                      aria-label={`${label}, ${service?.name ?? "serviço"}, ${service?.durationMinutes ?? 0} minutos, disponível${isActive ? ", selecionado" : ""}`}
+                      aria-label={`${label}, ${combinedNames}, ${totals?.durationMinutes ?? 0} minutos, disponível${isActive ? ", selecionado" : ""}`}
                       onClick={() => {
                         setSelectedSlot(slot.startsAt);
                         setPicked(true);
@@ -330,8 +367,8 @@ export function BookingWidget({
                       <span className="booking-time-value">{label}</span>
                       <span className="booking-time-divider" aria-hidden="true" />
                       <span className="booking-time-details">
-                        <strong>{service?.name}</strong>
-                        <small>{service?.durationMinutes} min · Disponível</small>
+                        <strong>{combinedNames}</strong>
+                        <small>{totals?.durationMinutes ?? 0} min · Disponível</small>
                       </span>
                       <span className="booking-time-check" aria-hidden="true">
                         {isActive ? "✓" : ""}
@@ -342,7 +379,7 @@ export function BookingWidget({
               </div>
             ) : (
               <p className="booking-empty-slots">
-                Não há horários disponíveis nesta data. Escolha outro dia.
+                Não há horários disponíveis para esta combinação nesta data. Escolha outro dia.
               </p>
             )}
           </section>
@@ -366,12 +403,14 @@ export function BookingWidget({
           {picked && selectedSlot ? (
             <form ref={bookingFormRef} action={bookAction} className="form-stack booking-confirm">
               <input type="hidden" name="slug" value={slug} />
-              <input type="hidden" name="serviceId" value={serviceId} />
+              {serviceIds.map((id) => (
+                <input key={id} type="hidden" name="serviceIds" value={id} />
+              ))}
               <input type="hidden" name="date" value={date} />
               <input type="hidden" name="startsAt" value={selectedSlot} />
 
               <p className="booking-summary">
-                <strong>{service?.name}</strong> ·{" "}
+                <strong>{combinedNames}</strong> ·{" "}
                 {formatInstantInZone(selectedSlot, timeZone, {
                   weekday: "long",
                   day: "2-digit",
@@ -381,6 +420,7 @@ export function BookingWidget({
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
+                {totals ? ` · ${totals.durationMinutes} min · ${formatCents(totals.priceCents)}` : ""}
               </p>
 
               <label className="field">
@@ -403,7 +443,7 @@ export function BookingWidget({
                 />
               </label>
 
-              <button type="submit" className="btn" disabled={bookingPending}>
+              <button type="submit" className="btn" disabled={bookingPending || !totals}>
                 {bookingPending ? "Reservando..." : "Confirmar reserva"}
               </button>
               <p className="muted small">

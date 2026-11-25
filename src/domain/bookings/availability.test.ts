@@ -248,6 +248,41 @@ describe("generateSlots", () => {
     expect(slots).toEqual([]);
   });
 
+  it("usa o intervalo combinado para oferecer slots e descartar conflitos", () => {
+    // 60 + 15 e 30 + 0 = 105 minutos ocupados por reserva.
+    const combinedTiming = { durationMinutes: 90, bufferMinutes: 15 };
+    const query = {
+      date: TUESDAY,
+      timeZone: "America/Sao_Paulo",
+      rules: TUESDAY_09_TO_12,
+      exceptions: [],
+      busyIntervals: [],
+      timing: combinedTiming,
+    };
+
+    const slots = generateSlots(query);
+    expect(slots.map((slot) => slot.startsAt.toISOString())).toEqual([
+      "2026-12-01T12:00:00.000Z",
+    ]);
+    expect(slots[0].occupiedUntil.toISOString()).toBe(
+      "2026-12-01T13:45:00.000Z",
+    );
+
+    // Um compromisso que só cobre a primeira parte do conjunto já bloqueia o
+    // início candidato: nada é oferecido.
+    expect(
+      generateSlots({
+        ...query,
+        busyIntervals: [
+          {
+            startsAt: date("2026-12-01T12:30:00.000Z"),
+            occupiedUntil: date("2026-12-01T13:00:00.000Z"),
+          },
+        ],
+      }),
+    ).toEqual([]);
+  });
+
   it("rejeita dados inválidos", () => {
     expect(() =>
       generateSlots({

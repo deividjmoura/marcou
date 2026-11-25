@@ -8,7 +8,7 @@ como ele foi realizado nesta codebase.
 
 | Camada | Onde | Responsabilidade |
 |---|---|---|
-| Domínio puro | `src/domain/bookings/availability.ts`, `booking.ts` | Intervalos, sobreposição, geração de slots, transições de estado. Testável sem banco. |
+| Domínio puro | `src/domain/bookings/availability.ts`, `booking.ts`, `aggregate.ts` | Intervalos, sobreposição, soma dos serviços, geração de slots e transições de estado. Testável sem banco. |
 | Banco (transações) | `supabase/migrations/202611150002_booking_operations.sql` | Atomicidade, conflito, expiração, autorização, auditoria. |
 | Servidor | `src/server/bookings.ts`, `src/server/services.ts` | Orquestra chamadas, traduz erros, nunca confia no cliente. |
 | Interface | `src/app/p/[slug]`, `src/app/painel`, `src/app/reserva` | Fluxo do cliente e do prestador. |
@@ -16,7 +16,8 @@ como ele foi realizado nesta codebase.
 ## Disponibilidade
 
 `generateSlots` recebe data (no fuso do prestador), regras semanais, exceções,
-intervalos já ocupados e o tempo do serviço (duração + intervalo). Ele:
+intervalos já ocupados e o tempo do serviço ou do conjunto de serviços
+(soma das durações + soma dos intervalos, calculada pela RPC). Ele:
 
 1. seleciona as janelas do dia (expediente ou horário especial; bloqueio zera o dia);
 2. respeita a vigência (`validFrom`/`validUntil`) e regras inativas;
@@ -33,15 +34,25 @@ API diretamente. Por isso `create_booking` revalida o expediente no banco.
 Função `security definer` com `set search_path = public`, executada com o JWT do
 usuário (`auth.uid()`). Passos:
 
-1. exige autenticação e prestador publicado e serviço ativo;
+1. exige autenticação e prestador publicado e todos os serviços ativos do mesmo
+   prestador (1 a 20, sem duplicatas);
 2. valida nome do cliente e que o início é futuro;
-3. calcula `occupied_until = início + duração + intervalo`;
-4. valida `is_interval_available` (expediente ou horário especial, sem cruzar a meia-noite);
+3. calcula no banco `duration = Σ durações`, `buffer = Σ intervalos`,
+   `price = Σ preços`, `deposit = Σ sinais` e
+   `occupied_until = início + duration + buffer`;
+4. valida `is_interval_available` para o intervalo combinado (expediente ou
+   horário especial, sem cruzar a meia-noite);
 5. aplica `pg_advisory_xact_lock` por prestador para serializar a disputa;
 6. expira reservas vencidas que conflitam com o intervalo solicitado;
-7. insere a reserva `pending_payment` com `expires_at = now + booking_hold_minutes`
-   e snapshot de serviço, nome e contato do cliente;
+7. insere a reserva `pending_payment` com `expires_at = now + booking_hold_minutes`,
+   snapshots agregados em `bookings` e um snapshot por serviço em
+   `booking_services`; `bookings.service_id` é o primeiro da lista;
 8. registra `booking.created` em `booking_events`.
+
+A assinatura antiga com `uuid` (um serviço) continua disponível e delega para a
+nova com `uuid[]`. A migração `20261125120000_booking_multiple_services.sql` é
+aditiva e espelha reservas antigas na tabela de vínculos. Handoff:
+`docs/handoffs/21-booking.md`.
 
 A constraint `bookings_no_overlapping_active_intervals` (GiST, por prestador,
 intervalo semiaberto `[starts_at, occupied_until)`) é a garantia final. Violação
@@ -85,8 +96,10 @@ Regras:
 
 ## Testes
 
-- `npm test`: domínio (slots, sobreposição, transições, validação).
+- `npm test`: domínio (slots, soma agregada, sobreposição, transições, validação).
 - `npm run test:db`: PostgreSQL real (embedded-postgres) aplicando as migrations
-  e exercitando conflito, concorrência (5 requisições simultâneas), adjacência,
-  limites de horário, expiração, idempotência, transições e isolamento
-  multi-tenant (30 verificações).
+  e exercitando conflito, concorrência (5 requisições simultâneas, inclusive
+  com reservas combinadas), adjacência, limites de horário, expiração,
+  idempotência, transições, isolamento multi-tenant, backfill e RLS da tabela
+  de vínculos (92 verificações no harness de booking, além dos harnesses de
+  social, identidade e descoberta).

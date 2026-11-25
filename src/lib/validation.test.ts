@@ -4,6 +4,7 @@ import {
   availabilityRuleInputSchema,
   bookingInputSchema,
   isoDate,
+  multiBookingInputSchema,
   providerInputSchema,
   providerSettingsSchema,
   serviceInputSchema,
@@ -142,6 +143,47 @@ describe("bookingInputSchema", () => {
         serviceId: "123e4567-e89b-12d3-a456-426614174000",
         startsAt: "amanhã",
         customerName: "Ana",
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("multiBookingInputSchema", () => {
+  const base = {
+    slug: "studio",
+    startsAt: "2026-12-01T12:00:00.000Z",
+    customerName: "Ana",
+  };
+  const serviceA = "123e4567-e89b-12d3-a456-426614174000";
+  const serviceB = "223e4567-e89b-12d3-a456-426614174001";
+
+  it("aceita um ou mais serviços", () => {
+    expect(
+      multiBookingInputSchema.safeParse({
+        ...base,
+        serviceIds: [serviceA, serviceB],
+      }).success,
+    ).toBe(true);
+    expect(
+      multiBookingInputSchema.safeParse({ ...base, serviceIds: [serviceA] })
+        .success,
+    ).toBe(true);
+  });
+
+  it("rejeita lista vazia, duplicadas e excesso de serviços", () => {
+    expect(
+      multiBookingInputSchema.safeParse({ ...base, serviceIds: [] }).success,
+    ).toBe(false);
+    expect(
+      multiBookingInputSchema.safeParse({
+        ...base,
+        serviceIds: [serviceA, serviceA],
+      }).success,
+    ).toBe(false);
+    expect(
+      multiBookingInputSchema.safeParse({
+        ...base,
+        serviceIds: Array(21).fill(serviceA),
       }).success,
     ).toBe(false);
   });

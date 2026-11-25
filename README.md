@@ -82,6 +82,9 @@ As migrations estão em `supabase/migrations/`:
 10. `20261123143000_discovery_taxonomy_service_areas.sql` — catálogo versionado,
     modalidades de serviço, áreas aproximadas, moderação e projeção pública
     mínima. Detalhes em `docs/DISCOVERY-TAXONOMY.md`.
+11. `20261125120000_booking_multiple_services.sql` — reservas com um ou mais
+    serviços do mesmo prestador, snapshots por serviço e totais agregados
+    calculados no banco. Detalhes em `docs/handoffs/21-booking.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
@@ -99,6 +102,9 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
   reservas vencidas conflitantes e insere a reserva com snapshot do serviço.
 - A constraint de exclusão GiST + `pg_advisory_xact_lock` por prestador impedem
   dupla marcação, inclusive sob requisições simultâneas.
+- Uma reserva pode combinar 1 a 20 serviços ativos do mesmo prestador: duração,
+  intervalo e preço são somados no banco e o intervalo combinado é validado por
+  completo; reservas de serviço único seguem compatíveis.
 - Transições de estado (`pending_payment`, `pending_review`, `confirmed`,
   `cancelled`, `expired`) são aplicadas por `transition_booking`, com
   autorização, validade e auditoria.

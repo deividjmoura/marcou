@@ -15,12 +15,21 @@ export default async function ProviderPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
     service?: string;
+    services?: string;
     date?: string;
     slot?: string;
   }>;
 }) {
   const { slug } = await params;
   const query = await searchParams;
+  const initialServiceIds = [
+    ...new Set(
+      [
+        ...(query.services ?? "").split(","),
+        ...(query.service ? [query.service] : []),
+      ].filter((id) => /^[0-9a-f-]{36}$/i.test(id)),
+    ),
+  ];
 
   if (!isSupabaseConfigured()) {
     return (
@@ -103,7 +112,7 @@ export default async function ProviderPage({
               ),
             };
           })}
-          initialServiceId={query.service}
+          initialServiceIds={initialServiceIds}
           initialDate={query.date}
           initialSlot={query.slot}
         />
