@@ -1,22 +1,36 @@
 /**
- * Converte um valor monetário digitado em reais para centavos inteiros.
+ * Conversão de valores em reais digitados pelo prestador para centavos.
  *
- * Formatos aceitos (espaços e o prefixo opcional "R$" são ignorados):
- * - inteiro: "50", "1234";
- * - vírgula decimal (padrão pt-BR), com ou sem ponto de milhar:
- *   "50,5", "50,50", "1234,56", "1.234,56", "1.234.567,89";
- * - ponto de milhar sem casas decimais: "1.234", "1.234.567";
- * - ponto decimal com até 2 casas: "50.5", "1234.56". Esse é o formato do
- *   `defaultValue` do formulário de edição (`toFixed(2)`), então precisa
- *   continuar aceito.
+ * Regra (espaços e o prefixo opcional "R$" são ignorados antes de aplicar):
  *
- * Não há ambiguidade: grupos de milhar têm sempre 3 dígitos e casas decimais
- * têm no máximo 2. "1.234" é mil duzentos e trinta e quatro reais; "12.34" é
- * doze reais e trinta e quatro centavos.
+ * | Entrada              | Leitura                          | Centavos  |
+ * | -------------------- | -------------------------------- | --------- |
+ * | "50", "0"            | inteiro em reais                 | 5000, 0   |
+ * | "50,5", "0,5"        | vírgula = decimal (1–2 casas)    | 5050, 50  |
+ * | "1.234,56"           | ponto = milhar, vírgula = decimal| 123456    |
+ * | "1.234.567,89"       | idem, vários grupos              | 123456789 |
+ * | "1.234"              | ponto SEM vírgula + 3 dígitos    | 123400    |
+ * |                      | = milhar                         |           |
+ * | "12.5", "12.50"      | ponto SEM vírgula + 1–2 dígitos  | 1250      |
+ * |                      | = decimal                        |           |
  *
- * Retorna `NaN` para entradas vazias ou inválidas (negativos, letras, grupos de
- * milhar malformados, mais de 2 casas decimais, separadores misturados no lugar
- * errado). O cálculo usa apenas inteiros, sem arredondamento de ponto flutuante.
+ * Ponto sem vírgula: o número de dígitos depois do ÚLTIMO ponto decide.
+ * Exatamente 3 dígitos em todos os grupos significa milhar; 1 ou 2 dígitos
+ * depois de um único ponto significa decimal. Não há sobreposição, porque
+ * centavos têm no máximo 2 casas e grupos de milhar têm sempre 3. O formato
+ * decimal com ponto precisa continuar aceito, já que o formulário de edição
+ * preenche o campo com `toFixed(2)` ("1234.56").
+ *
+ * Ambiguidade real é RECUSADA (retorna `NaN`) em vez de adivinhar, para não
+ * gravar silenciosamente um valor diferente do pretendido:
+ * - grupo de milhar começando com zero ("0.500", "0.123,45"): poderia ser
+ *   "50 centavos com 3 casas" ou "500 reais";
+ * - separadores trocados ou misturados ("1,234.56", "1,234,56", "12.34.56");
+ * - grupos de tamanho errado ("1.23,45", "1.2345,67");
+ * - mais de 2 casas decimais ("50,555"), sinal negativo, notação científica,
+ *   letras, "Infinity"/"NaN", vírgula sem dígitos ("50,", ",50").
+ *
+ * O cálculo usa apenas inteiros, sem arredondamento de ponto flutuante.
  */
 export function parseBrlToCents(value: unknown): number {
   if (typeof value !== "string") return Number.NaN;
@@ -24,16 +38,18 @@ export function parseBrlToCents(value: unknown): number {
   const compact = value.replace(/\s/g, "").replace(/^R\$/i, "");
   if (compact === "") return Number.NaN;
 
+  // Primeiro grupo de milhar sem zero à esquerda: "0.500" é ambíguo.
+  const thousands = "[1-9]\\d{0,2}(?:\\.\\d{3})+";
+  const commaDecimal = new RegExp(`^(${thousands}|\\d+),(\\d{1,2})$`).exec(compact);
+  const dotDecimal = /^(\d+)\.(\d{1,2})$/.exec(compact);
+
   let integerPart: string;
   let decimalPart = "";
-
-  const commaDecimal = /^(\d{1,3}(?:\.\d{3})+|\d+),(\d{1,2})$/.exec(compact);
-  const dotDecimal = /^(\d+)\.(\d{1,2})$/.exec(compact);
 
   if (commaDecimal) {
     integerPart = commaDecimal[1];
     decimalPart = commaDecimal[2];
-  } else if (/^\d{1,3}(?:\.\d{3})+$/.test(compact)) {
+  } else if (new RegExp(`^${thousands}$`).test(compact)) {
     integerPart = compact;
   } else if (dotDecimal) {
     integerPart = dotDecimal[1];
@@ -48,4 +64,16 @@ export function parseBrlToCents(value: unknown): number {
   const cents = reais * 100 + Number(decimalPart.padEnd(2, "0"));
 
   return Number.isSafeInteger(cents) ? cents : Number.NaN;
+}
+
+/**
+ * Para campos monetários opcionais em que vazio tem significado de negócio
+ * zero (ex.: "sem sinal"). Ausente ou só espaços vira 0; qualquer outra
+ * entrada segue a regra de `parseBrlToCents`, incluindo a recusa de
+ * ambiguidades.
+ */
+export function parseOptionalBrlToCents(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === "string" && value.trim() === "") return 0;
+  return parseBrlToCents(value);
 }
