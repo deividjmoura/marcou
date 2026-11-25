@@ -75,6 +75,14 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
+- Hardening dos privilégios de tabela herdados do Supabase (Issue `#125`):
+  migration `20261125140000_harden_public_table_privileges.sql` remove
+  `TRUNCATE`/`REFERENCES`/`TRIGGER` de `anon`/`authenticated` nas 8 tabelas
+  legadas, deixa escrita direta só onde há política (`profiles`/`providers`
+  perdem `DELETE`; `bookings`/`booking_events` ficam só leitura) e tira o
+  `SELECT` inútil de `anon` em reservas e eventos. `scripts/privileges-check.mjs`
+  passa a emular os defaults do Supabase desde a primeira migration, aplica
+  regras globais (RLS, T/R/G, escrita × política) e roda fluxos reais.
 - Proteção contra condições de corrida no provisionamento de `profiles`:
   inserção inicial com `ON CONFLICT (id) DO NOTHING` (`ignoreDuplicates: true`)
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor

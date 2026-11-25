@@ -23,8 +23,10 @@
   `calendar_connections`. Validação empilhada: 217 testes, `test:db` (booking
   116, social 50, identidade 32, discovery 40, privilégios 43/49, calendar 107
   — sem falhas),
-  `audit` 0/0 e build. Emular defaults do Supabase desde a primeira migration
-  segue dependente da #125.
+  `audit` 0/0 e build.
+- #125 na mesma branch: `20261125140000_harden_public_table_privileges.sql`.
+  `privileges-check` emula os defaults desde a primeira migration: after 94/0
+  fluxos e 31/0 estruturais. Sem o hardening, 42 falhas.
 
 ## Estabilização de autenticação, velocidade de login e changelog obrigatório — 24/11/2026
 

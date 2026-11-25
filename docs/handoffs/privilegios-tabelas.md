@@ -29,9 +29,8 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
    direto revogado, as RPCs continuam operando como definer. A política RLS
    `notifications_update_own` foi preservada — o pedido era remover grants,
    não alterar políticas.
-4. **bookings e booking_events:** intactos (`SELECT` para `anon` e
-   `authenticated`, o restante via funções de servidor). A comparação
-   before/after no harness prova que não houve mudança.
+4. **bookings e booking_events:** na #123, intactos. A #125 (abaixo) deixa só
+   `SELECT` para `authenticated`; escrita apenas via funções de servidor.
 5. **Ordem em relação ao Calendar (#29):** a migration da matriz
    (`20261125130000`) roda **antes** de
    `20261125153000_google_calendar_sync.sql`, que cria `calendar_connections`,
@@ -41,7 +40,18 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
    existe e por isso não tem efeito; quem garante os privilégios é a migration
    do Calendar. Desde a integração da #29, as três tabelas estão em `OBJECTS`
    e são verificadas na fase `after` (ver seção "Google Calendar (#29)").
-6. **Sem referência de issue na PR:** o responsável escolheu não usar `Refs`
+6. **Hardening das tabelas legadas (#125):**
+   `20261125140000_harden_public_table_privileges.sql` faz `revoke all` + `grant`
+   exato nas 8 tabelas anteriores à convenção. Resultado:
+   - nenhum `TRUNCATE`/`REFERENCES`/`TRIGGER` para clientes;
+   - escrita de `authenticated` só onde há política do mesmo comando, então
+     `profiles`/`providers` perdem `DELETE` e `bookings`/`booking_events` ficam
+     só leitura;
+   - `anon` só lê onde há política que vale para ele (perde `SELECT` em
+     `bookings`/`booking_events`).
+
+   `ALTER DEFAULT PRIVILEGES` não foi alterado (justificativa na #125).
+7. **Sem referência de issue na PR:** o responsável escolheu não usar `Refs`
    nesta PR draft (a issue `[SECURITY]` pretendida não foi identificada de
    forma inequívoca: #41 está OPEN e #14 CLOSED, nenhuma fala de matriz de
    privilégios).
@@ -53,13 +63,13 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
 
 | Objeto em `public` | `anon` | `authenticated` | `service_role` |
 |---|---|---|---|
-| `profiles` | — | SELECT, INSERT, UPDATE, DELETE | ALL |
-| `providers` | SELECT | SELECT, INSERT, UPDATE, DELETE | ALL |
+| `profiles` | — | SELECT, INSERT, UPDATE | ALL |
+| `providers` | SELECT | SELECT, INSERT, UPDATE | ALL |
 | `services` | SELECT | SELECT, INSERT, UPDATE, DELETE | ALL |
 | `availability_rules` | SELECT | SELECT, INSERT, UPDATE, DELETE | ALL |
 | `availability_exceptions` | SELECT | SELECT, INSERT, UPDATE, DELETE | ALL |
-| `bookings` | SELECT | SELECT | ALL |
-| `booking_events` | SELECT | SELECT | ALL |
+| `bookings` | — | SELECT | ALL |
+| `booking_events` | — | SELECT | ALL |
 | `booking_services` | — | SELECT | ALL |
 | `notifications` | — | SELECT (antes: SELECT + UPDATE) | ALL |
 | `legal_documents` | SELECT | SELECT | ALL |
@@ -71,7 +81,7 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
 | `service_categories` | SELECT | SELECT | ALL |
 | `service_category_versions` | SELECT | SELECT | ALL |
 | `service_category_aliases` | SELECT | SELECT | ALL |
-| `service_category_catalog` (view) | SELECT | SELECT | SELECT |
+| `service_category_catalog` (view) | SELECT | SELECT | ALL (default do Supabase em views) |
 | `service_category_suggestions` | — | SELECT, INSERT | ALL |
 | `provider_service_areas` | — | SELECT, INSERT, UPDATE, DELETE | ALL |
 | `calendar_connections` (#29, tokens cifrados) | — | — | ALL |
@@ -88,17 +98,37 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
    default privileges do Supabase, que concedem escrita a papéis de API.
 3. Replique a linha neste handoff e, se a tabela tiver tokens, PII ou segredos,
    registre explicitamente por que `anon`/`authenticated` não a leem.
-4. Rode `npm run test:db`. O `scripts/privileges-check.mjs` verifica cada
-   objeto da matriz para `anon` e `authenticated` nas fases **antes** (21
-   objetos) e **depois** (24 objetos) das migrations e falha se houver objeto
-   sem matriz ou privilégio diferente do contratado. Se a sua migration for
-   posterior à matriz e criar tabelas, exclua-a também da fase `before` (como
-   o Calendar) e declare as tabelas como adições esperadas na comparação.
+4. Rode `npm run test:db`. O `scripts/privileges-check.mjs` emula os defaults
+   do Supabase **desde a primeira migration**. Na fase `after`, ele confere a
+   matriz exata dos 24 objetos e as regras globais:
+   - RLS em toda tabela;
+   - nenhum T/R/G para clientes;
+   - `anon` sem escrita;
+   - escrita de `authenticated` e leitura de `anon` só com política
+     correspondente.
+
+   Também roda fluxos reais como `anon`/`authenticated`. Uma tabela nova sem
+   `revoke all` herda `ALL` e reprova o CI.
 5. Se a mudança for intencional (nova write de cliente, por exemplo), atualize
    a matriz, o handoff e o teste na mesma PR — nunca relaxe o check só para
    fazer o CI passar.
 
 ## Validação executada
+
+### Hardening #125 — 25/11/2026
+
+- `node scripts/privileges-check.mjs`: fase `before` 6/0 estruturais. Inclui o
+  autoteste "linha de base reproduz o GRANT ALL do Supabase nas tabelas
+  legadas". Fase `after` 94/0 fluxos e 31/0 estruturais; comparação 3/0.
+  - Fluxos: 48 de matriz, 18 escritas legítimas e RPCs, 9 acessos negados,
+    18 `TRUNCATE` negados e 1 de dados intactos.
+- **Negativo 1:** com a migration de hardening vazia, 42 falhas, entre elas 15
+  `TRUNCATE` que passaram. Os 3 restantes (`anon` em `notifications` e
+  `booking_services` nos dois papéis) já eram bloqueados pela #123.
+- **Negativo 2:** sem emular o default de tabelas, o autoteste da fase
+  `before` falha. A fase `after` não passa mais por vacuidade.
+- `npm run test:db`: booking `116/0`, social `50/0`, identidade `32/0`,
+  descoberta `40/0`, matriz conforme o contrato, calendar `107/0`.
 
 ### Com o Calendar (#29) empilhado — 25/11/2026
 
@@ -172,13 +202,16 @@ Integrado na branch `arena/9e68c2bb-marcou`, empilhada sobre esta PR.
 
 ## Riscos e limitações
 
-- **Defaults do Supabase desde a primeira migration:** este check só emula os
-  default privileges a partir de `20261125120000` (e reforça antes do
-  Calendar). As 20 tabelas anteriores são verificadas num Postgres limpo, onde
-  `anon`/`authenticated` nunca recebem o `GRANT ALL` do Supabase. Emular desde
-  a primeira migration hoje gera falhas nas tabelas legadas (ver auditoria na
-  #123); a correção depende do hardening proposto na #125 e não faz parte da
-  #29.
+- **Defaults do Supabase:** emulados desde a primeira migration desde a #125.
+  O harness emula o papel `postgres` criando objetos. Outros criadores (Studio,
+  `supabase_admin`) podem ter defaults diferentes no projeto real. Antes de
+  aplicar, ler `pg_default_acl` e a matriz no projeto de dev (consultas na
+  #125).
+- **Fluxos removidos por decisão de segurança (#125):** `DELETE` direto em
+  `profiles`/`providers` e `SELECT` de `anon` em `bookings`/`booking_events`/
+  `profiles` passam a dar `permission denied`. Nenhum código em `src/` usa
+  esses caminhos: `getBooking` roda depois de `requireUser` e trata erro como
+  `null`.
 - `CONTRIBUTING.md` e `check:changelog` foram trazidos da PR #122 (aberta) apenas
   na parte necessária à exigência de changelog; conflito textual com essa PR é
   esperado quando ela for integrada.

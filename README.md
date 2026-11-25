@@ -97,7 +97,10 @@ As migrations estão em `supabase/migrations/`:
 12. `20261125130000_table_privileges_matrix.sql` — matriz canônica de
     privilégios de tabelas/views de `public`. Detalhes em
     `docs/handoffs/privilegios-tabelas.md`.
-13. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
+13. `20261125140000_harden_public_table_privileges.sql` — `revoke all` +
+    `grant` exato nas 8 tabelas legadas: sem `TRUNCATE`/`REFERENCES`/`TRIGGER`
+    para clientes e escrita só onde há política (#125).
+14. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
     transacional, vínculo de eventos e worker de sincronização unidirecional.
     Detalhes em `docs/CALENDAR-INTEGRATION.md`.
 

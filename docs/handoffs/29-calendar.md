@@ -44,8 +44,8 @@ Em `scripts/privileges-check.mjs`:
 
 `docs/handoffs/privilegios-tabelas.md` atualizado (matriz, funções, validação).
 
-### Pendente fora da #29
-- **Emular os defaults do Supabase desde a primeira migration:** hoje isso gera falhas nas tabelas legadas (`bookings`, `profiles`, `notifications`…). Depende do hardening da #125 e é da #123/#125, não do Calendar.
+### #125 (feito nesta mesma branch)
+Defaults do Supabase emulados desde a primeira migration, com hardening das tabelas legadas em `20261125140000_harden_public_table_privileges.sql`. Detalhes em `docs/handoffs/privilegios-tabelas.md`.
 
 ## Reenvio ao conectar (backfill)
 Implementado depois da abertura da PR, com autorização do responsável. O trigger `calendar_connections_backfill_on_connect` roda na transição para `connected` e enfileira, na mesma transação, jobs `reason = 'backfill'` (sem `booking_event_id` e sem gravar em `booking_events`) para:
