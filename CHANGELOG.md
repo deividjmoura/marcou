@@ -30,6 +30,13 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - Matriz canônica de requisitos de produto e sequência de dependências das
   Issues `#84`, `#91` e `#93` registrada em `docs/ROADMAP-MARCOU-SOCIAL.md`,
   preservando a arquitetura da Issue `#72`.
+- Integração unidirecional com Google Calendar (Issue `#29`, atrás de
+  `GOOGLE_CALENDAR_ENABLED=false`): OAuth próprio com escopo
+  `calendar.events`, tokens cifrados AES-256-GCM, outbox transacional
+  alimentada por `booking_events`, worker protegido por bearer e página
+  `/painel/integracoes/calendario`. O evento leva só serviço, início, fim e
+  fuso. Migration `20261125153000_google_calendar_sync.sql` (não aplicada em
+  ambiente remoto) e harness `scripts/calendar-check.mjs` em `npm run test:db`.
 
 ### Alterado
 
@@ -63,3 +70,11 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor
   anterior), impedindo que requisições paralelas sobrescrevam nome ou telefone
   já escolhidos pelo usuário em `/perfil`.
+- Google Calendar (`#29`): state OAuth consumido de forma atômica
+  (`consume_calendar_oauth_state`) antes da troca do code e preso ao usuário que
+  iniciou o fluxo; escopo `calendar.events` exigido em `tokens.scope`;
+  `/api/calendar/connect` passa a aceitar só POST com checagem de origem; claim
+  processa no máximo um job por reserva, em ordem; falhas de persistência
+  deixam de ser ignoradas; estado terminal `dead`; `invalid_grant` suspende a
+  conexão; desconexão mantém tokens e vínculos até os eventos saírem do Google
+  (ou serem marcados como órfãos).

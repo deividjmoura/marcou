@@ -1,6 +1,23 @@
 # Marcou — estado atual e continuidade
 
-Última atualização: 24/11/2026
+Última atualização: 25/11/2026
+
+## Google Calendar — Issue #29 — 25/11/2026
+
+- Branch `arena/9e68c2bb-marcou` integra `feat/29-google-calendar-sync`
+  (`b83e0cd`) sobre a `main` `9b92451`. Sem push, PR ou Supabase remoto; a
+  migration `20261125153000_google_calendar_sync.sql` segue não aplicada.
+- Tabela de tokens renomeada para `calendar_connections`. OAuth com state
+  consumido atomicamente e preso ao usuário, escopo `calendar.events`
+  obrigatório e `/connect` só via POST com checagem de origem. Worker com um
+  job por reserva, escritas verificadas, estado `dead` e suspensão por
+  `invalid_grant`. Desconexão mantém tokens/vínculos até a limpeza terminar.
+- Validação local: lint, typecheck, 204 testes Vitest, `test:db` (legado 69,
+  social 47, identidade 32, discovery 40, calendar 83 — todos sem falha) e
+  build. Fluxo OAuth real, Google API, scheduler e CI não validados.
+- Pendente da PR #123: ajustes em `scripts/privileges-check.mjs` e
+  `docs/handoffs/privilegios-tabelas.md`, descritos em
+  `docs/handoffs/29-calendar.md`.
 
 ## Estabilização de autenticação, velocidade de login e changelog obrigatório — 24/11/2026
 
