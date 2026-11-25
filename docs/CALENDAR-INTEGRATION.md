@@ -6,7 +6,7 @@ Sincroniza eventos do Marcou para o Google Calendar do prestador. O Google Calen
 - `booking.confirmed`: cria/atualiza o evento.
 - `booking.cancelled` e `booking.expired`: removem o evento associado.
 - Reagendamento / `booking.changed`: fora da v1.
-- O evento contém apenas o snapshot do serviço, início e fim, no fuso IANA do prestador. **Não inclui nome, telefone, e-mail, ID da reserva nem outro dado pessoal do cliente.**
+- O evento contém apenas o snapshot do serviço, início e fim, no fuso IANA do prestador. Em reservas com vários serviços (PR #123), o título é o `service_name_snapshot` agregado ("Corte + Barba", até 180 caracteres) e o fim cobre a duração somada. **Não inclui nome, telefone, e-mail, ID da reserva nem outro dado pessoal do cliente.**
 - ID de evento determinístico (`googleEventIdForBooking`) + outbox garantem idempotência e retry.
 
 ## Arquitetura
@@ -86,6 +86,7 @@ Redirect URI no Google Cloud: `<NEXT_PUBLIC_SITE_URL>/api/calendar/callback`. N�
 ## Limitações conhecidas (v1)
 - Evento apagado manualmente no Google não é recriado (`google_event_missing`); o vínculo é mantido.
 - Reconectar após suspensão não reenvia reservas cujos jobs já foram para `dead`.
+- Sem backfill: reservas confirmadas antes da conexão (ou durante uma suspensão) não são enviadas; só eventos de reserva gravados com a conexão ativa geram evento no Google.
 - Vínculos órfãos são só rastro; não há botão para limpá-los.
 - Só o calendário `primary`.
 

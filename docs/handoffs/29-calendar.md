@@ -5,6 +5,7 @@ Atualizado em 25/11/2026.
 ## Estado
 - Trabalho na branch `arena/9e68c2bb-marcou`, que integra `feat/29-google-calendar-sync` (`b83e0cd`) sobre a `main` atual (`9b92451`, já com a PR #122). O único conflito foi o import em `src/app/painel/page.tsx` (mantidos `measureAuthFlow`/`measureAuthStep` da #122 e `isCalendarFeatureEnabled`).
 - **Empilhada sobre a PR #123** (merge de `16f0166`, autorizado pelo responsável): necessário porque `privileges-check.mjs` exige as migrations `20261125120000` e `20261125130000`. A branch da #123 não foi alterada. Conflitos resolvidos em `package.json` (`test:db` com os dois checks), `README.md` (migrations 11–13) e `CHANGELOG.md` (entradas das duas frentes).
+- **PR:** [#126](https://github.com/deividjmoura/marcou/pull/126) (draft, base `main`).
 - **Ordem de merge:** a #123 precisa entrar na `main` antes desta branch. Depois disso, o diff desta branch volta a ser só o Calendar.
 - Sem push, sem PR e sem Supabase remoto. A migration continua **não aplicada**.
 
@@ -28,7 +29,9 @@ Com a #123 empilhada:
 - `npm run test:db`: booking 116/0, social 50/0, identidade 32/0, discovery 40/0, privilégios before 43/0 e after 49/0, calendar 84/0.
 - `npm run audit`: 0 falhas, 0 avisos.
 - `npm run build`: ok.
-- Não validado: fluxo OAuth real, Google API real, scheduler, deploy, CI do GitHub.
+- CI da PR #126 (`quality`: check:changelog, lint, typecheck, test, test:db, build): pass; deploy preview Netlify: pass.
+- Compatibilidade com a PR #124 (simulada em worktree descartável, sem commit): merge sem conflito; typecheck ok, 289/289 testes, lint 0 erros, CHANGELOG válido.
+- Não validado: fluxo OAuth real, Google API real, scheduler, aplicação da migration em Supabase remoto.
 
 ## Integração com a matriz de privilégios da #123 (feito)
 Em `scripts/privileges-check.mjs`:
