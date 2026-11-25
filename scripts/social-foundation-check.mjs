@@ -240,6 +240,11 @@ try {
       roles: { anon: false, authenticated: true },
     },
     {
+      label: "criação agregada exige autenticação",
+      signature: "public.create_booking(text,uuid[],timestamptz,text,text,text)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
       label: "transição de reserva exige autenticação",
       signature: "public.transition_booking(uuid,text,text)",
       roles: { anon: false, authenticated: true },
@@ -248,6 +253,16 @@ try {
       label: "agenda permanece pública",
       signature: "public.get_provider_schedule(text,uuid,date,timestamptz,timestamptz)",
       roles: { anon: true, authenticated: true },
+    },
+    {
+      label: "agenda agregada permanece pública",
+      signature: "public.get_provider_schedule(text,uuid[],date,timestamptz,timestamptz)",
+      roles: { anon: true, authenticated: true },
+    },
+    {
+      label: "helper de totais não é API de cliente",
+      signature: "public.booking_service_totals(uuid,uuid[])",
+      roles: { anon: false, authenticated: false, service_role: false },
     },
     {
       label: "marcar notificação exige autenticação",
@@ -653,7 +668,7 @@ try {
     await ownerBClient.query(
       `select * from public.create_booking(
          'social-prov-a',
-         $1,
+         $1::uuid,
          '2026-12-01T12:00:00Z',
          'Cliente ACL',
          '47999999999',
@@ -704,7 +719,7 @@ try {
   );
   const schedule = await anonClient.query(
     `select public.get_provider_schedule(
-       'social-prov-a', $1, '2026-12-01',
+       'social-prov-a', $1::uuid, '2026-12-01',
        '2026-12-01T00:00:00Z', '2026-12-02T00:00:00Z'
      ) as value`,
     [serviceA],

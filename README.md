@@ -91,7 +91,13 @@ As migrations estão em `supabase/migrations/`:
 10. `20261123143000_discovery_taxonomy_service_areas.sql` — catálogo versionado,
     modalidades de serviço, áreas aproximadas, moderação e projeção pública
     mínima. Detalhes em `docs/DISCOVERY-TAXONOMY.md`.
-11. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
+11. `20261125120000_booking_multiple_services.sql` — reservas com um ou mais
+    serviços do mesmo prestador, snapshots por serviço e totais agregados
+    calculados no banco. Detalhes em `docs/handoffs/21-booking.md`.
+12. `20261125130000_table_privileges_matrix.sql` — matriz canônica de
+    privilégios de tabelas/views de `public`. Detalhes em
+    `docs/handoffs/privilegios-tabelas.md`.
+13. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
     transacional, vínculo de eventos e worker de sincronização unidirecional.
     Detalhes em `docs/CALENDAR-INTEGRATION.md`.
 
@@ -111,6 +117,10 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
   reservas vencidas conflitantes e insere a reserva com snapshot do serviço.
 - A constraint de exclusão GiST + `pg_advisory_xact_lock` por prestador impedem
   dupla marcação, inclusive sob requisições simultâneas.
+- Uma reserva pode combinar 1 a 20 serviços ativos do mesmo prestador: duração
+  e preço são somados no banco, o intervalo ocupado é a soma das durações mais o
+  intervalo do último serviço, e o intervalo combinado é validado por completo;
+  reservas de serviço único seguem compatíveis.
 - Transições de estado (`pending_payment`, `pending_review`, `confirmed`,
   `cancelled`, `expired`) são aplicadas por `transition_booking`, com
   autorização, validade e auditoria.

@@ -55,8 +55,6 @@ async function hasPrivilege(role, table, privilege) {
 }
 
 const databaseDir = path.join(os.tmpdir(), "marcou-pg-data");
-await rm(databaseDir, { recursive: true, force: true });
-
 const postgres = new EmbeddedPostgres({
   databaseDir,
   user: "postgres",
@@ -66,17 +64,23 @@ const postgres = new EmbeddedPostgres({
   autoRehydrateSymlinks: true,
 });
 
-await postgres.initialise();
-await postgres.start();
+let admin;
+let db;
+const roleClients = new Set();
 
-const admin = new Client({
-  host: "127.0.0.1",
-  port: PORT,
-  user: "postgres",
-  password: PASSWORD,
-  database: "postgres",
-});
-await admin.connect();
+try {
+  await rm(databaseDir, { recursive: true, force: true });
+  await postgres.initialise();
+  await postgres.start();
+
+  admin = new Client({
+    host: "127.0.0.1",
+    port: PORT,
+    user: "postgres",
+    password: PASSWORD,
+    database: "postgres",
+  });
+  await admin.connect();
 
 await admin.query(`drop database if exists ${DATABASE}`);
 await admin.query(`create database ${DATABASE}`);
@@ -93,7 +97,7 @@ for (const role of ["anon", "authenticated", "service_role"]) {
   `);
 }
 
-const db = new Client({
+db = new Client({
   host: "127.0.0.1",
   port: PORT,
   user: "postgres",
@@ -111,6 +115,9 @@ await db.query(`
     $$;
 `);
 
+const MULTI_MIGRATION = "supabase/migrations/20261125120000_booking_multiple_services.sql";
+const PRIVILEGES_MIGRATION =
+  "supabase/migrations/20261125130000_table_privileges_matrix.sql";
 const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
   "supabase/migrations/202611150002_booking_operations.sql",
@@ -118,12 +125,120 @@ const migrations = [
   "supabase/migrations/202611160001_provider_description.sql",
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
+  MULTI_MIGRATION,
+  PRIVILEGES_MIGRATION,
 ];
 
+async function writePrivileges(table) {
+  const result = await db.query(
+    `select r.rolname as role, p.privilege_type as privilege
+       from pg_roles r
+       cross join unnest(array[
+         'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'
+       ]) as p(privilege_type)
+      where r.rolname in ('anon', 'authenticated')
+        and has_table_privilege(r.oid, ('public.' || $1)::regclass, p.privilege_type)
+      order by 1, 2`,
+    [table],
+  );
+  return result.rows.map((row) => `${row.role}:${row.privilege}`);
+}
+
+let bookingsPrivilegesBefore;
+let bookingEventsPrivilegesBefore;
+let legacyBackfillBookingId;
+let legacyBackfillServiceId;
+
 for (const file of migrations) {
+  if (file === MULTI_MIGRATION) {
+    // Flag antes da migration nova: nada aqui pode alterar bookings antigos.
+    bookingsPrivilegesBefore = await writePrivileges("bookings");
+    bookingEventsPrivilegesBefore = await writePrivileges("booking_events");
+
+    // Emula os default privileges do Supabase para tabelas novas em public.
+    await db.query(
+      `alter default privileges in schema public
+         grant all on tables to anon, authenticated`,
+    );
+
+    // Reserva de serviço único criada ANTES da migration: o backfill precisa
+    // preservar o snapshot histórico, não o preço atual do serviço.
+    const legacyOwner = crypto.randomUUID();
+    const legacyCustomer = crypto.randomUUID();
+    await db.query(`insert into auth.users (id) values ($1), ($2)`, [
+      legacyOwner,
+      legacyCustomer,
+    ]);
+    const legacyProvider = (
+      await db.query(
+        `insert into public.providers
+           (owner_id, slug, display_name, timezone, is_published)
+         values ($1, 'prov-legacy', 'Legado', 'America/Sao_Paulo', true)
+         returning id`,
+        [legacyOwner],
+      )
+    ).rows[0].id;
+    legacyBackfillServiceId = (
+      await db.query(
+        `insert into public.services
+           (provider_id, name, duration_minutes, price_cents, deposit_cents, buffer_minutes)
+         values ($1, 'Serviço legado', 30, 5000, 0, 0) returning id`,
+        [legacyProvider],
+      )
+    ).rows[0].id;
+    legacyBackfillBookingId = (
+      await db.query(
+        `insert into public.bookings (
+           provider_id, customer_id, service_id, starts_at, ends_at,
+           occupied_until, timezone, customer_name, customer_phone,
+           service_name_snapshot, duration_minutes_snapshot,
+           price_cents_snapshot, deposit_cents_snapshot,
+           buffer_minutes_snapshot, status
+         ) values (
+           $1, $2, $3, '2026-12-01T12:00:00Z', '2026-12-01T12:30:00Z',
+           '2026-12-01T12:30:00Z', 'America/Sao_Paulo', 'Cliente legado', '',
+           'Serviço legado', 30, 4500, 0, 0, 'confirmed'
+         ) returning id`,
+        [legacyProvider, legacyCustomer, legacyBackfillServiceId],
+      )
+    ).rows[0].id;
+  }
+
   const sql = await readFile(file, "utf8");
   await db.query(sql);
   console.log(`aplicada: ${file}`);
+}
+
+console.log("\n[privilégios de booking_services]");
+{
+  const inheritedWrite = await writePrivileges("booking_services");
+  check(
+    "tabela nova não herda INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER",
+    inheritedWrite.length === 0,
+    inheritedWrite.join(", "),
+  );
+
+  const hasSelect = async (role) =>
+    Boolean(
+      (
+        await db.query(
+          `select has_table_privilege($1, 'public.booking_services', 'SELECT') as allowed`,
+          [role],
+        )
+      ).rows[0].allowed,
+    );
+  check("anon não recebe SELECT da tabela nova", (await hasSelect("anon")) === false);
+  check(
+    "authenticated recebe só SELECT da tabela nova",
+    (await hasSelect("authenticated")) === true,
+  );
+  check(
+    "privilégios de bookings/booking_events não foram alterados",
+    JSON.stringify(await writePrivileges("bookings")) ===
+      JSON.stringify(bookingsPrivilegesBefore) &&
+      JSON.stringify(await writePrivileges("booking_events")) ===
+        JSON.stringify(bookingEventsPrivilegesBefore),
+  );
 }
 
 function clientFor(role) {
@@ -139,6 +254,7 @@ function clientFor(role) {
 async function asRole(role, uid) {
   const client = clientFor(role);
   await client.connect();
+  roleClients.add(client);
   if (uid) {
     await client.query("select set_config('request.jwt.claim.sub', $1, false)", [
       uid,
@@ -233,8 +349,16 @@ const D3_11 = "2026-12-03T14:00:00.000Z";
 
 async function createBooking(client, slug, serviceId, startsAt, key, name = "Cliente") {
   const result = await client.query(
-    `select * from public.create_booking($1, $2, $3, $4, '11999999999', $5)`,
+    `select * from public.create_booking($1, $2::uuid, $3, $4, '11999999999', $5)`,
     [slug, serviceId, startsAt, name, key],
+  );
+  return result.rows[0];
+}
+
+async function createBookingMulti(client, slug, serviceIds, startsAt, key, name = "Cliente") {
+  const result = await client.query(
+    `select * from public.create_booking($1, $2::uuid[], $3, $4, '11999999999', $5)`,
+    [slug, serviceIds, startsAt, name, key],
   );
   return result.rows[0];
 }
@@ -248,7 +372,7 @@ console.log("\n[agenda pública]");
 {
   const anon = await asRole("anon");
   const result = await anon.query(
-    `select public.get_provider_schedule('prov-a', $1, '2026-12-01', $2, $3) as schedule`,
+    `select public.get_provider_schedule('prov-a', $1::uuid, '2026-12-01', $2, $3) as schedule`,
     [serviceA1, "2026-12-01T00:00:00Z", "2026-12-02T00:00:00Z"],
   );
   const schedule = result.rows[0].schedule;
@@ -264,7 +388,7 @@ console.log("\n[agenda pública]");
     "agenda não expõe prestador não publicado",
     (
       await anon.query(
-        `select public.get_provider_schedule('prov-b-hidden', $1, '2026-12-01', $2, $3) as schedule`,
+        `select public.get_provider_schedule('prov-b-hidden', $1::uuid, '2026-12-01', $2, $3) as schedule`,
         [serviceA1, "2026-12-01T00:00:00Z", "2026-12-02T00:00:00Z"],
       )
     ).rows[0].schedule === null,
@@ -470,6 +594,634 @@ console.log("\n[transições]");
     await db.query(`select status from public.bookings where id = $1`, [late.id])
   ).rows[0];
   check("expiração tardia foi persistida", lateRow.status === "expired");
+}
+
+console.log("\n[múltiplos serviços]");
+{
+  const anon = await asRole("anon");
+  const D4_09 = "2026-12-04T12:00:00.000Z";
+  const D4_10 = "2026-12-04T13:00:00.000Z";
+  const D4_11 = "2026-12-04T14:00:00.000Z";
+  const D4_1430 = "2026-12-04T14:30:00.000Z";
+  const dayWindow = ["2026-12-04T00:00:00Z", "2026-12-05T00:00:00Z"];
+
+  const scheduleResult = await anon.query(
+    `select public.get_provider_schedule('prov-a', $1::uuid[], '2026-12-04', $2, $3) as schedule`,
+    [[serviceA1, serviceA2], ...dayWindow],
+  );
+  const schedule = scheduleResult.rows[0].schedule;
+  check(
+    " agenda agregada expõe duração e intervalo do banco",
+    schedule?.timing?.durationMinutes === 90 && schedule?.timing?.bufferMinutes === 0,
+    JSON.stringify(schedule?.timing),
+  );
+  check(
+    " totais agregados vêm dos serviços persistidos",
+    schedule?.totals?.priceCents === 12000 &&
+      schedule?.totals?.depositCents === 2000 &&
+      schedule?.totals?.occupiedMinutes === 90 && schedule?.totals?.bufferMinutes === 0,
+    JSON.stringify(schedule?.totals),
+  );
+  check(
+    " agenda devolve os serviços na ordem escolhida",
+    JSON.stringify((schedule?.services ?? []).map((item) => item.id)) ===
+      JSON.stringify([serviceA1, serviceA2]),
+  );
+
+  const legacySchedule = (
+    await anon.query(
+      `select public.get_provider_schedule('prov-a', $1::uuid, '2026-12-04', $2, $3) as schedule`,
+      [serviceA1, ...dayWindow],
+    )
+  ).rows[0].schedule;
+  check(
+    " assinatura legada da agenda continua com um serviço",
+    legacySchedule?.timing?.durationMinutes === 60 &&
+      legacySchedule?.totals?.priceCents === 8000,
+  );
+
+  const mixedSchedule = (
+    await anon.query(
+      `select public.get_provider_schedule('prov-a', $1::uuid[], '2026-12-04', $2, $3) as schedule`,
+      [[serviceA1, serviceB1], ...dayWindow],
+    )
+  ).rows[0].schedule;
+  check("agenda mista entre negócios retorna nulo", mixedSchedule === null);
+  await anon.end();
+
+  const combo = await createBookingMulti(
+    customerCClient,
+    "prov-a",
+    [serviceA1, serviceA2],
+    D4_09,
+    `combo-${uuid()}`,
+    "Combo",
+  );
+  check(
+    " reserva combinada usa fim agregado e intervalo do último serviço",
+    iso(combo.ends_at) === "2026-12-04T13:30:00.000Z" &&
+      iso(combo.occupied_until) === "2026-12-04T13:30:00.000Z",
+    `${iso(combo.ends_at)} / ${iso(combo.occupied_until)}`,
+  );
+  check(
+    " snapshots agregados refletem o conjunto",
+    combo.duration_minutes_snapshot === 90 &&
+      combo.price_cents_snapshot === 12000 &&
+      combo.deposit_cents_snapshot === 2000 &&
+      combo.buffer_minutes_snapshot === 0,
+  );
+  check("service_id permanece como primeiro serviço", combo.service_id === serviceA1);
+
+  const comboServices = (
+    await db.query(
+      `select service_id, position, duration_minutes_snapshot, price_cents_snapshot
+         from public.booking_services where booking_id = $1 order by position`,
+      [combo.id],
+    )
+  ).rows;
+  check(
+    " cada serviço tem snapshot próprio e posição",
+    comboServices.length === 2 &&
+      comboServices[0].service_id === serviceA1 &&
+      comboServices[0].position === 0 &&
+      comboServices[0].duration_minutes_snapshot === 60 &&
+      comboServices[1].service_id === serviceA2 &&
+      comboServices[1].position === 1 &&
+      comboServices[1].duration_minutes_snapshot === 30,
+    JSON.stringify(comboServices),
+  );
+
+  await expectError(
+    " serviço único que caberia sozinho conflita com o intervalo combinado",
+    () =>
+      createBooking(customerDClient, "prov-a", serviceA2, D4_10, `combo-conflict-${uuid()}`),
+    "slot_unavailable",
+  );
+  await expectError(
+    " combo que não cabe no expediente é recusado",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, serviceA2],
+        D4_1430,
+        `combo-hours-${uuid()}`,
+      ),
+    "outside_working_hours",
+  );
+  await expectError(
+    " serviços de outro prestador são recusados",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, serviceB1],
+        D4_09,
+        `combo-tenant-${uuid()}`,
+      ),
+    "service_not_available",
+  );
+  await expectError(
+    " serviços duplicados são recusados",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, serviceA1],
+        D4_09,
+        `combo-duplicate-${uuid()}`,
+      ),
+    "service_not_available",
+  );
+
+  const inactiveService = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, is_active)
+       values ($1, 'Inativo', 30, 1000, false) returning id`,
+      [providerA],
+    )
+  ).rows[0].id;
+  await expectError(
+    " serviço inativo não entra no combo",
+    () =>
+      createBookingMulti(
+        customerDClient,
+        "prov-a",
+        [serviceA1, inactiveService],
+        D4_09,
+        `combo-inactive-${uuid()}`,
+      ),
+    "service_not_available",
+  );
+
+  const legacyAfterMigration = await createBooking(
+    customerDClient,
+    "prov-a",
+    serviceA2,
+    D4_11,
+    `legacy-${uuid()}`,
+  );
+  const legacyRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [legacyAfterMigration.id],
+    )
+  ).rows[0].total;
+  check("reserva antiga de serviço único continua funcionando", legacyRows === 1);
+  const realBackfill = (
+    await db.query(
+      `select service_id, position, service_name_snapshot, price_cents_snapshot
+         from public.booking_services where booking_id = $1`,
+      [legacyBackfillBookingId],
+    )
+  ).rows;
+  check(
+    "backfill real preserva o snapshot histórico (4500, não 5000)",
+    realBackfill.length === 1 &&
+      realBackfill[0].service_id === legacyBackfillServiceId &&
+      realBackfill[0].position === 0 &&
+      realBackfill[0].service_name_snapshot === "Serviço legado" &&
+      realBackfill[0].price_cents_snapshot === 4500,
+    JSON.stringify(realBackfill),
+  );
+
+  const serviceB2 = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Serviço B 2', 30, 3000, 0) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     values ($1, 5, '09:00', '12:00')`,
+    [providerB],
+  );
+
+  const comboAttempts = await Promise.allSettled(
+    customers.map(async (uid, index) => {
+      const client = await asRole("authenticated", uid);
+      try {
+        return await createBookingMulti(
+          client,
+          "prov-b",
+          [serviceB1, serviceB2],
+          D4_09,
+          `race-combo-${uuid()}`,
+          `Concorrente combo ${index}`,
+        );
+      } finally {
+        await client.end();
+      }
+    }),
+  );
+  const comboWinners = comboAttempts.filter((attempt) => attempt.status === "fulfilled");
+  const comboLosers = comboAttempts.filter(
+    (attempt) =>
+      attempt.status === "rejected" &&
+      String(attempt.reason?.message).includes("slot_unavailable"),
+  );
+  check(
+    "apenas uma reserva combinada vence a concorrência",
+    comboWinners.length === 1,
+    `obteve ${comboWinners.length}`,
+  );
+  check(
+    "demais combos concorrentes recebem slot_unavailable",
+    comboLosers.length === customers.length - 1,
+    `obteve ${comboLosers.length}`,
+  );
+
+  if (comboWinners.length === 1) {
+    const winnerId = comboWinners[0].value.id;
+    const winnerServices = (
+      await db.query(
+        `select count(*)::int as total from public.booking_services where booking_id = $1`,
+        [winnerId],
+      )
+    ).rows[0].total;
+    check("reserva vencedora guarda os dois serviços", winnerServices === 2);
+
+    const outsiderRows = await customerCClient.query(
+      `select 1 from public.booking_services where booking_id = $1`,
+      [winnerId],
+    );
+    check("cliente de outro negócio não lê os serviços da reserva", outsiderRows.rows.length === 0);
+
+    const otherProviderRows = await ownerAClient.query(
+      `select 1 from public.booking_services where booking_id = $1`,
+      [winnerId],
+    );
+    check("prestador A não lê serviços da reserva de B", otherProviderRows.rows.length === 0);
+
+    const ownerRows = await ownerBClient.query(
+      `select 1 from public.booking_services where booking_id = $1`,
+      [winnerId],
+    );
+    check("dono da reserva lê os serviços", ownerRows.rows.length === 2);
+
+    const directInsert = await customerCClient
+      .query(
+        `insert into public.booking_services
+           (booking_id, provider_id, service_id, position, service_name_snapshot,
+            duration_minutes_snapshot, price_cents_snapshot, deposit_cents_snapshot,
+            buffer_minutes_snapshot)
+         values ($1, $2, $3, 9, 'Invasor', 30, 100, 0, 0)`,
+        [winnerId, providerB, serviceB1],
+      )
+      .then(() => true)
+      .catch(() => false);
+    check("cliente não insere diretamente em booking_services", directInsert === false);
+  }
+}
+
+console.log("\n[resolução de overload em notação nomeada (PostgREST)]");
+{
+  const anon = await asRole("anon");
+  const dayWindow = ["2026-12-04T00:00:00Z", "2026-12-05T00:00:00Z"];
+
+  // O PostgREST resolve sobrecargas por nome de argumento, não só por tipo.
+  const namedScheduleSingle = (
+    await anon.query(
+      `select public.get_provider_schedule(
+         p_provider_slug => 'prov-a',
+         p_service_id => $1::uuid,
+         p_date => '2026-12-04'::date,
+         p_from => $2::timestamptz,
+         p_to => $3::timestamptz
+       ) as schedule`,
+      [serviceA1, ...dayWindow],
+    )
+  ).rows[0].schedule;
+  const namedScheduleMany = (
+    await anon.query(
+      `select public.get_provider_schedule(
+         p_provider_slug => 'prov-a',
+         p_service_ids => $1::uuid[],
+         p_date => '2026-12-04'::date,
+         p_from => $2::timestamptz,
+         p_to => $3::timestamptz
+       ) as schedule`,
+      [[serviceA1, serviceA2], ...dayWindow],
+    )
+  ).rows[0].schedule;
+
+  check(
+    " p_service_id nomeado cai na assinatura de um serviço",
+    namedScheduleSingle?.timing?.durationMinutes === 60 &&
+      namedScheduleSingle?.services?.length === 1,
+    JSON.stringify(namedScheduleSingle?.timing),
+  );
+  check(
+    " p_service_ids nomeado cai na assinatura agregada",
+    namedScheduleMany?.timing?.durationMinutes === 90 &&
+      namedScheduleMany?.services?.length === 2,
+    JSON.stringify(namedScheduleMany?.timing),
+  );
+  await anon.end();
+
+  const namedB2 = (
+    await db.query(
+      `select id from public.services where provider_id = $1 and name = 'Serviço B 2'`,
+      [providerB],
+    )
+  ).rows[0].id;
+
+  const namedCustomerId = uuid();
+  await db.query(`insert into auth.users (id) values ($1)`, [namedCustomerId]);
+  const namedCustomer = await asRole("authenticated", namedCustomerId);
+
+  // Sábado (12/05) livre no prestador B para as duas criações nomeadas.
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     values ($1, 6, '09:00', '12:00')`,
+    [providerB],
+  );
+
+  const namedLegacy = (
+    await namedCustomer.query(
+      `select * from public.create_booking(
+         p_provider_slug => $1,
+         p_service_id => $2::uuid,
+         p_starts_at => $3::timestamptz,
+         p_customer_name => $4,
+         p_customer_phone => '11999999999',
+         p_idempotency_key => $5
+       )`,
+      ["prov-b", serviceB1, "2026-12-05T12:00:00.000Z", "Nomeado um", `named-legacy-${uuid()}`],
+    )
+  ).rows[0];
+  const namedLegacyRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [namedLegacy.id],
+    )
+  ).rows[0].total;
+  check(
+    " wrapper legado nomeado responde como antes (um serviço)",
+    namedLegacy.status === "pending_payment" &&
+      namedLegacy.service_id === serviceB1 &&
+      namedLegacy.duration_minutes_snapshot === 60 &&
+      namedLegacy.price_cents_snapshot === 5000 &&
+      namedLegacy.buffer_minutes_snapshot === 0 &&
+      namedLegacyRows === 1,
+    JSON.stringify({ status: namedLegacy.status, rows: namedLegacyRows }),
+  );
+
+  const namedArray = (
+    await namedCustomer.query(
+      `select * from public.create_booking(
+         p_provider_slug => $1,
+         p_service_ids => $2::uuid[],
+         p_starts_at => $3::timestamptz,
+         p_customer_name => $4,
+         p_customer_phone => '11999999999',
+         p_idempotency_key => $5
+       )`,
+      ["prov-b", [serviceB1, namedB2], "2026-12-05T13:00:00.000Z", "Nomeado dois", `named-array-${uuid()}`],
+    )
+  ).rows[0];
+  const namedArrayRows = (
+    await db.query(
+      `select count(*)::int as total from public.booking_services where booking_id = $1`,
+      [namedArray.id],
+    )
+  ).rows[0].total;
+  check(
+    " assinatura array nomeada cria reserva combinada",
+    namedArray.status === "pending_payment" &&
+      namedArray.duration_minutes_snapshot === 90 &&
+      namedArray.price_cents_snapshot === 8000 &&
+      iso(namedArray.occupied_until) === "2026-12-05T14:30:00.000Z" &&
+      namedArrayRows === 2,
+    JSON.stringify({ occupied: iso(namedArray.occupied_until), rows: namedArrayRows }),
+  );
+
+  const overloads = (
+    await db.query(`
+      select p.proname as name, pg_get_function_identity_arguments(p.oid) as args
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname in ('create_booking', 'get_provider_schedule')
+         and p.prosecdef
+    `)
+  ).rows;
+  const hasBothOverloads = ["create_booking", "get_provider_schedule"].every((name) => {
+    const args = overloads.filter((row) => row.name === name).map((row) => row.args);
+    return (
+      args.some((item) => item.includes("uuid[]")) &&
+      args.some((item) => item.includes("uuid") && !item.includes("uuid[]"))
+    );
+  });
+  check(
+    "quatro assinaturas (legada + array) continuam publicadas",
+    overloads.length === 4 && hasBothOverloads,
+    JSON.stringify(overloads),
+  );
+}
+
+console.log("\n[casos de borda e truncamento]");
+{
+  const anon = await asRole("anon");
+  const dayWindow = ["2026-12-04T00:00:00Z", "2026-12-05T00:00:00Z"];
+  const slot = "2026-12-04T13:45:00.000Z";
+
+  const scheduleIds = (ids) =>
+    anon.query(
+      `select public.get_provider_schedule(
+         p_provider_slug => 'prov-a',
+         p_service_ids => $1::uuid[],
+         p_date => '2026-12-04'::date,
+         p_from => $2::timestamptz,
+         p_to => $3::timestamptz
+       ) as schedule`,
+      [ids, ...dayWindow],
+    );
+
+  check(" array vazio não produz agenda", (await scheduleIds([])).rows[0].schedule === null);
+  check(
+    " array com NULL não produz agenda",
+    (await scheduleIds([serviceA1, null])).rows[0].schedule === null,
+  );
+  check(
+    " array com duplicatas não produz agenda",
+    (await scheduleIds([serviceA1, serviceA1])).rows[0].schedule === null,
+  );
+
+  await db.query(
+    `insert into public.services (provider_id, name, duration_minutes, price_cents)
+     select $1, 'Extra ' || i, 30, 1000 from generate_series(1, 20) as i`,
+    [providerA],
+  );
+  const manyIds = (
+    await db.query(
+      `select id from public.services
+        where provider_id = $1 and is_active
+        order by created_at desc limit 21`,
+      [providerA],
+    )
+  ).rows.map((row) => row.id);
+  check(" 21 serviços distintos não produzem agenda", (await scheduleIds(manyIds)).rows[0].schedule === null);
+  await expectError(
+    " 21 serviços são recusados na criação",
+    () => createBookingMulti(customerDClient, "prov-a", manyIds, slot, `many-${uuid()}`),
+    "service_not_available",
+  );
+  await expectError(
+    " array vazio é recusado na criação",
+    () => createBookingMulti(customerDClient, "prov-a", [], slot, `empty-${uuid()}`),
+    "service_not_available",
+  );
+  await expectError(
+    " array com NULL é recusado na criação",
+    () => createBookingMulti(customerDClient, "prov-a", [serviceA1, null], slot, `null-${uuid()}`),
+    "service_not_available",
+  );
+
+  const inactiveId = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, is_active)
+       values ($1, 'Inativo borda', 30, 1000, false) returning id`,
+      [providerA],
+    )
+  ).rows[0].id;
+  check(
+    " serviço inativo não produz agenda",
+    (await scheduleIds([serviceA1, inactiveId])).rows[0].schedule === null,
+  );
+  await expectError(
+    " serviço inativo é recusado na criação",
+    () =>
+      createBookingMulti(customerDClient, "prov-a", [serviceA1, inactiveId], slot, `inactive-edge-${uuid()}`),
+    "service_not_available",
+  );
+  check(
+    " mistura de negócios não produz agenda",
+    (await scheduleIds([serviceA1, serviceB1])).rows[0].schedule === null,
+  );
+  await expectError(
+    " mistura de negócios é recusada na criação",
+    () =>
+      createBookingMulti(customerDClient, "prov-a", [serviceA1, serviceB1], slot, `mixed-edge-${uuid()}`),
+    "service_not_available",
+  );
+  await anon.end();
+
+  const firstLong = "A".repeat(120);
+  const secondLong = "B".repeat(120);
+  const longA = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents)
+       values ($1, $2, 30, 1000) returning id`,
+      [providerB, firstLong],
+    )
+  ).rows[0].id;
+  const longB = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents)
+       values ($1, $2, 30, 1000) returning id`,
+      [providerB, secondLong],
+    )
+  ).rows[0].id;
+  const longBooking = await createBookingMulti(
+    customerDClient,
+    "prov-b",
+    [longA, longB],
+    "2026-12-04T13:45:00.000Z",
+    `long-${uuid()}`,
+    "Nome longo",
+  );
+  check(
+    " nome combinado é truncado em 180 caracteres",
+    longBooking.service_name_snapshot.length === 180 &&
+      longBooking.service_name_snapshot.startsWith(`${firstLong} + `) &&
+      longBooking.service_name_snapshot.includes("B".repeat(40)),
+    `tamanho=${longBooking.service_name_snapshot.length}`,
+  );
+  const longNotifications = (
+    await db.query(
+      `select title, body from public.notifications
+        where booking_id = $1 order by recipient_id`,
+      [longBooking.id],
+    )
+  ).rows;
+  check(
+    " notificação continua legível após o truncamento",
+    longNotifications.length === 2 &&
+      longNotifications.every(
+        (row) =>
+          row.body.includes("A".repeat(40)) &&
+          row.body.includes("B".repeat(40)) &&
+          row.body.length > 150,
+      ),
+    `notificações=${longNotifications.length}`,
+  );
+
+  // Decisão do responsável: soma das durações + intervalo APENAS do último
+  // serviço da seleção (ordem de seleção).
+  const timedA = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo A', 30, 2000, 15) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const timedB = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo B', 45, 3000, 20) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const timed = (
+    await db.query(
+      `select public.booking_service_totals($1::uuid, $2::uuid[]) as totals`,
+      [providerB, [timedA, timedB]],
+    )
+  ).rows[0].totals;
+  check(
+    " intervalo apenas do último serviço (30+15 e 45+20 ⇒ 75 + 20 = 95)",
+    timed.durationMinutes === 75 &&
+      timed.bufferMinutes === 20 &&
+      timed.occupiedMinutes === 95 &&
+      timed.priceCents === 5000,
+    JSON.stringify(timed),
+  );
+
+  const shortA = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo curto A', 30, 1000, 10) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const shortB = (
+    await db.query(
+      `insert into public.services
+         (provider_id, name, duration_minutes, price_cents, buffer_minutes)
+       values ($1, 'Intervalo curto B', 45, 1000, 5) returning id`,
+      [providerB],
+    )
+  ).rows[0].id;
+  const shortTotals = (
+    await db.query(
+      `select public.booking_service_totals($1::uuid, $2::uuid[]) as totals`,
+      [providerB, [shortA, shortB]],
+    )
+  ).rows[0].totals;
+  check(
+    " intervalo apenas do último serviço (30+10 e 45+5 ⇒ 75 + 5 = 80)",
+    shortTotals.durationMinutes === 75 &&
+      shortTotals.bufferMinutes === 5 &&
+      shortTotals.occupiedMinutes === 80,
+    JSON.stringify(shortTotals),
+  );
 }
 
 console.log("\n[idempotência]");
@@ -1143,13 +1895,17 @@ console.log("\n[segurança e RLS]");
   );
 }
 
-await ownerAClient.end();
-await ownerBClient.end();
-await customerCClient.end();
-await customerDClient.end();
-await db.end();
-await admin.end();
-await postgres.stop();
+} catch (error) {
+  failed += 1;
+  console.error("  FAIL erro não tratado no harness de booking", error);
+} finally {
+  // Sempre desliga o cluster, inclusive em falha: a porta 55432 precisa ficar
+  // livre para a próxima execução de `npm run test:db`.
+  await Promise.allSettled([...roleClients].map((client) => client.end()));
+  if (db) await db.end().catch(() => undefined);
+  if (admin) await admin.end().catch(() => undefined);
+  await postgres.stop().catch(() => undefined);
+}
 
 console.log(`\nresultado: ${passed} passaram, ${failed} falharam`);
-process.exit(failed === 0 ? 0 : 1);
+process.exitCode = failed === 0 ? 0 : 1;
