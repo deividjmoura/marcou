@@ -54,8 +54,8 @@ export async function runCalendarWorker(limit = 10) {
           await admin.from("booking_calendar_events").delete().eq("booking_id", job.booking_id);
         }
       } else {
-        const { data: connection, error: connectionError } = await admin.from("provider_calendar_connections").select("provider_id,refresh_token_ciphertext,calendar_id").eq("provider_id", booking.provider_id).maybeSingle();
-        if (connectionError || !connection) throw new Error("calendar_connection_missing");
+        const { data: connection, error: connectionError } = await admin.from("provider_calendar_connections").select("provider_id,refresh_token_ciphertext,calendar_id,connection_status").eq("provider_id", booking.provider_id).maybeSingle();
+        if (connectionError || !connection || connection.connection_status !== "connected") throw new Error("calendar_connection_missing");
         const calendarId = connection.calendar_id || "primary";
         const eventId = mapping?.google_event_id ?? "marcou" + (await import("node:crypto")).createHash("sha256").update(booking.id).digest("hex").slice(0, 40);
         const token = await refreshGoogleAccessToken(connection);
