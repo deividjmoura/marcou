@@ -1,5 +1,6 @@
 import { encryptCalendarToken, decryptCalendarToken } from "./crypto";
 import { calendarAdminClient } from "./admin";
+import { buildCalendarEvent } from "./event-payload";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const CALENDAR_API = "https://www.googleapis.com/calendar/v3";
 export type CalendarConnection = { provider_id: string; refresh_token_ciphertext: string | null; calendar_id: string };
@@ -60,7 +61,7 @@ export async function runCalendarWorker(limit = 10) {
         const eventId = mapping?.google_event_id ?? "marcou" + (await import("node:crypto")).createHash("sha256").update(booking.id).digest("hex").slice(0, 40);
         const token = await refreshGoogleAccessToken(connection);
         // Deliberately exclude customer name, phone, email and booking ID from event payload.
-        const event = { id: eventId, summary: booking.service_name_snapshot, start: { dateTime: booking.starts_at, timeZone: booking.timezone }, end: { dateTime: booking.ends_at, timeZone: booking.timezone } };
+        const event = buildCalendarEvent({ id: eventId, serviceName: booking.service_name_snapshot, startsAt: booking.starts_at, endsAt: booking.ends_at, timezone: booking.timezone });
         const collection = `/calendars/${encodeURIComponent(calendarId)}/events`;
         let response: Response;
         if (mapping) response = await googleCalendarRequest(token, collection + "/" + encodeURIComponent(eventId), "PATCH", event);
