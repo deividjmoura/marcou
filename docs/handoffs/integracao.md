@@ -86,21 +86,27 @@ worktree temporária a partir da `main` `8730118`. Todas as PRs têm merge-base
 com a `main` (conferido com `git merge-base` e com a API `compare`). Resultado
 final das 5 PRs juntas: lint sem erros, typecheck ok, `npm test` 233/233,
 `test:db` verde (incluindo `privileges-check`), audit 0 e build ok.
+Depois do merge da #122, a ordem recomendada passou a ser #124 antes da #123.
+Conferido com `git merge-tree`: os conflitos da #123 são os mesmos
+(`CHANGELOG.md`, `package.json`) nas duas ordens.
 
-1. **#122** (auth/CHANGELOG): merge limpo. Nada a ajustar.
-2. **#123** (booking + matriz de privilégios), depois da #122. Conflitos em
-   `CHANGELOG.md` e `package.json`:
-   - CHANGELOG: manter cabeçalho e entradas da #122 e acrescentar as entradas
-     de booking/matriz em `Adicionado` e as de `Segurança`. A entrada
-     "Verificação obrigatória de changelog" da #123 é duplicada e sai.
+1. **#122** (auth/CHANGELOG): **mergeada em 25/11/2026** (`9b92451`).
+2. **#124** (esta PR): **já atualizada com a `main` depois da #122**. O
+   conflito add/add em `CHANGELOG.md` foi resolvido mantendo tudo da #122 e
+   acrescentando as 3 entradas da #124 (+13 linhas, 0 removidas), e
+   `npm run check:changelog` passa. Está pronta para revisão. Pode entrar
+   antes da #123, que ainda é draft e tem pendências de segurança.
+3. **#123** (booking + matriz de privilégios), depois dos ajustes da revisão.
+   Contra a `main` + #124, conflita em `CHANGELOG.md` e `package.json`:
+   - CHANGELOG: manter cabeçalho e todas as entradas já presentes (#122 e
+     #124) e acrescentar as entradas de booking/matriz em `Adicionado` e as de
+     `Segurança`. A entrada "Verificação obrigatória de changelog" da #123 é
+     duplicada e sai.
    - `package.json`: usar o `test:db` da #123 (com `privileges-check`),
      mantendo `check:changelog`.
 
-   `scripts/changelog-check.mjs` e o teste dele são idênticos nas duas PRs.
+   `scripts/changelog-check.mjs` e o teste dele são idênticos aos da `main`.
    As pendências de segurança da revisão da #123 continuam valendo (issue #125).
-3. **#124** (esta PR), depois da #123: conflito add/add só em `CHANGELOG.md`.
-   Resolução: manter tudo e acrescentar as 3 entradas da #124 (+13 linhas,
-   0 removidas). Depois rodar `npm run check:changelog`.
 4. **#40** (#22), depois da #124: merge limpo, mas o `check:changelog` falha
    (`src/app/p/[slug]/actions.ts` sem entrada). Precisa de entrada no
    CHANGELOG. Coordenar com o agente da Issue #21.
@@ -109,16 +115,16 @@ final das 5 PRs juntas: lint sem erros, typecheck ok, `npm test` 233/233,
    antes do bloco da #68) e em `src/app/reserva/[id]/page.tsx` (layout da #68 +
    `role={role}` no `<ReservationActions>`). Também precisa de entrada no
    CHANGELOG.
-6. **#32 corrigida** (patch comentado na PR #32): só depois da #122.
+6. **#32 corrigida** (patch comentado na PR #32): a #122 já entrou.
    Regenerar o patch mantendo os steps novos da #122 em
    `.github/workflows/ci.yml` e acrescentando só concurrency, timeout e nomes.
 7. Rebasear antes de revisar: #38, #39 e #67. #69 e #71: o código da #69 não
    está na `main` (a `main` resolve a recuperação por `/auth/confirm` com
    `token_hash`); fechar ou rebasear é decisão do responsável.
 
-**Não mergear a #124 antes da #122:** o `CHANGELOG.md` desta PR reproduz as
-entradas da #122 para satisfazer o check dela e só fica correto depois do merge
-da #122.
+A #122 já está na `main`. A partir de agora, o `check:changelog` do CI vale para
+toda PR que mexer em `src/`, `scripts/`, `supabase/` etc.: #40, #68, #32 e as
+demais precisam de entrada em `## [Unreleased]`.
 
 ### Triagem de PRs candidatas a fechamento (evidência; nada foi fechado)
 
