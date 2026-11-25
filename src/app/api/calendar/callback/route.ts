@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       refresh_token_ciphertext: encryptCalendarToken(tokens.refresh_token),
       access_token_ciphertext: encryptCalendarToken(tokens.access_token),
       access_token_expires_at: new Date(Date.now() + Number(tokens.expires_in ?? 3600) * 1000).toISOString(),
-      granted_scope: tokens.scope ?? "https://www.googleapis.com/auth/calendar.events",
+      granted_scope: tokens.scope ?? "https://www.googleapis.com/auth/calendar.events", connection_status: "connected",
       oauth_state_hash: null, oauth_state_expires_at: null,
       connected_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     }).eq("provider_id", provider.id);
