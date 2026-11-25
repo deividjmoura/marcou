@@ -42,7 +42,8 @@ export class FakeStore implements CalendarStore {
 
   addJob(job: Partial<OutboxJob> & { id: string; booking_id: string }) {
     this.jobs.set(job.id, {
-      booking_event_id: `event-${job.id}`,
+      booking_event_id: job.reason === "backfill" ? null : `event-${job.id}`,
+      reason: "booking_event",
       operation: "upsert",
       status: "pending",
       attempts: 0,

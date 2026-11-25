@@ -204,6 +204,7 @@ try {
   console.log("\n[funções SECURITY DEFINER]");
   const functions = {
     "public.enqueue_calendar_sync_from_booking_event()": false,
+    "public.enqueue_calendar_backfill_on_connect()": false,
     "public.claim_calendar_sync_jobs(integer)": true,
     "public.consume_calendar_oauth_state(text, uuid)": true,
     "public.finalize_calendar_disconnect(uuid)": true,
@@ -511,6 +512,179 @@ try {
   check("conexão (tokens) removida", remaining.rows[0].n === 0);
   const orphanKept = await db.query(`select orphaned_at from public.booking_calendar_events where booking_id=$1`, [mapped]);
   check("vínculo órfão mantido como rastro", orphanKept.rowCount === 1 && orphanKept.rows[0].orphaned_at !== null);
+
+  console.log("\n[reenvio ao conectar (backfill)]");
+  const bfOwner = uuid();
+  await db.query(`insert into auth.users (id) values ($1)`, [bfOwner]);
+  const bfProvider = (
+    await db.query(
+      `insert into public.providers (owner_id, slug, display_name) values ($1, 'cal-backfill', 'Backfill') returning id`,
+      [bfOwner],
+    )
+  ).rows[0].id;
+  const bfService = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents) values ($1, 'Corte', 30, 5000) returning id`,
+      [bfProvider],
+    )
+  ).rows[0].id;
+  async function bfBooking(status, startsAt) {
+    const endsAt = new Date(Date.parse(startsAt) + 30 * 60 * 1000).toISOString();
+    return (
+      await db.query(
+        `insert into public.bookings (
+           provider_id, customer_id, service_id, starts_at, ends_at, occupied_until, timezone,
+           customer_name, customer_phone, service_name_snapshot, duration_minutes_snapshot,
+           price_cents_snapshot, deposit_cents_snapshot, buffer_minutes_snapshot, status, expires_at
+         ) values ($1,$2,$3,$4,$5,$5,'America/Sao_Paulo','Cliente','','Corte',30,5000,0,0,$6::public.booking_status,
+                   case when $6::text in ('pending_payment','pending_review') then now() + interval '1 hour' end)
+         returning id`,
+        [bfProvider, customer, bfService, startsAt, endsAt, status],
+      )
+    ).rows[0].id;
+  }
+  const future = (hours) => new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+  const bfConfirmed = await bfBooking("confirmed", future(24));
+  const bfPast = await bfBooking("confirmed", future(-48));
+  const bfPending = await bfBooking("pending_payment", future(26));
+  const bfCancelledMapped = await bfBooking("cancelled", future(28));
+  const bfCancelledPlain = await bfBooking("cancelled", future(30));
+  const bfQueued = await bfBooking("confirmed", future(32));
+  await db.query(
+    `insert into public.booking_calendar_events (booking_id, provider_id, calendar_id, google_event_id) values ($1,$2,'primary','evt-bf')`,
+    [bfCancelledMapped, bfProvider],
+  );
+  await addEvent(bfQueued, "booking.confirmed");
+  const backfillJobs = async () =>
+    (
+      await db.query(
+        `select o.booking_id, o.operation, o.status, o.booking_event_id
+           from public.calendar_sync_outbox o
+           join public.bookings b on b.id = o.booking_id
+          where b.provider_id = $1 and o.reason = 'backfill'
+          order by o.created_at, o.id`,
+        [bfProvider],
+      )
+    ).rows;
+
+  await db.query(`insert into public.calendar_connections (provider_id) values ($1)`, [bfProvider]);
+  check("conexão pending não enfileira backfill", (await backfillJobs()).length === 0);
+
+  // Transição para connected feita pelo service_role (como o callback OAuth).
+  await service_role.query(
+    `update public.calendar_connections set connection_status='connected', refresh_token_ciphertext='c' where provider_id=$1`,
+    [bfProvider],
+  );
+  let bf = await backfillJobs();
+  const bfIds = bf.map((job) => job.booking_id);
+  check("conectar enfileira a reserva confirmada futura (upsert)", bf.some((job) => job.booking_id === bfConfirmed && job.operation === "upsert"));
+  check(
+    "conectar enfileira remoção de reserva cancelada com evento ativo (delete)",
+    bf.some((job) => job.booking_id === bfCancelledMapped && job.operation === "delete"),
+  );
+  check("reserva confirmada já terminada não entra", !bfIds.includes(bfPast));
+  check("reserva aguardando pagamento não entra", !bfIds.includes(bfPending));
+  check("reserva cancelada sem evento no Google não entra", !bfIds.includes(bfCancelledPlain));
+  check("reserva com job pending não é duplicada", !bfIds.includes(bfQueued) && (await jobsFor(bfQueued)).length === 1);
+  check("backfill não toca reservas de outro prestador", bf.length === 2, JSON.stringify(bf));
+  check("jobs de backfill não têm booking_event", bf.every((job) => job.booking_event_id === null && job.status === "pending"));
+  const eventsAfterBackfill = await db.query(
+    `select count(*)::int as n from public.booking_events where booking_id = any($1::uuid[])`,
+    [[bfConfirmed, bfCancelledMapped]],
+  );
+  check("backfill não grava em booking_events (trilha de auditoria intacta)", eventsAfterBackfill.rows[0].n === 0);
+
+  await service_role.query(`update public.calendar_connections set connection_status='connected' where provider_id=$1`, [bfProvider]);
+  check("update connected -> connected não reenfileira", (await backfillJobs()).length === 2);
+
+  const bfClaimed = (await claim()).filter((job) => job.booking_id === bfConfirmed);
+  check("claim entrega o job de backfill", bfClaimed.length === 1 && bfClaimed[0].reason === "backfill", JSON.stringify(bfClaimed));
+
+  await db.query(
+    `update public.calendar_sync_outbox o set status='succeeded', completed_at=now(), processing_started_at=null
+       from public.bookings b where b.id = o.booking_id and b.provider_id = $1`,
+    [bfProvider],
+  );
+  await service_role.query(
+    `update public.calendar_connections set connection_status='suspended', suspended_reason='invalid_grant' where provider_id=$1`,
+    [bfProvider],
+  );
+  check("suspender não enfileira", (await backfillJobs()).length === 2);
+  await service_role.query(
+    `update public.calendar_connections set connection_status='connected', suspended_reason=null where provider_id=$1`,
+    [bfProvider],
+  );
+  bf = await backfillJobs();
+  check(
+    "reconectar após suspensão reenvia as reservas confirmadas futuras (inclusive as que já tinham job)",
+    bf.filter((job) => job.status === "pending").map((job) => job.booking_id).sort().join() ===
+      [bfConfirmed, bfCancelledMapped, bfQueued].sort().join(),
+    JSON.stringify(bf),
+  );
+
+  await expectError(
+    "job de backfill não aceita booking_event",
+    () =>
+      db.query(
+        `insert into public.calendar_sync_outbox (booking_id, booking_event_id, reason, operation)
+         select $1, id, 'backfill', 'upsert' from public.booking_events where booking_id = $2 limit 1`,
+        [bfQueued, bfQueued],
+      ),
+    "calendar_sync_outbox_reason_event",
+  );
+  await expectError(
+    "job de booking_event exige booking_event_id",
+    () => db.query(`insert into public.calendar_sync_outbox (booking_id, operation) values ($1, 'upsert')`, [bfConfirmed]),
+    "calendar_sync_outbox_reason_event",
+  );
+
+  const bulkOwner = uuid();
+  await db.query(`insert into auth.users (id) values ($1)`, [bulkOwner]);
+  const bulkProvider = (
+    await db.query(
+      `insert into public.providers (owner_id, slug, display_name) values ($1, 'cal-bulk', 'Bulk') returning id`,
+      [bulkOwner],
+    )
+  ).rows[0].id;
+  const bulkService = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents) values ($1, 'Corte', 30, 5000) returning id`,
+      [bulkProvider],
+    )
+  ).rows[0].id;
+  await db.query(
+    `insert into public.bookings (
+       provider_id, customer_id, service_id, starts_at, ends_at, occupied_until, timezone,
+       customer_name, customer_phone, service_name_snapshot, duration_minutes_snapshot,
+       price_cents_snapshot, deposit_cents_snapshot, buffer_minutes_snapshot, status
+     )
+     select $1, $2, $3,
+            date_trunc('hour', now()) + make_interval(hours => 24 + g),
+            date_trunc('hour', now()) + make_interval(hours => 24 + g, mins => 30),
+            date_trunc('hour', now()) + make_interval(hours => 24 + g, mins => 30),
+            'America/Sao_Paulo', 'Cliente', '', 'Corte', 30, 5000, 0, 0, 'confirmed'
+       from generate_series(1, 510) g`,
+    [bulkProvider, customer, bulkService],
+  );
+  await db.query(
+    `insert into public.calendar_connections (provider_id, connection_status, refresh_token_ciphertext) values ($1, 'connected', 'c')`,
+    [bulkProvider],
+  );
+  const bulk = await db.query(
+    `select count(*)::int as n, max(b.starts_at) as last_start
+       from public.calendar_sync_outbox o join public.bookings b on b.id = o.booking_id
+      where b.provider_id = $1 and o.reason = 'backfill'`,
+    [bulkProvider],
+  );
+  const cutoff = await db.query(
+    `select starts_at from public.bookings where provider_id = $1 order by starts_at offset 499 limit 1`,
+    [bulkProvider],
+  );
+  check(
+    "inserir conexão já connected também enfileira; limite de 500, das mais próximas",
+    bulk.rows[0].n === 500 && bulk.rows[0].last_start.getTime() === cutoff.rows[0].starts_at.getTime(),
+    JSON.stringify(bulk.rows[0]),
+  );
 
   console.log("\n[acesso direto de clientes]");
   const anonClient = await connect("anon");

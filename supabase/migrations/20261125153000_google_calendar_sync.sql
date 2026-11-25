@@ -53,7 +53,11 @@ create index calendar_connections_disconnecting_idx
 create table public.calendar_sync_outbox (
   id uuid primary key default gen_random_uuid(),
   booking_id uuid not null references public.bookings(id) on delete cascade,
-  booking_event_id uuid not null references public.booking_events(id) on delete cascade,
+  -- Nulo só para jobs de reenvio (backfill) criados ao conectar: eles não
+  -- correspondem a um evento da reserva e não poluem booking_events.
+  booking_event_id uuid references public.booking_events(id) on delete cascade,
+  reason text not null default 'booking_event'
+    check (reason in ('booking_event','backfill')),
   operation text not null check (operation in ('upsert','delete')),
   -- dead = estado terminal após esgotar tentativas ou erro permanente.
   status text not null default 'pending'
@@ -65,7 +69,10 @@ create table public.calendar_sync_outbox (
   last_error_code text,
   -- clock_timestamp() ordena jobs da mesma reserva mesmo dentro de uma transação.
   created_at timestamptz not null default clock_timestamp(),
-  unique (booking_event_id)
+  unique (booking_event_id),
+  constraint calendar_sync_outbox_reason_event check (
+    (reason = 'booking_event') = (booking_event_id is not null)
+  )
 );
 
 create index calendar_sync_outbox_ready_idx
@@ -144,6 +151,67 @@ revoke all on function public.enqueue_calendar_sync_from_booking_event() from pu
 create trigger booking_events_calendar_outbox
   after insert on public.booking_events
   for each row execute function public.enqueue_calendar_sync_from_booking_event();
+
+-- ---------------------------------------------------------------------------
+-- Reenvio ao conectar (backfill): na transição para `connected` (primeira
+-- conexão ou reconexão após suspensão), enfileira na mesma transação:
+-- - reservas confirmadas do prestador que ainda não terminaram;
+-- - reservas não confirmadas que ainda têm evento ativo no Google (ex.:
+--   canceladas enquanto a conexão estava suspensa e cujo job virou dead).
+-- O worker decide pelo estado atual da reserva, então duplicatas são
+-- inofensivas; mesmo assim pula reservas que já têm job `pending`. Limite de
+-- 500 reservas por conexão, das mais próximas para as mais distantes.
+-- ---------------------------------------------------------------------------
+create or replace function public.enqueue_calendar_backfill_on_connect()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.connection_status <> 'connected' or new.disconnect_requested_at is not null then
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and old.connection_status = 'connected' then
+    return new;
+  end if;
+
+  insert into public.calendar_sync_outbox (booking_id, booking_event_id, reason, operation)
+  select
+    b.id,
+    null,
+    'backfill',
+    case when b.status = 'confirmed' then 'upsert' else 'delete' end
+  from public.bookings b
+  where b.provider_id = new.provider_id
+    and (
+      (b.status = 'confirmed' and b.ends_at > now())
+      or (
+        b.status <> 'confirmed'
+        and exists (
+          select 1 from public.booking_calendar_events m
+          where m.booking_id = b.id
+            and m.provider_id = new.provider_id
+            and m.orphaned_at is null
+        )
+      )
+    )
+    and not exists (
+      select 1 from public.calendar_sync_outbox o
+      where o.booking_id = b.id and o.status = 'pending'
+    )
+  order by b.starts_at, b.id
+  limit 500;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.enqueue_calendar_backfill_on_connect() from public, anon, authenticated, service_role;
+
+create trigger calendar_connections_backfill_on_connect
+  after insert or update of connection_status on public.calendar_connections
+  for each row execute function public.enqueue_calendar_backfill_on_connect();
 
 -- ---------------------------------------------------------------------------
 -- Claim: no máximo um job por reserva, sempre o mais antigo não terminal.

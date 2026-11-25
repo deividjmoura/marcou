@@ -17,7 +17,8 @@ export type CalendarConnectionRow = {
 export type OutboxJob = {
   id: string;
   booking_id: string;
-  booking_event_id: string;
+  booking_event_id: string | null;
+  reason: "booking_event" | "backfill";
   operation: "upsert" | "delete";
   status: string;
   attempts: number;

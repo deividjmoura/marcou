@@ -19,8 +19,10 @@
   tabelas do Calendar entram na matriz de `scripts/privileges-check.mjs`
   (fase `before` exclui matriz e Calendar) e em
   `docs/handoffs/privilegios-tabelas.md`. A #123 precisa ser mesclada antes.
-  Validação empilhada: 214 testes, `test:db` (booking 116, social 50,
-  identidade 32, discovery 40, privilégios 43/49, calendar 84 — sem falhas),
+  PR #126 (draft). Reenvio ao conectar (backfill) via trigger em
+  `calendar_connections`. Validação empilhada: 217 testes, `test:db` (booking
+  116, social 50, identidade 32, discovery 40, privilégios 43/49, calendar 107
+  — sem falhas),
   `audit` 0/0 e build. Emular defaults do Supabase desde a primeira migration
   segue dependente da #125.
 

@@ -106,8 +106,9 @@ do responsável), sem aplicação em Supabase remoto, sem deploy e sem segredos.
   2 papéis + escrita direta em `notifications`), fase `after` 49/0 (24 objetos
   × 2 + 1), 25/0 checagens estruturais em cada fase e 3/0 na comparação.
 - `npm run test:db`: booking `116/0`, social `50/0`, identidade `32/0`,
-  descoberta `40/0`, matriz conforme o contrato e calendar `84/0`.
-- `npm test` 214/214; `lint` (3 avisos antigos de `<img>`), `typecheck`,
+  descoberta `40/0`, matriz conforme o contrato e calendar `107/0` (após o
+  backfill ao conectar).
+- `npm test` 217/217; `lint` (3 avisos antigos de `<img>`), `typecheck`,
   `audit` (0 falhas, 0 avisos), `build` e `check:changelog` sem erro.
 
 ### Entrega original da #123
@@ -146,6 +147,7 @@ Integrado na branch `arena/9e68c2bb-marcou`, empilhada sobre esta PR.
   | Função | EXECUTE |
   |---|---|
   | `enqueue_calendar_sync_from_booking_event()` (trigger) | ninguém (nem `service_role`) |
+  | `enqueue_calendar_backfill_on_connect()` (trigger) | ninguém (nem `service_role`) |
   | `claim_calendar_sync_jobs(integer)` | `service_role` |
   | `consume_calendar_oauth_state(text, uuid)` | `service_role` |
   | `finalize_calendar_disconnect(uuid)` | `service_role` |

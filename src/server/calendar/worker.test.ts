@@ -107,6 +107,48 @@ describe("calendar worker — atualização", () => {
   });
 });
 
+describe("calendar worker — reenvio ao conectar (backfill)", () => {
+  it("job de backfill sem booking_event cria o evento da reserva confirmada", async () => {
+    store.connect(PROVIDER);
+    store.bookings.set("b1", booking("b1", "confirmed", { service_name_snapshot: "Corte + Barba" }));
+    store.addJob({ id: "j1", booking_id: "b1", reason: "backfill", booking_event_id: null });
+
+    const summary = await runCalendarSync(deps());
+
+    expect(summary).toMatchObject({ claimed: 1, succeeded: 1, dead: 0 });
+    const insert = google.calls.find((c) => c.method === "insert")!;
+    expect(insert.event).toMatchObject({ id: googleEventIdForBooking("b1"), summary: "Corte + Barba" });
+    expect(store.mappings.get("b1")).toMatchObject({ google_event_id: googleEventIdForBooking("b1") });
+  });
+
+  it("backfill de reserva já sincronizada vira PATCH, sem duplicar o evento", async () => {
+    store.connect(PROVIDER);
+    store.bookings.set("b1", booking("b1", "confirmed"));
+    const eventId = googleEventIdForBooking("b1");
+    store.mappings.set("b1", { booking_id: "b1", provider_id: PROVIDER, calendar_id: "primary", google_event_id: eventId, orphaned_at: null });
+    google.events.set(eventId, {} as never);
+    store.addJob({ id: "j1", booking_id: "b1", reason: "backfill", booking_event_id: null });
+
+    await runCalendarSync(deps());
+
+    expect(google.calls.map((c) => c.method)).toContain("patch");
+    expect(google.calls.some((c) => c.method === "insert")).toBe(false);
+  });
+
+  it("backfill de reserva cancelada durante a suspensão remove o evento que sobrou", async () => {
+    store.connect(PROVIDER);
+    store.bookings.set("b1", booking("b1", "cancelled"));
+    store.mappings.set("b1", { booking_id: "b1", provider_id: PROVIDER, calendar_id: "primary", google_event_id: "evt", orphaned_at: null });
+    google.events.set("evt", {} as never);
+    store.addJob({ id: "j1", booking_id: "b1", reason: "backfill", booking_event_id: null, operation: "delete" });
+
+    await runCalendarSync(deps());
+
+    expect(google.events.has("evt")).toBe(false);
+    expect(store.mappings.has("b1")).toBe(false);
+  });
+});
+
 describe("calendar worker — exclusão", () => {
   beforeEach(() => {
     store.connect(PROVIDER);

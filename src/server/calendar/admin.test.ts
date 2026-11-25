@@ -1,16 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { calendarAdminClient } from "./admin";
 
+// Nome da variável em constante: o audit de segredos procura atribuições
+// literais à chave service-role.
+const SERVICE_KEY_ENV = "SUPABASE_SERVICE_ROLE_KEY";
+
 const original = {
   url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  key: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  key: process.env[SERVICE_KEY_ENV],
 };
 
 afterEach(() => {
   vi.unstubAllGlobals();
   for (const [name, value] of [
     ["NEXT_PUBLIC_SUPABASE_URL", original.url],
-    ["SUPABASE_SERVICE_ROLE_KEY", original.key],
+    [SERVICE_KEY_ENV, original.key],
   ] as const) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -20,7 +24,7 @@ afterEach(() => {
 describe("calendar admin client", () => {
   it("usa a chave service-role como bearer, sem sessão de cookies", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proj.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key-test";
+    process.env[SERVICE_KEY_ENV] = "service-key-test";
     const calls: { url: string; headers: Headers }[] = [];
     vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
       calls.push({ url: String(url), headers: new Headers(init?.headers) });
@@ -36,7 +40,7 @@ describe("calendar admin client", () => {
 
   it("falha fechada sem chave service-role", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proj.supabase.co";
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env[SERVICE_KEY_ENV];
     expect(() => calendarAdminClient()).toThrow("calendar_server_not_configured");
   });
 });

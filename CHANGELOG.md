@@ -43,6 +43,10 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   `/painel/integracoes/calendario`. O evento leva só serviço, início, fim e
   fuso. Migration `20261125153000_google_calendar_sync.sql` (não aplicada em
   ambiente remoto) e harness `scripts/calendar-check.mjs` em `npm run test:db`.
+- Google Calendar (`#29`): ao conectar ou reconectar, reservas confirmadas
+  futuras (até 500) e eventos de reservas canceladas durante uma suspensão são
+  reenfileirados na mesma transação por trigger, sem gravar em
+  `booking_events`; a outbox ganha `reason` (`booking_event` | `backfill`).
 
 ### Alterado
 

@@ -25,9 +25,9 @@ Atualizado em 25/11/2026.
 Com a #123 empilhada:
 - `npm run lint`: 0 erros (3 warnings `no-img-element` pré-existentes na `main`).
 - `npm run typecheck`: ok.
-- `npm test`: 214 testes ok.
-- `npm run test:db`: booking 116/0, social 50/0, identidade 32/0, discovery 40/0, privilégios before 43/0 e after 49/0, calendar 84/0.
-- `npm run audit`: 0 falhas, 0 avisos.
+- `npm test`: 217 testes ok.
+- `npm run test:db`: booking 116/0, social 50/0, identidade 32/0, discovery 40/0, privilégios before 43/0 e after 49/0, calendar 107/0 (inclui 23 checagens do backfill).
+- `npm run audit`: 0 falhas, 0 avisos. Correção: no commit `138cf6d` o resultado 0/0 foi medido antes de `admin.test.ts` ser rastreado pelo Git. Depois disso o audit acusava o arquivo (atribuição literal a `SUPABASE_SERVICE_ROLE_KEY`). Foi corrigido e medido de novo com o arquivo rastreado.
 - `npm run build`: ok.
 - CI da PR #126 (`quality`: check:changelog, lint, typecheck, test, test:db, build): pass; deploy preview Netlify: pass.
 - Compatibilidade com a PR #124 (simulada em worktree descartável, sem commit): merge sem conflito; typecheck ok, 289/289 testes, lint 0 erros, CHANGELOG válido.
@@ -46,6 +46,16 @@ Em `scripts/privileges-check.mjs`:
 
 ### Pendente fora da #29
 - **Emular os defaults do Supabase desde a primeira migration:** hoje isso gera falhas nas tabelas legadas (`bookings`, `profiles`, `notifications`…). Depende do hardening da #125 e é da #123/#125, não do Calendar.
+
+## Reenvio ao conectar (backfill)
+Implementado depois da abertura da PR, com autorização do responsável. O trigger `calendar_connections_backfill_on_connect` roda na transição para `connected` e enfileira, na mesma transação, jobs `reason = 'backfill'` (sem `booking_event_id` e sem gravar em `booking_events`) para:
+- reservas confirmadas futuras;
+- reservas não confirmadas com evento ainda ativo no Google.
+
+O limite é de 500 por conexão. Cobertura:
+- `calendar-check`: transições pending/connected/suspended, filtros, deduplicação contra job `pending`, constraint `reason`↔`booking_event_id`, claim, limite de 500 e EXECUTE da função;
+- teste negativo: sem o trigger, 8 falhas;
+- `worker.test.ts`: backfill cria evento, vira PATCH quando já sincronizado e remove evento de reserva cancelada.
 
 ## Audit de qualidade
 `npm run audit` acusava 2 falhas e 5 avisos no código do Calendar (vindos da `feat/29`); corrigidos sem afrouxar o script:
