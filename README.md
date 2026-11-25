@@ -82,13 +82,16 @@ As migrations estão em `supabase/migrations/`:
 10. `20261123143000_discovery_taxonomy_service_areas.sql` — catálogo versionado,
     modalidades de serviço, áreas aproximadas, moderação e projeção pública
     mínima. Detalhes em `docs/DISCOVERY-TAXONOMY.md`.
+11. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
+    transacional, vínculo de eventos e worker de sincronização unidirecional.
+    Detalhes em `docs/CALENDAR-INTEGRATION.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
 autorizada, mas não existem políticas de escrita direta para agendamentos: o
 navegador não consegue forjar preço, expiração ou status confirmado.
 
-Não aplique migrations em produção sem autorização.
+A integração Calendar permanece desativada por padrão e exige configuração de secrets e scheduler externo. Não aplique migrations em produção sem autorização.
 
 ## Motor de reservas
 
