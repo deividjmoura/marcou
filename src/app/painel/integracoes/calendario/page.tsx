@@ -8,8 +8,14 @@ export default async function CalendarIntegrationPage({ searchParams }: { search
   const params = await searchParams, user = await requireUser("/painel/integracoes/calendario");
   const provider = await getOwnedProvider(user.id);
   const enabled = isCalendarFeatureEnabled();
-  const connected = enabled && provider ? await calendarAdminClient().from("provider_calendar_connections").select("connection_status,connected_at").eq("provider_id", provider.id).maybeSingle() : null;
-  const isConnected = connected?.data?.connection_status === "connected";
+  let isConnected = false, statusUnavailable = false;
+  if (enabled && provider) {
+    try {
+      const { data, error } = await calendarAdminClient().from("provider_calendar_connections").select("connection_status").eq("provider_id", provider.id).maybeSingle();
+      if (error) statusUnavailable = true;
+      else isConnected = data?.connection_status === "connected";
+    } catch { statusUnavailable = true; }
+  }
   const messages: Record<string,string> = {
     connected: "Google Calendar conectado.", disconnected: "Integração desconectada.",
     "disconnected-cleanup-warning": "Desconectado, mas alguns eventos podem não ter sido removidos. Confira seu Google Calendar.",
@@ -22,7 +28,7 @@ export default async function CalendarIntegrationPage({ searchParams }: { search
     <section className="card form-stack">
       <Link href="/painel" className="btn btn-ghost">Voltar ao painel</Link>
       {params.calendar && messages[params.calendar] ? <p className="alert" role="status">{messages[params.calendar]}</p> : null}
-      {!enabled ? <p className="muted">Integração desativada neste ambiente.</p> : !provider ? <p className="muted">Configure seu negócio antes de conectar o calendário.</p> : isConnected ? <>
+      {!enabled ? <p className="muted">Integração desativada neste ambiente.</p> : !provider ? <p className="muted">Configure seu negócio antes de conectar o calendário.</p> : statusUnavailable ? <p className="alert alert-error">Não foi possível verificar o status da integração. Tente novamente mais tarde.</p> : isConnected ? <>
         <p className="alert alert-success">Conta conectada.</p>
         <p>Somente o nome do serviço e horário são sincronizados. Dados do cliente não são enviados.</p>
         <CalendarDisconnectForm />
