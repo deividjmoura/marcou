@@ -1564,7 +1564,7 @@
         "arena/9e68c2bb-marcou",
         "arena/4017109f-marcou"
       ],
-      "status": "assigned_round_7",
+      "status": "in_progress",
       "active_assignment": "Ligar o privileges-check ao CI (#136) depois que o Agent 1 resolver a migration da #131; fechar #41 com evidência; auditar o Calendar já mergeado e as branches antigas dele. Correção de rota da rodada 6: a #126 está FECHADA e o Calendar entrou na main pela #135; não refaça a #126.",
       "tasks": [
         {
@@ -1598,9 +1598,22 @@
           "A1-T1 (migration da #131)"
         ]
       },
-      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
-      "next_action": "Começar por A4-T3/A4-T2/A4-T4 (independentes) enquanto a #131 não é integrada.",
-      "updates": []
+      "current_state": "A4-T2 concluída: PR #41 fechada como superada pela #117, com evidência registrada. A4-T3 auditou a Calendar V1 já integrada pela #135 na main 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170: OAuth state atômico e vinculado ao usuário, scope estrito, tokens server-side cifrados, payload sem PII, RLS/grants e retries documentados/testados. Lacunas confirmadas para correção: callback usa request.url.origin como fallback quando NEXT_PUBLIC_SITE_URL ausente; claim/ack do worker não tem fencing token, permitindo worker antigo atualizar job depois de reclaim por timeout. A4-T1 (#136) segue dependente da migration da #131 ainda não mergeada.",
+      "next_action": "Criar PR de hardening Calendar com teste para callback fail-closed e fencing token de lease no outbox; executar CI. Em paralelo, auditar branches antigas via comparação de commits. Após Agent1 integrar #131, atualizar #136, rodar test:db completo e mergear se checklist verde.",
+      "updates": [
+        {
+          "timestamp": "2026-11-27",
+          "task": "A4-T2: encerrar PR #41 supersedida; auditoria inicial A4-T3",
+          "status": "completed_with_followup",
+          "result": "PR #41 fechada após comentário com evidência: #117 substituiu o hardening antigo, migration 20261123133000 e docs/harness estão na main. Calendar V1 #135 está mergeada (merge SHA ff02fa7d3eaec055737e3ccec09139dcd916222e). Main auditada: 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170. Encontradas duas lacunas: fallback inseguro de origem no callback e ausência de fencing token no lease do worker.",
+          "head_sha": "main:90b05aafed8f9f448f67a9b1b8c433a3ca3cb170; PR #41 head:17423a89137f355c8a6bee179483a8224cf5c1e8; PR #136 head:70fdc37cfedb44e5c66532046d9e8704f7265126",
+          "tests": "Auditoria estática de rotas, oauth-flow, worker, store, migrations, calendar-check, privileges-check e SECURITY-DEFINER-GRANTS; sem executar suíte local nesta etapa.",
+          "blockers": [
+            "#136 depende da migration 20261125130000_table_privileges_matrix.sql da PR #131 (Agent1)."
+          ],
+          "next_action": "Implementar e testar as duas lacunas do Calendar em branch/PR própria; inventariar branches antigas; depois destravar #136 após merge da #131."
+        }
+      ]
     },
     "agent_5_r7_product_backlog": {
       "scope": "PRs de design/docs/legado e triagem de issues de produto",
