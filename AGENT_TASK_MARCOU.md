@@ -190,12 +190,84 @@ ambiente remoto, deploy ou configuração foi alterado por esta limpeza.
 - Melhorias de disponibilidade/calendário resiliente já integradas anteriormente.
 - Infraestrutura da aplicação: Next.js, Supabase e deploy pela Netlify.
 
-## Próximos passos
+## Limpeza geral do repositório — 27/11/2026
+
+### PRs resolvidas
+| PR | Ação | Motivo |
+|-----|------|--------|
+| #129 | MERGE | Concorrência de transição de agendamento (FOR UPDATE). CI aprovada após correção de CHANGELOG. |
+| #40 | MERGE | Redirect após reserva criada moveu `redirect()` fora do try/catch. CI aprovada. |
+| #69 | CLOSE_SUPERSEDED | Recuperação de senha (Issue #70) substituída pela implementação mais completa da PR #127 e #130. Estava em conflito com `main`. |
+
+### Branches excluídas (remoto)
+| Branch | SHA | PR | Justificativa |
+|--------|-----|-----|---------------|
+| `fix/booking-transition-concurrency` | d8a67f1 | #122 MERGED | PR #129 mergeada; não é base de outra PR aberta |
+| `fix/22-public-booking-redirect` | 81b3415 | #40 MERGED | PR #40 mergeada; não é base de outra PR aberta |
+| `arena/0d6f17f1-marcou` | 1b1a49a | #122 MERGED | PR já mergeada (squash em main) |
+| `arena/b71fb1e9-marcou` | 920ea06 | #118 MERGED | PR já mergeada (squash em main) |
+| `fix/auth-password-recovery-flow` | faddee2 | #66 MERGED | PR já mergeada (squash em main) |
+
+### PRs restantes (16 abertas)
+| PR | Status | Decisão |
+|-----|--------|---------|
+| #127 | ready, MERGEABLE | KEEP — restrição de não alteração |
+| #124 | ready, MERGEABLE | KEEP — restrição de não alteração |
+| #130 | DRAFT, MERGEABLE | KEEP_PENDING — validação funcional/Supabase pendente |
+| #128 | DRAFT, MERGEABLE | KEEP_PENDING — cluster de expiração (#38, #128, #129) |
+| #71 | DRAFT, MERGEABLE | KEEP_PENDING — runbook Issue #70 |
+| #67 | DRAFT, MERGEABLE | KEEP_PENDING — revisão visual humana pendente |
+| #38 | DRAFT, MERGEABLE | KEEP_PENDING — cluster de expiração (#38, #128, #129) |
+| #2 | DRAFT, MERGEABLE | KEEP_PENDING — sem CI reportado |
+| #126 | CONFLICTING | KEEP_PENDING — depende de #123 |
+| #123 | CONFLICTING | NEEDS_FIX — validação externa de migration pendente |
+| #68 | CONFLICTING + DRAFT | NEEDS_FIX |
+| #46 | CONFLICTING | NEEDS_FIX — muitos conflitos com main |
+| #41 | CONFLICTING + DRAFT | NEEDS_FIX — validação externa de migration pendente |
+| #39 | CONFLICTING + DRAFT | NEEDS_FIX |
+| #32 | CONFLICTING | NEEDS_FIX |
+
+### PR #123 — Múltiplos serviços (Issue #21) — 27/11/2026
+
+**Branch de execução:** `fix/booking-multiple-services-pr123` (SHA: a ser definido após commit)
+
+**O que foi implementado:**
+- Migration `20261125120000_booking_multiple_services.sql`: tabela `booking_services`, função `booking_service_totals`, sobrecarga de `create_booking(text, uuid[], ...)` e `get_provider_schedule(text, uuid[], ...)`, assinaturas legadas preservadas para `uuid` único.
+- Migration `20261125130000_table_privileges_matrix.sql`: revogação de privilégios amplos em `notifications` e `booking_services`, concessão restrita a `service_role`.
+- `src/domain/bookings/aggregate.ts`: função pura `aggregateBookingServices` para documentação/teste da regra de agregação.
+- `src/lib/validation.ts`: `multiBookingInputSchema` para validação de reserva com 1-20 serviços.
+- `src/server/bookings.ts`: `getProviderSchedule`, `getAvailableSlots` e `createBooking` atualizados para aceitar `serviceIds: string[]`.
+- `src/app/p/[slug]/actions.ts`: `fetchSlotsAction` e `bookSlotAction` atualizados para múltiplos serviços, mantendo compatibilidade com `serviceId` legático.
+- `scripts/db-check.mjs` e `scripts/social-foundation-check.mjs`: cast explícito `::uuid` nas chamadas de `create_booking` e `get_provider_schedule` para evitar ambiguidade entre sobrecargas.
+- `docs/handoffs/21-booking.md` e `docs/handoffs/privilegios-tabelas.md`: documentação de handoff.
+
+**Conflitos resolvidos:**
+- `create_booking` / `get_provider_schedule` sobrecargas (`uuid` vs `uuid[]`) causavam ambiguidade no pg driver; corrigido com cast explícito nos scripts de harness.
+- `actions.ts` e `actions.test.ts` adaptados para a nova interface `AvailableSlots` (com `services` e `totals`).
+- `booking-widget.tsx` adaptado para a nova interface `SlotsState` (com `services` e `totals`).
+
+**Validações executadas (branch `fix/booking-multiple-services-pr123`, base `main` `69d0217`):**
+- `npm run typecheck`: ✅ 0 erros
+- `npm run lint`: ✅ 0 erros (3 warnings pré-existentes de `next/image`)
+- `npm run audit`: ✅ 0 falhas, 0 avisos
+- `npm test`: ✅ 155/155 aprovados
+- `npm run test:db`: ✅ passou (db-check, social-foundation-check, identity-check, discovery-check)
+- `npm run build`: ✅ aprovado
+- `npm run check:changelog`: ✅ passou
+
+**Impacto na PR #126:** A PR #126 depende desta entrega. Os contratos expostos são:
+- `createBooking({ slug, serviceIds: string[], startsAt, customerName, customerPhone })` em `src/server/bookings.ts`
+- `getAvailableSlots({ slug, serviceIds: string[], date })` em `src/server/bookings.ts`
+- Migration `20261125120000_booking_multiple_services.sql` (tabela `booking_services` + funções)
+- `multiBookingInputSchema` em `src/lib/validation.ts`
+
+### Próximos passos atualizados
 1. Aplicar a migration pendente `supabase/migrations/202611160001_provider_description.sql` no Supabase e validar o fluxo real na Netlify.
-2. Retomar o motor multi-serviço (Issue #21) na branch `feat/21-booking-multiple-services`, cuja migration `202611150004` ainda não está na `main`.
-3. Fechar os critérios restantes da Issue #22 (PR #40, `fix/22-public-booking-redirect`).
-4. Revisar as PRs abertas de hardening (#32, #38, #39, #41) e decidir o descarte definitivo da branch `feat/pagina-publica-agendamento` (PR #1 fechada sem merge).
-5. Em cada entrega: aguardar o GitHub Actions executar lint, typecheck, testes e build, e só declarar validação com resultado real.
+2. Issue #21: motor multi-serviço implementado na PR #123 (branch `fix/booking-multiple-services-pr123`), aguardando revisão e merge.
+3. Issue #22: critérios parcialmente atendidos pelo PR #40 (mergeado); restante ainda pendente.
+4. Revisar PRs de hardening (#32, #38, #39, #41) — pendentes de resolução de conflitos e/ou validação externa.
+5. Avaliar cluster de expiração (#38, #128) em conjunto com implementação existente na branch `arena/3b7c9d2f-marcou` (endpoint `POST /api/bookings/expire`).
+6. Em cada entrega: aguardar o GitHub Actions executar lint, typecheck, testes e build, e só declarar validação com resultado real.
 
 ## Regras para agentes
 - Trabalhar na branch/issue atribuída; não sobrescrever trabalho de outras branches.

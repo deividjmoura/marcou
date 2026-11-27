@@ -30,6 +30,14 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - Matriz canônica de requisitos de produto e sequência de dependências das
   Issues `#84`, `#91` e `#93` registrada em `docs/ROADMAP-MARCOU-SOCIAL.md`,
   preservando a arquitetura da Issue `#72`.
+- Reserva com múltiplos serviços (Issue `#21`): tabela `booking_services`,
+  função `booking_service_totals` e sobrecarga de `create_booking` /
+  `get_provider_schedule` que aceitam `uuid[]`, duração combinada, preço total
+  e sinal agregados no banco; migration `20261125120000_booking_multiple_services.sql`.
+- Matriz de privilégios de tabelas (Issue `#125`): revogação de privilégios
+  amplos em `notifications` e `booking_services`, concessão restrita a
+  `service_role`; migration `20261125130000_table_privileges_matrix.sql` e
+  script `scripts/privileges-check.mjs`.
 
 ### Alterado
 

@@ -30,7 +30,7 @@ interface BookingWidgetProps {
   initialSlot?: string;
 }
 
-const initialSlots: SlotsState = { slots: null };
+const initialSlots: SlotsState = { slots: null, services: [], totals: null };
 const initialBook: BookState = {};
 
 function startOfWeek(date: string): string {
@@ -96,11 +96,11 @@ export function BookingWidget({
 
     async function load() {
       if (!serviceId || !date) {
-        setSlots({ slots: null });
+        setSlots({ slots: null, services: [], totals: null });
         return;
       }
       setLoading(true);
-      setSlots({ slots: null });
+      setSlots({ slots: null, services: [], totals: null });
       try {
         const result = await fetchSlotsAction({ slug, serviceId, date });
         if (active) setSlots(result);
@@ -108,6 +108,8 @@ export function BookingWidget({
         if (active) {
           setSlots({
             slots: null,
+            services: [],
+            totals: null,
             error: "Não foi possível carregar os horários. Tente novamente.",
           });
         }

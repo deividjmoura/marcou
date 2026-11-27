@@ -17,7 +17,7 @@ const mockedIsSupabaseConfigured = vi.mocked(isSupabaseConfigured);
 
 const input = {
   slug: "studio-ana",
-  serviceId: "123e4567-e89b-12d3-a456-426614174000",
+  serviceIds: ["123e4567-e89b-12d3-a456-426614174000"],
   date: "2026-12-01",
 };
 
@@ -28,13 +28,24 @@ describe("fetchSlotsAction", () => {
   });
 
   it("devolve a lista de horários quando a consulta funciona", async () => {
-    mockedGetAvailableSlots.mockResolvedValue([
-      {
-        startsAt: "2026-12-01T12:00:00.000Z",
-        occupiedUntil: "2026-12-01T13:00:00.000Z",
-        label: "2026-12-01T12:00:00.000Z",
+    mockedGetAvailableSlots.mockResolvedValue({
+      slots: [
+        {
+          startsAt: "2026-12-01T12:00:00.000Z",
+          occupiedUntil: "2026-12-01T13:00:00.000Z",
+          label: "2026-12-01T12:00:00.000Z",
+        },
+      ],
+      services: [],
+      totals: {
+        durationMinutes: 60,
+        bufferMinutes: 0,
+        occupiedMinutes: 60,
+        priceCents: 0,
+        depositCents: 0,
       },
-    ]);
+      timing: { durationMinutes: 60, bufferMinutes: 0 },
+    });
 
     const result = await fetchSlotsAction(input);
 
@@ -43,11 +54,32 @@ describe("fetchSlotsAction", () => {
   });
 
   it("trata agenda vazia como ausência de horários, não como erro", async () => {
-    mockedGetAvailableSlots.mockResolvedValue([]);
+    mockedGetAvailableSlots.mockResolvedValue({
+      slots: [],
+      services: [],
+      totals: {
+        durationMinutes: 0,
+        bufferMinutes: 0,
+        occupiedMinutes: 0,
+        priceCents: 0,
+        depositCents: 0,
+      },
+      timing: { durationMinutes: 60, bufferMinutes: 0 },
+    });
 
     const result = await fetchSlotsAction(input);
 
-    expect(result).toEqual({ slots: [] });
+    expect(result).toEqual({
+      slots: [],
+      services: [],
+      totals: {
+        durationMinutes: 0,
+        bufferMinutes: 0,
+        occupiedMinutes: 0,
+        priceCents: 0,
+        depositCents: 0,
+      },
+    });
   });
 
   it("distingue retorno nulo de ausência de horários", async () => {
@@ -56,8 +88,10 @@ describe("fetchSlotsAction", () => {
     const result = await fetchSlotsAction(input);
 
     expect(result.slots).toBeNull();
+    expect(result.services).toEqual([]);
+    expect(result.totals).toBeNull();
     expect(result.error).toBe(
-      "Não foi possível consultar a disponibilidade deste serviço.",
+      "Não foi possível consultar a disponibilidade destes serviços.",
     );
   });
 
@@ -85,7 +119,7 @@ describe("fetchSlotsAction", () => {
   it("rejeita data impossível sem consultar o banco", async () => {
     const result = await fetchSlotsAction({ ...input, date: "2026-02-30" });
 
-    expect(result).toEqual({ slots: null });
+    expect(result).toEqual({ slots: null, services: [], totals: null });
     expect(mockedGetAvailableSlots).not.toHaveBeenCalled();
   });
 });
