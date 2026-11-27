@@ -1,5 +1,6 @@
 const DEFAULT_NEXT_PATH = "/inicio";
 const LOCAL_ORIGIN = "https://marcou.invalid";
+const LOCAL_APP_ORIGIN = "http://localhost:3000";
 const PRODUCTION_ORIGIN = "https://marcoou.netlify.app";
 const NETLIFY_PREVIEW_HOST = /^deploy-preview-\d+--marcoou\.netlify\.app$/;
 
@@ -100,7 +101,7 @@ function hasUnsafePathShape(value: string): boolean {
   if (
     !value.startsWith("/") ||
     value.startsWith("//") ||
-    value.includes("\\\\") ||
+    value.includes("\\") ||
     CONTROL_CHARACTERS.test(value)
   ) {
     return true;
@@ -117,7 +118,7 @@ function hasUnsafePathShape(value: string): boolean {
       !decodedPath ||
       !decodedPath.startsWith("/") ||
       decodedPath.startsWith("//") ||
-      decodedPath.includes("\\\\") ||
+      decodedPath.includes("\\") ||
       CONTROL_CHARACTERS.test(decodedPath)
     ) {
       return true;
