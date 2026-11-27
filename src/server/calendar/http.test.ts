@@ -16,6 +16,8 @@ describe("Calendar HTTP helpers", () => {
   it("falha fechada sem NEXT_PUBLIC_SITE_URL válida", () => {
     expect(isTrustedCalendarOrigin(post(SITE), undefined)).toBe(false);
     expect(calendarSiteOrigin("not a url")).toBeNull();
+    expect(calendarSiteOrigin("javascript:alert(1)")).toBeNull();
+    expect(calendarSiteOrigin("ftp://marcou.example")).toBeNull();
     expect(calendarSiteOrigin(`${SITE}/path`)).toBe(SITE);
   });
 
