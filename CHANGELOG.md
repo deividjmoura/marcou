@@ -63,3 +63,11 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor
   anterior), impedindo que requisições paralelas sobrescrevam nome ou telefone
   já escolhidos pelo usuário em `/perfil`.
+
+### Corrigido
+
+- Bloqueio de linha com `FOR UPDATE` na transição de agendamento
+  (`transition_booking`), evitando condições de corrida entre chamadas
+  concorrentes e garantindo integridade do estado da reserva
+  (migration `20261127000000_booking_transition_concurrency_lock.sql` e
+  script de validação `scripts/booking-concurrency.mjs`).
