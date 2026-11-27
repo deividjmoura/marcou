@@ -44,6 +44,13 @@
 
 A decisão está detalhada em `docs/PROPOSTA-STACK-TECNICA.md`. Nenhum projeto externo foi provisionado.
 
+A evolução para a rede social Marcou (perfis sociais, descoberta, feed e
+reputação) mantém esta mesma base e está registrada em
+`docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md` e `docs/ROADMAP-MARCOU-SOCIAL.md`.
+A página pública do profissional continua sendo uma **rota interna da
+aplicação** (`/p/[slug]`), não um site, subdomínio ou hospedagem independente;
+ver `docs/REVISAO-ARQUITETURA-SOCIAL.md`.
+
 ## Segurança e privacidade
 - Regras de acesso por papel e por proprietário dos dados.
 - Comprovantes em bucket privado, com acesso temporário e auditável.
