@@ -566,8 +566,8 @@ describe("email and OAuth identity actions", () => {
 
   it("builds password recovery redirects from the validated Netlify preview context", async () => {
     vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("CONTEXT", "deploy-preview");
-    vi.stubEnv("DEPLOY_PRIME_URL", "https://deploy-preview-42--marcoou.netlify.app");
+    vi.stubEnv("MARCOU_AUTH_DEPLOY_CONTEXT", "deploy-preview");
+    vi.stubEnv("MARCOU_AUTH_DEPLOY_PRIME_URL", "https://deploy-preview-42--marcoou.netlify.app");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
 
     await requestPasswordResetAction({}, form({ email: "ana@example.com" }));

@@ -48,8 +48,8 @@ function netlifyPreviewOrigin(value: string | null | undefined): string | null {
  * in production; localhost is the only request-origin fallback in development.
  */
 export function trustedAppOrigin(requestOrigin?: string): string {
-  if (process.env.CONTEXT === "deploy-preview") {
-    const preview = netlifyPreviewOrigin(process.env.DEPLOY_PRIME_URL);
+  if (process.env.MARCOU_AUTH_DEPLOY_CONTEXT === "deploy-preview") {
+    const preview = netlifyPreviewOrigin(process.env.MARCOU_AUTH_DEPLOY_PRIME_URL);
     if (preview) return preview;
     return PRODUCTION_ORIGIN;
   }

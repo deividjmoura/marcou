@@ -58,10 +58,18 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
-- Redirects de recuperação de senha agora usam origem de deployment confiável: produção canônica e Deploy Preview Netlify validado por `CONTEXT`/`DEPLOY_PRIME_URL`, ignorando `Host`/origem da requisição. Adicionados testes de produção, preview válido, domínio não autorizado e manipulação de origem, além de documentação do contrato do template Reset Password.
+- Redirects de recuperação usam origem canônica em produção e origem de Deploy Preview validada a partir de metadados de build confiáveis. A identificação de contexto/URL é compilada pelo `next.config.ts` porque `CONTEXT` e `DEPLOY_PRIME_URL` não estão disponíveis como variáveis internas de runtime das Functions. `Host` e `X-Forwarded-Host` nunca definem a origem. Inclui testes de produção, preview válido, domínio falso, configuração adulterada e retorno fixo a `/redefinir-senha`.
 
 - Proteção contra condições de corrida no provisionamento de `profiles`:
   inserção inicial com `ON CONFLICT (id) DO NOTHING` (`ignoreDuplicates: true`)
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor
   anterior), impedindo que requisições paralelas sobrescrevam nome ou telefone
   já escolhidos pelo usuário em `/perfil`.
+
+### Corrigido
+
+- Bloqueio de linha com `FOR UPDATE` na transição de agendamento
+  (`transition_booking`), evitando condições de corrida entre chamadas
+  concorrentes e garantindo integridade do estado da reserva
+  (migration `20261127000000_booking_transition_concurrency_lock.sql` e
+  script de validação `scripts/booking-concurrency.mjs`).

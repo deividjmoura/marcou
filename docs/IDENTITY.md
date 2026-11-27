@@ -74,7 +74,7 @@ Defina, por site/ambiente, as variáveis públicas já usadas pela aplicação:
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase correspondente. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publishable/anon pública do projeto; nunca use service-role no navegador. |
 
-No Netlify, cadastre os valores em **Site configuration → Environment variables**, considerando os contexts Production, Deploy Previews e Branch Deploys conforme a política do projeto. `NEXT_PUBLIC_SITE_URL` deve apontar para a origem do preview publicado que iniciou o fluxo, para que os links de e-mail voltem ao mesmo ambiente. Os handlers de autenticação não refletem `Host`/`x-forwarded-host` em links ou redirects: se a variável estiver ausente ou inválida, a origem fecha para `http://localhost:3000`; configure-a em todo ambiente publicado.
+No Netlify, configure `NEXT_PUBLIC_SITE_URL` como `https://marcoou.netlify.app` em Production e `http://localhost:3000` apenas no desenvolvimento local. Para Deploy Previews, não defina uma origem por requisição nem sobrescreva os metadados de sistema: `CONTEXT` e `DEPLOY_PRIME_URL` são lidos durante o build e capturados por `next.config.ts` em `MARCOU_AUTH_DEPLOY_CONTEXT` e `MARCOU_AUTH_DEPLOY_PRIME_URL`. Esses valores são metadados públicos do deployment, não secrets. A Netlify não disponibiliza `CONTEXT`/`DEPLOY_PRIME_URL` como variáveis read-only às Functions em runtime; a captura no build é necessária. Não refletem `Host`/`X-Forwarded-Host`; preview inválido fecha para a origem canônica de produção.
 
 ### Supabase Auth URLs
 
@@ -205,4 +205,4 @@ A validação real publicada de Google, SMTP, confirmação e recovery depende d
 
 ## Redirects de recuperação por ambiente
 
-Consulte [`docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md`](AUTH-RECOVERY-PREVIEW-ORIGIN.md) para a política de origem confiável, validação de `CONTEXT`/`DEPLOY_PRIME_URL` da Netlify, contrato do template Reset Password e allowlist restrita de Deploy Previews. O fluxo não reflete `Host`, `x-forwarded-host` ou `request.nextUrl.origin`.
+Consulte [`docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md`](AUTH-RECOVERY-PREVIEW-ORIGIN.md) para a política de origem confiável, captura dos metadados `CONTEXT`/`DEPLOY_PRIME_URL` durante o build da Netlify, contrato do template Reset Password e allowlist restrita de Deploy Previews. O fluxo não reflete `Host`, `x-forwarded-host` ou `request.nextUrl.origin`.

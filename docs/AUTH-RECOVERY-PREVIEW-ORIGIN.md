@@ -8,8 +8,8 @@ Os redirects e links de e-mail são construídos com `trustedAppOrigin()` em
 de recuperação.
 
 - **Production:** origem canônica `https://marcoou.netlify.app`.
-- **Netlify Deploy Preview:** somente quando `CONTEXT=deploy-preview`, usa
-  `DEPLOY_PRIME_URL` e aceita exclusivamente HTTPS com hostname
+- **Netlify Deploy Preview:** somente quando `MARCOU_AUTH_DEPLOY_CONTEXT=deploy-preview`, usa
+  `MARCOU_AUTH_DEPLOY_PRIME_URL` e aceita exclusivamente HTTPS com hostname
   `deploy-preview-<número>--marcoou.netlify.app`. Hostname, protocolo, porta,
   userinfo, caminho, query e fragmento são validados.
 - **Desenvolvimento local:** `NEXT_PUBLIC_SITE_URL=http://localhost:3000`;
@@ -17,23 +17,28 @@ de recuperação.
 - Preview sem URL válida ou qualquer origem de configuração não autorizada
   retorna à origem canônica de produção (fail closed).
 
-A variável de ambiente de preview é fornecida pela plataforma Netlify, não pela
-requisição HTTP. Não copie `Host`, `x-forwarded-host` ou valores do navegador
-para ela.
+Os metadados internos `CONTEXT` e `DEPLOY_PRIME_URL` existem durante o build da
+Netlify, mas não são variáveis read-only disponíveis às Functions em runtime.
+`next.config.ts` os captura no build e os injeta no bundle do servidor como
+`MARCOU_AUTH_DEPLOY_CONTEXT` e `MARCOU_AUTH_DEPLOY_PRIME_URL`. São valores
+públicos de deployment, nunca secrets. Não copie `Host`, `X-Forwarded-Host` ou
+valores do navegador para essas variáveis.
 
 ## Variáveis
 
 | Variável | Fonte/uso |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Desenvolvimento local; produção deve usar a origem canônica. Não é usada para escolher o domínio em Deploy Preview. |
-| `CONTEXT` | Variável gerenciada pela Netlify. O valor `deploy-preview` ativa a regra específica de preview. |
-| `DEPLOY_PRIME_URL` | Variável gerenciada pela Netlify, origem do deploy. Só é aceita se corresponder ao hostname de preview validado. |
+| `CONTEXT` | Metadado read-only da Netlify no build; capturado por `next.config.ts`. |
+| `DEPLOY_PRIME_URL` | Metadado read-only da Netlify no build; capturado por `next.config.ts`. |
+| `MARCOU_AUTH_DEPLOY_CONTEXT` | Valor de `CONTEXT` injetado pelo Next.js no bundle do servidor. |
+| `MARCOU_AUTH_DEPLOY_PRIME_URL` | Valor de `DEPLOY_PRIME_URL` injetado pelo Next.js no bundle do servidor. |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase usado no ambiente. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave pública do projeto Supabase. |
 
-Configure o contexto Production e Deploy Previews no Netlify e deixe as variáveis
-de contexto gerenciadas pela plataforma intactas. Não é necessário cadastrar
-uma origem enviada por requisição.
+Configure o contexto Production e Deploy Previews no Netlify e deixe os metadados
+de contexto gerenciados pela plataforma intactos. Não cadastre valores derivados
+de requisição nem substitua os metadados de build.
 
 ## Recuperação de senha — contrato do código e do template
 
