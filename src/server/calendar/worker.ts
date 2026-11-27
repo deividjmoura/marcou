@@ -196,6 +196,7 @@ export async function cleanupProviderDisconnect(
   const connection = await deps.store.getConnection(providerId);
   if (!connection) return { ...result, finalized: true };
   if (!connection.disconnect_requested_at) return result;
+  let tokenAlreadyRevoked = false;
 
   const mappings = await deps.store.listActiveMappings(providerId, DISCONNECT_BATCH);
   if (mappings.length > 0) {
@@ -204,6 +205,7 @@ export async function cleanupProviderDisconnect(
       token = await tokenFor(connection);
     } catch (error) {
       if (error instanceof CalendarSyncError && !error.retryable) {
+        tokenAlreadyRevoked = error.code === RECONNECT_REQUIRED;
         result.orphaned += await deps.store.orphanActiveMappings(providerId);
         deps.log({ event: "disconnect_orphaned", providerId, count: result.orphaned, code: error.code });
       } else {
@@ -228,15 +230,20 @@ export async function cleanupProviderDisconnect(
 
   const finalization = await deps.store.finalizeDisconnect(providerId);
   if (!finalization.finalized) return { ...result, pending: true };
-  if (finalization.refreshCiphertext) {
+  if (finalization.refreshCiphertext && !tokenAlreadyRevoked) {
     let revoked = false;
     try {
       revoked = await deps.google.revokeToken(deps.crypto.decrypt(finalization.refreshCiphertext));
     } catch {
       revoked = false;
     }
-    if (!revoked) deps.log({ event: "revoke_failed", providerId, code: "google_revoke_failed" });
+    if (!revoked) {
+      deps.log({ event: "revoke_failed", providerId, code: "google_revoke_failed" });
+      return { ...result, pending: true };
+    }
   }
+  // Só apaga a conexão/token depois de revogação confirmada (ou invalid_grant).
+  await deps.store.completeDisconnect(providerId);
   const orphaned = await deps.store.countOrphanedMappings(providerId);
   return { ...result, finalized: true, orphaned };
 }
