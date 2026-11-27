@@ -85,6 +85,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
+- O harness `scripts/privileges-check.mjs` da Issue `#125` passa a integrar `npm run test:db`, verificando em CI a matriz de privilégios com defaults do Supabase emulados antes das migrations.
+
 - Hardening dos privilégios de tabela herdados do Supabase (Issue `#125`):
   migration `20261125140000_harden_public_table_privileges.sql` remove
   `TRUNCATE`/`REFERENCES`/`TRIGGER` de `anon`/`authenticated` nas 8 tabelas
