@@ -360,10 +360,10 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "ci_pending",
+      "status": "ci_retry_pending",
       "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
-      "current_state": "Revalidação remota concluída: branch fix/booking-transition-test-wiring está 1 commit à frente e 0 atrás de main (main 69d02173653384e082476e7879ee9f33672dec72; HEAD 1bf0a601d95bde3fb45e4008a60dac677b5ab971). Diff confirmado: somente package.json, acrescentando scripts/booking-concurrency.mjs ao npm run test:db. O workflow .github/workflows/ci.yml executa test:db em pull_request para main. Como a branch não tinha PR nem execução de CI, aberta PR #134 em Draft exclusivamente para disparar a validação. PR aberta, mergeable=true, sem merge. No instante da consulta, workflow runs e combined status ainda vazios; execução dos testes continua pendente.",
-      "next_action": "Acompanhar CI da PR #134 no HEAD exato 1bf0a601d95bde3fb45e4008a60dac677b5ab971. Se iniciar, conferir todos os steps e logs de test:db, incluindo o harness concorrente. Se não iniciar, investigar status/checks e mecanismo de disparo sem alterar produção. Não fazer merge.",
+      "current_state": "A primeira CI da PR #134 executou npm install com sucesso, mas parou no primeiro gate check:changelog: detectou alteração em package.json sem entrada nova no CHANGELOG.md. Nenhum dos testes seguintes foi executado nessa tentativa. Corrigido o motivo na branch de validação: adicionado registro em CHANGELOG.md explicando que test:db passa a executar booking-concurrency.mjs. Novo HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef; branch agora 2 commits à frente/0 atrás de main. PR #134 continua Draft; GitHub reportou mergeable=false imediatamente após atualização, aguardando recálculo/CI.",
+      "next_action": "Acompanhar a nova execução CI da PR #134 no HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Verificar check:changelog e todos os testes seguintes, especialmente test:db e o harness concorrente. Não fazer merge.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
@@ -376,31 +376,17 @@
         "implementation_branch": "fix/booking-transition-concurrency-incremental",
         "implementation_branch_sha": "90cd050fa96b7bb5eb191ae43700c636f7b7db31",
         "validation_branch": "fix/booking-transition-test-wiring",
-        "validation_branch_sha": "1bf0a601d95bde3fb45e4008a60dac677b5ab971",
+        "validation_branch_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
         "validation_branch_ahead": 1,
         "validation_branch_behind": 0,
-        "ci": "Pendente; fetch_commit_workflow_runs=[] e combined status=[] logo após abertura da PR.",
-        "notes": "Diff remoto comparado com main: apenas package.json (1 inserção/1 deleção). Nenhuma migration ou lógica de produção alterada. Harness possui 25 chamadas check() conforme inspeção estática do arquivo.",
+        "ci": "Run 46048607429 falhou em check:changelog antes dos testes; falha corrigida com atualização do CHANGELOG. Nova execução pendente no HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef.",
+        "notes": "Primeira CI: npm install success; check:changelog failure porque package.json mudou sem CHANGELOG; lint/typecheck/npm test/test:db/build skipped. Alteração adicionada em CHANGELOG.md, diff total agora 2 arquivos (package.json e CHANGELOG.md), sem migrations ou lógica de produção.",
         "pr": 134,
         "pr_url": "https://github.com/deividjmoura/marcou/pull/134",
-        "pr_state": "open_draft_mergeable",
+        "pr_state": "open_draft",
         "workflow": "CI trigger confirmado por pull_request para main; runs ainda não visíveis na consulta inicial"
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T08:30:00-03:00",
-          "task": "Revalidar migration incremental, harness concorrente e CI da main",
-          "status": "main_integrated_audit_validation_pending",
-          "result": "Main contém correção via migration incremental 20261127000000_booking_transition_concurrency_lock.sql. Migration anterior em main intacta; branch antiga editou migration existente e não contém incremental. Harness main: 23 assertions (não 21), cenário proof_received vs cancel presente; evento total esperado=2 e estado final validados, mas rollback/event types sem assertion explícita dedicada. CI/testes reais não verificados.",
-          "head_sha": "main 69d02173653384e082476e7879ee9f33672dec72; branch 6db76085bc866498a587b6346fc443480107a11a",
-          "tests": "Inspeção remota estática; testes locais não executados. Combined status vazio; wrapper workflow-run retorna [] (consulta PR runs), CI SHA exato desconhecido.",
-          "blockers": [
-            "Execução real do harness e test:db pendente.",
-            "CI no SHA main exato não confirmado.",
-            "Assertion de rollback e contagem por tipo de evento poderia ser mais explícita."
-          ],
-          "next_action": "Não criar duplicata. Validar testes e CI em checkout isolado; sem merge/deploy/produção."
-        },
         {
           "timestamp": "2026-11-27T15:09:00-03:00",
           "task": "Revalidar integridade concorrente de transition_booking, histórico de migrations, harness e CI; preparar apenas wiring incremental faltante",
@@ -425,6 +411,18 @@
             "Aguardar workflow CI iniciar e concluir no SHA exato."
           ],
           "next_action": "Acompanhar CI da PR #134 e conferir resultado de todos os steps, especialmente test:db."
+        },
+        {
+          "timestamp": "2026-11-27T18:20:28.341Z",
+          "task": "Corrigir gate de changelog identificado na primeira CI da PR #134",
+          "status": "ci_retry_pending",
+          "result": "Run 46048607429 concluiu failure em check:changelog, não em teste de código; lint/typecheck/npm test/test:db/build foram skipped. Adicionei entrada em CHANGELOG.md para o wiring do harness. Novo commit 1ee63754a08adb68e15f05b73b86861ba4fd68ef; branch 2 ahead/0 behind. PR permanece Draft e sem merge.",
+          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
+          "tests": "Primeira CI: npm install success; check:changelog falhou; demais steps skipped. Reteste automático aguardado.",
+          "blockers": [
+            "Aguardar nova CI no HEAD atualizado e validar test:db."
+          ],
+          "next_action": "Conferir CI no novo HEAD e logs de todos os steps."
         }
       ]
     },
