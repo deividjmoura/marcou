@@ -352,22 +352,27 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "main_integrated_audit_validation_pending",
-      "active_assignment": "Correção incremental preparada em branch isolada a partir da main; não fazer merge/deploy/produção. Validar testes locais/CI quando houver runner disponível.",
-      "current_state": "Main HEAD 69d02173653384e082476e7879ee9f33672dec72 contém migration incremental 20261127000000_booking_transition_concurrency_lock.sql (blob e9574e7ec5c211e2f3287daac9b0d2b38ff1abb8), com FOR UPDATE em ambas as leituras. Migration 20261116035000... em main permanece intacta (sem FOR UPDATE). Branch arena/6f3a9b1f-marcou HEAD 6db76085bc866498a587b6346fc443480107a11a, 1 ahead/7 behind; branch editou retroativamente a migration antiga e não contém incremental. Script main inclui incremental e cenário concorrente proof_received vs cancel com duas sessões; 23 assertions nomeadas, não 21; verifica estado final e total de eventos=2, mas não explicita rollback/event types individualmente. CI status sem checks; runs list vazia (wrapper filtra PR), portanto SHA CI não confirmado. Nenhum teste executado nesta sessão.",
-      "next_action": "Não duplicar correção: já está na main em migration incremental. Pendências: execução real do harness/test:db, CI no SHA exato, fortalecer assertion rollback/event type se necessário. Sem merge/deploy/produção.",
+      "status": "incremental_test_wiring_prepared_validation_pending",
+      "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
+      "current_state": "Main atual verificada em 69d02173653384e082476e7879ee9f33672dec72. Migration supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql está na main e contém FOR UPDATE nos dois SELECTs relevantes; commit de integração d59a81db0d387095e249b1870b50c19c55d50499. Migration histórica 20261116035000_fix_booking_idempotency_authorization.sql mantém blob 9466efa05887ab3c546e3828c43f01d416e2372e em main e branch. Harness scripts/booking-concurrency.mjs está na main (blob 13bad51b28d17b2ac428b42204bffb0e7c5f6ab6), contém 25 chamadas check(), duas sessões distintas, prova vs cancel, valida um vencedor/estado final e exatamente dois eventos (rollback implícito da chamada perdedora). Porém main package.json não inclui o harness em test:db. Criada branch isolada fix/booking-transition-test-wiring a partir da main, commit 1bf0a601d95bde3fb45e4008a60dac677b5ab971, que altera somente package.json para incluir o script. Branch 1 ahead/0 behind. Nenhum teste executado nesta sessão por ausência de checkout/runtime local; CI/status checks não retornaram runs para SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971.",
+      "next_action": "Executar npm run test:db, npm test, typecheck, lint e build no SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971 e obter CI associado a esse SHA. Manter branch isolada; não fazer merge, deploy ou alterações em produção.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "branch": "arena/6f3a9b1f-marcou",
-        "head_sha": "6db76085bc866498a587b6346fc443480107a11a",
-        "merge_base": "9b92451d2761f2292385b99468f024402d35211b",
-        "ahead": 1,
-        "behind": 7,
-        "migration_main": "PRESENTE, blob e9574e7ec5c211e2f3287daac9b0d2b38ff1abb8, FOR UPDATE nas duas leituras",
-        "migration_branch": "NOT_FOUND",
-        "modified_existing_migration": "Main antiga intacta sem lock; branch antiga modificada com FOR UPDATE em dois SELECTs",
-        "ci": "Combined status vazio; runs tool vazia (consulta apenas PR), SHA exato não confirmado",
-        "notes": "23 named assertions in main harness. proof_received vs cancel in concurrent sessions. final state and total booking_events=2 assertion; rollback assertion indirect, no explicit per-event type assertion. No test run in this session."
+        "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
+        "migration": "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
+        "migration_blob_main": "e9574e7ec5c211e2f3287daac9b0d2b38ff1abb8",
+        "historical_migration_blob_unchanged": "9466efa05887ab3c546e3828c43f01d416e2372e",
+        "harness_blob": "13bad51b28d17b2ac428b42204bffb0e7c5f6ab6",
+        "harness_assertions": 25,
+        "main_test_db_wiring": false,
+        "implementation_branch": "fix/booking-transition-concurrency-incremental",
+        "implementation_branch_sha": "90cd050fa96b7bb5eb191ae43700c636f7b7db31",
+        "validation_branch": "fix/booking-transition-test-wiring",
+        "validation_branch_sha": "1bf0a601d95bde3fb45e4008a60dac677b5ab971",
+        "validation_branch_ahead": 1,
+        "validation_branch_behind": 0,
+        "ci": "No workflow runs or combined status checks returned for exact validation SHA.",
+        "notes": "The earlier 21/21 figure is a commit-message report from d59a81d, not a fresh execution of the current 25-assertion harness. Container has no repository checkout/package.json, so tests could not be executed here."
       },
       "updates": [
         {
@@ -383,6 +388,19 @@
             "Assertion de rollback e contagem por tipo de evento poderia ser mais explícita."
           ],
           "next_action": "Não criar duplicata. Validar testes e CI em checkout isolado; sem merge/deploy/produção."
+        },
+        {
+          "timestamp": "2026-11-27T15:09:00-03:00",
+          "task": "Revalidar integridade concorrente de transition_booking, histórico de migrations, harness e CI; preparar apenas wiring incremental faltante",
+          "status": "incremental_test_wiring_prepared_validation_pending",
+          "result": "Migration incremental já está na main no commit d59a81d; dois FOR UPDATE confirmados. Migration histórica preservada (blob 9466efa em main e branch). Harness na main tem 25 assertions e cobre duas sessões com proof_received vs cancel, estado final e exatamente dois eventos. Divergência: package.json da main não chama booking-concurrency.mjs em test:db. Criada branch isolada fix/booking-transition-test-wiring a partir de main, commit 1bf0a601d95bde3fb45e4008a60dac677b5ab971, alterando somente package.json. Não mexeu na migration nem em produção.",
+          "head_sha": "main 69d02173653384e082476e7879ee9f33672dec72; validation branch 1bf0a601d95bde3fb45e4008a60dac677b5ab971",
+          "tests": "Inspeção estática: 25 chamadas check(); transições incompatíveis em clientes distintos; perdedora falha e total de eventos permanece 2. Testes não executados por ausência de checkout/runtime. CI/status checks vazios para SHA exato 1bf0a601d95bde3fb45e4008a60dac677b5ab971. O registro 21/21 é histórico do commit d59a81d, não validação atual do harness.",
+          "blockers": [
+            "Execução npm run test:db, npm test, typecheck, lint e build pendente em runner com checkout.",
+            "CI não disponível para SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971."
+          ],
+          "next_action": "Executar testes e CI no SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971; sem merge/deploy/produção."
         }
       ]
     }
