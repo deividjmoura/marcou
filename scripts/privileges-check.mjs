@@ -36,7 +36,7 @@ const { Client } = pg;
 const SECURITY_MIGRATION = "20261125130000_table_privileges_matrix.sql";
 const HARDEN_MIGRATION = "20261125140000_harden_public_table_privileges.sql";
 const CALENDAR_MIGRATION = "20261125153000_google_calendar_sync.sql";
-const CALENDAR_FENCING_MIGRATION = "20261127235900_calendar_worker_fencing.sql";
+const CALENDAR_FENCING_MIGRATION = "20261128000000_calendar_worker_fencing.sql";
 /** Tabelas criadas pela migration do Calendar: só existem na fase after. */
 const CALENDAR_OBJECTS = ["calendar_connections", "calendar_sync_outbox", "booking_calendar_events"];
 /** Tabelas anteriores à convenção `revoke all … grant …`, endurecidas pela #125. */
