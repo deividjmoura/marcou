@@ -281,19 +281,19 @@ export async function runCalendarSync(
 
     try {
       if (outcome) {
-        await deps.store.completeJob(job.id, outcome.code);
+        await deps.store.completeJob(job.id, job.lease_token ?? "", outcome.code);
         summary.succeeded += 1;
         continue;
       }
       const code = calendarErrorCode(failure).slice(0, 80);
       const attempts = Number(job.attempts ?? 1);
       if (!isRetryableCalendarError(failure) || attempts >= CALENDAR_MAX_ATTEMPTS) {
-        await deps.store.killJob(job.id, code);
+        await deps.store.killJob(job.id, job.lease_token ?? "", code);
         summary.dead += 1;
         deps.log({ event: "job_dead", jobId: job.id, attempts, code });
       } else {
         const availableAt = new Date(deps.now() + retryDelaySeconds(attempts) * 1000).toISOString();
-        await deps.store.failJob(job.id, code, availableAt);
+        await deps.store.failJob(job.id, job.lease_token ?? "", code, availableAt);
         summary.failed += 1;
       }
     } catch (error) {
