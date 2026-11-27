@@ -22,6 +22,7 @@ export type OutboxJob = {
   operation: "upsert" | "delete";
   status: string;
   attempts: number;
+  lease_token: string | null;
 };
 
 export type BookingSnapshot = {
@@ -50,9 +51,9 @@ export type ConsumeStateOutcome = "ok" | "invalid" | "expired" | "forbidden" | "
  */
 export interface CalendarStore {
   claimJobs(limit: number): Promise<OutboxJob[]>;
-  completeJob(jobId: string, code: string | null): Promise<void>;
-  failJob(jobId: string, code: string, availableAt: string): Promise<void>;
-  killJob(jobId: string, code: string): Promise<void>;
+  completeJob(jobId: string, leaseToken: string, code: string | null): Promise<void>;
+  failJob(jobId: string, leaseToken: string, code: string, availableAt: string): Promise<void>;
+  killJob(jobId: string, leaseToken: string, code: string): Promise<void>;
 
   getBooking(bookingId: string): Promise<BookingSnapshot | null>;
   getMapping(bookingId: string): Promise<EventMapping | null>;
@@ -80,6 +81,7 @@ export interface CalendarStore {
   requestDisconnect(providerId: string): Promise<"requested" | "already" | "none">;
   listDisconnectingProviders(limit: number): Promise<string[]>;
   finalizeDisconnect(providerId: string): Promise<{ finalized: boolean; refreshCiphertext: string | null }>;
+  completeDisconnect(providerId: string): Promise<void>;
 }
 
 const CONNECTION_COLUMNS =
@@ -92,12 +94,13 @@ function fail(code: string): never {
 export function createSupabaseCalendarStore(admin: CalendarAdminClient): CalendarStore {
   const now = () => new Date().toISOString();
 
-  async function updateJob(jobId: string, values: Record<string, unknown>, code: string) {
+  async function updateJob(jobId: string, leaseToken: string, values: Record<string, unknown>, code: string) {
     const { data, error } = await admin
       .from("calendar_sync_outbox")
       .update(values)
       .eq("id", jobId)
       .eq("status", "processing")
+      .eq("lease_token", leaseToken)
       .select("id");
     if (error || !data || data.length !== 1) fail(code);
   }
@@ -109,27 +112,30 @@ export function createSupabaseCalendarStore(admin: CalendarAdminClient): Calenda
       return (data ?? []) as OutboxJob[];
     },
 
-    completeJob(jobId, code) {
+    completeJob(jobId, leaseToken, code) {
       const at = now();
       return updateJob(
         jobId,
-        { status: "succeeded", completed_at: at, processing_started_at: null, last_error_code: code, available_at: at },
+        leaseToken,
+        { status: "succeeded", completed_at: at, processing_started_at: null, lease_token: null, last_error_code: code, available_at: at },
         "calendar_outbox_complete_failed",
       );
     },
 
-    failJob(jobId, code, availableAt) {
+    failJob(jobId, leaseToken, code, availableAt) {
       return updateJob(
         jobId,
-        { status: "failed", completed_at: null, processing_started_at: null, last_error_code: code, available_at: availableAt },
+        leaseToken,
+        { status: "failed", completed_at: null, processing_started_at: null, lease_token: null, last_error_code: code, available_at: availableAt },
         "calendar_outbox_fail_failed",
       );
     },
 
-    killJob(jobId, code) {
+    killJob(jobId, leaseToken, code) {
       return updateJob(
         jobId,
-        { status: "dead", completed_at: now(), processing_started_at: null, last_error_code: code },
+        leaseToken,
+        { status: "dead", completed_at: now(), processing_started_at: null, lease_token: null, last_error_code: code },
         "calendar_outbox_dead_failed",
       );
     },
@@ -344,6 +350,11 @@ export function createSupabaseCalendarStore(admin: CalendarAdminClient): Calenda
         | { finalized: boolean; revoke_token_ciphertext: string | null }
         | undefined;
       return { finalized: Boolean(row?.finalized), refreshCiphertext: row?.revoke_token_ciphertext ?? null };
+    },
+
+    async completeDisconnect(providerId) {
+      const { data, error } = await admin.rpc("complete_calendar_disconnect", { p_provider_id: providerId });
+      if (error || data !== true) fail("calendar_disconnect_complete_failed");
     },
   };
   return store;

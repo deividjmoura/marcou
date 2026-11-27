@@ -103,6 +103,11 @@ As migrations estão em `supabase/migrations/`:
 14. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
     transacional, vínculo de eventos e worker de sincronização unidirecional.
     Detalhes em `docs/CALENDAR-INTEGRATION.md`.
+15. `20261128000000_calendar_worker_fencing.sql` — lease token por claim e
+    fencing para impedir ack tardio de worker após reclaim.
+16. `20261128000100_calendar_disconnect_revocation_retry.sql` — preserva o
+    refresh token até a revogação no Google ser confirmada e endurece o
+    `search_path` das funções Calendar.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
