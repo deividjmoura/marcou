@@ -1685,8 +1685,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Runbook seções 0 e 9 lidas; autorização explícita para merge com checklist verde. Reconfirmando main, PRs e evidências de #46/#2 antes das alterações.",
-      "next_action": "Verificar main atual e checks; fechar PRs superadas #46/#2 com evidência; resolver conflito #133 e depois #67; triagem de issues.",
+      "current_state": "PRs #46 e #2 encerradas como superadas com comentários e evidências (#60; #37/#49/#51). Triagem inicial registrada em 12 issues de produto. PR #133 precisa ser reaplicada sobre main atual (9 commits atrás); #67 segue pendente de inspeção visual humana.",
+      "next_action": "Consolidar PR #133 em branch nova sobre main, preservando conteúdo social e alterações recentes da main; publicar resumo e executar CI.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1697,6 +1697,16 @@
           "tests": "Coordenação lida; checks GitHub em verificação.",
           "blockers": [],
           "next_action": "Reconferir main/PRs; executar triagem #46/#2 e corrigir PRs #133/#67."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Triage/encerramento de PRs legadas #46 e #2 e comentários de status em issues de produto",
+          "status": "completed",
+          "result": "#46 fechada como superada pela PR #60 e registro atual em AGENT_TASK_MARCOU.md. #2 fechada como protótipo superado pelo fluxo real #37/#49/#51. Comentários de status/próxima ação adicionados às issues #19,#28,#43,#47,#52-57,#121,#132.",
+          "head_sha": "main 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170",
+          "tests": "Verificadas PRs/commits e docs main; sem teste executável por triagem.",
+          "blockers": [],
+          "next_action": "Reconciliar #133 sobre main atual e rodar CI."
         }
       ]
     },
