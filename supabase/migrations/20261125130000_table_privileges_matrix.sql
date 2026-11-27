@@ -19,9 +19,10 @@ begin;
 
 -- Notificações: remover a única write direta concedida a clientes. As RPCs
 -- continuam funcionando porque executam como definer, não como o chamador.
-revoke all on table public.notifications from public, anon;
+-- REVOKE ALL garante que authenticated não conserva INSERT/UPDATE/DELETE/
+-- TRUNCATE/REFERENCES/TRIGGER de default privileges ou grants anteriores.
+revoke all on table public.notifications from public, anon, authenticated;
 grant select on table public.notifications to authenticated;
-revoke update on table public.notifications from authenticated;
 grant all on table public.notifications to service_role;
 
 -- booking_services continua na matriz com o menor conjunto possível. O
