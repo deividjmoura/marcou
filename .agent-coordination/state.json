@@ -1417,7 +1417,8 @@
       "scope": "Scheduler de expiração/lembretes e plataforma/ops",
       "pull_requests": [
         38,
-        32
+        32,
+        138
       ],
       "issues": [
         25,
@@ -1433,7 +1434,7 @@
         "feat/30-platform-hardening",
         "arena/3b7c9d2f-marcou"
       ],
-      "status": "assigned_round_7",
+      "status": "completed_round_7",
       "active_assignment": "Definir UM mecanismo canônico de expiração/lembretes, integrar #128 e #38 em sequência e triar a #32. Nenhum scheduler é ativado.",
       "tasks": [
         {
@@ -1465,9 +1466,70 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Atribuição da rodada 7 registrada; #128 já mergeada (8a5e4e7) por outro agente; nenhum trabalho da rodada 7 iniciado.",
-      "next_action": "Atualizar a #38 sobre a main (que já inclui a #128) e comparar com arena/3b7c9d2f-marcou.",
-      "updates": []
+      "current_state": "RODADA 7 concluída para Agente 3 (A3-T1..A3-T4). Confirmado na main que PR #128 (8a5e4e7f0b78f28439200ce74be5dc174748fb46) e PR #38 (5b4e8943de079703120cdac681347fde724252fc) já implementam o mecanismo canônico único de expiração (booking-expiration.yml staging-only, BOOKING_EXPIRATION_ENABLED desligado por padrão, recusa explícita do project ref de produção peornypgltuueubmsucm) e de lembretes (GET /api/cron -> create_booking_reminders(24) com FOR UPDATE SKIP LOCKED e idempotência diária no fuso do prestador bookings.timezone). PR #32 triada: valor exclusivo reconstruído e atualizado para Netlify+Supabase na PR #138 (branch arena/fdad472c-marcou, HEAD 39855f0b5f17a81852debfbe88bc464da026f2fa), mergeada via squash na main em 44ed540e614968783bedf9f445da55d715e6d72b com CI quality verde (run 46080925536) e Netlify checks verdes; PR #32 fechada como substituída com evidência (descartados AGENT_TASK_MARCOU.md truncado, docs/MOTION.md de #27 e typo no README). Issues: #25 confirmada CLOSED com evidências; comentários publicados mantendo ABERTAS #26, #30, #20 (OWNER_DECISION) e #13, #31 (PARTIAL/BACKLOG). Disposição de branches registrada para o Agent 6 (A6-T2): arena/3b7c9d2f-marcou -> APAGAR; feat/30-platform-hardening -> PRESERVAR_TEMPORARIAMENTE_OU_APAGAR_APOS_DECISAO_27 (contém docs/MOTION.md descartado por escopo de #27); fix/booking-expiration-scheduler e feat/26-notification-scheduler já apagadas; arena/fdad472c-marcou é a branch desta sessão ativa (apagar só após encerramento da sessão). Nenhum scheduler ativado, nenhuma migration remota executada, nenhum serviço/secret externo alterado.",
+      "next_action": "Concluído pelo Agente 3. Demais agentes devem atualizar suas branches sobre main >= 44ed540e614968783bedf9f445da55d715e6d72b (e 90b05aa da #137). Agent 6 audita PR #138 (merge 44ed540), fechamento da #32, comentários das issues #26/#13/#30/#20/#31 e executa a disposição de branches na Onda 4. Responsável decide/provisiona itens OWNER_DECISION de #30, #20 e #26.",
+      "updates": [
+        {
+          "timestamp": "2026-11-27T23:13:46Z",
+          "task": "A3-T1, A3-T2, A3-T3, A3-T4 — mecanismo canônico de schedulers, substituição limpa da PR #32 (PR #138) e triagem de issues #25/#26/#13/#30/#20/#31",
+          "status": "completed_round_7",
+          "result": "Confirmado mecanismo canônico único na main (#128 expiração staging-only + #38 lembretes por fuso do prestador); arena/3b7c9d2f-marcou marcada APAGAR por duplicação/violação de audit; valor exclusivo da PR #32 reconstruído e integrado via PR #138 (merge squash 44ed540e614968783bedf9f445da55d715e6d72b) com docs/PLATFORM.md (Netlify+Supabase), hardening do ci.yml (concurrency, timeout 20m, deduplicação de audit), .env.example classificado, docs/NOTIFICACOES.md e docs/BOOKING-OPS.md alinhados e src/server/cron-auth.test.ts; PR #32 fechada como substituída; issues #26/#13/#30/#20/#31 comentadas (#25 já fechada). Nenhum scheduler ativado.",
+          "head_sha": "PR #138 head=39855f0b5f17a81852debfbe88bc464da026f2fa -> main squash=44ed540e614968783bedf9f445da55d715e6d72b",
+          "tests": "Local (SHA 39855f0): check:changelog ok, lint 0 errors, typecheck 0 errors, audit 0/0, vitest 30/30 (235/235), test:db 5/5 (80/0, 47/0, 32/0, 40/0, 25/0), build ok. Remoto: CI quality run 46080925536 SUCCESS + Netlify deploy-preview/header-rules/redirect-rules SUCCESS (pages-changed NEUTRAL).",
+          "blockers": [
+            "Provisionamento remoto (Supabase staging/prod, migrations remotas, env vars Netlify, backups/restore, alertas, rate limiting) depende do responsável (Issues #30 e #20).",
+            "Ativação de schedulers (BOOKING_EXPIRATION_ENABLED + Environment booking-expiration-staging, scheduler externo para GET /api/cron, provedor de e-mail) depende do responsável (Issue #26).",
+            "Testes E2E com Playwright, Core Web Vitals/Lighthouse e a11y assistida dependem de ambiente staging (#30/#31)."
+          ],
+          "next_action": "Agent 6 audita PR #138 (44ed540), PR #32 fechada, issues #25/#26/#13/#30/#20/#31 e executa limpeza de branches na Onda 4."
+        }
+      ],
+      "last_verified": {
+        "round": "7",
+        "main_before_merge_sha": "5b4e8943de079703120cdac681347fde724252fc",
+        "pr_138": {
+          "branch": "arena/fdad472c-marcou",
+          "head_sha": "39855f0b5f17a81852debfbe88bc464da026f2fa",
+          "merge_sha": "44ed540e614968783bedf9f445da55d715e6d72b",
+          "ci_run_id": 46080925536,
+          "ci_status": "SUCCESS",
+          "netlify": {
+            "deploy_preview": "SUCCESS",
+            "header_rules": "SUCCESS",
+            "redirect_rules": "SUCCESS",
+            "pages_changed": "NEUTRAL"
+          },
+          "local_checks": {
+            "check_changelog": "ok (2 relevant files in origin/main...HEAD)",
+            "lint": "0 errors (3 pre-existing next/image warnings)",
+            "typecheck": "0 errors",
+            "audit": "0 failures, 0 warnings",
+            "unit_tests": "30 files, 235/235 passed (includes 5 new tests in src/server/cron-auth.test.ts)",
+            "test_db": "db-check 80/0, social-foundation 47/0, identity 32/0, discovery 40/0, booking-concurrency 25/0",
+            "build": "next build succeeded"
+          }
+        },
+        "pr_32": {
+          "head_sha": "5b63265662978df1e7e25808a5826435c97fab06",
+          "disposition": "CLOSED_SUPERSEDED_BY_138",
+          "comment_url": "https://github.com/deividjmoura/marcou/pull/32#issuecomment-7229949097"
+        },
+        "branch_dispositions_for_agent_6": {
+          "fix/booking-expiration-scheduler": "JA_APAGADA (PR #128 merged em 8a5e4e7)",
+          "feat/26-notification-scheduler": "JA_APAGADA (PR #38 merged em 5b4e894)",
+          "arena/3b7c9d2f-marcou": "APAGAR (HEAD 664cb5b77181abbaf04d2394a3d668415f1738b8: propõe endpoint duplicado POST /api/bookings/expire + src/lib/supabase/service.ts sem timingSafeEqual, sem server-only, sem no-store em erros e violando audit @supabase/ssr; superada pelo mecanismo canônico único da PR #128 em 8a5e4e7)",
+          "feat/30-platform-hardening": "PRESERVAR_OU_APAGAR_APOS_DECISAO_27 (HEAD 5b63265662978df1e7e25808a5826435c97fab06: PR #32 fechada como substituída pela PR #138; única peça não portada foi docs/MOTION.md por ser escopo da Issue #27)",
+          "arena/fdad472c-marcou": "PRESERVAR_ENQUANTO_SESSAO_ATIVA (branch desta sessão Arena; PR #138 merged em 44ed540, tip == head 39855f0; pode ser apagada após encerramento da sessão)"
+        },
+        "issues": {
+          "25": "CLOSED (verificado na main; critérios atendidos por #35/#129/#134/#128)",
+          "26": "OPEN (OWNER_DECISION — comentário atualizado: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7229959409)",
+          "13": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/13#issuecomment-7229959625)",
+          "30": "OPEN (OWNER_DECISION — comentário: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7229959848)",
+          "20": "OPEN (OWNER_DECISION — comentário: https://github.com/deividjmoura/marcou/issues/20#issuecomment-7229960101)",
+          "31": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7229960433)"
+        }
+      }
     },
     "agent_4_r7_security_calendar": {
       "scope": "Privilégios/segurança de banco e fechamento do Calendar (V1 já na main)",
