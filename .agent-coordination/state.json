@@ -442,10 +442,10 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "coordinator_waiting_for_round5_deliveries",
+      "status": "round5_independent_consolidation_complete_with_delivery_record_gaps_and_blockers",
       "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
-      "current_state": "Identidade operacional: Agent6 (coordenador/auditor independente). Dispatch round 2026-11-27-round-5-followups contém atribuições apenas para Agents 1–5; não há dispatch.assignments.agent_6. As cinco tarefas estão registradas como atribuídas e aguardando execução/entrega. Nenhuma tarefa alheia foi assumida, repetida ou modificada. A consolidação/auditoria independente fica pendente até existirem resultados desta rodada.",
-      "next_action": "Aguardar as entregas dos Agents 1–5; então revalidar os SHAs/estados remotos e auditar/consolidar somente os resultados entregues. Não modificar código, PRs, branches ou serviços externos.",
+      "current_state": "Auditoria independente/consolidação remota realizada. Main 69d02173653384e082476e7879ee9f33672dec72. PR #124 OPEN/non-Draft/mergeable, head f320fe88313547cfd2ef6a4ac680456c68a7db44, base 9b92451 (7 commits atrás da main); CI run 45997568772 success e preview success no SHA exato. PR #127 OPEN/non-Draft/mergeable, head cc212db05cfc14ee70dd05e353a66484b7cef2c8, base 9b92451 (7 atrás); CI run 46014586526 success e preview success no SHA exato. PR #130 OPEN/Draft/mergeable, head 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, base main atual 69d0217; CI run 46040285407 success e preview success no SHA exato; teste funcional externo de recovery segue pendente. PR #126 OPEN/Draft/NOT mergeable, head PR 335e3f50b1d8dba862c2c769039a1750e94a6681/base 9b92451; CI run 45646944918 success apenas nesse SHA. A ref remota arena/9e68c2bb-marcou está em 8d73650dfc62508a22c3b4ed83d1019e493ca871, dois commits à frente do head registrado da PR (#125 hardening e #22 redirect fix), sem CI localizado para essa ponta. A branch #126 contém 17 arquivos em comum com PR #131; migration booking_multiple_services é idêntica, mas migration da matriz, privileges-check, db-check e arquivos de booking divergem. PR #131 OPEN/non-Draft/mergeable, head 955f9a8d40981096dedeee55b2c77964895f5bf9, base main atual, CI run 46037716087 success. PR #123 CLOSED sem merge; Issue #29 OPEN e decisão de escopo Calendar pendente. PR #127 e #130 alteram src/lib/identity.ts; #130 não substitui o fallback proxy da #127, exigindo integração coordenada. Limpeza Agent3: inventário remoto confirma 31 branches, arena/ee322640-marcou ausente e Issue/PR #69 fechada. Divergência de handoff: apenas agent_3_repo_cleanup está marcado como concluído no state.json; slots Agent1, Agent2, Agent4 e Agent5 ainda constam assigned_round_5 e não têm relatório de conclusão registrado. PR reviews/comments consultados não contêm relatórios desses quatro agentes; portanto, os resultados acima são a verificação independente do Agent6, não atribuições concluídas em nome deles.",
+      "next_action": "Responsável deve decidir: (1) integrar #124/#127 após refresh/revalidação contra main atual; (2) integrar #127 antes de atualizar/reconciliar #130 e executar CI combinado; (3) priorizar #131 e depois rebasear/reconstruir #126, removendo duplicação e separando #125/#22; (4) definir escopo da Issue #29 e autorizar teste controlado de recovery; (5) pedir aos Agents 1,2,4,5 que registrem suas entregas nos próprios state_entry. Não fazer merge, deploy ou alterações externas sem autorização explícita.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
@@ -477,21 +477,34 @@
           "agent_4",
           "agent_5"
         ],
-        "agent_6_assignment": null
+        "agent_6_assignment": null,
+        "pr124_head": "f320fe88313547cfd2ef6a4ac680456c68a7db44",
+        "pr124_ci_run": 45997568772,
+        "pr127_head": "cc212db05cfc14ee70dd05e353a66484b7cef2c8",
+        "pr127_ci_run": 46014586526,
+        "pr130_head": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+        "pr130_ci_run": 46040285407,
+        "pr126_pr_head": "335e3f50b1d8dba862c2c769039a1750e94a6681",
+        "pr126_branch_tip": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
+        "pr126_branch_extra_commits": [
+          "fc02e378beb6095ad2d102fab8f7827d8b189346",
+          "8d73650dfc62508a22c3b4ed83d1019e493ca871"
+        ],
+        "pr126_ci_run": 45646944918,
+        "pr131_head": "955f9a8d40981096dedeee55b2c77964895f5bf9",
+        "pr131_ci_run": 46037716087,
+        "branch_count": 31,
+        "deleted_branch_absent": "arena/ee322640-marcou",
+        "state_blob_before_write": "fb1a02d14bff4dacf71239c0ae40becdf7b6a053",
+        "agent_delivery_registry": {
+          "agent_1": "assigned_round_5_no_completion_record",
+          "agent_2": "assigned_round_5_no_completion_record",
+          "agent_3": "cleanup_round_complete_one_proven_removal",
+          "agent_4": "assigned_round_5_no_completion_record",
+          "agent_5": "assigned_round_5_no_completion_record"
+        }
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Verificação do dispatch round-3",
-          "status": "no_new_assignment",
-          "result": "Conferido dispatch.assignments no round 2026-11-27-round-3. O protocolo declara explicitamente que agentes 5 e 6 não recebem novas tarefas nesta rodada; agent6 não tem chave de atribuição. Nenhuma tarefa de outro agente executada. Validação anterior da PR #134 permanece registrada.",
-          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
-          "tests": "Nenhum teste executado nesta verificação de dispatch.",
-          "blockers": [
-            "Sem nova atribuição para agent6 nesta rodada."
-          ],
-          "next_action": "Aguardar nova atribuição; não alterar código/PR e manter a PR #134 aguardando revisão do responsável."
-        },
         {
           "timestamp": "2026-11-27T16:10:00-03:00",
           "task": "Verificação do dispatch round-4",
@@ -515,6 +528,23 @@
             "Aguardar entregas dos Agents 1–5 para realizar auditoria independente e consolidação."
           ],
           "next_action": "Após as entregas, revalidar SHAs/estado remoto e auditar/consolidar os resultados sem repetir tarefas dos agentes."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Auditoria independente Agent6 e consolidação round-5 — validação de PRs, CI, dependências e inventário",
+          "status": "round5_independent_consolidation_complete_with_delivery_record_gaps_and_blockers",
+          "result": "Verificação independente de SHAs/refs, metadados de PR, CI/Preview, dependências e sobreposições. Conclusões detalhadas em current_state/last_verified. Bloqueadores principais: #126 está Draft/mergeable=false, PR head diverge da ref de branch por dois commits e compartilha 17 arquivos com #131 com divergências; #29 aguarda decisão de escopo; #130 depende de integração coordenada com #127 e teste externo autorizado. Agent3 concluído e exclusão de branch confirmada. Os state_entrys de Agents 1,2,4,5 permanecem assigned sem relatórios finais registrados, embora haja conteúdo/CI nas PRs.",
+          "head_sha": "69d02173653384e082476e7879ee9f33672dec72",
+          "tests": "Nenhum teste local executado por Agent6. Consultados CI remotos nos SHAs exatos: #124 run 45997568772 success (f320fe8); #127 run 46014586526 success (cc212db); #126 run 45646944918 success (335e3f5, não cobre os dois commits posteriores da ref); #130 run 46040285407 success (852f1dc); #131 run 46037716087 success (955f9a8). Netlify Deploy Preview status success nos SHAs #124/#127/#126/#130; sem preview reportado para a ponta posterior da branch #126.",
+          "blockers": [
+            "Os state_entrys de Agents 1,2,4,5 não foram atualizados para conclusão; suas entregas formais não estão registradas no handoff, portanto não é possível atestar que todos concluíram.",
+            "PR #126: head da PR 335e3f5 difere da ref arena/9e68c2bb-marcou em 8d73650 (2 commits extras); PR Draft e mergeable=false; base 9b92451 está 7 commits atrás da main.",
+            "PR #126 compartilha 17 arquivos com #131; conteúdos de migration da matriz, scripts de privilégios/DB e booking divergem. #123 está fechada sem merge, #131 aberta e não integrada.",
+            "Issue #29 permanece aberta com decisão de escopo unidirecional/bidirecional pendente.",
+            "PR #127 e #130 alteram src/lib/identity.ts; integração precisa preservar fallback de code/token_hash e resolver origem por metadados de deployment.",
+            "Teste funcional de recuperação em produção/preview não foi executado nem autorizado."
+          ],
+          "next_action": "Registrar entregas faltantes nos próprios slots; responsável decidir sequência de integração #124/#127/#130 e #131/#126, definir escopo #29 e autorizar ou não teste controlado. Nenhum merge/deploy/serviço externo realizado."
         }
       ]
     },
