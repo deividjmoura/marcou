@@ -115,30 +115,18 @@
         128,
         38
       ],
-      "status": "ci_green_final_review_pending",
+      "status": "validation_passed_final_review_complete",
       "active_assignment": "PR #128: HEAD remoto 246f95df33013d495b1cda36675a04c2761637e8 e CI #279 está verde. Confirme os detalhes do run e que o sucesso corresponde exatamente ao HEAD; revise workflow_dispatch restrito a refs/heads/main e assertions DB de elegibilidade, não elegibilidade, idempotência e concorrência. Entregue relatório final de prontidão. Não faça merge, não habilite scheduler e mantenha #38 intacta.",
-      "current_state": "As correções de workflow_dispatch e assertions DB foram enviadas no HEAD 246f95df33013d495b1cda36675a04c2761637e8. PR #128 continua Draft/aberta/mergeable; CI associado #279 concluiu success nesse SHA. #38 segue sem alterações.",
-      "next_action": "Confirmar os detalhes do CI #279 e produzir parecer final de prontidão; não merge nem habilitar scheduler.",
+      "current_state": "PR #128 foi revisada: HEAD remoto 246f95df33013d495b1cda36675a04c2761637e8; CI #279 concluído success exatamente nesse SHA. Steps quality: changelog, lint, typecheck, npm test, test:db e build todos success. Revisado dispatch restrito main, gate BOOKING_EXPIRATION_ENABLED, testes DB elegibilidade/ineligibilidade, evento único, retry/idempotência e duas invocações concorrentes. PR permanece Draft/open/mergeable. #38 intacta.",
+      "next_action": "Aguardar autorização explícita para merge; não remover Draft, mergear, habilitar scheduler nem tocar PR #38.",
       "last_verified": {
         "branch": "fix/booking-expiration-scheduler",
         "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "Run #279 / quality in progress on exact SHA 246f95df33013d495b1cda36675a04c2761637e8; local test:db not executed because checkout unavailable.",
-        "notes": "PR #128 open Draft, mergeable, 4 commits ahead/0 behind main. PR #38 untouched."
+        "ci": "GitHub Actions CI run #279 (46043394357) concluído success no SHA exato; job quality, todos steps: changelog, lint, typecheck, npm test, test:db, build success.",
+        "notes": "PR #128 aberta, Draft, mergeable=true, 4 commits, 4 arquivos alterados. Revisão final aprovada. Testes DB confirmados via CI, não executados localmente (sem checkout). PR #38 status open/Draft/mergeable, sem alteração."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T14:50:00-03:00",
-          "task": "PR #128 caveat fixes implemented and review of diff",
-          "status": "validation_pending",
-          "result": "Workflow manual dispatch restricted to main plus BOOKING_EXPIRATION_ENABLED gate. DB tests now assert both eligible statuses expire, ineligible future/confirmed/cancelled states remain, exactly one event each, repeat call returns zero, and concurrent calls produce one expiration/event. Removed unused fixture array. Local test not run due no checkout.",
-          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
-          "tests": "CI quality check queued at run 46043394357 for exact SHA; no local run.",
-          "blockers": [
-            "Await CI."
-          ],
-          "next_action": "Monitor CI for exact SHA and fix if needed."
-        },
         {
           "timestamp": "2026-11-27T14:53:00-03:00",
           "task": "Checkpoint implementation and validation status for PR #128",
@@ -160,6 +148,16 @@
           "tests": "CI associado ao HEAD: success; validação final dos detalhes de workflow/test:db delegada.",
           "blockers": [],
           "next_action": "Confirmar logs/steps do run #279 e emitir relatório final; sem merge/scheduler."
+        },
+        {
+          "timestamp": "2026-11-27T14:46:00-03:00",
+          "task": "Revisão final e confirmação CI exato PR #128",
+          "status": "validation_passed_final_review_complete",
+          "result": "CI #279 run 46043394357 success no HEAD remoto exato. Quality steps changelog, lint, typecheck, npm test, test:db e build todos concluídos success. Workflow manual dispatch restrito refs/heads/main e gate BOOKING_EXPIRATION_ENABLED revisados. Testes DB cobrem pending_payment/pending_review vencidos, estados não elegíveis, evento único, retry/idempotência e chamadas concorrentes. PR aberta/Draft/mergeable; PR #38 intacta.",
+          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
+          "tests": "CI #279: check:changelog, lint, typecheck, npm test, test:db, build = success. Não rodado localmente; CI executou test:db.",
+          "blockers": [],
+          "next_action": "Aguardar autorização de merge; não merge/Draft/scheduler."
         }
       ]
     },
