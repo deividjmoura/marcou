@@ -1696,8 +1696,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PRs #46 e #2 encerradas como superadas com comentários e evidências (#60; #37/#49/#51). Triagem inicial registrada em 12 issues de produto. PR #133 precisa ser reaplicada sobre main atual (9 commits atrás); #67 segue pendente de inspeção visual humana.",
-      "next_action": "Consolidar PR #133 em branch nova sobre main, preservando conteúdo social e alterações recentes da main; publicar resumo e executar CI.",
+      "current_state": "PR #46/#2 fechadas como superadas. #133 fechada e substituída pela #140, branch nova baseada na main SHA 90b05a (ahead 7/behind 0), preview Netlify success. CI quality no SHA 4510cbb está verde até build (build em execução). #67 permanece draft/KEEP_PENDING: 40 commits atrás, changelog obrigatório ausente e revisão visual desktop/mobile não disponível.",
+      "next_action": "Aguardar conclusão da CI #140 e validar checks obrigatórios; squash merge se checklist 100% verde; continuar backlog triage/status.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1718,6 +1718,18 @@
           "tests": "Verificadas PRs/commits e docs main; sem teste executável por triagem.",
           "blockers": [],
           "next_action": "Reconciliar #133 sobre main atual e rodar CI."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Reconciliação e substituição da PR #133",
+          "status": "in_progress",
+          "result": "PR #133 fechada (não merge) e substituída por #140, branch agent5/133-docs-main-reconciled baseada diretamente em main 90b05aaf; diff 7 docs, changelog preserva entradas recentes; preview Netlify sucesso. CI quality (run 46081754355) check:changelog/lint/typecheck/audit/test/test:db verdes; build em andamento.",
+          "head_sha": "4510cbb7cfe7b9380ff3053317d035d6ff9dad8a",
+          "tests": "Quality workflow #301: 6 steps verdes; production build pendente; Netlify deploy preview success.",
+          "blockers": [
+            "CI build/checks ainda em execução"
+          ],
+          "next_action": "Confirmar build e demais checks, então merge squash se todos verdes."
         }
       ]
     },
