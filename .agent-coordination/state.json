@@ -106,28 +106,16 @@
       ],
       "status": "in_progress",
       "active_assignment": "Fix the two #128 caveats only: main-ref restriction for workflow_dispatch and stronger DB tests for eligibility, ineligible states, idempotency and concurrency. Re-run tests and CI on the new SHA. Do not merge or enable scheduler.",
-      "current_state": "Implemented both assigned caveat fixes in PR #128 branch. Workflow job now gates manual dispatch to refs/heads/main in addition to the opt-in variable. DB integration test now creates eligible pending_payment/pending_review, future pending, confirmed/cancelled with past expires, verifies count/status/events, repeat run idempotency, and concurrent RPC calls on one fixture. Changes pushed; test/CI validation pending.",
-      "next_action": "Run local database integration suite and review workflow/test diffs for syntax and fixture integrity; then await CI on exact branch SHA.",
+      "current_state": "Implemented PR #128 manual-dispatch main-ref guard and stronger expiration integration tests. The current branch SHA is 246f95df33013d495b1cda36675a04c2761637e8. GitHub CI quality check is queued for this exact SHA; local DB test could not be run in this environment because the repository working tree is not available.",
+      "next_action": "Wait for CI on SHA 246f95df33013d495b1cda36675a04c2761637e8. Review results, resolve any failures, and update coordination. Keep PR #38 untouched; no merge or scheduler activation.",
       "last_verified": {
         "branch": "fix/booking-expiration-scheduler",
-        "head_sha": "c93bc2d652f6b473877dd3ff600f5dc2f37fc06d",
+        "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "CI validation pending for this new SHA.",
-        "notes": "Only #128 files touched. #38 untouched."
+        "ci": "GitHub Actions quality check queued (run 46043394357) for this exact SHA; local test not run (repository checkout unavailable in session).",
+        "notes": "Workflow condition verified remotely. #38 remains unchanged."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T14:24:00-03:00",
-          "task": "Joint technical audit #128 and #38",
-          "status": "completed_with_caveats",
-          "result": "#128 CI 266 green but dispatch lacks main-ref restriction and RPC tests lack sufficient eligibility/idempotency/concurrency assertions. #38 CI 276 green; route auth, service-role, row locking and idempotency validated.",
-          "head_sha": "#128 9258b5962f6c5545ce53aa6e408fd179769e10b9; #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
-          "tests": "Exact SHA CI green for both; coverage gap noted in #128.",
-          "blockers": [
-            "#128 needs main-only dispatch restriction and stronger DB tests."
-          ],
-          "next_action": "Fix #128 caveats; #128 before #38 for future integration, only after user approval."
-        },
         {
           "timestamp": "2026-11-27T14:40:00-03:00",
           "task": "Start assigned PR #128 caveat fixes per coordination state",
@@ -147,6 +135,18 @@
           "tests": "Validation pending; existing baseline CI was #266.",
           "blockers": [],
           "next_action": "Run DB check and review, then wait for CI on current SHA."
+        },
+        {
+          "timestamp": "2026-11-27T14:50:00-03:00",
+          "task": "PR #128 caveat fixes implemented and review of diff",
+          "status": "validation_pending",
+          "result": "Workflow manual dispatch restricted to main plus BOOKING_EXPIRATION_ENABLED gate. DB tests now assert both eligible statuses expire, ineligible future/confirmed/cancelled states remain, exactly one event each, repeat call returns zero, and concurrent calls produce one expiration/event. Removed unused fixture array. Local test not run due no checkout.",
+          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
+          "tests": "CI quality check queued at run 46043394357 for exact SHA; no local run.",
+          "blockers": [
+            "Await CI."
+          ],
+          "next_action": "Monitor CI for exact SHA and fix if needed."
         }
       ]
     },
