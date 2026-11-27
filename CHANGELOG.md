@@ -11,6 +11,15 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Consolidação documental “plataforma única, perfil público interno”:
+  `docs/REVISAO-ARQUITETURA-SOCIAL.md` com auditoria, decisão de URL canônica
+  `/p/[slug]` para o perfil público (alternativas `/{slug}`, `/@{slug}` e
+  `/profissional/{slug}` rejeitadas/adiadas) e matriz de compatibilidade;
+  ADR (`docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md`), contrato de domínio,
+  roadmap e prompt de agentes atualizados com os princípios de plataforma
+  única, perfil como rota interna e visitante sem conta para conteúdo público.
+  Nenhuma rota, migration ou configuração foi alterada.
+
 - Documentação operacional consolidada em `docs/PLATFORM.md` (Issues `#30` e
   `#20`): inventário da stack na Netlify + Supabase, matriz verificada de
   variáveis de ambiente (`PUBLIC` vs `SERVER-ONLY / SECRET`), tabela de
