@@ -857,10 +857,10 @@
       "issues": [
         125
       ],
-      "status": "round_6_partial_closeout_triaged_with_blockers",
+      "status": "round_6_agent5_active_pr39_merged_pr136_ci_pending",
       "active_assignment": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos.",
-      "current_state": "Agent5 assumido pelo responsável. PR #71 fechada como runbook diagnóstico superseded por #127/#130 e Issue #70; Issue #70 permanece aberta. PR #39 revisada: branch 0 behind, mergeable clean, CI run 46048421298 verde em changelog/lint/typecheck/unit/test:db/build, mas workflow não roda audit; corpo relata audit local 0/0 sem evidência reproduzida nesta sessão, portanto Draft e sem merge. Issue #24 atualizada e permanece aberta para escopo restante. PR #133 tem CI verde e está fora de Draft, mas o próprio corpo exige revisão/aprovação do responsável; HOLD. Issue #125 comentada: PR #131 inclui migration 20261125130000_table_privileges_matrix.sql e scripts/privileges-check.mjs, mas #131 ainda não está integrada; issue permanece aberta até verificar em main.",
-      "next_action": "Aguardar integração de #131 pelo Agent1 para validar e fechar #125; manter #39 bloqueada até audit executado/comprovado no SHA exato; não mergear #133 sem aprovação indicada no próprio PR. Manter #67/#46/#41/#32/#2 em HOLD por base antiga, dependência, revisão ou escopo futuro. Não mexer nos clusters dos Agents1-4.",
+      "current_state": "Agent5 assumido pelo responsável. PR #71 fechada como runbook diagnóstico superseded por #127/#130 e Issue #70; Issue #70 permanece aberta. PR #39 atualizada contra main após merges #134/#135, recebeu audit no CI, CI/Preview verdes e foi squash-merged. Merge SHA 6f6f4cd30fecf902f97e64348052adef02f9ab16. Issue #24 atualizada, permanece aberta para critérios restantes. PR #133 continua HOLD por aprovação expressamente pendente. Issue #125: migration 20261125140000_harden_public_table_privileges.sql e scripts/privileges-check.mjs entraram na main via PR #135, mas package.json não executava o script em test:db. Criada PR #136 para adicionar o harness ao gate e CHANGELOG; CI pendente.",
+      "next_action": "Aguardar CI completa da PR #136 no SHA 70fdc37cfedb44e5c66532046d9e8704f7265126. Se verde e branch atualizada, Ready + squash merge; depois fechar Issue #125 com referência à PR #135/#136. Manter #133 sem merge até aprovação. Continuar triagem de #67/#46/#41/#32/#2 e issues sem encerrar roadmap futuro.",
       "updates": [
         {
           "timestamp": "2026-11-27T22:00:00-03:00",
@@ -892,6 +892,20 @@
             "#2 usa base branch antiga de página pública e horários demonstrativos; é futura/placeholder, não pronta para merge."
           ],
           "next_action": "Continuar triagem dos issues abertos e monitorar merges dos Agents1-4; não fechar roadmap nem atuar em clusters atribuídos a outros agentes."
+        },
+        {
+          "timestamp": "2026-11-27T22:25:00-03:00",
+          "task": "Round 6 — merge PR #39 e criação de correção mínima para completar Issue #125",
+          "status": "pr39_merged_pr136_ci_pending",
+          "result": "PR #39 branch feat/24-provider-agenda atualizada com merge commit 6c737bacbb5111ac73b7c1f45bcbb041c01c00d0 (main ff02fa7d3eaec055737e3ccec09139dcd916222e como 2º parent), sem force-push. Adicionado step npm run audit ao CI e reconciliado CHANGELOG com alterações #134/#135. Checks no SHA 6c737bac: quality success (check:changelog, lint, typecheck, audit, npm test, test:db, build); Netlify Redirect rules success, Header rules success, Pages changed neutral. PR marcada Ready e squash-merged com expected_head_sha; merge SHA 6f6f4cd30fecf902f97e64348052adef02f9ab16. PR #71 fechada (comment #7227006193). Issue #24 comentada (#7227015313), permanece aberta. PR #133 permanece HOLD por exigência explícita de revisão do responsável. Issue #125: PR #135 já integrou migration e script, mas package.json test:db não chamava privileges-check; criada PR #136 (branch fix/125-privileges-check-ci), commits 417190f e 70fdc37, CI em andamento.",
+          "head_sha": "6f6f4cd30fecf902f97e64348052adef02f9ab16",
+          "tests": "PR #39 CI run 46060353684 success no SHA 6c737bac: changelog/lint/typecheck/audit/unit/test:db/build. Preview Redirect/Header success; Pages changed neutral. PR #136 CI run 46060571287 em andamento no SHA 70fdc37; ainda sem resultado final.",
+          "blockers": [
+            "PR #136 aguarda CI completa; Issue #125 não fechar antes do merge e validação do script em test:db.",
+            "PR #133 exige aprovação/revisão do responsável conforme corpo da PR.",
+            "PRs #67/#46/#41/#32/#2 continuam desatualizadas ou dependentes de decisão; #41 é hardening de segurança e requer rebase/revisão, não descarte automático."
+          ],
+          "next_action": "Monitorar CI #136, fechar #125 somente após merge comprovado; manter PRs/documentação futuras abertas até decisões e critérios concluídos."
         }
       ]
     },
