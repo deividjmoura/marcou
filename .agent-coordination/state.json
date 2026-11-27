@@ -643,33 +643,82 @@
     "agent_3_repo_cleanup": {
       "scope": "Limpeza operacional conservadora de branches e referências",
       "pull_requests": [],
-      "status": "cleanup_round_complete_one_proven_removal",
+      "status": "cleanup_round2_reverified_zero_new_proven_removals",
       "active_assignment": "Faça inventário completo e limpeza conservadora do repositório Marcou. Reconfirme main, branches, PRs e issues no remoto antes de cada ação. Classifique branches como ativa/protegida, associada a PR aberta, integrada comprovadamente, substituída comprovadamente ou incerta. Não use idade/nome como critério isolado. Preserve obrigatoriamente PRs/branches #124 e #127, #126, #128, #130, #131, #133, #134, #38, #39, #68, #71 e todos os trabalhos ativos. Preserve também os seis arquivos staged locais relacionados ao Calendar: não acessar, editar, apagar ou sobrescrever. A limpeza anterior já removeu branches das PRs #122, #118, #66, #129 e #40 e fechou #69 como superseded; não repetir ações sem verificar o estado atual. Pode excluir somente branches comprovadamente integradas/superseded, sem commits exclusivos úteis, e fechar PR/issue somente se duplicada/substituída de forma inequívoca e sem trabalho exclusivo. Antes de cada exclusão/fechamento, reconfirme o estado remoto imediatamente. Não fazer force-push, merge, deploy, alteração de produção, Supabase, Netlify, Google Cloud, secrets ou migrations remotas. Registre inventário antes/depois, cada ação, SHA, evidência de equivalência em main, checks e pendências. Atualize somente este registro histórico no state.json, usando blob SHA mais recente.",
-      "current_state": "Limpeza conservadora concluída. Histórico unshallowed antes de classificar (clone estava shallow em 69d0217; contagens sem unshallow seriam falsas). Inventário prévio: 32 heads. Protegidos preservados: branches de #124, #127, #126, #128, #130, #131, #133, #134, #38, #39, #68, #71 e todos os PRs abertos ativos (#2, #32, #41, #46, #67). Trabalho ativo sem PR preservado: arena/9c0da280 (Calendar OAuth/worker, 53 commits exclusivos, migrations de 27/11), arena/3b7c9d2f (rascunho endpoint de expiração, 27/11), arena/6f3a9b1f e cc212db (rascunhos FOR UPDATE de 27/11 com conteúdo NÃO idêntico ao entregue pela PR #129 mergeada), fix/booking-transition-concurrency-incremental (behind=0; iteração da migration de concorrência pendente de revisão do responsável). Incertos preservados (fechados sem merge, descarte pendente de decisão): feat/customer-account-area (PR #48), feat/pagina-publica-agendamento (PR #1), feat/21-booking-multiple-services (#21; veículo atual é a PR #131 protegida), arena/29-calendar-integration, fix/29-oauth-state-atomic e feat/29-google-calendar-sync (legado Calendar; análise documentada indica supersessão pela arquitetura da PR #126, aguardando landing/decisão). Ação executada: exclusão única de arena/ee322640-marcou (tip 85af322dcb34cd9fb4ea7e43a7b5729e9b538fa5; 1 commit exclusivo de 18/11; PR #69 reconfirmada CLOSED em 2026-11-27T15:53:55Z como superseded pelo responsável; finalidade implementada canonicamente na PR #127 protegida e contrato documentado na PR #130; estado remoto reconfirmado por ls-remote imediatamente antes da exclusão). Inventário posterior: 31 heads. coordination/agents e main intactos; seis arquivos staged do Calendar não acessados; sem force-push, merge, deploy ou alteração externa.",
-      "next_action": "Pendências para decisão do responsável (nenhuma ação sem aprovação): descarte de feat/customer-account-area, feat/pagina-publica-agendamento, feat/21-booking-multiple-services, arena/29-calendar-integration, fix/29-oauth-state-atomic, feat/29-google-calendar-sync e dos rascunhos arena/3b7c9d2f, arena/6f3a9b1f e cc212db (conteúdo não idêntico ao mergeado; exportar patch antes de qualquer descarte).",
+      "current_state": "Round 2 da limpeza (foco: branches, PRs, issues e resíduos de patches) concluído em modo conservador. Reconfirmação completa ao vivo: main inalterada em 69d02173653384e082476e7879ee9f33672dec72; 31 heads (idênticos aos do round 1); 17 PRs abertas sem mudança de estado e nenhum novo merge; 12 branches protegidas verificadas presentes (#124, #127, #126, #128, #130, #131, #133, #134, #38, #39, #68, #71); rascunhos ativos sem alteração de tip (arena/9c0da280=905bb65, arena/3b7c9d2f=664cb5b, arena/6f3a9b1f=6db7608, cc212db=38aab51, fix/booking-transition-concurrency-incremental=90cd050). Nenhuma branch nova tornou-se comprovadamente integrada/superseded desde o round 1: nenhuma exclusão adicional era segura e nenhuma foi executada. Issues: 64 abertas (roadmap #72–#112 e legadas #8–#70); nenhuma duplicata/substituída de forma inequívoca — nenhum fechamento; fechadas seguem fechadas (#80, #81, #82, #87, #106; PRs #69/#123 já encerradas). Resíduos de patches: nenhum arquivo .patch rastreado no repo (main e branches conferidas); workspace desta sessão contém apenas pr130-recovery-tests.patch, entregável pendente da tarefa PR #130 (pausada, preservado); a referência patches/pr-39 de rounds antigos era artefato de outra sessão e não existe no repositório. Tarefa PR #130 permanece pausada e não esquecida (patch e registro em agent_3_pr_130).",
+      "next_action": "Aguardar decisão do responsável para os 7 casos incertos restantes (arena/4017109f com PR #123 fechada sem merge e 5 commits exclusivos; feat/customer-account-area; feat/pagina-publica-agendamento; feat/21-booking-multiple-services; arena/29-calendar-integration; fix/29-oauth-state-atomic; feat/29-google-calendar-sync) e para os rascunhos ativos de 27/11 (arena/3b7c9d2f, arena/6f3a9b1f, cc212db — exportar patch antes de qualquer descarte). Tarefa da PR #130 retoma com a aplicação autorizada de pr130-recovery-tests.patch na branch da PR e reexecução de CI.",
       "last_verified": {
         "coordination_branch": "coordination/agents",
-        "before_heads": 32,
+        "round": "2",
+        "before_heads": 31,
         "after_heads": 31,
-        "deleted": [
-          {
-            "branch": "arena/ee322640-marcou",
-            "tip_sha": "85af322dcb34cd9fb4ea7e43a7b5729e9b538fa5",
-            "pr": 69,
-            "evidence": "PR #69 CLOSED (2026-11-27T15:53:55Z) como superseded pelo responsável; 1 commit exclusivo cuja finalidade está implementada na PR #127 protegida e documentada na PR #130; ls-remote reconfirmado imediatamente antes da exclusão"
-          }
-        ],
-        "preserved_counts": {
-          "protected_pr_branches": 12,
-          "active_open_pr_branches": 5,
-          "active_no_pr": 4,
-          "incerta_pending_owner": 9,
+        "cumulative_from_round1": {
+          "before_heads": 32,
+          "after_heads": 31,
+          "deleted_total": [
+            {
+              "branch": "arena/ee322640-marcou",
+              "tip_sha": "85af322dcb34cd9fb4ea7e43a7b5729e9b538fa5",
+              "pr": 69,
+              "reason": "PR #69 CLOSED superseded pelo responsável; finalidade viva na PR #127 protegida"
+            }
+          ]
+        },
+        "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "open_prs": 17,
+        "open_issues": 64,
+        "issue_closures": 0,
+        "pr_closures": 0,
+        "branch_deletions_this_round": 0,
+        "classification": {
           "infra": [
             "main",
             "coordination/agents"
+          ],
+          "protegidas_pr_12": [
+            "arena/30a92c52-marcou",
+            "arena/18c3a3fa-marcou",
+            "arena/9e68c2bb-marcou",
+            "fix/booking-expiration-scheduler",
+            "fix/auth-recovery-preview-origin",
+            "fix/booking-multiple-services-pr123",
+            "arena/f074e752-marcou",
+            "fix/booking-transition-test-wiring",
+            "feat/26-notification-scheduler",
+            "feat/24-provider-agenda",
+            "feat/booking-flow-confirmation-success",
+            "fix/auth-recovery-redirect-production"
+          ],
+          "pr_abertas_ativas_5": [
+            "feat/calendario-mobile (#2)",
+            "feat/30-platform-hardening (#32)",
+            "fix/security-definer-execute-grants (#41)",
+            "arena/116298da-marcou (#46)",
+            "design/identidade-visual (#67)"
+          ],
+          "trabalho_ativo_sem_pr_5": [
+            "arena/9c0da280-marcou (Calendar OAuth/worker, 53 exclusivos, migrations 27/11)",
+            "arena/3b7c9d2f-marcou (rascunho expiração, 1 exclusivo)",
+            "arena/6f3a9b1f-marcou (rascunho FOR UPDATE, 1 exclusivo)",
+            "cc212db (rascunho FOR UPDATE, 9 exclusivos)",
+            "fix/booking-transition-concurrency-incremental (1 exclusivo, behind=0, revisão do responsável)"
+          ],
+          "incerta_pendente_owner_7": [
+            "arena/4017109f-marcou (PR #123 fechada sem merge, 5 exclusivos)",
+            "feat/customer-account-area (PR #48 fechada, 3 exclusivos)",
+            "feat/pagina-publica-agendamento (PR #1 fechada, 2 exclusivos)",
+            "feat/21-booking-multiple-services (Issue #21 aberta; veículo atual é a PR #131 protegida)",
+            "arena/29-calendar-integration (legado Calendar, 39 exclusivos)",
+            "fix/29-oauth-state-atomic (legado Calendar, 40 exclusivos)",
+            "feat/29-google-calendar-sync (legado Calendar, 3 exclusivos)"
           ]
         },
-        "notes": "Equivalência provada por rev-list, git cherry e diff de conteúdo; clone unshallow obrigatório para provas; nenhum critério de idade/nome isolado."
+        "patch_residues": {
+          "repo": "nenhum .patch rastreado (main e branches conferidas)",
+          "workspace_sessao": "pr130-recovery-tests.patch mantido (entregável da PR #130, pausada)",
+          "outras_sessoes": "referência patches/pr-39 não existe no repositório"
+        },
+        "notes": "Nenhuma ação destrutiva nesta rodada: zero exclusões, zero fechamentos de PR/issue. Provas por reconfirmação gh/ls-remote imediatamente antes de cada decisão; critério de idade/nome nunca usado isoladamente."
       },
       "updates": [
         {
@@ -683,6 +732,20 @@
             "Descartes adicionais exigem decisão explícita do responsável; conteúdo não idêntico ao mergeado em todos os casos incertos."
           ],
           "next_action": "Aguardar decisões de descarte; antes de qualquer nova exclusão, exportar patch dos commits exclusivos."
+        },
+        {
+          "timestamp": "2026-11-27T19:40:34-03:00",
+          "task": "Round 2 — reauditoria de branches/PRs/issues/resíduos de patches",
+          "status": "cleanup_round2_reverified_zero_new_proven_removals",
+          "result": "Nenhum alvo novo comprovadamente seguro: main e PRs inalterados desde o round 1; 31/31 heads reclassificados e preservados; 12 protegidos íntegros; 0 exclusões, 0 fechamentos de PR, 0 fechamentos de issue; nenhum resíduo de patch aplicado no repositório; patch da PR #130 (pausada) preservado no workspace.",
+          "head_sha": null,
+          "tests": "Reconfirmação gh pr list/view, gh issue list, ls-remote por branch, comparação de tips dos rascunhos ativos; verificação de ausência de .patch no repo via git ls-tree.",
+          "blockers": [
+            "7 casos incertos exigem decisão explícita do responsável antes de qualquer descarte.",
+            "Rascunhos ativos de 27/11 têm conteúdo não idêntico ao mergeado; exportar patch antes de qualquer descarte.",
+            "PR #130 (pausada) aguarda autorização para aplicar pr130-recovery-tests.patch e reexecutar CI."
+          ],
+          "next_action": "Aguardar decisões de descarte do responsável e/ou nova atribuição; retomar PR #130 quando autorizado."
         }
       ]
     },
