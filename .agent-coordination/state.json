@@ -64,16 +64,28 @@
       "pull_requests": [
         131
       ],
-      "status": "prompt_sent_after_canceling_accidental_broad_prompt",
-      "current_state": "Final security/integrity audit requested. Mandatory focus: effective grants and RLS on notifications for public, anon and authenticated.",
-      "next_action": "Audit notifications grants and RLS, migrations, tests and CI at exact current SHA; report verdict and update this file.",
+      "status": "audit_completed_approved",
+      "current_state": "Auditoria final de segurança e integridade concluída. PR #131 aprovada. Tabela notifications: authenticated tem apenas SELECT, public/anon sem privilégios, UPDATE direto negado por teste. RLS policies correspondem aos privilégios. Migrations seguras e consistentes.",
+      "next_action": "Aguardando revisão final e merge da PR #131. Não realizar merge.",
       "last_verified": {
-        "branch": null,
-        "head_sha": null,
-        "ci": "previous context said green; must re-verify current SHA",
-        "notes": "Earlier concern: authenticated may have SELECT only while public/anon privileges were revoked. Verify from actual migration/schema, do not assume."
+        "branch": "fix/booking-multiple-services-pr123",
+        "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
+        "ci": "typecheck 0 erros, lint 0 erros, audit 0 falhas/0 avisos, testes unitários 155/155, test:db 4 scripts aprovados (db-check 69/0, social-foundation 47/0, identity 32/0, discovery 40/0), build aprovado, check:changelog aprovado",
+        "notes": "Tabela notifications auditada: authenticated mantém apenas SELECT; public e anon sem privilégios; sem INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER indevidos. RLS policies notifications_select_own e notifications_update_own correspondem aos privilégios. Via RPCs mark_notification_read/mark_all_notifications_read (SECURITY DEFINER) filtram por recipient_id = auth.uid(). Migration 20261125130000 usa REVOKE ALL antes de GRANT. Histórico preservado (serviço único → booking_services espelho)."
       },
-      "updates": []
+      "updates": [
+        {
+          "timestamp": "2026-11-27T17:13:00-03:00",
+          "task": "Auditoria final de segurança e integridade PR #131",
+          "status": "audit_completed_approved",
+          "result": "APROVADA — grants efetivos de notifications confirmados por teste de privilégios: authenticated=[SELECT], public/anon=[nenhum], UPDATE direto negado. Todos os testes passaram.",
+          "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
+          "tests": "privileges-check 43/0 antes + 43/0 depois; test:db db-check 69/0 social-foundation 47/0 identity 32/0 discovery 40/0; unit tests 155/155; typecheck 0; lint 0; audit 0/0; build aprovado; check:changelog aprovado",
+          "blockers": [],
+          "next_action": "Aguardando revisão final e merge da PR #131. Não realizar merge."
+        }
+      ],
+      "updated_at": "2026-11-27T17:13:00-03:00"
     },
     "agent_2_pr_128_and_38": {
       "scope": "PR #128 booking expiration and PR #38 reminders",
