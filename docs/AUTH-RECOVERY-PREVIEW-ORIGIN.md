@@ -19,8 +19,9 @@ de recuperação.
 
 Os metadados internos `CONTEXT` e `DEPLOY_PRIME_URL` existem durante o build da
 Netlify, mas não são variáveis read-only disponíveis às Functions em runtime.
-`next.config.ts` os captura no build e os injeta no bundle do servidor como
-`MARCOU_AUTH_DEPLOY_CONTEXT` e `MARCOU_AUTH_DEPLOY_PRIME_URL`. São valores
+`next.config.ts` os captura no build e os injeta pelo recurso `env` do Next.js
+como `MARCOU_AUTH_DEPLOY_CONTEXT` e `MARCOU_AUTH_DEPLOY_PRIME_URL`. Esse recurso
+pode embutir os valores em bundles JavaScript; por isso só são usados dados
 públicos de deployment, nunca secrets. Não copie `Host`, `X-Forwarded-Host` ou
 valores do navegador para essas variáveis.
 
@@ -88,3 +89,56 @@ Os testes automatizados cobrem:
   caminho fixo `/redefinir-senha`.
 
 Não altere configurações remotas do Supabase durante os testes.
+
+
+## Checklist operacional do responsável
+
+### 1. Supabase Auth — URL Configuration
+
+- **Onde:** Supabase Dashboard → Authentication → URL Configuration.
+- **Site URL esperado:** `https://marcoou.netlify.app` (sempre produção, não um preview).
+- **Redirect URLs permitidas:**
+  - `https://marcoou.netlify.app/auth/confirm**`
+  - `https://marcoou.netlify.app/auth/callback**`
+  - `https://deploy-preview-*--marcoou.netlify.app/auth/confirm**`
+  - `https://deploy-preview-*--marcoou.netlify.app/auth/callback**`
+  - Opcional, apenas desenvolvimento: `http://localhost:3000/auth/confirm**` e `http://localhost:3000/auth/callback**`.
+- **Como validar:** conferir literalmente o Site URL e os quatro padrões; não aceitar wildcard genérico como `https://**.netlify.app/**`.
+- **Evidência correta:** produção e preview oficial são aceitos; URLs externas, outro site Netlify e hosts com sufixos adicionais não são permitidos. A query `next` não provoca fallback para Site URL.
+
+### 2. Supabase Auth — Reset Password template
+
+- **Onde:** Supabase Dashboard → Authentication → Email Templates → Reset Password.
+- **Valor esperado:** o link deve usar `{{ .RedirectTo }}` seguido de `&amp;token_hash={{ .TokenHash }}&amp;type=recovery`, conforme o snippet acima.
+- **Como validar:** revisar o HTML salvo sem gerar e-mail de teste; confirmar que não há `{{ .SiteURL }}` hardcoded, domínio fixo, nem remoção do caminho/query de `RedirectTo`.
+- **Evidência correta:** quando um pedido autorizado for feito, o link deve conter `/auth/confirm?next=%2Fredefinir-senha`, `token_hash` e `type=recovery`; não deve conter token em logs ou analytics.
+
+### 3. Netlify — domínio e Deploy Preview
+
+- **Onde:** Netlify → Site configuration → Domain management; e Deploys → Deploy Previews.
+- **Valor esperado:** domínio de produção do site `marcoou.netlify.app`; preview no formato `https://deploy-preview-<número>--marcoou.netlify.app`.
+- **Como validar:** abrir um Deploy Preview oficial da PR e conferir o hostname completo; confirmar que o preview é do mesmo site Netlify.
+- **Evidência correta:** o domínio de produção continua canônico e o preview oficial usa o hostname numerado exato; domínio de outro site ou suffix malicioso não passa na validação.
+
+### 4. Netlify — variáveis por ambiente
+
+- **Onde:** Netlify → Site configuration → Environment variables.
+- **Esperado:** `CONTEXT` e `DEPLOY_PRIME_URL` são metadados read-only do build; não criar overrides manuais. `next.config.ts` os captura em cada build. `NEXT_PUBLIC_SITE_URL` deve ser `https://marcoou.netlify.app` em Production e `http://localhost:3000` somente em desenvolvimento local. `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` devem apontar para o projeto correto.
+- **Escopo:** variáveis de aplicação necessárias ao build devem incluir Builds; qualquer variável lida por Functions em runtime também precisa incluir Functions. As variáveis `MARCOU_AUTH_DEPLOY_CONTEXT` e `MARCOU_AUTH_DEPLOY_PRIME_URL` são produzidas pelo Next.js no build, não devem ser preenchidas manualmente.
+- **Segredos:** não copiar nem solicitar valores secretos em PR, chat ou checklist. Nunca usar service-role no cliente; mantenha credenciais exclusivamente nos consoles protegidos.
+- **Como validar:** revisar nomes, contexts Production/Deploy Previews e scopes; depois de qualquer alteração de variável, gerar um novo Deploy Preview/build para aplicar.
+- **Evidência correta:** produção resolve para `https://marcoou.netlify.app`; Deploy Preview resolve para seu próprio hostname oficial. A função não depende de `Host` nem `X-Forwarded-Host`.
+
+### 5. Teste funcional — produção e preview
+
+- **Onde:** páginas `/esqueci-senha` e `/redefinir-senha` do domínio de produção e de um Deploy Preview oficial.
+- **Como validar:** somente após aprovação do responsável para enviar um e-mail real, solicitar recuperação com uma conta de teste controlada, abrir o link no mesmo ambiente que iniciou a solicitação, confirmar a nova senha e entrar com ela. Repetir separadamente em produção e preview; nunca compartilhar o link ou token.
+- **Evidência correta:** produção termina em `https://marcoou.netlify.app/redefinir-senha`; preview termina no hostname do próprio preview em `/redefinir-senha`; a senha atualiza e o login com a nova senha funciona. Token expirado/reutilizado deve falhar com mensagem segura.
+- **Limite desta entrega:** nenhum e-mail foi enviado e nenhuma configuração externa foi alterada; o teste funcional permanece pendente de execução autorizada pelo responsável.
+
+## Relação com as PRs #71 e #127
+
+- **#71** é somente um runbook WIP baseado no fluxo antigo `/auth/callback?flow=recovery`; não altera código e não cobre a origem de Deploy Preview.
+- **#127** adiciona o fallback de `code`/`token_hash` órfãos, a classificação do callback PKCE e testes de regressão. Sua branch permanece preservada e não foi modificada por esta PR.
+- **#130** acrescenta o vínculo da origem confiável ao deployment, o tratamento do contexto de preview e o checklist de configuração/template.
+- **Conclusão:** o conteúdo operacional da #71 fica coberto e atualizado por #130, enquanto a lógica de fallback que ela não implementava está na #127. Recomenda-se encerrar a #71 como substituída após revisão do responsável; não é necessário mesclar nem alterar sua branch.
