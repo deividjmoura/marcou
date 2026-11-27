@@ -27,25 +27,27 @@
     "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or marked unknown.",
     "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values.",
     "safety": [
-      "No merge, production changes, external configuration changes, deploys or remote migrations without explicit user authorization for that exact action.",
-      "Do not change PR #127.",
-      "Do not expand scope or modify another agent's ownership."
+      "Nenhum merge, deploy, produção, configuração externa, migration remota ou alteração de secrets sem autorização explícita para a ação exata.",
+      "Não alterar PR #127, nem sua branch; somente leitura.",
+      "Não acessar nem modificar os seis arquivos staged locais relacionados ao Calendar.",
+      "Preservar todas as PRs/branches abertas e trabalhos ativos, exceto limpeza de branch comprovadamente integrada/superseded autorizada na tarefa do Agent3.",
+      "Não expandir escopo nem modificar a atribuição de outro agente."
     ],
-    "handoff": "Existem exatamente cinco agentes externos e um coordenador (Agent6, o assistente). Os cinco agentes externos são identificados apenas pelo número informado no prompt desta rodada: Agent1..Agent5. Cada agente assume integralmente a tarefa do slot correspondente, independentemente de quem a executava em rodadas anteriores, de nomes de sessão ou de registros históricos. Não dependa da identidade antiga dos agentes. O coordenador Agent6 faz auditoria independente, consolida resultados e define próximos passos; não é um sexto agente externo. A PR #134 continua aguardando revisão do responsável e não deve ser alterada sem nova atribuição/autorização.",
+    "handoff": "Existem cinco agentes externos e um coordenador (Agent6, o assistente). Os agentes são identificados exclusivamente pelo número informado no prompt desta rodada. Cada um assume a tarefa integral do slot correspondente, independentemente de identidade anterior. Agent6 audita e consolida. Nesta rodada: Agent1 PR #124; Agent2 revisão somente leitura PR #127 (intocável); Agent3 limpeza conservadora de branches; Agent4 contrato de recuperação #127/#130 (sem teste externo); Agent5 prontidão Calendar #126/Issue #29 (sem tocar nos seis arquivos staged).",
     "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update."
   },
   "dispatch": {
-    "round": "2026-11-27-round-4-reassigned",
+    "round": "2026-11-27-round-5-followups",
     "dispatched_at": "2026-11-27",
-    "instruction": "Esta rodada foi reatribuída para cinco agentes externos novos/recuperados após perda de identidade das sessões. O número que o responsável informar no prompt (Agent1, Agent2, ... Agent5) define exclusivamente o slot de dispatch.assignments com o mesmo número. Assuma a tarefa integral desse slot, mesmo que antes estivesse atribuída a outro agente. Não tente recuperar sua identidade antiga nem escolha tarefa pelo nome histórico. Antes de agir, confira estado remoto e SHAs. Atualize somente o registro histórico indicado como state_entry dentro da sua atribuição, sem sobrescrever outros registros; registre início, marcos e conclusão. Agent6 é o coordenador e fará auditoria independente. Não faça merge, deploy, produção, migrations remotas ou alterações externas sem autorização explícita. Exceção: a atribuição do agent_3 foi explicitamente substituída pelo responsável pela limpeza operacional do repositório; a tarefa anterior da PR #130 fica pausada e deve ser retomada depois.",
+    "instruction": "Nova rodada após consolidação das entregas anteriores. Existem cinco agentes externos e o coordenador Agent6. O número informado no prompt (Agent1..Agent5) define exclusivamente o slot; assuma a atribuição correspondente em dispatch.assignments, sem depender da identidade ou tarefa histórica anterior. Leia sua atribuição integral, confirme HEADs/refs remotos antes de agir e atualize somente o state_entry indicado. Registre início, marcos e conclusão com SHAs exatos, comandos/testes/CI reais, bloqueadores e próxima ação. Não duplique trabalho de outros slots. Respeite as restrições de cada atribuição e o protocolo geral: sem merge/deploy/produção/migrations remotas/alterações de serviços externos/secrets sem autorização explícita específica. PR #127 deve permanecer intacta; os seis arquivos staged locais do Calendar não podem ser acessados ou modificados. Agent6 coordena, audita independentemente e consolida os resultados.",
     "assignments": {
-      "agent_1": "state_entry=agent_1_pr_131. PR #68 — recuperar a branch e validar a confirmação. O HEAD observado era a18a0d73bf073a06b8a8b21ff89d01a07489769a, base antiga 051942b7 e main 69d02173653384e082476e7879ee9f33672dec72. Reconfirme tudo no remoto antes de agir. Atualize a branch da #68 para a main atual de forma segura, sem force-push, resolvendo conflitos e preservando o escopo. PR #131 continua OPEN e NÃO integrada à main: não incorporar commits/arquivos dela. Garantir confirmação e .ics corretos com snapshots agregados (nome, duração, preço); não inventar breakdown individual sem booking_services disponível na base. Acrescentar testes para confirmação e .ics com reserva de um e múltiplos serviços no contrato agregado. Se breakdown depender da #131, documentar dependência futura. Rodar CI/Preview no SHA final. Não remover Draft, não mergear, não alterar outras PRs.",
-      "agent_2": "state_entry=agent_2_pr_128_and_38. PRs #38 e #128 — revisão integrada final do cluster de lembretes e expiração. Reconfirme HEADs remotos atuais (últimos observados: #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd; #128 246f95df33013d495b1cda36675a04c2761637e8), compare workflows/código compartilhado com main atual. Verifique timezone, janelas de envio, idempotência, retries, concorrência, elegibilidade, gates/segredos, dispatch manual e risco de scheduler duplicado. Confirme CI/test:db nos SHAs exatos. Entregue decisão sobre coexistência, ordem de merge e o que deve permanecer desabilitado até autorização. Somente leitura: não alterar workflows/PRs, não habilitar scheduler, não disparar notificações e não mergear.",
-      "agent_3": "state_entry=agent_3_pr_130. NOVA PRIORIDADE: limpeza operacional conservadora do repositório Marcou, substituindo temporariamente a tarefa anterior da PR #130 (não a perca: registre-a como pausada e preserve os achados para retomada posterior). Audite branches, PRs, issues e resíduos/patches já aplicados. Reconfirme estado remoto atual, main SHA, todas as PRs abertas/fechadas/merged, branches e referências antes de qualquer ação. Classifique cada branch: protegida/ativa, vinculada a PR aberta, já integrada (merge commit/squash/rebase comprovável), obsoleta/superseded, ou incerta. NÃO decidir por idade/nome isoladamente. Compare conteúdo e ancestry com main, PRs, commits e dependências. A limpeza anterior já removeu branches das PRs #122, #118, #66, #129 e #40 e fechou #69 como superseded; verifique se ainda há resíduos relacionados, sem repetir ações já feitas. Preservar obrigatoriamente #124 e #127, PR #134 e todos os trabalhos ativos dos agentes; não alterar #127. Preservar os seis arquivos staged locais relatados para Calendar: não acessar, não editar, não apagar. Não remover branch de PR aberta nem branches que contenham commits exclusivos úteis; não fechar issues/PRs abertas por mera idade. Identificar patches/cherry-picks/resíduos que já estejam integralmente aplicados em main e só então propor remoção. Para cada ação destrutiva, registrar evidência objetiva (branch/PR/issue, SHA, commit equivalente em main, status checks, dependências e razão). Pode executar limpeza de branches comprovadamente merged/superseded e fechamento de PRs/issues comprovadamente duplicadas ou substituídas somente quando não houver trabalho exclusivo e todos os checks relevantes estiverem verdes; para qualquer merge de PR, exigir aprovação/review necessária, CI completo verde no HEAD exato e ausência de dependências pendentes. Se qualquer critério falhar, não fazer a ação: listar como pendente. Não tocar produção, Supabase, Netlify, Google Cloud, secrets, migrations remotas ou deploy. Não fazer force-push. Antes de cada exclusão/fechamento/merge, reconfirmar estado remoto imediatamente. Atualize somente o registro histórico indicado por state_entry; antes de escrever state.json, buscar versão mais recente e usar blob SHA atual, preservando atualizações dos demais agentes. Entregar inventário antes/depois, lista exata de ações executadas e pendências, SHAs, testes/checks e riscos. Não executar a antiga tarefa da PR #130 nesta rodada; marcá-la como pausada para retomada depois.",
-      "agent_4": "state_entry=agent_4_pr_39. PR #39 — revisão final de qualidade e comportamento da agenda do prestador. Reconfirme HEAD/base e CI (últimos observados: HEAD 7a1e270e369023020f27ea6afddb07df76a014d7, main 69d02173653384e082476e7879ee9f33672dec72, run 46048421298). Revise diff completo, filtros/busca, estados vazios, responsividade, acessibilidade, regressões e Preview. Se houver defeito reproduzível no escopo, corrija na branch, atualize CHANGELOG se exigido e rode CI/Preview novamente; caso contrário, entregue parecer final com evidências e riscos residuais. Não remover Draft, não mergear, não alterar outras PRs.",
-      "agent_5": "state_entry=agent_5_calendar_audit. PR #126 / Issue #29 — auditoria de dependências e plano técnico, sem editar código. Reconfirme estado remoto de #126, main e #131; #131 segue OPEN/não integrada, #123 fechada sem merge. #126 head declarado 335e3f50... e branch remota observada 8d73650... (sem CI nesse SHA). Identifique commits/arquivos da #123 consumidos pela #126, o que depende da #131, se PR/branch aponta para o mesmo HEAD e sequência segura sem cherry-pick incompatível. Avalie callback sem fallback request.url.origin, timeout Google compatível com lease/claim worker, corrida worker/desconexão, limpeza/revogação idempotente/rastreável, scope OAuth estrito e PKCE. Separe P1/P2, testes e decisões do responsável (especialmente escopo unidirecional vs bidirecional). Preserve os seis arquivos staged locais relatados: não acessar nem alterar. Somente leitura: não rebasear, cherry-pickar, editar branches/migrations, acessar serviços reais, deploy ou merge."
+      "agent_1": "state_entry=agent_1_pr124_audit. Execute integralmente a auditoria final da PR #124 no branch/SHA correto, somente leitura.",
+      "agent_2": "state_entry=agent_2_pr127_security_review. Faça revisão de segurança somente leitura da PR #127; mantenha branch e PR absolutamente intactas.",
+      "agent_3": "state_entry=agent_3_repo_cleanup. Faça inventário e limpeza conservadora de branches/refs comprovadamente obsoletas, respeitando todos os itens protegidos.",
+      "agent_4": "state_entry=agent_4_recovery_validation. Valide o contrato de recuperação #127/#130 e entregue roteiro de teste controlado; não envie e-mail nem altere serviços externos.",
+      "agent_5": "state_entry=agent_5_calendar_readiness. Revalide prontidão/dependências da PR #126 e Issue #29; preserve os seis arquivos staged locais."
     },
-    "agent_model": "Cinco slots numerados (Agent1–Agent5), identidade de sessão não persistente; Agent6 é o coordenador."
+    "agent_model": "Cinco agentes externos numerados Agent1–Agent5; Agent6 é o coordenador/auditor independente."
   },
   "shared_project_state": {
     "netlify": {
@@ -559,6 +561,81 @@
           "next_action": "Aguardar nova atribuição do coordenador; manter PR #133 como entrega pronta para revisão."
         }
       ]
+    },
+    "agent_1_pr124_audit": {
+      "scope": "Auditoria final da PR #124 no checkout correto",
+      "pull_requests": [
+        124
+      ],
+      "status": "assigned_round_5",
+      "active_assignment": "Audite integralmente a PR #124 no repositório de trabalho correto: branch arena/30a92c52-marcou, HEAD esperado f320fe88313547cfd2ef6a4ac680456c68a7db44 (reconfirme antes de tudo). O relatório anterior identificou commit test(money): cover dot decimal 12.34; não confunda com arena/18c3a3fa-marcou / PR #127. Revise todo o diff da #124, incluindo parser BRL, campos de preço/sinal, ações por papel na reserva, autorização mantida no banco, testes e changelog. Execute npm run audit e a suíte pertinente disponível no checkout correto; registre comandos/resultados reais. Compare com main atual e confirme status/CI/mergeability da PR no HEAD exato. Somente leitura: não editar arquivos, não criar commits, não alterar PR/issue, não remover Draft e não fazer merge. Entregue parecer objetivo com bloqueadores, riscos e recomendação.",
+      "current_state": "Tarefa atribuída no round 5; aguardando início.",
+      "next_action": "Reconfirmar branch e SHA corretos, executar auditoria e registrar evidências.",
+      "last_verified": {
+        "branch": "arena/30a92c52-marcou",
+        "head_sha": "f320fe88313547cfd2ef6a4ac680456c68a7db44",
+        "pull_request": 124
+      }
+    },
+    "agent_2_pr127_security_review": {
+      "scope": "Revisão de segurança somente leitura da PR #127",
+      "pull_requests": [
+        127
+      ],
+      "status": "assigned_round_5",
+      "active_assignment": "Faça revisão independente e somente leitura da PR #127, HEAD esperado cc212db05cfc14ee70dd05e353a66484b7cef2c8 (reconfirme). A PR e sua branch devem permanecer absolutamente intactas: não editar, commit/push, rebase, fechar, remover Draft ou mergear. Examine src/proxy.ts, src/lib/auth-url.ts, src/lib/identity.ts, /auth/callback, /auth/confirm e testes. Foque na origem de redirect: trustedAppOrigin(request.nextUrl.origin), allowlist de produção/Deploy Preview/localhost, Host/forwarded-host, open redirect, preservação e roteamento de code/token_hash/type, loops, PKCE, cache/no-store e vazamento de tokens. Compare o contrato com PR #130 e com a configuração de recuperação já confirmada no shared_project_state. Não acessar nem alterar Supabase/Netlify nem enviar e-mails. Separe vulnerabilidade reproduzível de risco teórico; indique testes ausentes e recomendação.",
+      "current_state": "Tarefa atribuída no round 5; PR #127 protegida contra qualquer alteração.",
+      "next_action": "Auditar o diff e o fluxo completo, sem escrever no repositório.",
+      "last_verified": {
+        "branch": "arena/18c3a3fa-marcou",
+        "head_sha": "cc212db05cfc14ee70dd05e353a66484b7cef2c8",
+        "pull_request": 127
+      }
+    },
+    "agent_3_repo_cleanup": {
+      "scope": "Limpeza operacional conservadora de branches e referências",
+      "pull_requests": [],
+      "status": "assigned_round_5",
+      "active_assignment": "Faça inventário completo e limpeza conservadora do repositório Marcou. Reconfirme main, branches, PRs e issues no remoto antes de cada ação. Classifique branches como ativa/protegida, associada a PR aberta, integrada comprovadamente, substituída comprovadamente ou incerta. Não use idade/nome como critério isolado. Preserve obrigatoriamente PRs/branches #124 e #127, #126, #128, #130, #131, #133, #134, #38, #39, #68, #71 e todos os trabalhos ativos. Preserve também os seis arquivos staged locais relacionados ao Calendar: não acessar, editar, apagar ou sobrescrever. A limpeza anterior já removeu branches das PRs #122, #118, #66, #129 e #40 e fechou #69 como superseded; não repetir ações sem verificar o estado atual. Pode excluir somente branches comprovadamente integradas/superseded, sem commits exclusivos úteis, e fechar PR/issue somente se duplicada/substituída de forma inequívoca e sem trabalho exclusivo. Antes de cada exclusão/fechamento, reconfirme o estado remoto imediatamente. Não fazer force-push, merge, deploy, alteração de produção, Supabase, Netlify, Google Cloud, secrets ou migrations remotas. Registre inventário antes/depois, cada ação, SHA, evidência de equivalência em main, checks e pendências. Atualize somente este registro histórico no state.json, usando blob SHA mais recente.",
+      "current_state": "Tarefa atribuída no round 5; manter a limpeza restrita a resíduos comprovados.",
+      "next_action": "Inventariar branches/PRs e separar candidatas seguras de itens protegidos/incertos.",
+      "last_verified": {
+        "coordination_branch": "coordination/agents",
+        "coordination_commit": "65b4dcb9f85abb92fa6e4a1529eda9d173b45f9a"
+      }
+    },
+    "agent_4_recovery_validation": {
+      "scope": "Validação do contrato de recuperação de senha entre app, Supabase e Netlify",
+      "pull_requests": [
+        127,
+        130
+      ],
+      "status": "assigned_round_5",
+      "active_assignment": "Faça auditoria somente leitura do fluxo de recuperação de senha ponta a ponta no código e documentação das PRs #127 e #130. Considere o estado compartilhado já verificado: Supabase Site URL limpo, allowlist de produção e Deploy Preview presente, template de recovery usando {{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery; NEXT_PUBLIC_SITE_URL no Netlify foi confirmado pelo responsável. O único passo externo ainda pendente é teste funcional controlado de recuperação, que NÃO está autorizado nesta tarefa. Verifique consistência entre template, RedirectTo, /auth/confirm, verifyOtp(token_hash,type), proxy fallback, trusted origin e /redefinir-senha; compare HEADs/CI atuais e runbook da #130. Produza procedimento manual curto com pré-condições, resultado esperado, sinais de falha e como evitar expor token/link. Não enviar e-mail, não testar conta real, não acessar/alterar painel Supabase/Netlify, não editar secrets, não fazer deploy/merge ou alterar PRs. Informe exatamente o que ainda depende do responsável.",
+      "current_state": "Tarefa atribuída no round 5; configuração externa já consta como atualizada/verificada no estado compartilhado.",
+      "next_action": "Conferir consistência do contrato no código e preparar roteiro do teste controlado sem executá-lo.",
+      "last_verified": {
+        "pr130_head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+        "pr127_head_sha": "cc212db05cfc14ee70dd05e353a66484b7cef2c8",
+        "recovery_template_status": "updated_and_verified_by_management_api_readback",
+        "netlify_site_url_status": "verified_by_user"
+      }
+    },
+    "agent_5_calendar_readiness": {
+      "scope": "Revalidação da prontidão e dependências da PR #126 / Issue #29",
+      "pull_requests": [
+        126,
+        131
+      ],
+      "status": "assigned_round_5",
+      "active_assignment": "Revalide somente por leitura a PR #126 e Issue #29 contra o estado remoto atual. Confirme o HEAD declarado pela PR versus o HEAD real da branch arena/9e68c2bb-marcou, base/main atual, commits exclusivos, CI no SHA exato e dependências #123 (fechada sem merge) e #131 (aberta, não integrada). Identifique se há partes da PR #126 que dependem de APIs/migrations de #123/#131 e se o hardening de privilégios (#125) pode/deve ser separado do Calendar. Reavalie os riscos já identificados: callback não pode usar request.url.origin como fallback; timeout/fencing/lease e corrida worker-disconnect; revogação externa retryável/rastreável; validação estrita de scopes; PKCE e rotação de refresh token/chave; serviços server-only. A decisão do responsável sobre escopo unidirecional vs bidirecional continua pendente. NÃO acesse nem altere os seis arquivos staged locais, branches, migrations, serviços reais, secrets ou deploy. Não faça rebase/cherry-pick/commit/push/merge. Entregue mapa de dependências, blockers P1/P2, sequência segura e decisões necessárias, com SHAs exatos e testes/CI aplicáveis.",
+      "current_state": "Tarefa atribuída no round 5; auditoria anterior existe, mas deve ser revalidada contra os HEADs atuais.",
+      "next_action": "Reconfirmar referências remotas e emitir mapa atualizado de dependências e prontidão.",
+      "last_verified": {
+        "pr126_head_sha": "335e3f50b1d8dba862c2c769039a1750e94a6681",
+        "calendar_branch_head_sha": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
+        "main_sha": "69d02173653384e082476e7879ee9f33672dec72"
+      }
     }
   }
 }
