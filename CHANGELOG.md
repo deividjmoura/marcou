@@ -13,6 +13,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 - Pipeline CI passa a executar `npm run audit` junto às validações de PR.
 
+- Rota cron de lembretes marcada como `server-only`, com guarda explícita para URL/chave ausentes e exceção do audit restrita ao arquivo e às garantias server-only.
+
 - Scheduler de lembretes separado da expiração: endpoint protegido chama somente `create_booking_reminders(24)`; migration adiciona lock `FOR UPDATE SKIP LOCKED`, janela validada e harness cobre execução simultânea, cancelamento e expiração.
 
 - `CHANGELOG.md` na raiz do repositório, `CONTRIBUTING.md` com o processo
