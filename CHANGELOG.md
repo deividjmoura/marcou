@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Motor de reservas com múltiplos serviços do mesmo estabelecimento (Issue `#21`, PR `#139`): tabela `booking_services`, RPCs agregadas, seleção múltipla na página pública, compatibilidade com reservas de um serviço e migration `20261125120000_booking_multiple_services.sql`.
+- Matriz de privilégios com grants mínimos para `notifications` e `booking_services` (`20261125130000_table_privileges_matrix.sql`).
 - Consolidação documental “plataforma única, perfil público interno”:
   `docs/REVISAO-ARQUITETURA-SOCIAL.md` com auditoria, decisão de URL canônica
   `/p/[slug]` para o perfil público (alternativas `/{slug}`, `/@{slug}` e
