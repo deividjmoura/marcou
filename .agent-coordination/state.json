@@ -1610,21 +1610,9 @@
           "A1-T1: PR #142 (substitui #131 e #139), migration final 20261127130000_table_privileges_matrix.sql; aguardar CI e merge na main."
         ]
       },
-      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131. A dependência de #136 mudou: #131 foi fechada sem merge e substituída pela PR #139 do Agent1. PR #139 tem CI success e Netlify preview success no HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6, mas ainda está mergeable=false/atrás da main após #141; Agent1 precisa atualizar/mesclar main e concluir o merge antes de A4-T1. Atualização da dependência: PR #139 foi fechada sem merge e substituída pela #142 (`fix/139-multi-services-final`), baseada na main atual `cd6065ad6a46187510bde58e51f474d0ff66a4c0`; HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2`, mergeable=true, CI in_progress. #136 permanece bloqueada até #142 integrar migration 20261127130000. PR #142 HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2` terminou CI failure no Database integration tests: assert de ordem ainda espera matriz < hardening < Calendar, mas a migration final da matriz `20261127130000` foi renumerada para depois da Calendar e do multi-services. Comentei na #142 com o log e a correção necessária; manter o teste e ajustar a ordem/comentários, sem desabilitar.",
-      "next_action": "Aguardar Agent1 corrigir o assert e o comentário da migration na #142, atualizar head e obter CI verde. Depois da #142 mergeada, atualizar #136 com privileges-check + calendar-check no test:db.",
+      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131. A dependência de #136 mudou: #131 foi fechada sem merge e substituída pela PR #139 do Agent1. PR #139 tem CI success e Netlify preview success no HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6, mas ainda está mergeable=false/atrás da main após #141; Agent1 precisa atualizar/mesclar main e concluir o merge antes de A4-T1. Atualização da dependência: PR #139 foi fechada sem merge e substituída pela #142 (`fix/139-multi-services-final`), baseada na main atual `cd6065ad6a46187510bde58e51f474d0ff66a4c0`; HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2`, mergeable=true, CI in_progress. #136 permanece bloqueada até #142 integrar migration 20261127130000. PR #142 HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2` terminou CI failure no Database integration tests: assert de ordem ainda espera matriz < hardening < Calendar, mas a migration final da matriz `20261127130000` foi renumerada para depois da Calendar e do multi-services. Comentei na #142 com o log e a correção necessária; manter o teste e ajustar a ordem/comentários, sem desabilitar. A PR #142 foi atualizada para HEAD `e41a89d5c034071ab4016ffd68245af1f0bb4ed3`, CI em andamento. O novo commit renomeou as migrations para `20261125120000` e `20261125130000`, o que passa a ordem antiga mas viola a seção 5: a main atual já contém migrations até `20261128000100`. Comentei na #142 exigindo versões > 20261128000100 e ajuste da ordem/asserts para harden < Calendar < fencing < revocation < multi-services < matrix; não alterei o trabalho do Agent1.",
+      "next_action": "Aguardar Agent1 ajustar a versão das migrations para maior que 20261128000100 e alinhar o assert de ordem. Quando #142 mergear com CI verde, atualizar #136 e incluir ambos os harnesses em test:db.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T3: merge da PR #141 e fechamento da Issue #29",
-          "status": "completed",
-          "result": "PR #141 squash-merged na main: cd6065ad6a46187510bde58e51f474d0ff66a4c0. CI success e Netlify deploy-preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1. Issue #29 fechada automaticamente por Fixes #29; comentário adicionado com decisão unidirecional Marcou→Google, evidências de PR #135/#141 e OWNER_DECISION para OAuth real, secrets, redirect URI e scheduler. Nenhuma configuração/secret/deploy/migration remota alterada.",
-          "head_sha": "PR #141 head:979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; merge SHA/main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
-          "tests": "GitHub Actions CI success no SHA 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Netlify check-runs no mesmo SHA: Redirect rules success, Header rules success, Pages changed neutral (aceito). calendar-check executado por npm run test:db.",
-          "blockers": [
-            "A4-T1 (#136) aguarda a migration final da matriz da PR #131 (Agent1)."
-          ],
-          "next_action": "Aguardar/acompanhar #131; em seguida atualizar e validar #136."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "A4-T1: atualização da dependência de privilégios",
@@ -1660,6 +1648,18 @@
             "Agent1 precisa corrigir o order assertion/comment na PR #142 e rerodar CI; #136 continua bloqueada."
           ],
           "next_action": "Aguardar novo SHA/CI da #142 e só então atualizar #136."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "A4-T1: revisão da segunda tentativa de correção da PR #142",
+          "status": "blocked_waiting_agent1_migration_version",
+          "result": "Novo HEAD #142 e41a89d5c034071ab4016ffd68245af1f0bb4ed3 reverteu timestamps das migrations para 20261125120000/20261125130000. Isso viola o checklist de migration version > última da main (após #141, latest = 20261128000100). Comentei que devem usar versões maiores e atualizar ordem real no harness; não mexi na branch do Agent1. CI segue in_progress e Netlify preview success.",
+          "head_sha": "PR #142:e41a89d5c034071ab4016ffd68245af1f0bb4ed3; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
+          "tests": "CI ainda in_progress; não mergear. Netlify preview success.",
+          "blockers": [
+            "Agent1 precisa corrigir timestamps para > 20261128000100 e atualizar ordem/harness."
+          ],
+          "next_action": "Aguardar novo SHA da #142 com migration versions monotônicas e CI verde."
         }
       ],
       "branch_disposition": [
