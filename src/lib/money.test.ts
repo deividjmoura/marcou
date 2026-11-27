@@ -13,6 +13,7 @@ describe("parseBrlToCents", () => {
     ["1234,56", 123456],
     // ponto de milhar + vírgula decimal
     ["1.234,56", 123456],
+    ["1.234,5", 123450], // milhar com uma casa decimal
     ["1.234.567,89", 123456789],
     // ponto sem vírgula: 3 dígitos = milhar; 1–2 dígitos = decimal
     ["1.234", 123400],
