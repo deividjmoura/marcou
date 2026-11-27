@@ -14,7 +14,7 @@ function parseOrigin(value: string | null | undefined): string | null {
       url.search !== "" ||
       url.hash !== "" ||
       (url.pathname !== "" && url.pathname !== "/") ||
-      (url.protocol !== "https:" && url.hostname !== "localhost") ||
+      (url.protocol !== "https:" && !(url.protocol === "http:" && url.hostname === "localhost")) ||
       (url.protocol === "https:" && url.port !== "")
     ) {
       return null;
