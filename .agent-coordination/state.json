@@ -372,10 +372,10 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "validation_passed_ci_green_pending_owner_review",
+      "status": "no_assignment_round_4_pending_owner_review",
       "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
-      "current_state": "Validação concluída com sucesso na PR #134. HEAD exato 1ee63754a08adb68e15f05b73b86861ba4fd68ef; CI run 46048704272 (#283) completed/success. Todos os steps passaram: install, check:changelog, lint, typecheck, npm test (150/150 em 18 arquivos), test:db e build. O npm run test:db executou explicitamente scripts/booking-concurrency.mjs; harness concluiu 25 passou / 0 falhou, incluindo duas sessões concorrentes, transições mutuamente excludentes, estado final válido e ausência de eventos duplicados. PR #134 continua aberta, Draft, mergeable=true. Sem merge/deploy.",
-      "next_action": "Aguardar revisão/autorização do responsável para eventual merge da PR #134. Não alterar branch, não remover Draft e não fazer merge por conta própria.",
+      "current_state": "Dispatch round 2026-11-27-round-4 conferido na branch coordination/agents. dispatch.assignments contém tarefas para agents 1–5 e não possui chave agent_6_booking_transition_integrity. Handoff/protocolo confirma agent6 sem nova atribuição nesta rodada. PR #134 permanece aberta, Draft, mergeable=true, aguardando revisão/autorização; nenhum código/PR de terceiros tocado.",
+      "next_action": "Aguardar nova atribuição ou revisão/autorização do responsável para PR #134. Não modificar código/PR nem executar tarefas de outros agentes.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
@@ -400,18 +400,6 @@
       },
       "updates": [
         {
-          "timestamp": "2026-11-27T18:20:50.129Z",
-          "task": "Acompanhar reinício da CI após correção do changelog",
-          "status": "ci_running",
-          "result": "Nova CI run 46048704272 (#283) iniciou no SHA atualizado 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Setup e checkout concluídos; npm install em andamento na última leitura. Nenhum resultado dos testes disponível ainda.",
-          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
-          "tests": "Run #283 in_progress; steps de qualidade ainda pendentes.",
-          "blockers": [
-            "Aguardar conclusão da CI."
-          ],
-          "next_action": "Verificar todos os steps, especialmente test:db e o harness concorrente."
-        },
-        {
           "timestamp": "2026-11-27T18:26:20.149Z",
           "task": "Validação final do wiring de booking-concurrency no test:db",
           "status": "validation_passed_ci_green_pending_owner_review",
@@ -432,6 +420,18 @@
             "Sem nova atribuição para agent6 nesta rodada."
           ],
           "next_action": "Aguardar nova atribuição; não alterar código/PR e manter a PR #134 aguardando revisão do responsável."
+        },
+        {
+          "timestamp": "2026-11-27T16:10:00-03:00",
+          "task": "Verificação do dispatch round-4",
+          "status": "no_assignment_round_4_pending_owner_review",
+          "result": "Lido state.json na coordination/agents. dispatch.round=2026-11-27-round-4; assignments não inclui agent_6_booking_transition_integrity (há apenas agents 1–5). Handoff confirma agent6 sem nova tarefa nesta rodada. Nenhuma tarefa de outro agente executada; PR #134 permanece aguardando revisão.",
+          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
+          "tests": "Nenhum teste executado; verificação somente do dispatch/estado.",
+          "blockers": [
+            "Sem atribuição para agent6 no round-4."
+          ],
+          "next_action": "Aguardar nova atribuição ou revisão/autorização do responsável; manter PR #134 sem alterações e sem merge."
         }
       ]
     },
