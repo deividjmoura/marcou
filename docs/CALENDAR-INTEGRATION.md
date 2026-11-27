@@ -58,14 +58,14 @@ OAuth independente do Supabase Auth; solicita somente `https://www.googleapis.co
 2. A rota tenta a limpeza na hora: remove do Google cada evento mapeado e só então apaga o vínculo.
 3. O que falhar fica para o worker, que repete a limpeza a cada execução (painel mostra "desconexão em andamento"). Jobs de sincronização desse prestador viram no-op (`calendar_disconnecting`).
 4. Se o token foi revogado (`invalid_grant`), os vínculos restantes recebem `orphaned_at` (rastro) e o painel avisa quantos eventos precisam ser removidos manualmente.
-5. `finalize_calendar_disconnect` só apaga a conexão quando não há vínculo ativo nem job em `processing` do prestador; devolve o refresh token cifrado para revogação best-effort (falha é registrada, não bloqueia).
+5. `finalize_calendar_disconnect` marca `revocation_pending_at` quando não há vínculo ativo nem job em `processing`; mantém a conexão e o refresh token cifrado até o Google confirmar a revogação. Falha externa mantém a desconexão pendente e o worker tenta novamente. `complete_calendar_disconnect` remove a conexão somente após sucesso (ou `invalid_grant`, que indica token já inválido).
 
 Nova conexão não começa enquanto a desconexão está em andamento.
 
 ## Banco de dados
 Tabelas exclusivas do servidor: `calendar_connections`, `calendar_sync_outbox`, `booking_calendar_events`. RLS ligada, nenhuma policy de cliente, `revoke all … from public, anon, authenticated` e `grant all … to service_role` — neutralizando os default privileges que o Supabase dá a objetos novos. Não há sequences.
 
-Funções (`SECURITY DEFINER`, `search_path = public`, sem EXECUTE para `public/anon/authenticated`):
+Funções (`SECURITY DEFINER`, `search_path = pg_catalog, public`, sem EXECUTE para `public/anon/authenticated`):
 
 | Função | EXECUTE |
 | --- | --- |
@@ -73,7 +73,7 @@ Funções (`SECURITY DEFINER`, `search_path = public`, sem EXECUTE para `public/
 | `enqueue_calendar_backfill_on_connect()` (trigger) | ninguém (nem `service_role`) |
 | `claim_calendar_sync_jobs(integer)` | `service_role` |
 | `consume_calendar_oauth_state(text, uuid)` | `service_role` |
-| `finalize_calendar_disconnect(uuid)` | `service_role` |
+| `finalize_calendar_disconnect(uuid)`, `complete_calendar_disconnect(uuid)` | `service_role` |
 
 As três tabelas estão na matriz de `scripts/privileges-check.mjs` (PR #123): ausentes na fase `before`, sem privilégio para `anon`/`authenticated` na `after`. `scripts/calendar-check.mjs` (agora ligado a `npm run test:db`) aplica todas as migrations emulando os default privileges do Supabase e verifica privilégios, RLS, trigger, ordem/exclusividade do claim (inclusive 8 claims paralelos), `dead`, state OAuth e finalização.
 
