@@ -55,6 +55,14 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - Tratamento explícito de falha na leitura inicial de `profiles` antes de
   decidir pelo provisionamento, evitando tentativa de escrita cega sobre estado
   desconhecido.
+- Recuperação de senha (Issue `#70`): o proxy (`src/proxy.ts`) reencaminha um
+  `code` ou `token_hash` que chegar fora do handler correto — ex.: landing page
+  quando o Supabase substitui o `redirectTo` pelo Site URL — para
+  `/auth/callback` ou `/auth/confirm` (`src/lib/auth-url.ts`), sem reaproveitar
+  `next` da URL original e sem criar loops. O callback (`/auth/callback`)
+  reconhece recuperação pelo `redirectType` do auth-js (além do legado
+  `flow=recovery`) e encaminha a sessão PKCE válida para `/redefinir-senha`,
+  avisando quando o verificador PKCE está ausente em outro navegador.
 
 ### Segurança
 
