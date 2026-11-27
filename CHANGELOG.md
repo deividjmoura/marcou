@@ -48,6 +48,9 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   reenfileirados na mesma transação por trigger, sem gravar em
   `booking_events`; a outbox ganha `reason` (`booking_event` | `backfill`).
 
+- Agenda do prestador (`src/app/painel/booking-agenda.tsx`) com filtros Próximos/Anteriores/Todos, busca por cliente, telefone ou serviço e agrupamento por dia local, apoiada pelas regras puras de `src/domain/agenda/agenda.ts` e coberta por `agenda.test.ts`.
+- `listProviderBookingsForPanel` em `src/server/bookings.ts` retorna `{ bookings, failed }` para distinguir falha de consulta de agenda realmente vazia. Detalhes em `docs/AGENDA-PRESTADOR.md`.
+
 ### Alterado
 
 - `npm run test:db` passa a executar também `scripts/booking-concurrency.mjs`, integrando à validação padrão os cenários concorrentes de criação e transição de agendamentos.
@@ -64,6 +67,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   verificado do erro `400 redirect_uri_mismatch` no Google OAuth, distinção
   entre callback do Supabase e callback final da aplicação, padrões de allowlist
   com query string e análise técnica da entregabilidade de e-mails.
+
+- Painel do prestador (`/painel`) passa a renderizar a agenda por `BookingAgenda` dentro de `ProviderPanelMenu`, substituindo a tabela inline. A consulta permanece filtrada pelo prestador dono da sessão; falha de consulta aparece como aviso (`role="alert"`), e não como agenda vazia. A lista inclui contagem acessível, filtros com `aria-pressed`, agrupamento por dia e layout responsivo.
 
 ### Corrigido
 
