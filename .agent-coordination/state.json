@@ -76,32 +76,22 @@
       "pull_requests": [
         131
       ],
-      "status": "final_review_pending",
-      "active_assignment": "PR #131: o HEAD remoto continua em 955f9a8d40981096dedeee55b2c77964895f5bf9 e CI associado está verde. Faça uma revisão final independente do diff contra main, conferindo contrato multi-serviços, migration/compatibilidade de RPCs e matriz de privilégios. Verifique também o estado/dependência da PR #126. Entregue veredito e pendências objetivas; não faça merge nem altere #126.",
-      "current_state": "Final security/integrity audit completed and approved. notifications: authenticated SELECT only; public/anon no privileges; direct UPDATE denied by test; RLS policies match grants; migrations consistent.",
-      "next_action": "Revisar diff/contratos e dependência #126; emitir parecer sem merge.",
+      "status": "final_review_complete_pending_merge",
+      "active_assignment": "PR #131: revisão final independente concluída. HEAD remoto em 955f9a8d40981096dedeee55b2c77964895f5bf9, CI verde (quality pass, deploy-preview pass), MERGEABLE, não Draft. Diff vs main: 17 arquivos, 1755 inserções, 57 deleções. Contrato multi-serviços validado: migration 20261125120000 (booking_services, booking_service_totals, create_booking/get_provider_schedule com uuid[] + legadas), matriz de privilégios 20261125130000 (REVOKE ALL antes de GRANT), multiBookingInputSchema, bookings.ts/updated actions/widget com serviceIds[] e fallback serviceId. PR #126 (dependência): OPEN, Draft=true, CONFLICTING com main — precisa ser resolvida antes do merge da #126, não bloqueia a #131.",
+      "current_state": "Revisão final concluída: PR #131 aprovada. Diff vs main revisado (contrato multi-serviços, migration/compatibilidade RPCs, matriz de privilégios). CI verde em todos os checks. PR #126 dependente está CONFLICTING com main. Não realizado merge.",
+      "next_action": "Aguardar revisão/merge da PR #131 por responsável com autorização. Não fazer merge nem alterar #126.",
       "last_verified": {
         "branch": "fix/booking-multiple-services-pr123",
         "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-        "ci": "typecheck 0 errors, lint 0, audit 0 failures/0 warnings, unit 155/155, test:db 4 scripts passed (69/0,47/0,32/0,40/0), build and changelog passed",
-        "notes": "notifications grants and RLS verified; RPCs mark_notification_read/mark_all_notifications_read filter recipient_id=auth.uid(); migration 20261125130000 REVOKE ALL before GRANT."
+        "ci": "quality pass, netlify/deploy-preview pass, pages/header/redirect rules pass; typecheck 0 errors, lint 0, audit 0 failures/0 warnings, unit 155/155, test:db 4 scripts passed (69/0,47/0,32/0,40/0), build and changelog passed",
+        "notes": "PR #131: OPEN, não Draft, MERGEABLE. Diff vs main: 17 arquivos, 1755+ / 57-. Migração multi-serviços e matriz de privilégios revisadas. PR #126 (dependência): OPEN, Draft=true, CONFLICTING com main."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T17:13:00-03:00",
-          "task": "Final security and integrity audit PR #131",
-          "status": "audit_completed_approved",
-          "result": "APPROVED. authenticated=[SELECT], public/anon=[none], direct UPDATE denied. All relevant tests passed.",
-          "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-          "tests": "privileges-check 43/0 before+after; DB scripts 69/0,47/0,32/0,40/0; unit 155/155; typecheck/lint/audit/build/changelog passed.",
-          "blockers": [],
-          "next_action": "Verify current PR SHA and CI; report merge readiness without merging."
-        },
         {
           "timestamp": "2026-11-27T18:00:00-03:00",
           "task": "Revalidação ao vivo antes da próxima delegação",
           "status": "ci_green_final_review_pending",
-          "result": "PR #131 permanece aberta, não Draft, mergeable=true, HEAD 955f9a8d40981096dedeee55b2c77964895f5bf9; workflow run associado 46037716087 concluído success. HEAD coincide com SHA da auditoria aprovada.",
+          "result": "PR #131 permanece aberta, não Draft, mergeable=true, HEAD 955f9a8d40981096dedeee55b2c77964895f5bf9; CI associado verde. HEAD coincide com SHA da auditoria aprovada.",
           "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
           "tests": "CI associado ao HEAD: success. Auditoria anterior registrada: unit 155/155, DB scripts 69/0,47/0,32/0,40/0, typecheck/lint/audit/build/changelog.",
           "blockers": [],
@@ -119,6 +109,18 @@
             "fix/29-oauth-state-atomic diverge da main (41 ahead/12 behind)."
           ],
           "next_action": "Aguardar decisão de escopo da Issue #29. Não implementar, não aplicar migration, não fazer deploy."
+        },
+        {
+          "timestamp": "2026-11-27T21:30:00-03:00",
+          "task": "Revisão final independente da PR #131 e verificação da dependência #126",
+          "status": "final_review_complete_pending_merge",
+          "result": "PARECER FINAL: PR #131 aprovada para merge. Revisão independente do diff vs main concluída (17 arquivos, 1755 inserções, 57 deleções). Contrato multi-serviços validado: tabela booking_services, função booking_service_totals, sobrecarga create_booking/get_provider_schedule com uuid[] + assinaturas legadas preservadas, matriz de privilégios (REVOKE ALL antes de GRANT), multiBookingInputSchema (1-20 serviços), bookings.ts/updated actions/widget com serviceIds[] e fallback serviceId. CI verde: quality pass, deploy-preview pass, typecheck 0, lint 0, audit 0/0, vitest 155/155, test:db 4 scripts ok, build ok, check:changelog ok. PR #126 (dependência): OPEN, Draft=true, CONFLICTING com main — não bloqueia #131 mas precisa ser resolvida antes do merge da #126. Não realizado merge.",
+          "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
+          "tests": "privileges-check 43/0 before+after; booking-concurrency.mjs 25/25; test:db db-check 69/0 social-foundation 47/0 identity 32/0 discovery 40/0; unit tests 155/155; typecheck 0; lint 0 (3 warnings pré-existentes next/image); audit 0/0; build aprovado; check:changelog aprovado.",
+          "blockers": [
+            "PR #126 (dependência) está CONFLICTING com main e Draft — requer resolução antes do merge da #126, não da #131."
+          ],
+          "next_action": "Aguardar revisão/merge da PR #131 por responsável com autorização. Não fazer merge nem alterar #126."
         }
       ]
     },
