@@ -653,8 +653,8 @@ try {
     await ownerBClient.query(
       `select * from public.create_booking(
          'social-prov-a',
-         $1,
-         '2026-12-01T12:00:00Z',
+         $1::uuid,
+         '2026-12-01T12:00:00Z'::timestamptz,
          'Cliente ACL',
          '47999999999',
          $2
@@ -704,8 +704,8 @@ try {
   );
   const schedule = await anonClient.query(
     `select public.get_provider_schedule(
-       'social-prov-a', $1, '2026-12-01',
-       '2026-12-01T00:00:00Z', '2026-12-02T00:00:00Z'
+       'social-prov-a', $1::uuid, '2026-12-01'::date,
+       '2026-12-01T00:00:00Z'::timestamptz, '2026-12-02T00:00:00Z'::timestamptz
      ) as value`,
     [serviceA],
   );

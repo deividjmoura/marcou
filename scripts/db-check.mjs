@@ -235,7 +235,7 @@ const D3_11 = "2026-12-03T14:00:00.000Z";
 
 async function createBooking(client, slug, serviceId, startsAt, key, name = "Cliente") {
   const result = await client.query(
-    `select * from public.create_booking($1, $2, $3, $4, '11999999999', $5)`,
+    `select * from public.create_booking($1, $2::uuid, $3::timestamptz, $4, '11999999999', $5)`,
     [slug, serviceId, startsAt, name, key],
   );
   return result.rows[0];

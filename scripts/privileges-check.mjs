@@ -33,7 +33,8 @@ import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
 
 const { Client } = pg;
-const SECURITY_MIGRATION = "20261125130000_table_privileges_matrix.sql";
+const MULTI_MIGRATION = "20261127120000_booking_multiple_services.sql";
+const SECURITY_MIGRATION = "20261127130000_table_privileges_matrix.sql";
 const HARDEN_MIGRATION = "20261125140000_harden_public_table_privileges.sql";
 const CALENDAR_MIGRATION = "20261125153000_google_calendar_sync.sql";
 const CALENDAR_FENCING_MIGRATION = "20261128000000_calendar_worker_fencing.sql";
