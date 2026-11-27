@@ -104,4 +104,14 @@ Nada disso foi criado e nenhum botão de e-mail foi adicionado à interface.
 - impossibilidade de o usuário forjar notificação;
 - `mark_notification_read` gravando `read_at` e não afetando notificação alheia;
 - `mark_all_notifications_read` zerando as não lidas;
-- `create_booking_reminders` criando e depois não duplicando no mesmo dia.
+- `create_booking_reminders` criando e depois não duplicando no mesmo dia; concorrência, cancelamento e reservas expiradas não recebem lembrete.
+
+## Scheduler de lembretes (PR #38)
+
+- A PR #128 é a única responsável por expiração automática de holds; seu workflow chama `expire_stale_bookings()`.
+- Esta rota protegida `GET /api/cron` é exclusivamente para `create_booking_reminders(24)`. Não executa expiração.
+- O RPC seleciona reservas `confirmed`, futuras e dentro da janela. A migration `20261127000100_reminder_concurrency_lock.sql` usa `FOR UPDATE SKIP LOCKED`, de modo que execuções paralelas não duplicam eventos e uma transição de cancelamento/expiração concorrente é serializada.
+- A idempotência diária usa `reminder-<booking-id>-<YYYYMMDD>` e o trigger cria notificações para cliente e prestador.
+- Endpoint: token `CRON_SECRET`, service role server-only, `private/no-store` em todos os status; 401 sem token, 503 sem config, 500 genérico para erro RPC/exceção. Logs somente código/name.
+- Não há scheduler habilitado por esta PR. Configurar externamente frequência apropriada e secrets `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` e URL do projeto. Vercel Hobby não suporta cron a cada 5 minutos (erro registrado no PR); confirmar provedor/plano.
+- E-mail não faz parte da entrega.

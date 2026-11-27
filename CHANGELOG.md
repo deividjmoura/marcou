@@ -11,6 +11,10 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Pipeline CI passa a executar `npm run audit` junto às validações de PR.
+
+- Scheduler de lembretes separado da expiração: endpoint protegido chama somente `create_booking_reminders(24)`; migration adiciona lock `FOR UPDATE SKIP LOCKED`, janela validada e harness cobre execução simultânea, cancelamento e expiração.
+
 - `CHANGELOG.md` na raiz do repositório, `CONTRIBUTING.md` com o processo
   obrigatório de registro de mudanças e verificação automatizada
   (`scripts/changelog-check.mjs` / `npm run check:changelog`) integrada ao
