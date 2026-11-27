@@ -441,26 +441,20 @@
       "pull_requests": [
         133
       ],
-      "status": "documentation_pr_open_ci_green_pending_owner_review",
+      "status": "pr133_revalidation_complete_ready_for_review",
       "active_assignment": "PR #133 documental aberta em arena/f074e752-marcou (HEAD d469ce876a3819a5293ca17c75a4e1447fb1293a) contra main 69d02173653384e082476e7879ee9f33672dec72. Auditoria concluída; decisão de URL canônica /p/[slug] formalizada. Não fazer merge sem revisão do responsável.",
-      "current_state": "Auditoria documental (6 docs + prompt), issues #72–#112, rotas src/app, src/server e 11 migrations concluída. Conclusão: arquitetura já é plataforma única (/p/[slug] rota interna com motor real; RPC get_public_provider_discovery com projeção mínima; flags fail-closed). Lacunas eram de explicitação documental, não de desenho. Novo docs/REVISAO-ARQUITETURA-SOCIAL.md criado; ADR §2/§3.3/§10, contrato §1.1/§2.3, roadmap data+§6.5 e prompt de agentes atualizados; CHANGELOG [Unreleased] atualizado. AGENT_TASK_MARCOU.md deliberadamente não editado (concorrência das PRs #2/#32/#41/#46/#67/#126/#131).",
-      "next_action": "Aguardar revisão/aprovação da PR #133; depois aplicar acréscimos de critérios de aceite nos corpos das issues #86/#89/#99/#83 (com aprovação do responsável). Decisões futuras registradas: alias /@{slug} via middleware com canonical /p/{slug}; histórico de slugs 301/308.",
+      "current_state": "Revalidação da PR #133 concluída conforme dispatch: main permanece em 69d02173653384e082476e7879ee9f33672dec72 (nenhum avanço, PR up-to-date, mergeable CLEAN); head exato d469ce876a3819a5293ca17c75a4e1447fb1293a; CI run 46047571459 success nesse SHA; Netlify deploy-preview-133 pass ('Pages changed' skipping é esperado em PR documental). Diff 100% documental (7 arquivos: docs/ + CHANGELOG.md), sem código de runtime, rotas ou migrations. /p/[slug] confirmada como única rota pública de provider (sem middleware). Consistência verificada: ADR §2/§3.3/§10, contrato §1.1/§2.3, roadmap §6.5, prompt de agentes e ESCOPO declaram canônica /p/{slug} coerentemente; alternativas /{slug}, /@{slug} e /profissional/{slug} aparecem apenas como rejeitadas/adiadas. check:changelog e git diff --check ok. Nenhuma inconsistência documental encontrada: nenhum commit adicional foi necessário na branch da PR.",
+      "next_action": "PR #133 pronta para revisão/merge pelo responsável (CI verde no SHA exato). Pendência mantida: acréscimos de critérios de aceite nos corpos das issues #86/#89/#99/#83 dependem de aprovação explícita do responsável. Não fazer merge sem autorização.",
       "last_verified": {
         "branch": "arena/f074e752-marcou",
         "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "main_sha_at_revalidation": "69d02173653384e082476e7879ee9f33672dec72",
         "pull_request": 133,
-        "files_changed": [
-          "docs/REVISAO-ARQUITETURA-SOCIAL.md (novo)",
-          "docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md",
-          "docs/CONTRATO-DOMINIO-MARCOU-SOCIAL.md",
-          "docs/ROADMAP-MARCOU-SOCIAL.md",
-          "docs/PROMPT-AGENTE-MARCOU-SOCIAL.md",
-          "docs/ESCOPO-E-ARQUITETURA.md",
-          "CHANGELOG.md"
-        ],
-        "notes": "Somente documentação. CI verde no SHA da PR; nenhum runtime alterado.",
-        "ci": "CI run 46047571459 (job quality) success no SHA exato d469ce876a3819a5293ca17c75a4e1447fb1293a; Netlify deploy-preview-133 pass (https://deploy-preview-133--marcoou.netlify.app); 'Pages changed' skipping (esperado, PR documental)."
+        "pr_state": "open; draft=false; mergeable=MERGEABLE (mergeStateStatus CLEAN)",
+        "ci": "CI run 46047571459 completed success no headSha exato d469ce876a3819a5293ca17c75a4e1447fb1293a; Netlify deploy-preview-133 pass (https://deploy-preview-133--marcoou.netlify.app); 'Pages changed' skipping (esperado, PR documental); Header/Redirect rules pass.",
+        "tests": "Revalidação documental: check:changelog (--base origin/main) ok; git diff --check ok; grep de consistência da URL canônica em 5 documentos + CHANGELOG ok; confirmação de rota única src/app/p/[slug] e ausência de middleware.",
+        "notes": "Nenhum commit novo na branch da PR nesta revalidação (nada a corrigir). Nenhuma issue editada; nenhum runtime alterado; sem merge."
       },
       "updates": [
         {
@@ -488,6 +482,19 @@
             "Edição dos corpos das issues #86/#89/#99/#83 pendente de aprovação."
           ],
           "next_action": "Aguardar revisão da PR #133; depois aplicar critérios de aceite nas issues aprovadas."
+        },
+        {
+          "timestamp": "2026-11-27T18:33:22-03:00",
+          "task": "Dispatch agent_5_arquitetura_social: revalidar PR #133 contra main e o próprio diff",
+          "status": "pr133_revalidation_complete_ready_for_review",
+          "result": "Revalidação concluída sem inconsistências: main inalterada (69d0217), PR OPEN/não-Draft/MERGEABLE CLEAN no head exato d469ce8; CI run 46047571459 success e Netlify Preview pass nesse SHA; diff 100% documental; canônica /p/{slug} coerente em ADR/contrato/roadmap/prompt/ESCOPO com alternativas apenas rejeitadas/adiadas; /p/[slug] segue sendo a única rota pública de provider. Nenhum commit adicional necessário.",
+          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
+          "tests": "check:changelog ok; git diff --check ok; verificação de CI/Preview no SHA exato (run 46047571459 success, deploy-preview-133 pass); conferência documental por grep/leitura.",
+          "blockers": [
+            "Merge da PR #133 depende de revisão/aprovação do responsável.",
+            "Edição dos corpos das issues #86/#89/#99/#83 permanece bloqueada por falta de aprovação explícita."
+          ],
+          "next_action": "Aguardar revisão/aprovação e merge da PR #133 pelo responsável; depois aplicar critérios de aceite nas issues aprovadas."
         }
       ]
     }
