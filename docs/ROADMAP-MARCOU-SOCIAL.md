@@ -1,6 +1,6 @@
 # Roadmap — Marcou Social
 
-**Atualizado em:** 23/11/2026
+**Atualizado em:** 27/11/2026
 **Roadmap no GitHub:** [Issue #72](https://github.com/deividjmoura/marcou/issues/72)
 **Decisão arquitetural:** [DECISAO-ARQUITETURA-MARCOU-SOCIAL.md](DECISAO-ARQUITETURA-MARCOU-SOCIAL.md)
 **Prompt para agentes:** [PROMPT-AGENTE-MARCOU-SOCIAL.md](PROMPT-AGENTE-MARCOU-SOCIAL.md)
@@ -269,6 +269,7 @@ milestones):
 | **Feed de publicações de profissionais** | **M2** | #90, **#91**, #94, #95 | Publicação restrita a perfis profissionais no beta (#90/#91), consulta paginada por cursor com ranking determinístico (#94) e interface resiliente (#95). |
 | **Feed acessível pela área do cliente** | **M2** | #47, #89, **#95** | Entrada direta para o feed e descoberta a partir do espaço Cliente (`/inicio` e `/minha-conta`) sob a feature flag `social_feed`, mantendo `Meus agendamentos` e reservas operacionais mesmo com a flag desligada. |
 | **Moderação de conteúdo e mecanismo de denúncia** | **M4** (núcleo) + **M5** (console operacional) | **#103**, **#104**, **#105**, #108 | Denúncia autenticada sem expor o denunciante e bloqueio/silêncio server-side (#103), proteção automatizada/rate-limit/OCR (#104), fila de casos, sanções reversíveis e audit log imutável (#105) e console administrativo (#108) antes do beta (#112). |
+| **Perfil público como rota interna da plataforma única** | **M1** | #83, **#86**, #89, #93, #99 | A vitrine social permanece na rota canônica `/p/[slug]` da aplicação única — nunca site, subdomínio, hospedagem ou aplicação independente por profissional, e sem rota raiz `/{slug}` (decisão em `docs/REVISAO-ARQUITETURA-SOCIAL.md`). `providers.slug` segue como identificador público validado; visitantes navegam conteúdo público sem conta, e ações privadas exigem a autenticação existente; despublicar/ocultar remove a projeção pública imediatamente, inclusive em cache. |
 
 ### Verificação de dependências das Issues #84, #91 e #93
 

@@ -196,6 +196,7 @@ export async function cleanupProviderDisconnect(
   const connection = await deps.store.getConnection(providerId);
   if (!connection) return { ...result, finalized: true };
   if (!connection.disconnect_requested_at) return result;
+  let tokenAlreadyRevoked = false;
 
   const mappings = await deps.store.listActiveMappings(providerId, DISCONNECT_BATCH);
   if (mappings.length > 0) {
@@ -204,6 +205,7 @@ export async function cleanupProviderDisconnect(
       token = await tokenFor(connection);
     } catch (error) {
       if (error instanceof CalendarSyncError && !error.retryable) {
+        tokenAlreadyRevoked = error.code === RECONNECT_REQUIRED;
         result.orphaned += await deps.store.orphanActiveMappings(providerId);
         deps.log({ event: "disconnect_orphaned", providerId, count: result.orphaned, code: error.code });
       } else {
@@ -228,15 +230,20 @@ export async function cleanupProviderDisconnect(
 
   const finalization = await deps.store.finalizeDisconnect(providerId);
   if (!finalization.finalized) return { ...result, pending: true };
-  if (finalization.refreshCiphertext) {
+  if (finalization.refreshCiphertext && !tokenAlreadyRevoked) {
     let revoked = false;
     try {
       revoked = await deps.google.revokeToken(deps.crypto.decrypt(finalization.refreshCiphertext));
     } catch {
       revoked = false;
     }
-    if (!revoked) deps.log({ event: "revoke_failed", providerId, code: "google_revoke_failed" });
+    if (!revoked) {
+      deps.log({ event: "revoke_failed", providerId, code: "google_revoke_failed" });
+      return { ...result, pending: true };
+    }
   }
+  // Só apaga a conexão/token depois de revogação confirmada (ou invalid_grant).
+  await deps.store.completeDisconnect(providerId);
   const orphaned = await deps.store.countOrphanedMappings(providerId);
   return { ...result, finalized: true, orphaned };
 }
@@ -281,24 +288,24 @@ export async function runCalendarSync(
 
     try {
       if (outcome) {
-        await deps.store.completeJob(job.id, outcome.code);
+        await deps.store.completeJob(job.id, job.lease_token ?? "", outcome.code);
         summary.succeeded += 1;
         continue;
       }
       const code = calendarErrorCode(failure).slice(0, 80);
       const attempts = Number(job.attempts ?? 1);
       if (!isRetryableCalendarError(failure) || attempts >= CALENDAR_MAX_ATTEMPTS) {
-        await deps.store.killJob(job.id, code);
+        await deps.store.killJob(job.id, job.lease_token ?? "", code);
         summary.dead += 1;
         deps.log({ event: "job_dead", jobId: job.id, attempts, code });
       } else {
         const availableAt = new Date(deps.now() + retryDelaySeconds(attempts) * 1000).toISOString();
-        await deps.store.failJob(job.id, code, availableAt);
+        await deps.store.failJob(job.id, job.lease_token ?? "", code, availableAt);
         summary.failed += 1;
       }
     } catch (error) {
       // O job permanece em processing e será reivindicado de novo depois do
-      // timeout; o processamento é idempotente.
+      // timeout; o lease token impede que este worker antigo confirme o novo claim.
       summary.persistErrors += 1;
       deps.log({ event: "job_persist_failed", jobId: job.id, code: calendarErrorCode(error) });
     }

@@ -11,6 +11,17 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Motor de reservas com múltiplos serviços do mesmo estabelecimento (Issue `#21`, PR `#139`): tabela `booking_services`, RPCs agregadas, seleção múltipla na página pública, compatibilidade com reservas de um serviço e migration `20261125120000_booking_multiple_services.sql`.
+- Matriz de privilégios com grants mínimos para `notifications` e `booking_services` (`20261125130000_table_privileges_matrix.sql`).
+- Consolidação documental “plataforma única, perfil público interno”:
+  `docs/REVISAO-ARQUITETURA-SOCIAL.md` com auditoria, decisão de URL canônica
+  `/p/[slug]` para o perfil público (alternativas `/{slug}`, `/@{slug}` e
+  `/profissional/{slug}` rejeitadas/adiadas) e matriz de compatibilidade;
+  ADR (`docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md`), contrato de domínio,
+  roadmap e prompt de agentes atualizados com os princípios de plataforma
+  única, perfil como rota interna e visitante sem conta para conteúdo público.
+  Nenhuma rota, migration ou configuração foi alterada.
+
 - Documentação operacional consolidada em `docs/PLATFORM.md` (Issues `#30` e
   `#20`): inventário da stack na Netlify + Supabase, matriz verificada de
   variáveis de ambiente (`PUBLIC` vs `SERVER-ONLY / SECRET`), tabela de
@@ -112,8 +123,28 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - Tratamento explícito de falha na leitura inicial de `profiles` antes de
   decidir pelo provisionamento, evitando tentativa de escrita cega sobre estado
   desconhecido.
+- Recuperação de senha (Issue `#70`): o proxy (`src/proxy.ts`) reencaminha um
+  `code` ou `token_hash` que chegar fora do handler correto — ex.: landing page
+  quando o Supabase substitui o `redirectTo` pelo Site URL — para
+  `/auth/callback` ou `/auth/confirm` (`src/lib/auth-url.ts`), sem reaproveitar
+  `next` da URL original e sem criar loops. O callback (`/auth/callback`)
+  reconhece recuperação pelo `redirectType` do auth-js (além do legado
+  `flow=recovery`) e encaminha a sessão PKCE válida para `/redefinir-senha`,
+  avisando quando o verificador PKCE está ausente em outro navegador.
+- Caracteres invisíveis na origem (Issue `#70`): `parseConfiguredOrigin` e
+  `trustedAppOrigin` agora removem caracteres de formato Unicode (ex.: U+2060
+  WORD JOINER, U+200B ZERO WIDTH SPACE, U+FEFF BOM) de `NEXT_PUBLIC_SITE_URL`
+  antes de montar URLs de redirect. Isso evita que o Supabase rejeite o
+  `redirectTo` por causa de um caractere invisível e faça fallback silencioso
+  para a raiz do Site URL, enviando o usuário de volta à landing page.
+- Segurança do fallback de recuperação: redirecionamentos do proxy agora usam
+  origem validada (domínio oficial Marcou, previews numerados da Netlify ou
+  localhost), não o Host recebido; testes cobrem Host malicioso e preservam
+  previews e ambiente local.
 
 ### Segurança
+
+- Google Calendar (#29): callback OAuth falha fechado com `503` quando `NEXT_PUBLIC_SITE_URL` está ausente/inválida, sem aceitar a origem da própria requisição como fallback. Worker da outbox usa `lease_token` rotativo por claim e exige o token atual para confirmar/reagendar/encerrar jobs, impedindo ack tardio de worker cujo lease foi retomado. Migration `20261128000000_calendar_worker_fencing.sql`; harness `calendar-check.mjs` passa a integrar `npm run test:db`. Revogação externa do refresh token permanece pendente no banco até confirmação do Google; falhas transitórias são repetidas pelo worker, com `complete_calendar_disconnect` removendo a conexão só após sucesso. Funções Calendar recebem `search_path = pg_catalog, public` na migration `20261128000100_calendar_disconnect_revocation_retry.sql`.
 
 - Hardening dos privilégios de tabela herdados do Supabase (Issue `#125`):
   migration `20261125140000_harden_public_table_privileges.sql` remove

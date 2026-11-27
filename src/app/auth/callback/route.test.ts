@@ -1,3 +1,4 @@
+import { AuthPKCECodeVerifierMissingError } from "@supabase/auth-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { withAuthFlowCollector, type AuthFlowTiming } from "@/server/identity";
@@ -166,9 +167,75 @@ describe("GET /auth/callback", () => {
       `${ORIGIN}/redefinir-senha`,
     );
     expectPrivateNoStore(response);
-    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("recovery-code");
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith(
+      "recovery-code",
+      undefined,
+    );
     expect(mocks.selectMaybeSingle).not.toHaveBeenCalled();
     expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("reconhece a recuperação pelo redirectType, mesmo sem flow/next na URL", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: {
+        user: { id: "user-1", user_metadata: { name: "Ana" } },
+        redirectType: "recovery",
+      },
+      error: null,
+    });
+
+    // É o formato que chega quando o Supabase cai na landing page e o proxy
+    // apenas encaminha o code para o callback.
+    const response = await GET(callbackRequest("?code=recovery-code"));
+
+    expect(response.headers.get("location")).toBe(
+      `${ORIGIN}/redefinir-senha`,
+    );
+    expectPrivateNoStore(response);
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith(
+      "recovery-code",
+      undefined,
+    );
+    expect(mocks.selectMaybeSingle).not.toHaveBeenCalled();
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("usa o flow id do callback para trocar o code", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: {
+        user: { id: "user-1", user_metadata: { name: "Ana" } },
+        redirectType: null,
+      },
+      error: null,
+    });
+
+    await GET(
+      callbackRequest("?code=abc&next=%2Fpainel&sb_flow_id=flow-123"),
+    );
+
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("abc", {
+      flowId: "flow-123",
+    });
+  });
+
+  it("explica quando o verificador PKCE está ausente (outro navegador)", async () => {
+    mocks.exchangeCodeForSession.mockResolvedValue({
+      data: { user: null },
+      error: new AuthPKCECodeVerifierMissingError(),
+    });
+
+    const response = await GET(
+      callbackRequest("?code=abc&next=%2Fp%2Fstudio-ana"),
+    );
+
+    const location = response.headers.get("location") ?? "";
+    expect(location.startsWith(`${ORIGIN}/login?`)).toBe(true);
+    // A mensagem é codificada na query da URL de redirecionamento.
+    expect(location).toContain(
+      "Abra+o+link+no+mesmo+navegador+em+que+solicitou+a+recupera%C3%A7%C3%A3o.",
+    );
+    expectPrivateNoStore(response);
+    expect(mocks.exchangeCodeForSession).toHaveBeenCalledWith("abc", undefined);
   });
 
   it("não trata um destino isolado como recuperação de senha", async () => {

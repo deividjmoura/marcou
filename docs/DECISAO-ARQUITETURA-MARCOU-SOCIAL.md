@@ -2,6 +2,10 @@
 
 **Status:** aceita para planejamento e implementação incremental
 **Data:** 23/11/2026
+**Revisada em:** 27/11/2026 — consolidação “plataforma única, perfil público
+interno” (decisões de URL e superfície de perfil em §2, §3.3 e §10; detalhes em
+[REVISAO-ARQUITETURA-SOCIAL.md](REVISAO-ARQUITETURA-SOCIAL.md)). As decisões
+anteriores desta ADR permanecem válidas.
 **Issue principal:** [#72 — Rede social de serviços integrada ao agendamento](https://github.com/deividjmoura/marcou/issues/72)
 **Issue desta decisão:** [#80](https://github.com/deividjmoura/marcou/issues/80)
 
@@ -45,7 +49,18 @@ Decisões vinculantes:
   curtir, comentar, salvar, compartilhar, conversar e contratar. Publicação
   pública irrestrita por clientes só entra após decisão explícita de produto e
   segurança;
-- não criar uma segunda identidade de domínio nem integrar Firebase ao Marcou.
+- operar **uma única plataforma**: um domínio principal, uma aplicação Next.js,
+  uma autenticação centralizada, uma identidade visual, um banco de dados e uma
+  autoridade de domínio. O perfil público de cada profissional é uma **rota
+  interna da própria aplicação** (canonicamente `/p/{slug}`), acessível por
+  descoberta, pesquisa e compartilhamento — nunca um site, subdomínio,
+  hospedagem ou aplicação independente por profissional;
+- permitir que o visitante conheça profissionais e navegue conteúdo público
+  permitido **sem criar conta**; ações privadas (seguir, salvar, comentar,
+  solicitar, agendar) continuam exigindo a autenticação e as permissões
+  existentes, sem relaxamento;
+- não criar uma segunda identidade de domínio, sites/subdomínios individuais
+  por profissional nem integrar Firebase ao Marcou.
 
 ## 3. Proposta de produto
 
@@ -83,6 +98,34 @@ O escopo inclui:
 
 A contagem de seguidores ou curtidas nunca substitui uma avaliação verificada.
 Nenhum selo deve sugerir verificação que não tenha realmente ocorrido.
+
+### 3.3 Perfil público interno e URL canônica
+
+O perfil público do profissional é uma superfície da rede social **dentro da
+aplicação Marcou** (evolução da rota atual `/p/[slug]` pela
+[#86](https://github.com/deividjmoura/marcou/issues/86)), compartilhando
+layout, identidade visual, navegação e infraestrutura com o restante da
+plataforma. Ele identifica o profissional, exibe foto/apresentação, serviços,
+portfólio, publicações, seguidores e interações permitidas, avaliações
+elegíveis, localização aproximada e modalidades, e dá acesso à disponibilidade
+e ao agendamento pelo motor existente.
+
+**URL canônica: `/p/{slug}`**, onde `slug` é `providers.slug`, sujeito às
+regras de validação e unicidade existentes. Alternativas avaliadas na revisão
+de 27/11/2026 ([REVISAO-ARQUITETURA-SOCIAL.md](REVISAO-ARQUITETURA-SOCIAL.md)):
+
+| Opção | Resultado |
+|---|---|
+| `/p/{slug}` | **Canônica.** Zero conflito com as rotas estáticas do App Router; já integrada a Server Actions, `revalidatePath`, painel e redirecionamento pós-login; curta para compartilhamento; SEO concentrado no slug + metadata da #89 |
+| `/{slug}` | **Rejeitada.** Rota dinâmica na raiz dividiria namespace com todas as rotas estáticas e futuras, exigindo middleware, registro de slugs reservados e guarda permanente contra colisão |
+| `/@{slug}` | **Adiada como alias opcional.** Pastas iniciadas por `@` são slots de parallel routes no App Router; só seria possível via rewrite em middleware. Se algum dia for implementada, reescreve internamente para `/p/{slug}` e nunca cria segunda URL canônica (`rel=canonical` permanece em `/p/{slug}`) |
+| `/profissional/{slug}` | **Adiada.** Viável, mas redundante; mudar agora criaria superfície de redirecionamento para todos os deep links `/p/{slug}?service=…` do fluxo de reserva. Reabrir só com evidência de produto/SEO, como novo canônico + redirect 301/308 preservando query |
+
+Nenhuma rota é implementada por esta decisão; ela orienta as issues existentes
+(#86, #89, #93, #99). O exemplo conceitual `marcou.com/@ana-beleza` é apenas
+uma ilustração de rota interna da plataforma e não define domínio: o endereço
+de produção vigente é `https://marcoou.netlify.app` e a escolha do domínio
+definitivo não é objeto desta ADR.
 
 ## 4. Limites dos domínios
 
@@ -256,6 +299,12 @@ ser confirmados e revisados juridicamente.
 4. **Abrir mensagens sem contexto:** rejeitada no beta por spam e segurança.
 5. **Usar likes como reputação:** rejeitada; reputação verificável depende de
    contratação elegível.
+6. **Site, subdomínio, hospedagem ou aplicação independente por profissional:**
+   rejeitada; o perfil é rota interna da aplicação única (§3.3), e criar
+   superfície independente por profissional duplicaria infraestrutura,
+   autenticação, SEO e manutenção.
+7. **Rota raiz `/{slug}` para o perfil público:** rejeitada por colidir com o
+   namespace de rotas estáticas e futuras da aplicação (§3.3).
 
 ## 11. Decisões ainda necessárias
 
