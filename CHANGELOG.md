@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Workflow de expiração automática exclusivamente (PR #128): GitHub Actions protegido por gate, Environment staging, validação de projeto Supabase, headers temporários e timeout/retry; reutiliza `expire_stale_bookings()` já existente e não cria RPC/migration de expiração.
+
 - `CHANGELOG.md` na raiz do repositório, `CONTRIBUTING.md` com o processo
   obrigatório de registro de mudanças e verificação automatizada
   (`scripts/changelog-check.mjs` / `npm run check:changelog`) integrada ao

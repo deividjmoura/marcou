@@ -1,0 +1,105 @@
+name: Booking expiration scheduler
+
+on:
+  schedule:
+    # GitHub scheduled workflows are best-effort and may be delayed.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: booking-expiration
+  cancel-in-progress: false
+
+jobs:
+  expire-stale-bookings:
+    if: vars.BOOKING_EXPIRATION_ENABLED == 'true'
+    # Use environment-scoped credentials/config; production requires a separate deliberate workflow/environment.
+    environment: booking-expiration-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Validate required secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: |
+          test -n "$SUPABASE_PROJECT_REF" || { echo "::error::Missing SUPABASE_PROJECT_REF environment variable"; exit 1; }
+          test -n "$SUPABASE_URL" || { echo "::error::Missing SUPABASE_URL secret"; exit 1; }
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "::error::Missing SUPABASE_SERVICE_ROLE_KEY secret"; exit 1; }
+          python3 - "$SUPABASE_URL" "$SUPABASE_PROJECT_REF" <<'PY'
+          import re
+          import sys
+          from urllib.parse import urlparse
+
+          url, project_ref = sys.argv[1:]
+          if not re.fullmatch(r"[a-z0-9]{20}", project_ref):
+              print("::error::SUPABASE_PROJECT_REF must be a 20-character lowercase project ref")
+              raise SystemExit(1)
+          parsed = urlparse(url)
+          host = (parsed.hostname or "").lower()
+          expected_host = f"{project_ref}.supabase.co"
+          if (
+              parsed.scheme != "https"
+              or host != expected_host
+              or parsed.username is not None
+              or parsed.password is not None
+              or parsed.query
+              or parsed.fragment
+              or parsed.path not in ("", "/")
+              or parsed.port not in (None, 443)
+          ):
+              print("::error::SUPABASE_URL must be a plain HTTPS Supabase hosted project URL")
+              raise SystemExit(1)
+          PY
+
+      - name: Call expiration RPC
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          started_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          response_file="$(mktemp)"
+          curl_config="$(mktemp)"
+          chmod 600 "$curl_config"
+          trap 'rm -f "$response_file" "$curl_config"' EXIT
+
+          python3 - "$curl_config" "$SUPABASE_URL" <<'PY'
+          import json
+          import os
+          import sys
+
+          config_path, url = sys.argv[1:]
+          key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+          with open(config_path, "w", encoding="utf-8") as config:
+              config.write("url = " + json.dumps(url.rstrip("/") + "/rest/v1/rpc/expire_stale_bookings") + "\n")
+              config.write("request = " + json.dumps("POST") + "\n")
+              config.write("header = " + json.dumps("apikey: " + key) + "\n")
+              config.write("header = " + json.dumps("Authorization: Bearer " + key) + "\n")
+              config.write("header = " + json.dumps("Content-Type: application/json") + "\n")
+              config.write("header = " + json.dumps("Accept: application/json") + "\n")
+              config.write("data = " + json.dumps("{}") + "\n")
+          PY
+
+          status="$(curl --silent --show-error \
+            --connect-timeout 10 --max-time 30 \
+            --retry 2 --retry-delay 2 --retry-max-time 20 \
+            -o "$response_file" -w '%{http_code}' \
+            --config "$curl_config")"
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Expiration RPC failed (HTTP $status), started at $started_at"
+            exit 1
+          fi
+
+          count="$(tr -d '[:space:]' < "$response_file")"
+          if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+            echo "::error::RPC returned an unexpected response; HTTP $status, started at $started_at"
+            exit 1
+          fi
+
+          echo "Expiration RPC succeeded at $started_at (expired_count=$count)"
