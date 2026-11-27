@@ -1,6 +1,10 @@
 -- Serialize reminder generation with booking transitions. A canceled or expired
 -- booking cannot be selected after a concurrent state transition commits.
 -- The scheduler only emits reminders; expiration is owned by PR #128.
+-- Daily idempotency uses the booking's local start date rendered in the
+-- provider timezone stored on the booking, never the database session
+-- timezone: a UTC date rollover must not produce a second reminder while the
+-- booking is still inside the reminder window.
 create or replace function public.create_booking_reminders(p_within_hours integer default 24)
 returns integer
 language plpgsql
@@ -15,7 +19,7 @@ begin
   end if;
 
   with eligible_bookings as (
-    select b.id
+    select b.id, b.starts_at, b.timezone
     from public.bookings b
     where b.status = 'confirmed'
       and b.starts_at > now()
@@ -32,7 +36,8 @@ begin
       null,
       'system',
       'Lembrete automático de agendamento',
-      'reminder-' || eligible.id::text || '-' || to_char(now(), 'YYYYMMDD')
+      'reminder-' || eligible.id::text || '-'
+        || to_char(eligible.starts_at at time zone eligible.timezone, 'YYYYMMDD')
     from eligible_bookings eligible
     on conflict (source, external_event_id) do nothing
     returning booking_id

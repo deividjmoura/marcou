@@ -370,9 +370,23 @@ export async function transitionBooking(params: {
   return booking;
 }
 
-export async function listProviderBookings(
+export interface ProviderBookingsResult {
+  bookings: Booking[];
+  /** `true` quando a consulta falhou; distingue falha de agenda vazia. */
+  failed: boolean;
+}
+
+/**
+ * Lista os agendamentos do prestador autenticado.
+ *
+ * O filtro é sempre por `provider_id` do prestador que pertence ao usuário da
+ * sessão (`getOwnedProvider`), e a RLS de `bookings` só libera as linhas do
+ * dono. O resultado informa explicitamente se a consulta falhou, para a UI não
+ * apresentar erro de carregamento como se fosse agenda vazia.
+ */
+export async function listProviderBookingsForPanel(
   providerId: string,
-): Promise<Booking[]> {
+): Promise<ProviderBookingsResult> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
@@ -380,8 +394,16 @@ export async function listProviderBookings(
     .eq("provider_id", providerId)
     .order("starts_at", { ascending: false });
 
-  if (error) return [];
-  return (data ?? []) as Booking[];
+  if (error) return { bookings: [], failed: true };
+  return { bookings: (data ?? []) as Booking[], failed: false };
+}
+
+/** Compatibilidade: devolve apenas a lista, sem sinalizar falha de consulta. */
+export async function listProviderBookings(
+  providerId: string,
+): Promise<Booking[]> {
+  const { bookings } = await listProviderBookingsForPanel(providerId);
+  return bookings;
 }
 
 export async function listCustomerBookings(): Promise<Booking[]> {

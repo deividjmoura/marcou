@@ -49,10 +49,13 @@ function isValidCronServiceRoleException(file, source) {
 const SECRET_PATTERNS = [
   { name: "private key", regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
   { name: "service_role JWT", regex: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ },
-  { name: "supabase service role", regex: /SUPABASE_SERVICE_ROLE_KEY\s*[=:]\s*\S+/i },
-  { name: "client secret", regex: /CLIENT_SECRET\s*[=:]\s*\S+/i },
-  { name: "smtp password", regex: /(?:SMTP|MAIL)_PASSWORD\s*[=:]\s*\S+/i },
-  { name: "google oauth secret", regex: /GOOGLE_CLIENT_SECRET\s*[=:]\s*\S+/i },
+  // Os padrões de atribuição abaixo aceitam a forma `${{ secrets.NAME }}` do
+  // GitHub Actions (referência a placeholder, não a valor) e continuam
+  // acusando qualquer atribuição literal de valor ou JWT exposto.
+  { name: "supabase service role", regex: /SUPABASE_SERVICE_ROLE_KEY\s*[=:]\s*(?!\$\{\{\s*secrets\.)\S+/i },
+  { name: "client secret", regex: /CLIENT_SECRET\s*[=:]\s*(?!\$\{\{\s*secrets\.)\S+/i },
+  { name: "smtp password", regex: /(?:SMTP|MAIL)_PASSWORD\s*[=:]\s*(?!\$\{\{\s*secrets\.)\S+/i },
+  { name: "google oauth secret", regex: /GOOGLE_CLIENT_SECRET\s*[=:]\s*(?!\$\{\{\s*secrets\.)\S+/i },
 ];
 
 console.log("[segredos]");
