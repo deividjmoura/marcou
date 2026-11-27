@@ -1607,24 +1607,12 @@
       "dependencies": {
         "blocks": [],
         "blocked_by": [
-          "A1-T1 (migration da #131)"
+          "A1-T1: PR #139 (substitui #131), migration da matriz 20261127130000_table_privileges_matrix.sql; aguardar merge sobre main após #141."
         ]
       },
-      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131.",
-      "next_action": "Acompanhar Agent1 e PR #131; assim que a migration final da matriz estiver na main, atualizar a branch #136 sem force-push, alinhar privileges-check ao nome/versionamento final, preservar calendar-check na sequência test:db, executar suíte completa e mergear somente com CI verde no SHA exato. Depois registrar fechamento da #125.",
+      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131. A dependência de #136 mudou: #131 foi fechada sem merge e substituída pela PR #139 do Agent1. PR #139 tem CI success e Netlify preview success no HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6, mas ainda está mergeable=false/atrás da main após #141; Agent1 precisa atualizar/mesclar main e concluir o merge antes de A4-T1.",
+      "next_action": "Aguardar Agent1 atualizar e mergear #139 sobre a main atual. Depois atualizar a #136 com migration final 20261127130000, preservando calendar-check no test:db, executar CI e mergear com SHA verde.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T2: encerrar PR #41 supersedida; auditoria inicial A4-T3",
-          "status": "completed_with_followup",
-          "result": "PR #41 fechada após comentário com evidência: #117 substituiu o hardening antigo, migration 20261123133000 e docs/harness estão na main. Calendar V1 #135 está mergeada (merge SHA ff02fa7d3eaec055737e3ccec09139dcd916222e). Main auditada: 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170. Encontradas duas lacunas: fallback inseguro de origem no callback e ausência de fencing token no lease do worker.",
-          "head_sha": "main:90b05aafed8f9f448f67a9b1b8c433a3ca3cb170; PR #41 head:17423a89137f355c8a6bee179483a8224cf5c1e8; PR #136 head:70fdc37cfedb44e5c66532046d9e8704f7265126",
-          "tests": "Auditoria estática de rotas, oauth-flow, worker, store, migrations, calendar-check, privileges-check e SECURITY-DEFINER-GRANTS; sem executar suíte local nesta etapa.",
-          "blockers": [
-            "#136 depende da migration 20261125130000_table_privileges_matrix.sql da PR #131 (Agent1)."
-          ],
-          "next_action": "Implementar e testar as duas lacunas do Calendar em branch/PR própria; inventariar branches antigas; depois destravar #136 após merge da #131."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "A4-T3/A4-T4: PR #141 de hardening Calendar e inventário das branches antigas",
@@ -1661,6 +1649,18 @@
             "A4-T1 (#136) aguarda a migration final da matriz da PR #131 (Agent1)."
           ],
           "next_action": "Aguardar/acompanhar #131; em seguida atualizar e validar #136."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "A4-T1: atualização da dependência de privilégios",
+          "status": "blocked_waiting_agent1_pr139",
+          "result": "PR #131 foi fechada sem merge; Agent1 substituiu por PR #139, migrations renumeradas para 20261127120000_booking_multiple_services.sql e 20261127130000_table_privileges_matrix.sql. PR #139 HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6 tem CI success e Netlify preview success, porém mergeable=false e base antiga 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170, anterior ao merge da #141. A #136 segue sem alteração até a migration estar na main.",
+          "head_sha": "PR #139:58b16fd3e064a43f0c728b1f0599c96b75c8e7d6; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
+          "tests": "CI success + Netlify preview success em #139, mas PR ainda mergeable=false; não é autorizável para merge.",
+          "blockers": [
+            "Agent1 precisa atualizar #139 com main cd6065a e resolver conflito/mergeability."
+          ],
+          "next_action": "Após #139 mergear, atualizar #136 sem force-push e preservar ambas as checks em test:db."
         }
       ],
       "branch_disposition": [
