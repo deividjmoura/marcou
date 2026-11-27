@@ -114,7 +114,10 @@
           "result": "Issue #29 (Calendar / calendar_connections) auditada por agent_5_calendar_audit. Veredito: NÃO APROVAR produção no estado atual. Tabela calendar_connections não existe na main (69d0217); nenhuma migration, RLS, privilégios ou funções CRUD. Riscos P1: desconexão não coordenada com worker, disconnect apaga mappings sem limpeza externa, callback aceita url.origin como fallback. Riscos P2: PKCE ausente, scope concedido não validado, rotação de refresh token/chave sem suporte, cobertura automatizada incompleta. Seis arquivos staged locais não acessados nem modificados. Branches: fix/29-oauth-state-atomic (2f577e2), arena/29-calendar-integration (26baee930), main (69d0217).",
           "head_sha": "69d02173653384e082476e7879ee9f33672dec72",
           "tests": "Nenhum teste executado por este agente. Auditoria de agent_5 foi somente leitura; scripts/calendar-state-check.mjs em test:db cobre atomicidade/replay/concorrência/grants/RLS mas não corrida worker-disconnect nem falhas de remoção Google.",
-          "blockers": ["Decisão explícita sobre escopo read/write/bidirectional da Issue #29.", "fix/29-oauth-state-atomic diverge da main (41 ahead/12 behind)."],
+          "blockers": [
+            "Decisão explícita sobre escopo read/write/bidirectional da Issue #29.",
+            "fix/29-oauth-state-atomic diverge da main (41 ahead/12 behind)."
+          ],
           "next_action": "Aguardar decisão de escopo da Issue #29. Não implementar, não aplicar migration, não fazer deploy."
         }
       ]
@@ -343,6 +346,45 @@
             "Six local staged files were not accessed by explicit instruction; cannot claim content-level comparison."
           ],
           "next_action": "Preserve staged local work; confirm canonical branch, update branch to current main/dependencies without force push, address prioritized findings and run CI/test:db; no deploy or remote migration."
+        }
+      ]
+    },
+    "agent_6_booking_transition_integrity": {
+      "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
+      "pull_requests": [],
+      "status": "audit_complete_not_integrated_validation_blocked",
+      "active_assignment": "Auditoria da correção FOR UPDATE para transition_booking concluída. Somente leitura; não criar nova correção até confirmar o estado da main e preservar histórico.",
+      "current_state": "main HEAD 69d02173653384e082476e7879ee9f33672dec72 não contém a correção. Branch arena/6f3a9b1f-marcou HEAD 6db76085bc866498a587b6346fc443480107a11a (1 ahead/7 behind main). Migration 20261127000000_booking_transition_concurrency_lock.sql não existe nem na main nem na branch. Commit 6db7608 editou retroativamente supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql (adicionou FOR UPDATE em dois SELECTs) e adicionou scripts/booking-concurrency.mjs; portanto não usou migration incremental. O script no SHA atual tem 19 checks (não 21), executa dois clientes PostgreSQL concorrentes apenas para a mesma transição proof_received, sem cenário de transições incompatíveis nem rollback explícito/assertado. O script lista apenas migrations existentes e não inclui a migration incremental alegada. package.json test:db não executa booking-concurrency.mjs. Não há workflow run nem status check para o SHA 6db7608 (actions/runs total_count=0; combined status pending, 0 checks).",
+      "next_action": "Não criar outra correção até decidir a estratégia de histórico: não editar migration já aplicada; preparar migration incremental com CREATE OR REPLACE FUNCTION transition_booking contendo FOR UPDATE e atualizar harness para aplicar essa migration, incluir prova_received versus cancel em duas sessões, afirmar rollback de estado/eventos após rejeição, contar os checks corretamente e integrar o teste no comando de CI. Antes de implementar, reconciliar branch com main atual sem reescrever histórico; executar testes em checkout isolado e exigir CI no SHA final. Sem merge/deploy/produção.",
+      "last_verified": {
+        "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "branch": "arena/6f3a9b1f-marcou",
+        "head_sha": "6db76085bc866498a587b6346fc443480107a11a",
+        "merge_base": "9b92451d2761f2292385b99468f024402d35211b",
+        "ahead": 1,
+        "behind": 7,
+        "migration_main": "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql: NOT_FOUND",
+        "migration_branch": "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql: NOT_FOUND",
+        "modified_existing_migration": "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
+        "ci": "No workflow runs for exact SHA; actions/runs total_count=0; combined commit status pending with 0 statuses.",
+        "notes": "Commit 6db76085bc866498a587b6346fc443480107a11a message describes FOR UPDATE. Diff confirms only existing migration edit and added test script. Test script blob 3c5382d0126fc8432fe337f4959252dd544f6a31, 394 lines, 19 check() assertions. Script has two distinct pg clients for same proof_received race, no proof_received-vs-cancel test and no explicit rollback assertion. package.json test:db = db-check + social-foundation-check + identity-check + discovery-check; it does not invoke booking-concurrency.mjs. No local checkout/runtime available in this session to execute Node/PostgreSQL tests; no test run claimed."
+      },
+      "updates": [
+        {
+          "timestamp": "2026-11-27T20:00:00-03:00",
+          "task": "Revalidar integridade concorrente de transition_booking, migration, harness e CI",
+          "status": "audit_complete_not_integrated_validation_blocked",
+          "result": "NÃO integrada. Main 69d02173653384e082476e7879ee9f33672dec72; branch arena/6f3a9b1f-marcou 6db76085bc866498a587b6346fc443480107a11a (1 ahead/7 behind). Migration incremental 20261127000000... ausente em ambas. Commit 6db7608 alterou migration existente 20261116035000_fix_booking_idempotency_authorization.sql, acrescentando FOR UPDATE em dois SELECTs; isso reescreve histórico. scripts/booking-concurrency.mjs tem 19 assertions, não 21; cobre mesma transição proof_received concorrente, mas não transições incompatíveis proof_received/cancel nem rollback assertado. package test:db não executa esse script. CI não encontrado para o SHA exato.",
+          "head_sha": "main 69d02173653384e082476e7879ee9f33672dec72; arena/6f3a9b1f-marcou 6db76085bc866498a587b6346fc443480107a11a",
+          "tests": "Nenhum teste executado localmente: não havia checkout/runtime de projeto acessível. Inspeção estática do harness: 19 check() assertions. CI Actions total_count=0 e commit combined status pending/0 checks para o SHA 6db7608.",
+          "blockers": [
+            "Correção ausente na main.",
+            "Migration incremental citada não existe; correção foi inserida em migration existente.",
+            "Harness não cobre transições incompatíveis nem rollback e não está integrado em test:db/CI.",
+            "Branch 7 commits atrás da main; precisa reconciliar sem reescrever histórico.",
+            "Execução real dos testes ainda pendente."
+          ],
+          "next_action": "Preparar migration incremental e harness reforçado em branch isolada após reconciliar main; rodar testes reais e CI no SHA final. Não merge/deploy/produção."
         }
       ]
     }
