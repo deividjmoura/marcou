@@ -170,6 +170,30 @@ describe("GET /auth/confirm", () => {
     expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
+
+  it("usa a origem do Deploy Preview capturada no build e ignora a origem da requisição", async () => {
+    vi.stubEnv("MARCOU_AUTH_DEPLOY_CONTEXT", "deploy-preview");
+    vi.stubEnv(
+      "MARCOU_AUTH_DEPLOY_PRIME_URL",
+      "https://deploy-preview-42--marcoou.netlify.app",
+    );
+
+    const request = new NextRequest(
+      "https://attacker.example/auth/confirm?token_hash=recovery-token&type=recovery",
+      { headers: { "x-forwarded-host": "forged.example" } },
+    );
+    const response = await GET(request);
+
+    expect(mocks.verifyOtp).toHaveBeenCalledWith({
+      token_hash: "recovery-token",
+      type: "recovery",
+    });
+    expect(response.headers.get("location")).toBe(
+      "https://deploy-preview-42--marcoou.netlify.app/redefinir-senha",
+    );
+    expectPrivateNoStore(response);
+  });
+
   it("não permite redirecionamento para outro domínio", async () => {
     const response = await GET(
       confirmationRequest(
