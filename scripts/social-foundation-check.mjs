@@ -653,8 +653,8 @@ try {
     await ownerBClient.query(
       `select * from public.create_booking(
          'social-prov-a',
-         $1,
-         '2026-12-01T12:00:00Z',
+         $1::uuid,
+         '2026-12-01T12:00:00Z'::timestamptz,
          'Cliente ACL',
          '47999999999',
          $2
