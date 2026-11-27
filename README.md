@@ -103,6 +103,11 @@ As migrations estão em `supabase/migrations/`:
 14. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
     transacional, vínculo de eventos e worker de sincronização unidirecional.
     Detalhes em `docs/CALENDAR-INTEGRATION.md`.
+15. `20261128000000_calendar_worker_fencing.sql` — lease token por claim e
+    fencing para impedir ack tardio de worker após reclaim.
+16. `20261128000100_calendar_disconnect_revocation_retry.sql` — preserva o
+    refresh token até a revogação no Google ser confirmada e endurece o
+    `search_path` das funções Calendar.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
@@ -164,9 +169,22 @@ lembretes). As mensagens ficam em `/notificacoes`, com contador de não lidas no
 painel, em "Meus agendamentos" e na página da reserva. O acesso é isolado por
 RLS: cada usuário só lê e marca as próprias notificações.
 
-Lembretes são criados por `create_booking_reminders()`; ainda não há cron
-configurado. E-mail não está implementado: nenhuma infraestrutura de envio está
-configurada e nenhuma credencial foi criada.
+Lembretes são criados por `create_booking_reminders(24)` via rota protegida
+`GET /api/cron` (PR #38, fail-closed com `CRON_SECRET` e ainda sem scheduler
+externo ativado). A expiração periódica de holds é separada e fica em
+`.github/workflows/booking-expiration.yml` (PR #128, desligado por padrão).
+E-mail não está implementado: nenhuma infraestrutura de envio está configurada
+e nenhuma credencial foi criada.
+
+## Plataforma e operação
+
+O inventário técnico, a matriz de variáveis de ambiente (`PUBLIC` vs
+`SERVER-ONLY / SECRET`), o fluxo de deploy e rollback na Netlify, os mecanismos
+canônicos de schedulers e o checklist de provisionamento estão documentados em:
+
+- [Plataforma, ambientes e operação](docs/PLATFORM.md)
+- [Scheduler de expiração de holds](docs/BOOKING-EXPIRATION-SCHEDULER.md)
+- [Notificações e scheduler de lembretes](docs/NOTIFICACOES.md)
 
 ## Pendências
 

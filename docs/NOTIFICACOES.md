@@ -39,18 +39,21 @@ O texto usa o nome do serviço congelado no snapshot
 ## Lembretes
 
 `public.create_booking_reminders(p_within_hours)` cria eventos
-`booking.reminder` para agendamentos `confirmed` que começam dentro da janela.
-A chave de idempotência é `reminder-<booking>-<YYYYMMDD>`, portanto cada
-agendamento recebe no máximo um lembrete por dia. A função é `security definer`
-e só pode ser executada por `service_role` (`anon`/`authenticated` não têm
-`execute`).
+`booking.reminder` para agendamentos `confirmed` cujo início (`starts_at`) é
+futuro e está dentro da janela informada (`1` a `168` horas; padrão `24`h).
+Reservas canceladas, expiradas ou ainda pendentes não são elegíveis.
 
-Ainda não existe cron configurado para chamá-la. Para agendar:
+A chave de idempotência é `reminder-<booking>-<YYYYMMDD>`, em que `<YYYYMMDD>`
+é o **dia local do início da reserva no fuso do prestador** (`bookings.timezone`),
+nunca o fuso da sessão do banco. Combinada à constraint única
+`(source, external_event_id)` com `ON CONFLICT DO NOTHING`, uma virada de data
+em UTC ou chamadas repetidas na janela não geram lembrete duplicado. A função é
+`security definer` e só pode ser executada por `service_role`
+(`anon`/`authenticated` não têm `execute`).
 
-- Supabase: `pg_cron` + `pg_net`, ou uma Edge Function agendada chamando a RPC
-  com a `service_role` key.
-
-Nenhuma dessas opções está provisionada. Nenhuma credencial nova foi criada.
+O acionamento HTTP versionado é `GET /api/cron` (ver seção **Scheduler de
+lembretes** abaixo); nenhum cron externo está provisionado ou ativado no
+repositório. Nenhuma credencial nova foi criada.
 
 ## Estado, permissões e isolamento
 
@@ -104,4 +107,15 @@ Nada disso foi criado e nenhum botão de e-mail foi adicionado à interface.
 - impossibilidade de o usuário forjar notificação;
 - `mark_notification_read` gravando `read_at` e não afetando notificação alheia;
 - `mark_all_notifications_read` zerando as não lidas;
-- `create_booking_reminders` criando e depois não duplicando no mesmo dia.
+- `create_booking_reminders` criando e depois não duplicando no mesmo dia; concorrência, cancelamento e reservas expiradas não recebem lembrete.
+
+## Scheduler de lembretes (PR #38)
+
+- **Separação canônica de schedulers:** a PR #128 (`.github/workflows/booking-expiration.yml`) é o único mecanismo canônico de expiração automática de holds (`expire_stale_bookings()`). A rota protegida `GET /api/cron` chama exclusivamente `create_booking_reminders(24)` — não executa expiração e não coexiste com endpoints duplicados de expiração (ver `docs/PLATFORM.md`).
+- **Elegibilidade e janela:** a RPC valida `p_within_hours` entre `1` e `168` (lança `invalid_reminder_window` fora da faixa) e seleciona apenas reservas `confirmed`, futuras (`starts_at > now()`) e dentro da janela (`starts_at <= now() + make_interval(hours => p_within_hours)`). Canceladas e expiradas permanecem inelegíveis.
+- **Concorrência e serialização:** a migration `20261127000100_reminder_concurrency_lock.sql` usa `FOR UPDATE OF b SKIP LOCKED`, de modo que execuções paralelas não duplicam eventos e transições concorrentes de cancelamento ou expiração são serializadas. Se uma reserva estiver temporariamente bloqueada por outra transação, será reavaliada na execução ou retry seguinte.
+- **Idempotência diária por fuso do prestador:** a chave `reminder-<booking-id>-<YYYYMMDD>` usa o dia local do início da reserva em `bookings.timezone` (`to_char(starts_at at time zone timezone, 'YYYYMMDD')`), nunca o fuso da sessão do banco: a virada de data em UTC não gera segundo lembrete enquanto a reserva segue na janela, e o mesmo agendamento recebe no máximo um lembrete. O trigger cria notificações para cliente e prestador.
+- **Contrato HTTP e segurança:** `GET /api/cron` é marcado com `import "server-only"`, autentica `Authorization: Bearer <CRON_SECRET>` em tempo constante (`timingSafeEqual`, fail-closed), usa `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor, envia `Cache-Control: private, no-store, max-age=0` em todos os status e responde `401` sem token válido, `503` sem URL/chave configuradas, `500` genérico em erro RPC/exceção e `200` com contagem. Logs registram somente código/nome de erro, sem PII ou segredos.
+- **Política de retries do chamador externo:** retentativas automáticas (com backoff) em falhas transitórias de rede, timeout ou HTTP `500` são seguras graças à idempotência da RPC e ao lock `SKIP LOCKED`. Respostas `401` (segredo ausente/inválido) e `503` (ambiente sem configuração) indicam erro operacional e **não** devem entrar em loop de retry — devem gerar alerta.
+- **Provisionamento externo pendente (desligado por padrão):** nenhum scheduler externo está ativado por padrão. O hosting canônico da aplicação é **Netlify** (a tentativa inicial com Vercel Cron falhou no plano Hobby por limitar a 1x/dia); o responsável deve escolher e provisionar o agendador externo (ex.: GitHub Actions, serviço de cron HTTPS ou Supabase `pg_cron`/`pg_net`) com frequência adequada (ex.: a cada 15–30 minutos para janela de 24h) e os segredos `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` e URL do ambiente.
+- E-mail não faz parte desta entrega.

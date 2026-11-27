@@ -202,7 +202,7 @@ const D5_09 = "2026-12-29T12:00:00.000Z"; // 09:00 BRT (nova data para não conf
 
 async function createBooking(client, startsAt, key, name = "Cliente") {
   const result = await client.query(
-    `select * from public.create_booking($1, $2, $3, $4, '11999999999', $5)`,
+    `select * from public.create_booking($1, $2::uuid, $3::timestamptz, $4, '11999999999', $5)`,
     [slugA, serviceA, startsAt, name, key],
   );
   return result.rows[0];
