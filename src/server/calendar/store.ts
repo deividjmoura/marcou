@@ -81,6 +81,7 @@ export interface CalendarStore {
   requestDisconnect(providerId: string): Promise<"requested" | "already" | "none">;
   listDisconnectingProviders(limit: number): Promise<string[]>;
   finalizeDisconnect(providerId: string): Promise<{ finalized: boolean; refreshCiphertext: string | null }>;
+  completeDisconnect(providerId: string): Promise<void>;
 }
 
 const CONNECTION_COLUMNS =
@@ -349,6 +350,11 @@ export function createSupabaseCalendarStore(admin: CalendarAdminClient): Calenda
         | { finalized: boolean; revoke_token_ciphertext: string | null }
         | undefined;
       return { finalized: Boolean(row?.finalized), refreshCiphertext: row?.revoke_token_ciphertext ?? null };
+    },
+
+    async completeDisconnect(providerId) {
+      const { data, error } = await admin.rpc("complete_calendar_disconnect", { p_provider_id: providerId });
+      if (error || data !== true) fail("calendar_disconnect_complete_failed");
     },
   };
   return store;
