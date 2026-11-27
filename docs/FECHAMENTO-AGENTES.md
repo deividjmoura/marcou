@@ -2,7 +2,20 @@
 
 > **Fonte de verdade viva:** `.agent-coordination/state.json` na branch `coordination/agents`.
 > Este documento é o runbook estável (regras, ordem, critérios). O estado volátil (SHAs, CI, status por agente) fica **somente** no `state.json`.
-> Snapshot de referência: 2026-11-27, `main` = `f1983b1` (sobre `8a5e4e7`, #128 mergeada). Sempre reconfirme a `main` atual antes de agir.
+> Snapshot de referência: 2026-11-27, `main` = `5b4e894` (#128 e #38 já mergeadas). Sempre reconfirme a `main` atual antes de agir.
+
+## 0. Autorização do responsável (vale para os 6 agentes, rodada 7)
+
+O responsável (Deivid) concedeu **autonomia total para integrar**. Isso significa:
+
+- **Você PODE e DEVE fazer squash merge** das PRs do seu escopo assim que o checklist da seção 5 estiver verde no SHA exato. Não peça confirmação, não espere teste manual: o responsável fará os testes reais em produção **depois** desta rodada, e é justamente por isso que a integração foi liberada agora.
+- **Você PODE** resolver conflitos, atualizar branches com a `main` (merge, sem force-push), adicionar testes, marcar PR como Ready, fechar PRs superadas (com evidência), fechar issues com aceite comprovado e apagar branches comprovadamente integradas.
+- Esta autorização **inclui a #133** (documental): resolva o conflito, rode o CI e mergeie se verde, deixando na PR um resumo curto da decisão de arquitetura para o responsável ler depois.
+- **Não depende de** teste manual/real pendente. Registre-o como pendência do responsável.
+
+O que **continua proibido** (a autonomia é sobre o repositório, não sobre o ambiente real): ver a seção 4. Em especial: nada de Supabase remoto, Netlify, Google Cloud, OAuth/SMTP, secrets, e-mails/notificações reais, deploy manual, ativação de schedulers, tag/Release sem autorização explícita, force-push ou bypass de checks.
+
+Se algo do checklist **não** estiver verde: corrija; se não for corrigível por você, registre o bloqueio no `state.json` com a causa exata e siga para o próximo item. Não mergeie "no vermelho" sob nenhuma hipótese.
 
 ## 1. Objetivo
 
@@ -18,7 +31,7 @@ Levar o repositório a um estado limpo: cada PR aberta vira **mergeada**, **corr
 | #68 | rascunho, conflito, 34 atrás | 1 | após #124/#131; confirmação e `.ics` multi-serviço |
 | #130 | rascunho, conflito, depende de #127 | 2 | reconstruir sobre main após #127, testes com mocks |
 | #128 | **mergeada** (`8a5e4e7`, 20:11) | — | nada a fazer; serve de base para a #38 |
-| #38 | rascunho; atualizar sobre a main que já tem a #128 | 3 | integrar com um único mecanismo de expiração; idempotência diária por timezone, retries, documentação |
+| #38 | **mergeada** (`5b4e894`) | — | nada a fazer; Agent 3 confere só a consistência com a #128 e a documentação |
 | #32 | pronta, conflito, 132 atrás | 3 | triagem: reaproveitar o que falta ou fechar como superada |
 | #136 | rascunho; `test:db` falha: espera migration que só existe na #131 | 4 | após decisão da migration em #131; ligar `privileges-check` ao CI |
 | #41 | rascunho, conflito, 104 atrás | 4 | provável superada por #117/#135; fechar com evidência |
@@ -61,7 +74,7 @@ Já integrado e **não deve ser refeito**: #128 (scheduler de expiração), #134
 - [ ] Squash merge com `expected_head_sha`, título em Conventional Commits.
 - [ ] Depois do merge: registrar o SHA do merge, conferir o vínculo com issues e o status da branch.
 
-Teste manual/real pendente do responsável **não** bloqueia merge se o checklist acima estiver verde e o item for documentado como pendência. Itens marcados `OWNER_DECISION` **não** são mergeados sem aprovação explícita.
+Teste manual/real pendente do responsável **não** bloqueia merge se o checklist acima estiver verde e o item for documentado como pendência. A autorização da seção 0 cobre todas as PRs desta rodada; as decisões da seção 7 continuam do responsável, mas dizem respeito a ações no ambiente real, não a merges.
 
 ## 6. Convenções
 
@@ -80,7 +93,7 @@ Teste manual/real pendente do responsável **não** bloqueia merge se o checklis
 
 ## 7. Decisões que dependem do responsável
 
-1. Revisão da #133 (consolidação da arquitetura social).
+1. Leitura/revisão posterior da #133 (consolidação da arquitetura social) — já autorizada para merge se o CI estiver verde (seção 0).
 2. Validação real da recuperação de senha e conferência da configuração do Supabase Auth (#130/#70); rotação das credenciais OAuth/SMTP expostas anteriormente.
 3. Conexão real do Google Calendar, variáveis de produção e ativação de qualquer scheduler (`BOOKING_EXPIRATION_ENABLED`, lembretes, worker do Calendar).
 4. Provisionamento de Supabase/cron/ambientes/deploy (#30, #20).
@@ -93,3 +106,40 @@ Teste manual/real pendente do responsável **não** bloqueia merge se o checklis
 - Branches: apenas `main`, `coordination/agents`, branches de PR aberta e branches preservadas com motivo registrado.
 - Issues: fechadas com evidência, ou abertas com status/próxima ação; pendências do responsável listadas.
 - Relatório final do Agente 6 no `state.json` com SHAs verificados, o que ficou pendente e a pergunta sobre release.
+
+## 9. Instruções por agente (rodada 7)
+
+Todos: leiam `.agent-coordination/state.json` (branch `coordination/agents`) e este runbook, assumam o slot do seu número, reconfirmem `main`/PR/CI no GitHub e escrevam **somente** a sua entrada (`agent_N_r7_*`). Autonomia de merge: seção 0. Regras: seção 4. Checklist: seção 5. Um merge por vez.
+
+### Agent 1 — Reservas (#131, #124, #68) · entrada `agent_1_r7_booking`
+- **P0 da rodada:** a #131 destrava o Agent 4 (#136), a #124 e a #68. Comece por ela.
+- #131: atualizar com a `main`, resolver o conflito, corrigir a regressão do `redirect` dentro de `try/catch` (escreva primeiro o teste que falha), fazer a UI refletir múltiplos serviços, manter compatibilidade com reservas de 1 serviço (`serviceId`/`serviceIds` legados). Migration com versão **maior** que `20261127000000`. Mergear quando verde e **avisar no `state.json`** (SHA do merge e qual migration entrou) para o Agent 4.
+- #124 (após #131): parser BRL com milhar (B3), sinal, ações por papel (B4); autorização continua no banco.
+- #68 (após #124/#131): confirmação e `.ics` corretos com vários serviços, duração e preço totais.
+- Fechar as issues cobertas (#21, #22, etc.) **somente** com aceite comprovado.
+
+### Agent 2 — Autenticação (#127, #130) · entrada `agent_2_r7_auth`
+- #127: pronta e limpa; atualizar com a `main`, rodar a suíte completa e **mergear primeiro**.
+- #130: reconstruir sobre a `main` já com a #127 (origem confiável, `redirectTo`, `token_hash`/`type=recovery`, code/PKCE, sem open redirect nem loop produção/preview). Só testes com mocks; **nenhum e-mail real**, nenhuma chamada ao Supabase remoto.
+- Issues #70/#23: comentar evidência; o que depende de validação real em produção fica aberto como pendência do responsável.
+
+### Agent 3 — Schedulers e operação (#38, #32) · entrada `agent_3_r7_ops_schedulers`
+- #38 e #128 já estão na `main`. Confirme que existe **um único** mecanismo canônico de expiração/lembretes (sem scheduler duplicado) e que a documentação (`docs/BOOKING-EXPIRATION-SCHEDULER.md`, `docs/NOTIFICACOES.md`) reflete o estado real. Corrija lacunas com teste.
+- #32: triagem. Reaproveite apenas o que ainda falta (inventário, CI) em PR pequena sobre a `main` atual, ou feche como superada com evidência.
+- **Nenhum scheduler é ativado** (`BOOKING_EXPIRATION_ENABLED` e lembretes permanecem desligados). Ativação é do responsável.
+
+### Agent 4 — Privilégios do banco e Calendar (#136, #41) · entrada `agent_4_r7_security_calendar`
+- Comece pelas tarefas independentes: auditar o Calendar já mergeado (#135) e as branches antigas dele; verificar se a #41 foi superada por #117/#135 e **fechar com evidência** se sim.
+- #136: depois que o Agent 1 mergear a #131, atualizar, resolver a dependência da migration, ligar o `privileges-check` ao CI/`test:db`, mergear quando verde. Fechar a #125 se o aceite estiver cumprido.
+- A #126 está fechada; **não refaça**. Os seis arquivos staged locais do Calendar são intocáveis.
+
+### Agent 5 — Design, docs e backlog de produto (#133, #67, #46, #2) · entrada `agent_5_r7_product_backlog`
+- #46 e #2: provavelmente superadas. Fechar com evidência (commit/PR que já contém o conteúdo).
+- #133: resolver o conflito, rodar o CI, **mergear se verde** (seção 0) e deixar na PR um resumo curto para o responsável.
+- #67: atualizar com a `main`, validar e integrar se os critérios forem atendidos.
+- Triagem das issues de produto/roadmap (#72–#112 e afins): **não fechar para reduzir contagem**; cada uma fica aberta com status e próxima ação, salvo duplicata/substituída comprovada.
+
+### Agent 6 — Auditor independente, limpeza final e relatório · entrada `agent_6_r7_coordinator`
+- **Não implementa** o trabalho dos Agents 1–5. Audita cada alegação contra o GitHub (SHA exato, CI no SHA, SHA do merge, vínculo com issue, estado da branch) e mantém a ordem de merges.
+- Onda 4 (só depois dos merges): apagar branches **comprovadamente integradas** (PR `MERGED` + tip remoto igual ao `headRefOid`, ou sem commits exclusivos). Preservar `main`, `coordination/agents`, branches de PR aberta e branches com trabalho exclusivo, com o motivo registrado. Autoridade para apagar branches: seção 0.
+- Relatório final no `state.json`: SHAs verificados, PRs mergeadas/fechadas, issues, branches removidas/preservadas, pendências do responsável (seção 7) e a **pergunta sobre GitHub Release** (ver `AGENTS.md`; sem autorização explícita, nada de tag nem Release).
