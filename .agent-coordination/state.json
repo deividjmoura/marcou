@@ -1610,8 +1610,8 @@
           "A1-T1 (migration da #131)"
         ]
       },
-      "current_state": "A4-T2 concluída: PR #41 fechada como superada pela #117, com evidência registrada. A4-T3: PR #141 aberta para corrigir callback OAuth fail-closed, fencing do lease, revogação externa retryable e search_path das funções Calendar. PR sem conflito; CI ainda pendente no HEAD 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1 (base main cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b). Não mergear até todos os checks passarem no SHA exato. A4-T4: branches antigas auditadas; tabela de disposição abaixo, sem tocar em branches nem nos seis arquivos staged locais. A4-T1 (#136) permanece bloqueada pela migration da #131.",
-      "next_action": "Aguardar CI da #141, revisar os checks no SHA 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1 e corrigir qualquer falha. Após CI verde, mergear #141 e fechar #29 com evidência do V1. Depois da integração da #131 pelo Agent1, atualizar #136 sem force-push, garantir privileges-check e calendar-check em test:db, rodar CI e mergear só com checklist verde.",
+      "current_state": "PR #141 está com checklist verde no SHA exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1: GitHub Actions CI success e Netlify deploy-preview success; PR mergeable=true, sem reviews ou threads pendentes. Base main permanece cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b. Autorização de merge da coordenação aplica-se; executar squash/merge agora. A4-T4 branch disposition já registrada. #136 continua bloqueada pela #131.",
+      "next_action": "Mergear PR #141 no SHA verde; conferir SHA de merge na main; depois comentar/fechar #29 com evidências. Em seguida aguardar #131 e concluir #136.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1637,6 +1637,18 @@
             "#136 depende da migration da #131 (Agent1)."
           ],
           "next_action": "Aguardar checks #141; se verdes, mergear. Depois da #131, alinhar #136 e rodar test:db completo."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "A4-T3: validação CI da PR #141",
+          "status": "checklist_green_ready_to_merge",
+          "result": "No SHA exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1: GitHub Actions CI completed/success; Netlify deploy-preview success (deploy-preview-141--marcoou.netlify.app); PR mergeable=true; nenhuma review/thread pendente. Main base SHA cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b.",
+          "head_sha": "979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1",
+          "tests": "CI success + Netlify preview success; check runs confirm same head SHA.",
+          "blockers": [
+            "Nenhum blocker para merge da #141. #136 permanece bloqueada pela #131."
+          ],
+          "next_action": "Mergear #141; validar merge SHA; depois fechar #29."
         }
       ],
       "branch_disposition": [
