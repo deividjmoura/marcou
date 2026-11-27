@@ -145,15 +145,15 @@
       "pull_requests": [
         130
       ],
-      "status": "code_and_docs_review_complete_external_functional_test_pending",
-      "active_assignment": "Reverify live PR #130 HEAD and CI, then write a concise functional-test runbook for production and Deploy Preview using a controlled test account. Do not send emails or alter external systems.",
-      "current_state": "Code/docs review complete at SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. Recovery flow, token_hash/type, RedirectTo/TokenHash template contract, strict preview origin, env/build docs and failure if preview redirects to production were reviewed. CI #277 passed on that SHA. Functional external test pending.",
-      "next_action": "Reverify live SHA/CI and provide exact controlled test procedure. External functional test only after explicit authorization.",
+      "status": "runbook_complete_functional_test_pending",
+      "active_assignment": "Functional test runbook delivered for production and Deploy Preview; external test remains gated on explicit authorization and controlled test account. Do not send emails or alter external systems.",
+      "current_state": "Live PR #130 reverified open/Draft/not merged at HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. CI #277 success on exact SHA (quality job: changelog, audit, lint, typecheck, npm test, test:db, build); Netlify Deploy Preview check success at https://deploy-preview-130--marcoou.netlify.app. No formal reviews. Reviewed recovery Server Action and /auth/confirm contract; runbook provided with exact production/preview destination criteria and preview-to-production failure rule. No functional email test performed.",
+      "next_action": "Await explicit authorization for controlled recovery test in production and Preview 130, plus access to a controlled test account. Execute each environment separately only after approval; confirm email link contract, same-environment return, password update/login, and expired/reused-token behavior. Track exposed OAuth/SMTP credential rotation as a separate external security follow-up; do not handle secrets.",
       "last_verified": {
         "branch": "fix/auth-recovery-preview-origin",
         "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-        "ci": "CI #277 success at this SHA; changelog, audit, lint, typecheck, npm test, test:db and build passed.",
-        "notes": "PR #130 open/Draft. No functional external test performed. Supabase auth settings updated/read back; Netlify URL confirmed by user."
+        "ci": "CI #277 (run 46040285407) success on exact SHA; quality job completed all steps: check:changelog, audit, lint, typecheck, npm test, test:db, build. Netlify Deploy Preview status success at https://deploy-preview-130--marcoou.netlify.app.",
+        "notes": "PR #130 open, Draft, not merged; mergeable=true; no formal reviews. No external functional test, emails, settings changes or deploys performed. Recovery handler verifies token_hash with type=recovery and redirects to /redefinir-senha on trusted origin."
       },
       "updates": [
         {
@@ -167,6 +167,19 @@
             "Functional test in production and Deploy Preview pending; requires controlled account and explicit authorization."
           ],
           "next_action": "Reverify current PR SHA/CI and produce controlled test runbook; no external changes."
+        },
+        {
+          "timestamp": "2026-11-27T09:45:00-03:00",
+          "task": "Reverify PR #130 and deliver controlled functional-test runbook",
+          "status": "runbook_complete_functional_test_pending",
+          "result": "Live PR remains open/Draft at SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. CI #277 and Netlify Deploy Preview check passed on exact SHA. Supplied production/Preview test steps, email link contract and mandatory failure condition when Preview returns to production.",
+          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+          "tests": "Verified CI run 46040285407 quality job success: changelog, audit, lint, typecheck, npm test, test:db and build; Netlify preview check success. No email or functional recovery test run.",
+          "blockers": [
+            "Functional test requires explicit authorization and controlled test account; no real email may be sent before approval.",
+            "Previously exposed OAuth/SMTP credentials need provider-side rotation as a separate authorized security follow-up; no secrets handled."
+          ],
+          "next_action": "Await explicit authorization for separate production and Deploy Preview recovery tests; do not change external systems or deploy."
         }
       ]
     },
