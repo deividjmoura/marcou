@@ -69,6 +69,7 @@ export function trustedAppOrigin(requestOrigin?: string): string {
     ) {
       return localRequestOrigin;
     }
+    return LOCAL_APP_ORIGIN;
   }
 
   return PRODUCTION_ORIGIN;
