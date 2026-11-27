@@ -360,10 +360,10 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "incremental_test_wiring_prepared_validation_pending",
+      "status": "ci_pending",
       "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
-      "current_state": "Main atual verificada em 69d02173653384e082476e7879ee9f33672dec72. Migration supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql está na main e contém FOR UPDATE nos dois SELECTs relevantes; commit de integração d59a81db0d387095e249b1870b50c19c55d50499. Migration histórica 20261116035000_fix_booking_idempotency_authorization.sql mantém blob 9466efa05887ab3c546e3828c43f01d416e2372e em main e branch. Harness scripts/booking-concurrency.mjs está na main (blob 13bad51b28d17b2ac428b42204bffb0e7c5f6ab6), contém 25 chamadas check(), duas sessões distintas, prova vs cancel, valida um vencedor/estado final e exatamente dois eventos (rollback implícito da chamada perdedora). Porém main package.json não inclui o harness em test:db. Criada branch isolada fix/booking-transition-test-wiring a partir da main, commit 1bf0a601d95bde3fb45e4008a60dac677b5ab971, que altera somente package.json para incluir o script. Branch 1 ahead/0 behind. Nenhum teste executado nesta sessão por ausência de checkout/runtime local; CI/status checks não retornaram runs para SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971.",
-      "next_action": "Executar npm run test:db, npm test, typecheck, lint e build no SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971 e obter CI associado a esse SHA. Manter branch isolada; não fazer merge, deploy ou alterações em produção.",
+      "current_state": "Revalidação remota concluída: branch fix/booking-transition-test-wiring está 1 commit à frente e 0 atrás de main (main 69d02173653384e082476e7879ee9f33672dec72; HEAD 1bf0a601d95bde3fb45e4008a60dac677b5ab971). Diff confirmado: somente package.json, acrescentando scripts/booking-concurrency.mjs ao npm run test:db. O workflow .github/workflows/ci.yml executa test:db em pull_request para main. Como a branch não tinha PR nem execução de CI, aberta PR #134 em Draft exclusivamente para disparar a validação. PR aberta, mergeable=true, sem merge. No instante da consulta, workflow runs e combined status ainda vazios; execução dos testes continua pendente.",
+      "next_action": "Acompanhar CI da PR #134 no HEAD exato 1bf0a601d95bde3fb45e4008a60dac677b5ab971. Se iniciar, conferir todos os steps e logs de test:db, incluindo o harness concorrente. Se não iniciar, investigar status/checks e mecanismo de disparo sem alterar produção. Não fazer merge.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
@@ -379,8 +379,12 @@
         "validation_branch_sha": "1bf0a601d95bde3fb45e4008a60dac677b5ab971",
         "validation_branch_ahead": 1,
         "validation_branch_behind": 0,
-        "ci": "No workflow runs or combined status checks returned for exact validation SHA.",
-        "notes": "The earlier 21/21 figure is a commit-message report from d59a81d, not a fresh execution of the current 25-assertion harness. Container has no repository checkout/package.json, so tests could not be executed here."
+        "ci": "Pendente; fetch_commit_workflow_runs=[] e combined status=[] logo após abertura da PR.",
+        "notes": "Diff remoto comparado com main: apenas package.json (1 inserção/1 deleção). Nenhuma migration ou lógica de produção alterada. Harness possui 25 chamadas check() conforme inspeção estática do arquivo.",
+        "pr": 134,
+        "pr_url": "https://github.com/deividjmoura/marcou/pull/134",
+        "pr_state": "open_draft_mergeable",
+        "workflow": "CI trigger confirmado por pull_request para main; runs ainda não visíveis na consulta inicial"
       },
       "updates": [
         {
@@ -409,6 +413,18 @@
             "CI não disponível para SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971."
           ],
           "next_action": "Executar testes e CI no SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971; sem merge/deploy/produção."
+        },
+        {
+          "timestamp": "2026-11-27T18:19:51.426Z",
+          "task": "Abrir PR Draft de validação para executar CI do wiring do harness concorrente",
+          "status": "ci_pending",
+          "result": "Confirmei que o script booking-concurrency.mjs estava fora do npm run test:db na main e dentro na branch isolada. Workflow CI executa test:db em pull_request para main. Abri PR #134 em Draft para disparar CI, sem merge; PR mergeable=true e SHA permanece 1bf0a601d95bde3fb45e4008a60dac677b5ab971. Runs/status ainda vazios na primeira consulta.",
+          "head_sha": "1bf0a601d95bde3fb45e4008a60dac677b5ab971",
+          "tests": "Inspeção estática do diff e workflow; execução real ainda pendente.",
+          "blockers": [
+            "Aguardar workflow CI iniciar e concluir no SHA exato."
+          ],
+          "next_action": "Acompanhar CI da PR #134 e conferir resultado de todos os steps, especialmente test:db."
         }
       ]
     },
