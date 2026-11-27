@@ -196,6 +196,23 @@ describe("calendar worker — exclusão", () => {
   });
 });
 
+describe("calendar worker — fencing de lease", () => {
+  it("recusa conclusão de um worker antigo depois que o job foi reivindicado novamente", async () => {
+    store.addJob({ id: "lease-job", booking_id: "lease-booking" });
+    const [staleClaim] = await store.claimJobs(1);
+    store.jobs.get("lease-job")!.status = "failed";
+    const [currentClaim] = await store.claimJobs(1);
+
+    expect(staleClaim.lease_token).toBeTruthy();
+    expect(currentClaim.lease_token).toBeTruthy();
+    expect(currentClaim.lease_token).not.toBe(staleClaim.lease_token);
+    await expect(store.completeJob("lease-job", staleClaim.lease_token!, null)).rejects.toThrow("completeJob_failed");
+
+    await store.completeJob("lease-job", currentClaim.lease_token!, null);
+    expect(store.jobs.get("lease-job")).toMatchObject({ status: "succeeded", lease_token: null });
+  });
+});
+
 describe("calendar worker — falhas e estado terminal", () => {
   beforeEach(() => {
     store.connect(PROVIDER);
