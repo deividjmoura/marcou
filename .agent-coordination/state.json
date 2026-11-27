@@ -1128,11 +1128,78 @@
         25,
         26
       ],
-      "status": "assigned_round_6",
+      "status": "round6_complete_ops_cluster_merged_issues_and_branches_closed",
       "active_assignment": "state_entry=agent_3_completion_ops. FECHAR cluster operacional de reservas: PRs #134, #128 e #38; Issues #25 e #26 conforme critérios. Primeiro confirme se #134 é independente e integre-a se os checks completos passarem. Para #128, resolver sobreposição com #38 em scripts/db-check.mjs e CHANGELOG.md, reforçar o gate para que expiração não possa apontar a produção por engano e manter BOOKING_EXPIRATION_ENABLED desligado por padrão. Para #38, corrigir/definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade; documentar scheduler externo necessário, sem ativá-lo. Atualize cada branch sobre main atual e rode CI completa após reconciliação. Você está autorizado a fazer squash merge quando os critérios globais forem atendidos, mesmo sem teste manual/real. Depois que os demais agentes terminarem seus merges, faça inventário final de branches: apague somente branches de PRs comprovadamente merged e branches sem commits exclusivos úteis; não apague branches de PR aberta, sessões ativas, coordination/agents, nem os seis arquivos staged locais do Calendar. Feche issues só com aceite cumprido ou substituição inequívoca; demais ficam abertas com status/next action claro. Não dispare notificações, não ative cron, não faça deploy nem altere serviços/secrets externos.",
-      "current_state": "Atribuição round 6 registrada; limpeza de branches somente após merges dos demais.",
-      "next_action": "Integrar #134/#128/#38, manter schedulers desativados e limpar refs merged no fim.",
-      "updates": []
+      "current_state": "ROUND 6 concluído para o cluster operacional. Squash merges executados e confirmados: PR #134 (test:db wiring) → main 7956ed454ef66657d1dcd28e6889e871a42d7750; PR #128 (expiration scheduler hardened: merge da main, recusa explícita do project ref de produção no workflow, allowlist de placeholders ${{ secrets.* }} no quality-audit, docs/CHANGELOG) → main 8a5e4e7f0b78f28439200ce74be5dc174748fb46; PR #38 (reminder scheduler: merge da main, idempotência corrigida para dia local do agendamento no fuso do prestador via bookings.timezone, asserção nova no db-check, docs) → main 5b4e8943de079703120cdac681347fde724252fc. Cada PR: HEAD confirmado, branch atualizada sobre a main vigente sem force-push (merge commits 17e42d1 e c7b5aff de 2 pais), conflito de CHANGELOG reconciliado (#38), suíte local completa verde (changelog, audit, lint, typecheck, unit, test:db, build) e CI verde no SHA exato (runs 46048704272, 46060707738, 46062424346) + Netlify previews pass. Issues: #25 FECHADA com comentário-evidência (pendências operacionais de reembolso/staging registradas conforme a própria cláusula da issue); #26 mantida ABERTA com comentário de status e próximas ações (scheduler externo e provedor de e-mail são passos do responsável; gate desligado por padrão). Inventário final de branches: 32 → 28 heads; excluídas somente branches de PRs comprovadamente MERGED com tip==head (feat/26-notification-scheduler #38, fix/booking-transition-test-wiring #134, fix/booking-expiration-scheduler #128, feat/24-provider-agenda #39); preservadas 12 branches de PRs abertas (#2, #32, #41, #46, #67, #68, #124, #127, #130, #131, #133, #136) e 14 incertas com trabalho exclusivo documentado; worktrees locais removidos. Nenhum deploy, migration remota, cron ativado, e-mail ou serviço externo alterado.",
+      "next_action": "Cluster operacional concluído. Agent6 deve consolidar o round: branches de PRs que os demais agentes mergearem depois deste registro (ex.: #68/#124/#131/#127/#130/#133 se mergeadas) podem ser excluídas com a mesma prova (MERGED + tip==head). Pendências do responsável: configurar Environment staging/variável BOOKING_EXPIRATION_ENABLED para a expiração; configurar scheduler externo de lembretes (CRON_SECRET etc.) e decidir provedor de e-mail antes de fechar #26; decidir descarte das 14 branches incertas documentadas nos rounds 5/6.",
+      "updates": [
+        {
+          "timestamp": "2026-11-27T20:33:41-03:00",
+          "task": "ROUND 6 — cluster operacional: PRs #134/#128/#38, issues #25/#26, inventário de branches",
+          "status": "round6_complete_ops_cluster_merged_issues_and_branches_closed",
+          "result": "3 squash merges concluídos com CI verde no SHA exato de cada head final (7956ed4, 8a5e4e7, 5b4e894); gate de expiração reforçado contra produção e mantido desligado; idempotência de lembretes corrigida para o fuso do prestador; issue #25 fechada com evidências e #26 aberta com status claro; inventário de branches 32→28 com apenas exclusões comprovadas.",
+          "head_sha": "5b4e8943de079703120cdac681347fde724252fc (main após o último merge)",
+          "tests": "Suíte local completa por PR + CI runs 46048704272/46060707738/46062424346 success nos SHAs exatos; previews Netlify pass.",
+          "blockers": [
+            "Ativação da expiração/lembretes depende de configuração externa do responsável (Environment staging, BOOKING_EXPIRATION_ENABLED, CRON_SECRET, provedor de e-mail).",
+            "14 branches incertas permanecem pendentes de decisão de descarte do responsável.",
+            "PR #130 (tarefa anterior) segue pausada aguardando autorização de push do patch."
+          ],
+          "next_action": "Agent6 consolida o round; responsável executa passos operacionais documentados em #26 e em docs/BOOKING-EXPIRATION-SCHEDULER.md."
+        }
+      ],
+      "last_verified": {
+        "round": "6",
+        "main_final_sha": "5b4e8943de079703120cdac681347fde724252fc",
+        "merges": [
+          {
+            "pr": 134,
+            "head": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
+            "squash_sha": "7956ed454ef66657d1dcd28e6889e871a42d7750",
+            "ci": "run 46048704272 success (changelog, lint, typecheck, unit, test:db, build) + preview; audit local 0 falhas"
+          },
+          {
+            "pr": 128,
+            "head": "488f9a9a25f9fe459a847a39bc9c1e0661629ab7",
+            "squash_sha": "8a5e4e7f0b78f28439200ce74be5dc174748fb46",
+            "ci": "run 46060707738 success no SHA exato + preview; suíte local completa verde (unit 150/150; test:db 5 harnesses; build)"
+          },
+          {
+            "pr": 38,
+            "head": "c7b5affd861f56b8b4a5bb318e57aad0a7f2f0e8",
+            "squash_sha": "5b4e8943de079703120cdac681347fde724252fc",
+            "ci": "run 46062424346 success no SHA exato, 0 steps falhos + preview; suíte local completa verde (test:db inclui asserção nova de fuso)"
+          }
+        ],
+        "issues": {
+          "closed": [
+            25
+          ],
+          "kept_open_with_status": [
+            26
+          ]
+        },
+        "branch_inventory": {
+          "before": 32,
+          "deleted_this_round": [
+            "feat/26-notification-scheduler (#38)",
+            "fix/booking-transition-test-wiring (#134)",
+            "fix/booking-expiration-scheduler (#128)",
+            "feat/24-provider-agenda (#39)"
+          ],
+          "after": 28,
+          "preserved": {
+            "open_pr_branches": 12,
+            "uncertain_with_exclusive_work": 14,
+            "infra": [
+              "main",
+              "coordination/agents"
+            ]
+          }
+        },
+        "tests": "Por PR: changelog-check, quality-audit, lint, typecheck, vitest, test:db (db-check+social+identity+discovery+booking-concurrency) e next build no worktree; CI remota quality no SHA exato; proofs de branch (rev-list, git cherry, ls-remote) para exclusões.",
+        "notes": "Sem force-push; merges via gh squash; nenhum secret/valor acessado; seis arquivos staged do Calendar não tocados; PR #130 permanece pausada com patch pr130-recovery-tests.patch preservado no workspace (tarefa anterior)."
+      }
     },
     "agent_4_completion_calendar": {
       "scope": "Closeout Google Calendar V1",
