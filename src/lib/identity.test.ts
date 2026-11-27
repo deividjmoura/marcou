@@ -21,7 +21,7 @@ describe("identity helpers", () => {
     expect(trustedAppOrigin("http://localhost:3100")).toBe("http://localhost:3100");
 
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example/path");
-    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
 
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://attacker.example");
     expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
@@ -37,6 +37,9 @@ describe("identity helpers", () => {
     expect(safeNextPath("///evil.example")).toBe("/inicio");
     expect(safeNextPath("https://evil.example")).toBe("/inicio");
     expect(safeNextPath("/\\evil.example")).toBe("/inicio");
+    expect(safeNextPath("/folder\\file")).toBe("/inicio");
+    expect(safeNextPath("/folder%5cfile")).toBe("/inicio");
+    expect(safeNextPath("/folder%255cfile")).toBe("/inicio");
     expect(safeNextPath("/%5c%5cevil.example")).toBe("/inicio");
     expect(safeNextPath("/%2f%2fevil.example")).toBe("/inicio");
     expect(safeNextPath("/%252f%252fevil.example")).toBe("/inicio");

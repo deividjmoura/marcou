@@ -70,11 +70,11 @@ Defina, por site/ambiente, as variáveis públicas já usadas pela aplicação:
 
 | Variável | Valor |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | Origem HTTPS pública deste ambiente, sem caminho (por exemplo `https://<site-oficial>`). Para desenvolvimento local: `http://localhost:3000`. |
+| `NEXT_PUBLIC_SITE_URL` | Origem canônica de produção `https://marcoou.netlify.app`; para desenvolvimento local, `http://localhost:3000`. Não configurar uma origem própria por Deploy Preview: o preview é identificado pelos metadados de build da Netlify. |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase correspondente. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publishable/anon pública do projeto; nunca use service-role no navegador. |
 
-No Netlify, cadastre os valores em **Site configuration → Environment variables**, considerando os contexts Production, Deploy Previews e Branch Deploys conforme a política do projeto. `NEXT_PUBLIC_SITE_URL` deve apontar para a origem do preview publicado que iniciou o fluxo, para que os links de e-mail voltem ao mesmo ambiente. Os handlers de autenticação não refletem `Host`/`x-forwarded-host` em links ou redirects: se a variável estiver ausente ou inválida, a origem fecha para `http://localhost:3000`; configure-a em todo ambiente publicado.
+No Netlify, configure `NEXT_PUBLIC_SITE_URL` como `https://marcoou.netlify.app` em Production e `http://localhost:3000` apenas no desenvolvimento local. Para Deploy Previews, não defina uma origem por requisição nem sobrescreva os metadados de sistema: `CONTEXT` e `DEPLOY_PRIME_URL` são lidos durante o build e capturados por `next.config.ts` em `MARCOU_AUTH_DEPLOY_CONTEXT` e `MARCOU_AUTH_DEPLOY_PRIME_URL`. O recurso `env` do Next.js pode embutir esses valores em bundles JavaScript; por isso são apenas metadados públicos de deployment, nunca secrets. A Netlify não disponibiliza `CONTEXT`/`DEPLOY_PRIME_URL` como variáveis read-only às Functions em runtime; a captura no build é necessária. Não refletem `Host`/`X-Forwarded-Host`; preview inválido fecha para a origem canônica de produção.
 
 ### Supabase Auth URLs
 
@@ -201,3 +201,8 @@ Este roteiro precisa ser executado pelo responsável depois de configurar Netlif
 O código inclui testes unitários para redirects/normalização, origens confiáveis, não enumeração de cadastro/reenvio/recuperação, callback, confirmação, no-store e o hub de identidade. `npm run test:db` executa quatro harnesses na ordem: bookings legado (`scripts/db-check.mjs`), fundação social (`scripts/social-foundation-check.mjs`), identidade (`scripts/identity-check.mjs`) e descoberta (`scripts/discovery-check.mjs`). O harness social aplica todas as migrations e falha se qualquer `SECURITY DEFINER` conservar `EXECUTE` para `PUBLIC`; os harnesses de identidade e descoberta também validam RLS, grants e isolamento. A migration `20261123140000_account_modes.sql` precede a migration `20261123143000_discovery_taxonomy_service_areas.sql`.
 
 A validação real publicada de Google, SMTP, confirmação e recovery depende das configurações acima. Nenhuma configuração remota foi alterada nesta entrega (o diagnóstico limitou-se à requisição pública e a metadados RFC somente-leitura, sem acesso direto aos painéis do Google Cloud ou Supabase), e nenhum fluxo externo deve ser tratado como concluído até as configurações manuais e o roteiro publicado serem executados com evidência segura. Issues relacionadas continuam abertas: [#23](https://github.com/deividjmoura/marcou/issues/23), [#70](https://github.com/deividjmoura/marcou/issues/70) e [#83](https://github.com/deividjmoura/marcou/issues/83). PR #69 foi consultada apenas como referência funcional, sem cherry-pick ou merge.
+
+
+## Redirects de recuperação por ambiente
+
+Consulte [`docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md`](AUTH-RECOVERY-PREVIEW-ORIGIN.md) para a política de origem confiável, captura dos metadados `CONTEXT`/`DEPLOY_PRIME_URL` durante o build da Netlify, contrato do template Reset Password e allowlist restrita de Deploy Previews. O fluxo não reflete `Host`, `x-forwarded-host` ou `request.nextUrl.origin`.

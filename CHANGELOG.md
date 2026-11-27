@@ -58,6 +58,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
+- Redirects de recuperação usam origem canônica em produção e origem de Deploy Preview validada a partir de metadados de build confiáveis. A identificação de contexto/URL é compilada pelo `next.config.ts` porque `CONTEXT` e `DEPLOY_PRIME_URL` não estão disponíveis como variáveis internas de runtime das Functions. `Host` e `X-Forwarded-Host` nunca definem a origem. Inclui testes de produção, preview válido, domínio falso, configuração adulterada e retorno fixo a `/redefinir-senha`.
+
 - Proteção contra condições de corrida no provisionamento de `profiles`:
   inserção inicial com `ON CONFLICT (id) DO NOTHING` (`ignoreDuplicates: true`)
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor
