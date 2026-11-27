@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "repository": "deividjmoura/marcou",
+  "coordination_branch": "coordination/agents",
+  "coordination_file": ".agent-coordination/state.json",
+  "updated_at": "2026-11-27",
+  "purpose": "Shared, compact handoff state for parallel agents. This file is the source of truth for task ownership, latest outcomes, SHAs, blockers and next actions.",
+  "protocol": {
+    "read_before_work": true,
+    "write_after_every_task": true,
+    "write_after_material_progress": true,
+    "update_scope": "Modify only the current agent's entry and shared metadata directly affected by its work. Preserve all other agents' entries.",
+    "history_limit_per_agent": 3,
+    "history_policy": "Append one concise update per completed task or material milestone. Keep only the newest 3 updates. Keep current_state and next_action accurate even when older updates are dropped.",
+    "required_update_fields": [
+      "timestamp",
+      "task",
+      "status",
+      "result",
+      "head_sha",
+      "tests",
+      "blockers",
+      "next_action"
+    ],
+    "sha_policy": "Always record the exact branch and commit SHA actually inspected or changed. Never report CI, preview, tests or deployment as current if they belong to another SHA.",
+    "concurrency": "Before writing, fetch the latest file from coordination/agents and use its current blob SHA. If update fails due to conflict/stale SHA, fetch again, merge only your own entry, and retry. Never overwrite another agent's update.",
+    "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or explicitly marked unknown.",
+    "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values. Record only secret names and rotation status if relevant.",
+    "safety": [
+      "No production changes, external configuration changes, deploys, remote migrations or merges unless the user explicitly authorizes that exact action.",
+      "Do not change PR #127.",
+      "Do not expand task scope or modify another agent's ownership area without coordination."
+    ],
+    "handoff": "A new agent must read this file first, inspect the live PR/branch state, then continue from current_state and next_action. Historical entries are context, not proof of current remote state."
+  },
+  "shared_project_state": {
+    "netlify": {
+      "site": "marcou",
+      "production_url": "https://marcoou.netlify.app",
+      "url_status": "verified_by_user",
+      "note": "User confirmed NEXT_PUBLIC_SITE_URL in Netlify is correct. Do not recheck or change unless a later issue requires it."
+    },
+    "supabase_auth": {
+      "project_ref": "peornypgltuueubmsucm",
+      "site_url": "https://marcoou.netlify.app",
+      "site_url_status": "updated_and_verified_by_management_api",
+      "redirect_allowlist_status": "present_in_management_api_readback",
+      "redirects": [
+        "https://marcoou.netlify.app",
+        "https://marcoou.netlify.app/auth/confirm**",
+        "https://marcoou.netlify.app/auth/callback**",
+        "https://deploy-preview-*--marcoou.netlify.app/auth/confirm**",
+        "https://deploy-preview-*--marcoou.netlify.app/auth/callback**"
+      ],
+      "recovery_template_status": "updated_and_verified_by_management_api_readback",
+      "recovery_template_contract": "Uses {{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery",
+      "pending": "Perform controlled functional recovery test only after code/preview readiness. No recovery email has been reported as sent or tested yet.",
+      "security_note": "A previous pasted configuration contained OAuth/SMTP credential material. Rotate exposed credentials at their providers and update secrets through the approved secure path. Never copy credential values into this file, logs, prompts or chat."
+    }
+  },
+  "agents": {
+    "agent_1_pr_131": {
+      "scope": "PR #131 multi-service model and privilege matrix",
+      "pull_requests": [131],
+      "status": "prompt_sent_after_canceling_accidental_broad_prompt",
+      "current_state": "Final security/integrity audit requested. Mandatory focus: effective grants and RLS on notifications for public, anon and authenticated.",
+      "next_action": "Audit notifications grants and RLS, migrations, tests and CI at exact current SHA; report verdict and update this file.",
+      "last_verified": {
+        "branch": null,
+        "head_sha": null,
+        "ci": "previous context said green; must re-verify current SHA",
+        "notes": "Earlier concern: authenticated may have SELECT only while public/anon privileges were revoked. Verify from actual migration/schema, do not assume."
+      },
+      "updates": []
+    },
+    "agent_2_pr_128_and_38": {
+      "scope": "PR #128 booking expiration and PR #38 reminders",
+      "pull_requests": [128, 38],
+      "status": "awaiting_agent_execution",
+      "current_state": "Joint final review requested, with separate verdicts per PR.",
+      "next_action": "Verify expiration/idempotency/scheduler default-off for #128; verify cron auth, service-role scope, env failures, duplicate-send protection and audit for #38. Confirm current SHAs and CI.",
+      "last_verified": {
+        "branch": null,
+        "head_sha": null,
+        "ci": "previous context said green for #128; #38 had a prior audit failure in cron route and was assigned a fix. Re-verify current state.",
+        "notes": "Recommended integration order: #128 before #38. Do not merge or enable schedulers."
+      },
+      "updates": []
+    },
+    "agent_3_pr_130": {
+      "scope": "PR #130 password recovery code/documentation review",
+      "pull_requests": [130],
+      "status": "awaiting_agent_execution",
+      "current_state": "Review code and operational docs only. Supabase auth configuration has been updated and read back successfully; Netlify production URL was confirmed by user.",
+      "next_action": "Verify recovery flow contract, preview origin handling, env/build documentation, OAuth redirect preservation and exact current SHA. Do not touch external services or send email.",
+      "last_verified": {
+        "branch": null,
+        "head_sha": null,
+        "ci": "previous context said green; re-verify current SHA",
+        "notes": "Supabase template now uses RedirectTo + TokenHash + type=recovery. Functional test is still pending."
+      },
+      "updates": []
+    },
+    "agent_4_pr_39": {
+      "scope": "PR #39 provider agenda",
+      "pull_requests": [39],
+      "status": "awaiting_agent_execution",
+      "current_state": "Update the real feature branch safely, then validate the exact resulting SHA.",
+      "next_action": "Recheck main and PR branch against historical references, validate/apply patch without overwriting remote work, then run tests and wait for CI and preview on the new SHA.",
+      "last_verified": {
+        "branch": "feat/24-provider-agenda",
+        "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
+        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "patch": "patches/pr-39/pr-39-agenda.patch",
+        "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
+        "previous_local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
+        "notes": "All values are historical references and must be rechecked. PR was previously Draft; do not merge or close."
+      },
+      "updates": []
+    }
+  }
+}
