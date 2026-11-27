@@ -25,6 +25,21 @@ foi executada em clone isolado, verificada e entregue como patch aplicável sobr
 `main`; falta apenas o push na branch da PR (comando abaixo). Nenhum merge,
 deploy, migration remota ou configuração foi executado.
 
+## Reconfirmação (2026-11-27, turno atual)
+
+- `main` remota: `69d02173653384e082476e7879ee9f33672dec72` — **sem mudança**.
+- Branch `feat/24-provider-agenda`: `6f44b506da887ecc90486c80e6b9789578b23837` — **sem mudança**.
+- Patch: SHA-256 `eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb` (36.241 B, 1.001 linhas) — **íntegro**.
+- `git apply --check` em clone limpo de `69d0217`: ok; após aplicar e commitar, a árvore é
+  `3f8890e1a097069b2a3cc224c8b88dcdead3b101` — **idêntica** à validada anteriormente,
+  então nenhuma alteração foi perdida.
+- Validações repetidas nesse clone: changelog ok, lint 0 erros/3 warnings, typecheck ok,
+  165 testes, `test:db` 188, audit 0/0, build ok com `/painel`.
+- **Bloqueio explícito:** o token da sessão tem `admin`/`push` no repositório, mas a
+  política deste ambiente restringe commit/push à branch `arena/9c0da280-marcou`.
+  Por isso a branch real da PR não foi tocada — a atualização precisa partir do
+  Codespaces com os comandos abaixo.
+
 ## Conflitos
 
 `git apply` do diff original da PR sobre a `main` atual falha em **1 arquivo**:
