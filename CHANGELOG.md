@@ -49,7 +49,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   preservando a arquitetura da Issue `#72`.
 - Motor de reservas com múltiplos serviços (`booking_services`, RPCs de
   agregação, compatibilidade com reservas de serviço único e backfill) na
-  migration `20261125120000_booking_multiple_services.sql` (PR `#123`).
+  migration `20261127120000_booking_multiple_services.sql` (PR `#131`, Issue `#21`).
 - Matriz canônica de privilégios de tabelas/views em
   `scripts/privileges-check.mjs`, com handoff em
   `docs/handoffs/privilegios-tabelas.md` (PR `#123`).
@@ -128,7 +128,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor
   anterior), impedindo que requisições paralelas sobrescrevam nome ou telefone
   já escolhidos pelo usuário em `/perfil`.
-- Migration aditiva `20261125130000_table_privileges_matrix.sql` (PR `#123`):
+- Migration aditiva `20261127130000_table_privileges_matrix.sql` (PR `#131`):
   remove o `UPDATE` direto de `authenticated` em `notifications` (a aplicação
   usa apenas as RPCs de leitura) e reafirma os grants mínimos de
   `booking_services`, sem alterar `bookings`, `booking_events`, dados, RLS ou

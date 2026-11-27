@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { bookingInputSchema, isoDate } from "@/lib/validation";
+import { isoDate, multiBookingInputSchema } from "@/lib/validation";
 import { safeNextPath } from "@/lib/identity";
 import { isSupabaseConfigured } from "@/lib/env";
 import {
@@ -10,48 +10,87 @@ import {
   createBooking,
   getAvailableSlots,
   getCurrentUser,
+  type BookingTotals,
+  type ScheduleServiceDetail,
+  type SlotPayload,
 } from "@/server/bookings";
 
 const SUPABASE_UNAVAILABLE_MESSAGE =
   "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+const INVALID_SELECTION_MESSAGE = "Selecione ao menos um serviço válido.";
 
 export interface SlotsState {
-  slots: Array<{ startsAt: string; occupiedUntil: string; label: string }> | null;
+  slots: SlotPayload[] | null;
+  services: ScheduleServiceDetail[];
+  totals: BookingTotals | null;
   error?: string;
 }
 
 const slotsSchema = z.object({
   slug: z.string().min(1),
-  serviceId: z.string().uuid(),
+  // `serviceId` é aceito apenas para links antigos de serviço único.
+  serviceId: z.string().uuid().optional(),
+  serviceIds: z
+    .array(z.string().uuid())
+    .max(20)
+    .optional()
+    .refine((ids) => !ids || new Set(ids).size === ids.length),
   date: isoDate,
 });
 
+function selectedServiceIds(input: {
+  serviceId?: string;
+  serviceIds?: string[];
+}): string[] {
+  const ids = [...(input.serviceIds ?? [])];
+  if (input.serviceId && !ids.includes(input.serviceId)) {
+    ids.unshift(input.serviceId);
+  }
+  return [...new Set(ids)];
+}
+
 export async function fetchSlotsAction(input: unknown): Promise<SlotsState> {
   if (!isSupabaseConfigured()) {
-    return { slots: null, error: SUPABASE_UNAVAILABLE_MESSAGE };
+    return {
+      slots: null,
+      services: [],
+      totals: null,
+      error: SUPABASE_UNAVAILABLE_MESSAGE,
+    };
   }
 
   const parsed = slotsSchema.safeParse(input);
-  if (!parsed.success) return { slots: null };
+  const serviceIds = parsed.success ? selectedServiceIds(parsed.data) : [];
+  if (!parsed.success || serviceIds.length === 0) {
+    return { slots: null, services: [], totals: null };
+  }
 
   try {
-    const slots = await getAvailableSlots({
+    const available = await getAvailableSlots({
       slug: parsed.data.slug,
-      serviceId: parsed.data.serviceId,
+      serviceIds,
       date: parsed.data.date,
     });
 
-    if (!slots) {
+    if (!available) {
       return {
         slots: null,
-        error: "Não foi possível consultar a disponibilidade deste serviço.",
+        services: [],
+        totals: null,
+        error: "Não foi possível consultar a disponibilidade destes serviços.",
       };
     }
 
-    return { slots };
+    return {
+      slots: available.slots,
+      services: available.services,
+      totals: available.totals,
+    };
   } catch {
     return {
       slots: null,
+      services: [],
+      totals: null,
       error: "Falha ao consultar os horários. Verifique sua conexão e tente novamente.",
     };
   }
@@ -69,13 +108,22 @@ export async function bookSlotAction(
 
   const user = await getCurrentUser();
   const slug = String(formData.get("slug") ?? "");
-  const serviceId = String(formData.get("serviceId") ?? "");
-  const startsAt = String(formData.get("startsAt") ?? "");
   const date = String(formData.get("date") ?? "");
+  const startsAt = String(formData.get("startsAt") ?? "");
+  const serviceIds = formData
+    .getAll("serviceIds")
+    .map((value) => String(value))
+    .filter(Boolean);
+  // Compatibilidade com o formulário antigo de serviço único.
+  const legacyServiceId = String(formData.get("serviceId") ?? "");
+  if (legacyServiceId && !serviceIds.includes(legacyServiceId)) {
+    serviceIds.unshift(legacyServiceId);
+  }
 
   if (!user) {
     const query = new URLSearchParams({
-      service: serviceId,
+      service: serviceIds[0] ?? "",
+      services: serviceIds.join(","),
       date,
       slot: startsAt,
     });
@@ -83,9 +131,9 @@ export async function bookSlotAction(
     redirect(`/login?next=${encodeURIComponent(target)}`);
   }
 
-  const parsed = bookingInputSchema.safeParse({
+  const parsed = multiBookingInputSchema.safeParse({
     slug,
-    serviceId,
+    serviceIds,
     startsAt,
     customerName: formData.get("customerName"),
     customerPhone: formData.get("customerPhone"),
@@ -93,7 +141,12 @@ export async function bookSlotAction(
 
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message ?? "Dados inválidos.",
+      error:
+        parsed.error.issues.find((issue) =>
+          issue.path.includes("serviceIds"),
+        )?.message ??
+        parsed.error.issues[0]?.message ??
+        INVALID_SELECTION_MESSAGE,
     };
   }
 
@@ -101,7 +154,7 @@ export async function bookSlotAction(
   try {
     booking = await createBooking({
       slug: parsed.data.slug,
-      serviceId: parsed.data.serviceId,
+      serviceIds: parsed.data.serviceIds,
       startsAt: parsed.data.startsAt,
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone ?? "",
