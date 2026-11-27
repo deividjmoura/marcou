@@ -63,6 +63,12 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   reconhece recuperação pelo `redirectType` do auth-js (além do legado
   `flow=recovery`) e encaminha a sessão PKCE válida para `/redefinir-senha`,
   avisando quando o verificador PKCE está ausente em outro navegador.
+- Caracteres invisíveis na origem (Issue `#70`): `parseConfiguredOrigin` e
+  `trustedAppOrigin` agora removem caracteres de formato Unicode (ex.: U+2060
+  WORD JOINER, U+200B ZERO WIDTH SPACE, U+FEFF BOM) de `NEXT_PUBLIC_SITE_URL`
+  antes de montar URLs de redirect. Isso evita que o Supabase rejeite o
+  `redirectTo` por causa de um caractere invisível e faça fallback silencioso
+  para a raiz do Site URL, enviando o usuário de volta à landing page.
 
 ### Segurança
 

@@ -2,11 +2,22 @@ const DEFAULT_NEXT_PATH = "/inicio";
 const LOCAL_ORIGIN = "https://marcou.invalid";
 const LOCAL_APP_ORIGIN = "http://localhost:3000";
 
+// Caracteres de formato Unicode que podem aparecer invisivelmente em URLs
+// (ex.: U+2060 WORD JOINER, U+200B ZERO WIDTH SPACE, U+FEFF BOM). Eles não
+// fazem parte de um hostname válido e podem fazer o Supabase rejeitar o
+// `redirectTo`, caindo em fallback silencioso para a raiz do Site URL.
+const FORMAT_CHARACTERS = /[\u200B-\u200D\u2060\uFEFF]/g;
+
+/** Remove caracteres de formato invisíveis que podem contaminar uma origem. */
+export function stripFormatCharacters(value: string): string {
+  return value.replace(FORMAT_CHARACTERS, "");
+}
+
 function parseConfiguredOrigin(value: string | null | undefined): string | null {
   if (!value) return null;
 
   try {
-    const url = new URL(value);
+    const url = new URL(stripFormatCharacters(value));
     if (
       url.username !== "" ||
       url.password !== "" ||
