@@ -35,15 +35,16 @@
     "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update."
   },
   "dispatch": {
-    "instruction": "NOVA RODADA. As atribuições abaixo substituem somente as tarefas anteriores dos agentes 1 a 4. Cada agente deve ler esta seção e conferir o estado remoto atual antes de agir. Agente 5 permanece fora desta rodada e mantém sua tarefa/PR #133 sem alterações. Agente 6 mantém sua validação pendente sem alterações. Cada agente atualiza somente sua própria entrada em agents após iniciar, em marcos e ao concluir. Não fazer merge, deploy, produção, migrations remotas, e-mails, testes com contas reais ou mudanças em serviços externos sem autorização explícita.",
+    "round": "2026-11-27-round-3",
     "dispatched_at": "2026-11-27",
+    "instruction": "Leia a atribuição da sua chave em dispatch.assignments e execute somente essa tarefa. Confira SHAs/estado remoto antes de agir. Atualize apenas sua própria entrada em agents no início, em marcos relevantes e ao concluir. Registre evidências, testes, bloqueios e próxima ação. Não faça merge, deploy, produção ou alterações em serviços externos sem autorização explícita.",
     "assignments": {
-      "agent_1_pr_131": "NOVA TAREFA — compatibilidade de confirmação de agendamento: auditar a PR #68 em conjunto com a PR #131 (múltiplos serviços). Verificar no código/diffs atuais se a confirmação, resumo, preço total, duração, serviços selecionados, payloads e estados continuam corretos quando uma reserva contém vários serviços; identificar regressões, campos legados serviceId/serviceIds e compatibilidade com reservas de um serviço. Revisão somente leitura: não editar código, não alterar PRs/issues, não fazer merge. Entregar matriz arquivo/cenário/risco, evidências com SHAs exatos, testes existentes/faltantes e recomendação objetiva.",
-      "agent_2_pr_128_and_38": "NOVA TAREFA — compatibilidade lembretes x expiração: auditar PR #38 em conjunto com PR #128. Verificar se lembretes podem ser enviados/agendados para reservas expiradas, canceladas, recusadas ou já concluídas; idempotência, concorrência, timezone, reprocessamento/retry e consistência entre scheduler e worker. Conferir workflows/gates e testes DB/unitários nos SHAs remotos atuais. Revisão somente leitura: manter #38 e #128 intactas; não habilitar scheduler, não enviar notificações reais e não fazer merge. Entregar matriz de cenários, lacunas e recomendação priorizada com SHAs.",
-      "agent_3_pr_130": "NOVA TAREFA — integração recuperação de senha: revisar conjuntamente PR #127 e PR #130 nos HEADs remotos atuais. Validar o contrato completo do link/template Supabase até /auth/confirm, tratamento de code e token_hash, PKCE, origem confiável em deploy preview/produção, prevenção de open redirect/loop e comportamento após sessão estabelecida. Conferir testes, CI e documentação; comparar com PR #71 apenas para indicar o que permanece histórico/útil. Somente leitura: não editar/encerrar PRs, não enviar e-mails, não testar contas reais e não alterar Supabase/Netlify. Entregar fluxo ponta a ponta, riscos e critérios de aceite com SHAs.",
-      "agent_4_pr_39": "CONTINUIDADE — PR #39 provider agenda: o estado remoto consultado ainda mostra PR aberta/Draft e mergeable=false, HEAD 6f44b506da887ecc90486c80e6b9789578b23837 e base_sha antiga db0fd8d84e7f5a1a1b41385a9abb1cd2e4f3c63f. Revalidar branch e main atuais, identificar conflitos exatos e concluir atualização/resolução somente se for seguro e sem sobrescrever commits remotos. Não usar force push, não fazer merge/close e não tocar arquivos fora do escopo da #39. Após resolver, executar testes/CI/Preview no SHA final e registrar evidências. Se não for seguro, não alterar a branch: entregar passos mínimos e arquivos conflitantes."
-    },
-    "round": "2026-11-27-round-2"
+      "agent_1_pr_68": "PR #68 — atualização segura e cobertura da confirmação. Revalidar PR/branch contra main atual e PR #131. Atualizar a branch da #68 para a main atual resolvendo conflitos sem force-push; não incorporar/mesclar #131 enquanto ela não estiver integrada à main. Com o contrato realmente disponível na branch, acrescentar testes automatizados para confirmação e download .ics usando service_name_snapshot agregado, duração e preço. Não inventar breakdown individual se os dados booking_services não estiverem na base; registrar dependência explícita de #131 para essa evolução. Executar CI/Preview no SHA final. Não remover Draft, não mergear e não alterar outras PRs.",
+      "agent_2_pr_38_128": "PRs #38 e #128 — revisão final do cluster de lembretes/expiração após o merge da #129. Conferir os HEADs atuais, workflows, gates, timezone, idempotência, retry, concorrência e possíveis mecanismos duplicados entre lembretes e expiração. Verificar CI/test:db nos SHAs exatos de #38 e #128 e entregar decisão de arquitetura/sequência: coexistem, dependem ou precisam ser consolidadas. Somente leitura: não habilitar scheduler, não disparar notificações, não alterar workflows/PRs e não fazer merge.",
+      "agent_3_pr_130": "PR #130 — fortalecer testes locais do fluxo de recuperação. Revisar código e testes atuais de origem confiável, RedirectTo, token_hash/type=recovery, code/PKCE e prevenção de open redirect/loop. Se houver lacunas reproduzíveis, adicionar testes unitários/integração isolados com mocks no branch da #130, sem chamar Supabase/Netlify reais, sem enviar e-mails e sem usar contas reais. Atualizar CHANGELOG se exigido, executar CI e registrar SHA final. Não alterar configurações externas, não remover Draft e não fazer merge.",
+      "agent_4_pr_39": "PR #39 — revisão final após atualização da branch. O HEAD remoto observado é 7a1e270e369023020f27ea6afddb07df76a014d7, base main 69d02173653384e082476e7879ee9f33672dec72, mergeable=true; CI run 46048421298 success em todos os steps e Netlify Deploy Preview pronto. Conferir diff final, confirmar que o CI corresponde exatamente ao HEAD e revisar testes/Preview. Atualizar o relatório e recomendar pronto/não pronto, listando o que ainda depende de decisão do responsável. Não remover Draft, não mergear e não alterar outras PRs.",
+      "agent_5_calendar_audit": "PR #126 / Calendar — reavaliar dependências reais depois do fechamento sem merge da PR #123 e do avanço da #131. Comparar o diff da PR #126, seu head declarado (335e3f50...) e a branch remota atual arena/9e68c2bb-marcou (8d73650...), com main e PR #131. Identificar quais commits/arquivos de #123 são necessários, o que #131 substitui e se #126 pode ser atualizada com segurança ou precisa ser reestruturada. Somente leitura: não rebasear, cherry-pickar, editar branch, migrations ou serviços. Entregar sequência exata e SHAs."
+    }
   },
   "shared_project_state": {
     "netlify": {
@@ -244,18 +245,19 @@
       "pull_requests": [
         39
       ],
-      "status": "conflict_diagnosis_pending",
+      "status": "branch_updated_ci_green_final_review_pending",
       "active_assignment": "PR #39: HEAD 6f44b506da887ecc90486c80e6b9789578b23837, base SHA registrado diverge da main e PR está mergeable=false. Diagnostique conflitos exatos entre feat/24-provider-agenda e main; atualize a branch com segurança sem sobrescrever trabalho remoto, resolva somente conflitos pertencentes à PR #39 e execute testes/CI/Preview no SHA final. Sem force push, merge ou fechamento. Se não for seguro, entregue passos mínimos para Codespaces.",
-      "current_state": "PR #39 continua aberta/Draft, HEAD 6f44b506da887ecc90486c80e6b9789578b23837; CI associado ao HEAD está verde, mas a PR está mergeable=false e base_sha informado é db0fd8d84e7f5a1a1b41385a9abb1cd2e4f3c63f, diferente da main atual 69d02173653384e082476e7879ee9f33672dec72.",
-      "next_action": "Diagnosticar conflitos com main atual e atualizar branch sem sobrescrever trabalho remoto; sem force push/merge.",
+      "current_state": "PR #39 atualizada para HEAD 7a1e270e369023020f27ea6afddb07df76a014d7, base main 69d02173653384e082476e7879ee9f33672dec72; GitHub informa mergeable=true. CI run 46048421298 (#281) completed/success no SHA consultado; quality steps check:changelog, lint, typecheck, npm test, test:db e build todos success. Netlify Deploy Preview ready em comentário do bot para esse HEAD. PR continua aberta e Draft.",
+      "next_action": "Executar revisão final do diff/Preview e registrar parecer; não remover Draft, não mergear.",
       "last_verified": {
         "branch": "feat/24-provider-agenda",
-        "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
+        "head_sha": "7a1e270e369023020f27ea6afddb07df76a014d7",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "patch": "patches/pr-39/pr-39-agenda.patch",
         "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
         "previous_local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
-        "notes": "Historical values only; recheck. PR previously Draft. Do not merge/close."
+        "notes": "Historical values only; recheck. PR previously Draft. Do not merge/close.",
+        "ci": "Run 46048421298 (#281) completed success; check:changelog, lint, typecheck, npm test, test:db, build success. Netlify Preview ready."
       },
       "updates": [
         {
@@ -269,6 +271,16 @@
             "PR mergeable=false; conflitos/estado de atualização precisam ser diagnosticados."
           ],
           "next_action": "Inspecionar conflitos e atualizar branch com segurança, sem force push/merge."
+        },
+        {
+          "timestamp": "2026-11-27T18:26:20.149Z",
+          "task": "Atualização de estado após resolução de conflitos da PR #39",
+          "status": "branch_updated_ci_green_final_review_pending",
+          "result": "Estado remoto atual diverge do relatório anterior: PR #39 HEAD 7a1e270e369023020f27ea6afddb07df76a014d7, mergeable=true, base main 69d02173653384e082476e7879ee9f33672dec72. CI run 46048421298 success em todos os steps e Netlify Deploy Preview pronto. Solicito revisão final do diff e parecer.",
+          "head_sha": "7a1e270e369023020f27ea6afddb07df76a014d7",
+          "tests": "CI #281: check:changelog, lint, typecheck, npm test, test:db e build success.",
+          "blockers": [],
+          "next_action": "Revisão final do diff/Preview; sem merge."
         }
       ]
     },
@@ -360,10 +372,10 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "ci_retry_pending",
+      "status": "validation_passed_ci_green_pending_owner_review",
       "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
-      "current_state": "A primeira CI da PR #134 executou npm install com sucesso, mas parou no primeiro gate check:changelog: detectou alteração em package.json sem entrada nova no CHANGELOG.md. Nenhum dos testes seguintes foi executado nessa tentativa. Corrigido o motivo na branch de validação: adicionado registro em CHANGELOG.md explicando que test:db passa a executar booking-concurrency.mjs. Novo HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef; branch agora 2 commits à frente/0 atrás de main. PR #134 continua Draft; GitHub reportou mergeable=false imediatamente após atualização, aguardando recálculo/CI. Nova CI #283 (run 46048704272) iniciou no HEAD atualizado 1ee63754a08adb68e15f05b73b86861ba4fd68ef; setup/checkout concluídos, npm install ainda em andamento na última consulta. Os gates restantes aguardam execução.",
-      "next_action": "Aguardar conclusão do run 46048704272 e validar check:changelog, lint, typecheck, npm test, npm run test:db (incluindo booking-concurrency.mjs) e build no SHA 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Não fazer merge.",
+      "current_state": "Validação concluída com sucesso na PR #134. HEAD exato 1ee63754a08adb68e15f05b73b86861ba4fd68ef; CI run 46048704272 (#283) completed/success. Todos os steps passaram: install, check:changelog, lint, typecheck, npm test (150/150 em 18 arquivos), test:db e build. O npm run test:db executou explicitamente scripts/booking-concurrency.mjs; harness concluiu 25 passou / 0 falhou, incluindo duas sessões concorrentes, transições mutuamente excludentes, estado final válido e ausência de eventos duplicados. PR #134 continua aberta, Draft, mergeable=true. Sem merge/deploy.",
+      "next_action": "Aguardar revisão/autorização do responsável para eventual merge da PR #134. Não alterar branch, não remover Draft e não fazer merge por conta própria.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
@@ -379,26 +391,14 @@
         "validation_branch_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
         "validation_branch_ahead": 1,
         "validation_branch_behind": 0,
-        "ci": "Run 46048704272 (#283) em andamento no SHA exato 1ee63754a08adb68e15f05b73b86861ba4fd68ef; setup/checkout success, npm install in_progress, demais steps pending.",
-        "notes": "Primeira CI: npm install success; check:changelog failure porque package.json mudou sem CHANGELOG; lint/typecheck/npm test/test:db/build skipped. Alteração adicionada em CHANGELOG.md, diff total agora 2 arquivos (package.json e CHANGELOG.md), sem migrations ou lógica de produção.",
+        "ci": "Run 46048704272 (#283) success no SHA exato; install, check:changelog, lint, typecheck, npm test 150/150, test:db e build todos success.",
+        "notes": "test:db executou db-check, social-foundation-check, identity-check, discovery-check e booking-concurrency.mjs. Harness concorrente: 25 passou, 0 falhou. PR #134 aberta/Draft/mergeable=true; sem merge.",
         "pr": 134,
         "pr_url": "https://github.com/deividjmoura/marcou/pull/134",
         "pr_state": "open_draft",
         "workflow": "CI trigger confirmado por pull_request para main; runs ainda não visíveis na consulta inicial"
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T18:19:51.426Z",
-          "task": "Abrir PR Draft de validação para executar CI do wiring do harness concorrente",
-          "status": "ci_pending",
-          "result": "Confirmei que o script booking-concurrency.mjs estava fora do npm run test:db na main e dentro na branch isolada. Workflow CI executa test:db em pull_request para main. Abri PR #134 em Draft para disparar CI, sem merge; PR mergeable=true e SHA permanece 1bf0a601d95bde3fb45e4008a60dac677b5ab971. Runs/status ainda vazios na primeira consulta.",
-          "head_sha": "1bf0a601d95bde3fb45e4008a60dac677b5ab971",
-          "tests": "Inspeção estática do diff e workflow; execução real ainda pendente.",
-          "blockers": [
-            "Aguardar workflow CI iniciar e concluir no SHA exato."
-          ],
-          "next_action": "Acompanhar CI da PR #134 e conferir resultado de todos os steps, especialmente test:db."
-        },
         {
           "timestamp": "2026-11-27T18:20:28.341Z",
           "task": "Corrigir gate de changelog identificado na primeira CI da PR #134",
@@ -422,6 +422,16 @@
             "Aguardar conclusão da CI."
           ],
           "next_action": "Verificar todos os steps, especialmente test:db e o harness concorrente."
+        },
+        {
+          "timestamp": "2026-11-27T18:26:20.149Z",
+          "task": "Validação final do wiring de booking-concurrency no test:db",
+          "status": "validation_passed_ci_green_pending_owner_review",
+          "result": "CI run 46048704272 (#283) concluiu success no SHA 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Todos os steps passaram. npm test: 150/150 em 18 arquivos. test:db executou o novo booking-concurrency.mjs e terminou 25 passou/0 falhou, incluindo transições concorrentes e ausência de eventos duplicados. PR #134 continua Draft/open/mergeable=true.",
+          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
+          "tests": "install, check:changelog, lint, typecheck, npm test 150/150, test:db com booking-concurrency 25/25 e build: success.",
+          "blockers": [],
+          "next_action": "Aguardar revisão/autorização do responsável; sem merge."
         }
       ]
     },
