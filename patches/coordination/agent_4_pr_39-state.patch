@@ -1,0 +1,88 @@
+diff --git a/.agent-coordination/state.json b/.agent-coordination/state.json
+index 7e4388d..18222c9 100644
+--- a/.agent-coordination/state.json
++++ b/.agent-coordination/state.json
+@@ -61,7 +61,9 @@
+   "agents": {
+     "agent_1_pr_131": {
+       "scope": "PR #131 multi-service model and privilege matrix",
+-      "pull_requests": [131],
++      "pull_requests": [
++        131
++      ],
+       "status": "prompt_sent_after_canceling_accidental_broad_prompt",
+       "current_state": "Final security/integrity audit requested. Mandatory focus: effective grants and RLS on notifications for public, anon and authenticated.",
+       "next_action": "Audit notifications grants and RLS, migrations, tests and CI at exact current SHA; report verdict and update this file.",
+@@ -75,7 +77,10 @@
+     },
+     "agent_2_pr_128_and_38": {
+       "scope": "PR #128 booking expiration and PR #38 reminders",
+-      "pull_requests": [128, 38],
++      "pull_requests": [
++        128,
++        38
++      ],
+       "status": "awaiting_agent_execution",
+       "current_state": "Joint final review requested, with separate verdicts per PR.",
+       "next_action": "Verify expiration/idempotency/scheduler default-off for #128; verify cron auth, service-role scope, env failures, duplicate-send protection and audit for #38. Confirm current SHAs and CI.",
+@@ -89,7 +94,9 @@
+     },
+     "agent_3_pr_130": {
+       "scope": "PR #130 password recovery code/documentation review",
+-      "pull_requests": [130],
++      "pull_requests": [
++        130
++      ],
+       "status": "awaiting_agent_execution",
+       "current_state": "Review code and operational docs only. Supabase auth configuration has been updated and read back successfully; Netlify production URL was confirmed by user.",
+       "next_action": "Verify recovery flow contract, preview origin handling, env/build documentation, OAuth redirect preservation and exact current SHA. Do not touch external services or send email.",
+@@ -103,20 +110,40 @@
+     },
+     "agent_4_pr_39": {
+       "scope": "PR #39 provider agenda",
+-      "pull_requests": [39],
+-      "status": "awaiting_agent_execution",
+-      "current_state": "Update the real feature branch safely, then validate the exact resulting SHA.",
+-      "next_action": "Recheck main and PR branch against historical references, validate/apply patch without overwriting remote work, then run tests and wait for CI and preview on the new SHA.",
++      "pull_requests": [
++        39
++      ],
++      "status": "patch_ready_push_blocked",
++      "current_state": "Resolução da PR #39 validada e reaplicada: o patch aplica limpo sobre a main 69d02173653384e082476e7879ee9f33672dec72 e reproduz exatamente a árvore 3f8890e1a097069b2a3cc224c8b88dcdead3b101. A branch real feat/24-provider-agenda segue em 6f44b506da887ecc90486c80e6b9789578b23837 (Draft, CONFLICTING): este agente não tem permissão de sessão para push fora de arena/9c0da280-marcou, então a atualização remota e o CI no novo SHA continuam pendentes.",
++      "next_action": "No Codespaces: git fetch origin; git switch -C feat/24-provider-agenda origin/main; git show origin/arena/9c0da280-marcou:patches/pr-39/pr-39-agenda.patch | git apply --3way; commit; git push --force-with-lease origin feat/24-provider-agenda. Depois registrar o novo HEAD, rodar check:changelog, lint, typecheck, test, test:db, audit e build e aguardar CI e Deploy Preview nesse SHA. Não mergear enquanto Draft/conflitante/sem CI.",
+       "last_verified": {
++        "verified_at": "2026-11-27",
+         "branch": "feat/24-provider-agenda",
+         "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
+         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+         "patch": "patches/pr-39/pr-39-agenda.patch",
+         "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
+-        "previous_local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
+-        "notes": "All values are historical references and must be rechecked. PR was previously Draft; do not merge or close."
++        "patch_bytes": 36241,
++        "local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
++        "commit_in_work_branch": "e8e02adf4135ea8944912b18c990c97941db3f31",
++        "ci": null,
++        "ci_note": "Somente execução antiga de 2026-11-16 no HEAD 6f44b50; nenhum CI no SHA da resolução.",
++        "deploy_preview": null,
++        "deploy_preview_note": "Só status Vercel de 2026-11-16 no HEAD 6f44b50; sem Deploy Preview Netlify nesse SHA.",
++        "notes": "Valores reconferidos neste turno; a árvore local é reprodutível aplicando o patch sobre 69d0217."
+       },
+-      "updates": []
++      "updates": [
++        {
++          "timestamp": "2026-11-27",
++          "task": "PR #39 - portar a resolução da agenda para a branch real e validar o SHA final",
++          "status": "blocked_on_push_permission",
++          "result": "main e branch da PR sem mudança; patch íntegro (SHA-256 eaba825b...), aplica com --check em clone limpo e reproduz a árvore 3f8890e1...; validações repetidas: changelog ok, lint 0 erros, typecheck ok, 165 testes, test:db 188, audit 0/0, build ok. Branch remota não atualizada: sessão restrita a push em arena/9c0da280-marcou.",
++          "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
++          "tests": "check:changelog ok; lint 0 erros/3 warnings preexistentes; typecheck ok; vitest 165 passed; test:db 188 passed; audit 0 falhas; build ok",
++          "blockers": "Sem permissão de sessão para push em feat/24-provider-agenda; CI e preview não podem ser gerados no SHA da resolução.",
++          "next_action": "Aplicar o patch no Codespaces, push --force-with-lease, registrar o novo HEAD, rodar CI e conferir preview nesse SHA; não mergear em Draft."
++        }
++      ]
+     }
+   }
+-}
+\ No newline at end of file
++}
