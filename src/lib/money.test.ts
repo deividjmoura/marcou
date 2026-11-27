@@ -19,6 +19,7 @@ describe("parseBrlToCents", () => {
     ["1.234", 123400],
     ["1.234.567", 123456700],
     ["12.5", 1250],
+    ["12.34", 1234],
     ["12.50", 1250],
     ["1234.56", 123456], // formato do formulário de edição (toFixed(2))
     // prefixo e espaços
