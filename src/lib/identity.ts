@@ -42,10 +42,9 @@ function netlifyPreviewOrigin(value: string | null | undefined): string | null {
 }
 
 /**
- * Auth links/redirects must be built from trusted deployment configuration.
- * Netlify's CONTEXT + DEPLOY_PRIME_URL are used only for deploy previews and
- * the preview hostname is strictly validated. Request Host/origin is ignored
- * in production; localhost is the only request-origin fallback in development.
+ * Auth links/redirects use deployment metadata captured by next.config.ts at
+ * build time. Preview hostnames are strictly validated. Request Host/origin is
+ * ignored in production/previews; localhost is the only dev request fallback.
  */
 export function trustedAppOrigin(requestOrigin?: string): string {
   if (process.env.MARCOU_AUTH_DEPLOY_CONTEXT === "deploy-preview") {
