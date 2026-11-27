@@ -5,10 +5,10 @@ const LOCAL_APP_ORIGIN = "http://localhost:3000";
 // Caracteres de formato Unicode que podem aparecer invisivelmente em URLs
 // (ex.: U+2060 WORD JOINER, U+200B ZERO WIDTH SPACE, U+FEFF BOM). Eles não
 // fazem parte de um hostname válido e podem fazer o Supabase rejeitar o
-// `redirectTo`, caindo em fallback silencioso para a raiz do Site URL.
-const FORMAT_CHARACTERS = /[\\u200B-\\u200D\\u2060\\uFEFF]/g;
+// \`redirectTo\`, caindo em fallback silencioso para a raiz do Site URL.
+const FORMAT_CHARACTERS = /[\u200B-\u200D\u2060\uFEFF]/g;
 const NETLIFY_SITE_HOST = "marcoou.netlify.app";
-const NETLIFY_DEPLOY_PREVIEW_HOST = /^deploy-preview-\\d+--marcoou\\.netlify\\.app$/i;
+const NETLIFY_DEPLOY_PREVIEW_HOST = /^deploy-preview-\d+--marcoou\.netlify\.app$/i;
 
 /** Remove caracteres de formato invisíveis que podem contaminar uma origem. */
 export function stripFormatCharacters(value: string): string {
