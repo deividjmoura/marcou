@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
-import { NextResponse } from "next/server";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { calendarNoticeRedirect, calendarSiteOrigin } from "@/server/calendar/http";
 import { calendarRedirectUri } from "@/server/calendar/oauth";
