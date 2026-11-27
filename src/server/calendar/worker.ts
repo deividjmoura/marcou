@@ -298,7 +298,7 @@ export async function runCalendarSync(
       }
     } catch (error) {
       // O job permanece em processing e será reivindicado de novo depois do
-      // timeout; o processamento é idempotente.
+      // timeout; o lease token impede que este worker antigo confirme o novo claim.
       summary.persistErrors += 1;
       deps.log({ event: "job_persist_failed", jobId: job.id, code: calendarErrorCode(error) });
     }
