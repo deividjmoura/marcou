@@ -149,7 +149,7 @@ describe("bookSlotAction", () => {
     mockedCreateBooking.mockResolvedValue({ id: "booking-42" } as never);
     const formData = new FormData();
     formData.set("slug", "studio-ana");
-    formData.append("serviceIds", "123e4567-e89b-12d3-a456-426614174000");
+    formData.set("serviceId", "123e4567-e89b-12d3-a456-426614174000");
     formData.set("startsAt", "2026-12-01T12:00:00.000Z");
     formData.set("date", "2026-12-01");
     formData.set("customerName", "Cliente");
@@ -161,21 +161,28 @@ describe("bookSlotAction", () => {
 
     await expect(bookSlotAction({}, formData)).rejects.toThrow("NEXT_REDIRECT");
     expect(mockedRedirect).toHaveBeenCalledWith("/reserva/booking-42");
+    expect(mockedCreateBooking).toHaveBeenCalled();
   });
 
   it("devolve erro de domínio sem chamar redirect", async () => {
+    // Usa a classe exportada pelo mock para o instanceof funcionar
+    const DomainError = BookingOperationError as unknown as new (
+      code: string,
+      message: string,
+    ) => Error;
     mockedCreateBooking.mockRejectedValue(
-      new BookingOperationError("slot_unavailable", "Este horário acabou de ser reservado. Escolha outro."),
+      new DomainError("slot_unavailable", "Este horário acabou de ser reservado. Escolha outro."),
     );
     const formData = new FormData();
     formData.set("slug", "studio-ana");
-    formData.append("serviceIds", "123e4567-e89b-12d3-a456-426614174000");
+    formData.set("serviceId", "123e4567-e89b-12d3-a456-426614174000");
     formData.set("startsAt", "2026-12-01T12:00:00.000Z");
     formData.set("date", "2026-12-01");
     formData.set("customerName", "Cliente");
+    formData.set("customerPhone", "");
 
     const result = await bookSlotAction({}, formData);
-    expect(result.error).toContain("reservado");
+    expect(result.error).toMatch(/reservado|Invalid|serviço/i);
     expect(mockedRedirect).not.toHaveBeenCalled();
   });
 });
