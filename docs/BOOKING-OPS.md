@@ -73,21 +73,25 @@ A UI **não** é a fonte da verdade: revalidação é no banco.
 
 Na criação de nova reserva, conflitos pendentes vencidos no intervalo são expirados antes do insert (serialização + limpeza).
 
-### O que falta (ops)
+### O que já está versionado e o que depende de operação
 
 | Item | Estado |
 |------|--------|
-| Cron / scheduler periódico | **Não** versionado no repo |
-| Secret de autenticação do job | Pendente (#26/#30) |
-| Observabilidade (métricas de quantos expirou) | Só retorno integer da função |
-| Ambiente staging vs prod | Depende de platform |
+| Cron / scheduler periódico | **Versionado** em `.github/workflows/booking-expiration.yml` (PR #128, mecanismo canônico único para `expire_stale_bookings()`); **desligado por padrão** (`BOOKING_EXPIRATION_ENABLED != 'true'`) |
+| Isolamento de ambiente | Restrito ao GitHub Environment `booking-expiration-staging` com validação de hostname e **recusa explícita** do project ref de produção (`peornypgltuueubmsucm`) |
+| Secret de autenticação do job | Provisionamento pendente pelo responsável em `booking-expiration-staging` (#30); ver `docs/BOOKING-EXPIRATION-SCHEDULER.md` |
+| Observabilidade | Histórico de runs do GitHub Actions + log de `expired_count` sem PII; alertas externos pendentes (#30) |
 
-**Requisitos do job (quando autorizado):**
+Propostas paralelas de endpoint HTTP de expiração (ex.: `POST /api/bookings/expire`)
+foram descartadas para evitar competição entre múltiplos schedulers. A rota
+`GET /api/cron` (PR #38) é exclusiva de lembretes (`create_booking_reminders(24)`).
 
-1. Chamar só com `service_role` ou edge function protegida por secret.
-2. Idempotente (já é).
-3. Logs: timestamp, `v_count`, erros.
-4. Intervalo sugerido: a cada 1–5 minutos (produto pode ajustar).
+**Requisitos operacionais (ativação pelo responsável):**
+
+1. Chamar só com `service_role` em ambiente isolado (staging primeiro).
+2. Manter idempotência (já garantida pela RPC e testada em `scripts/db-check.mjs`).
+3. Logs: timestamp UTC, status e `expired_count`, sem corpo de erro da API ou PII.
+4. Intervalo versionado: a cada 5 minutos (best-effort no GitHub Actions; criação de reserva continua expirando conflitos inline).
 5. Não apagar linhas de `bookings` / `booking_events`.
 
 ---
@@ -149,7 +153,7 @@ Falhas esperadas (aplicação deve mapear mensagens):
 | Critério | Status |
 |----------|--------|
 | Matriz de transições documentada e alinhada ao código | **Sim** (este doc + testes de domínio) |
-| Expiração automática por mecanismo agendado documentado | **Documentado**; **execução agendada ainda não provisionada** |
+| Expiração automática por mecanismo agendado documentado | **Sim** (`.github/workflows/booking-expiration.yml` + `docs/BOOKING-EXPIRATION-SCHEDULER.md`, desligado por padrão até configuração de staging pelo responsável) |
 | Cancelamento respeita regras definidas e autorização | **Autorização sim**; **regras comerciais de antecedência/reembolso pendentes** |
 | Horários liberados sem perder auditoria | **Sim** (status + `booking_events`) |
 | Testes de integração e docs atualizados | **Docs sim**; testes já existentes no motor; sem novos testes de cron |

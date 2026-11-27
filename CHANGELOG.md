@@ -11,6 +11,16 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Documentação operacional consolidada em `docs/PLATFORM.md` (Issues `#30` e
+  `#20`): inventário da stack na Netlify + Supabase, matriz verificada de
+  variáveis de ambiente (`PUBLIC` vs `SERVER-ONLY / SECRET`), tabela de
+  mecanismos canônicos únicos de schedulers (expiração, lembretes e Calendar),
+  checklist pré-deploy, procedimento de rollback, backup/observabilidade e
+  pendências de provisionamento do responsável.
+- Cobertura unitária dedicada para `isCronAuthorized` em
+  `src/server/cron-auth.test.ts` (fail-closed sem `CRON_SECRET`, header ausente,
+  esquema inválido, comparação de comprimento/conteúdo em tempo constante e
+  case-insensitivity de `Bearer`).
 - Workflow de expiração automática exclusivamente (PR #128): GitHub Actions protegido por gate, Environment staging, validação de projeto Supabase, recusa explícita do project ref de produção, headers temporários e timeout/retry; reutiliza `expire_stale_bookings()` já existente e não cria RPC/migration de expiração.
 - Pipeline CI passa a executar `npm run audit` junto às validações de PR.
 
@@ -60,6 +70,18 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
+- Hardening do pipeline CI (`.github/workflows/ci.yml`, substituindo a parte
+  exclusiva da PR `#32`): adiciona `concurrency` (cancela runs redundantes fora
+  da `main`), `timeout-minutes: 20`, steps nomeados e remove a execução
+  duplicada de `npm run audit`, preservando todos os gates obrigatórios
+  (`check:changelog`, `lint`, `typecheck`, `audit`, `test`, `test:db`, `build`).
+- `.env.example` reorganizado com classificação explícita `PUBLIC` vs
+  `SERVER-ONLY / SECRET` e lista comentada (sem valores) das variáveis
+  server-side existentes na `main`, apontando para `docs/PLATFORM.md`.
+- Documentação de schedulers alinhada em `docs/NOTIFICACOES.md`,
+  `docs/BOOKING-OPS.md` e `README.md`: política explícita de retries para
+  `GET /api/cron`, consolidação do mecanismo canônico único de expiração vs
+  lembretes e referência à documentação de plataforma.
 - Auditoria de segredos (`scripts/quality-audit.mjs`) passa a aceitar a forma `${{ secrets.NOME }}` do GitHub Actions como referência a placeholder, eliminando falso positivo em workflows legítimos; atribuições literais de valor e JWTs continuam sendo acusados.
 - `npm run test:db` passa a executar também `scripts/booking-concurrency.mjs`, integrando à validação padrão os cenários concorrentes de criação e transição de agendamentos.
 - Fluxo de login por senha (`loginAction`), cadastro imediato (`signupAction`),

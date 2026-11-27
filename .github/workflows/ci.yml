@@ -1,27 +1,54 @@
 name: CI
 
+# Platform hardening (Issue #30): gates claros, sem continue-on-error.
+# Não enfraquecer checks. Deploy remoto permanece manual e autorizado.
+# Sem cache: npm — o repositório não versiona package-lock.json.
+
 on:
   push:
     branches: ["main", "design/identidade-visual"]
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund --legacy-peer-deps
-      - run: npm run check:changelog
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run audit
-      - run: npm test
-      - run: npm run test:db
-      - run: npm run audit
-      - run: npm run build
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund --legacy-peer-deps
+
+      - name: Check changelog
+        run: npm run check:changelog
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Quality audit
+        run: npm run audit
+
+      - name: Unit / domain tests
+        run: npm test
+
+      - name: Database integration tests
+        run: npm run test:db
+
+      - name: Production build
+        run: npm run build
