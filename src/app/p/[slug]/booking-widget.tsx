@@ -140,7 +140,6 @@ export function BookingWidget({
   }, [date]);
 
   const selectedServices = services.filter((item) => selectedIds.includes(item.id));
-  const primaryService = selectedServices[0];
   const servicesLabel =
     selectedServices.length === 0
       ? ""

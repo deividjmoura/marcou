@@ -422,6 +422,12 @@ export async function transitionBooking(params: {
   return booking;
 }
 
+export interface ProviderBookingsResult {
+  bookings: Booking[];
+  /** `true` quando a consulta falhou; distingue falha de agenda vazia. */
+  failed: boolean;
+}
+
 export async function listProviderBookingsForPanel(
   providerId: string,
 ): Promise<ProviderBookingsResult> {
