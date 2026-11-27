@@ -547,8 +547,148 @@ console.log("\n[isolamento multi-tenant]");
 
 console.log("\n[expiração em lote]");
 {
-  const result = await db.query(`select public.expire_stale_bookings() as total`);
-  check("função de expiração em lote executa", Number(result.rows[0].total) >= 0);
+  const fixtures = [];
+  const createExpirationFixture = async ({ status, expiresAt, startsAt }) => {
+    const row = (
+      await db.query(
+        `insert into public.bookings (
+          provider_id, customer_id, service_id, starts_at, ends_at, occupied_until,
+          timezone, service_name_snapshot, duration_minutes_snapshot, price_cents_snapshot,
+          deposit_cents_snapshot, buffer_minutes_snapshot, status, expires_at
+        ) values (
+          $1, $2, $3, $4::timestamptz, $4::timestamptz + interval '1 hour',
+          $4::timestamptz + interval '1 hour', 'America/Sao_Paulo', 'Serviço 60',
+          60, 8000, 2000, 0, $5::public.booking_status, $6::timestamptz
+        ) returning id, status, expires_at`,
+        [providerA, customers[0], serviceA1, startsAt, status, expiresAt],
+      )
+    ).rows[0];
+    fixtures.push(row);
+    return row;
+  };
+
+  const eligiblePayment = await createExpirationFixture({
+    status: "pending_payment",
+    expiresAt: "2000-01-01T00:00:00.000Z",
+    startsAt: "2030-01-01T10:00:00.000Z",
+  });
+  const eligibleReview = await createExpirationFixture({
+    status: "pending_review",
+    expiresAt: "2000-01-01T00:00:00.000Z",
+    startsAt: "2030-01-02T10:00:00.000Z",
+  });
+  const futureHold = await createExpirationFixture({
+    status: "pending_payment",
+    expiresAt: "2999-01-01T00:00:00.000Z",
+    startsAt: "2030-01-03T10:00:00.000Z",
+  });
+  const confirmedPastExpiry = await createExpirationFixture({
+    status: "confirmed",
+    expiresAt: "2000-01-01T00:00:00.000Z",
+    startsAt: "2030-01-04T10:00:00.000Z",
+  });
+  const cancelledPastExpiry = await createExpirationFixture({
+    status: "cancelled",
+    expiresAt: "2000-01-01T00:00:00.000Z",
+    startsAt: "2030-01-05T10:00:00.000Z",
+  });
+
+  const eligibleIds = [eligiblePayment.id, eligibleReview.id];
+  const nonEligibleIds = [futureHold.id, confirmedPastExpiry.id, cancelledPastExpiry.id];
+  const serviceRoleA = await asRole("service_role");
+  const first = Number(
+    (await serviceRoleA.query(`select public.expire_stale_bookings() as total`)).rows[0].total,
+  );
+  check("batch expira exatamente os holds vencidos", first === 2, `obteve ${first}`);
+
+  const eligibleStatuses = (
+    await db.query(`select id, status from public.bookings where id = any($1::uuid[])`, [eligibleIds])
+  ).rows;
+  check(
+    "pending_payment e pending_review vencidos ficam expired",
+    eligibleStatuses.length === 2 && eligibleStatuses.every((row) => row.status === "expired"),
+    JSON.stringify(eligibleStatuses),
+  );
+
+  const nonEligibleStatuses = (
+    await db.query(`select id, status from public.bookings where id = any($1::uuid[])`, [nonEligibleIds])
+  ).rows;
+  check(
+    "holds futuros, confirmados e cancelados não são alterados",
+    nonEligibleStatuses.length === 3 &&
+      nonEligibleStatuses.some((row) => row.id === futureHold.id && row.status === "pending_payment") &&
+      nonEligibleStatuses.some((row) => row.id === confirmedPastExpiry.id && row.status === "confirmed") &&
+      nonEligibleStatuses.some((row) => row.id === cancelledPastExpiry.id && row.status === "cancelled"),
+    JSON.stringify(nonEligibleStatuses),
+  );
+
+  const eventRows = (
+    await db.query(
+      `select booking_id, count(*)::int as total
+         from public.booking_events
+        where booking_id = any($1::uuid[]) and event_type = 'booking.expired'
+        group by booking_id`,
+      [eligibleIds],
+    )
+  ).rows;
+  check(
+    "cada reserva elegível recebe exatamente um evento booking.expired",
+    eventRows.length === 2 && eventRows.every((row) => row.total === 1),
+    JSON.stringify(eventRows),
+  );
+
+  const second = Number(
+    (await serviceRoleA.query(`select public.expire_stale_bookings() as total`)).rows[0].total,
+  );
+  check("execução repetida não expira nem duplica eventos", second === 0, `obteve ${second}`);
+  const eventCountAfterRetry = Number(
+    (
+      await db.query(
+        `select count(*)::int as total from public.booking_events
+          where booking_id = any($1::uuid[]) and event_type = 'booking.expired'`,
+        [eligibleIds],
+      )
+    ).rows[0].total,
+  );
+  check("idempotência preserva total de eventos", eventCountAfterRetry === 2, `obteve ${eventCountAfterRetry}`);
+
+  const concurrentFixture = await createExpirationFixture({
+    status: "pending_payment",
+    expiresAt: "2000-01-01T00:00:00.000Z",
+    startsAt: "2030-01-06T10:00:00.000Z",
+  });
+  const concurrentClients = [await asRole("service_role"), await asRole("service_role")];
+  const concurrentResults = await Promise.all(
+    concurrentClients.map((client) =>
+      client.query(`select public.expire_stale_bookings() as total`),
+    ),
+  );
+  const concurrentCounts = concurrentResults.map((result) => Number(result.rows[0].total));
+  check(
+    "execuções concorrentes expiram a mesma reserva apenas uma vez",
+    concurrentCounts.reduce((sum, count) => sum + count, 0) === 1 &&
+      concurrentCounts.every((count) => count === 0 || count === 1),
+    JSON.stringify(concurrentCounts),
+  );
+  const concurrentState = (
+    await db.query(
+      `select b.status, count(e.id)::int as events
+         from public.bookings b
+         left join public.booking_events e
+           on e.booking_id = b.id and e.event_type = 'booking.expired'
+        where b.id = $1
+        group by b.id, b.status`,
+      [concurrentFixture.id],
+    )
+  ).rows[0];
+  check(
+    "concorrência deixa status expired e um evento",
+    concurrentState.status === "expired" && concurrentState.events === 1,
+    JSON.stringify(concurrentState),
+  );
+
+  await serviceRoleA.end();
+  await Promise.all(concurrentClients.map((client) => client.end()));
 }
 
 console.log("\n[notificações]");
