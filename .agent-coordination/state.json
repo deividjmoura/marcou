@@ -1559,7 +1559,8 @@
       "scope": "Privilégios/segurança de banco e fechamento do Calendar (V1 já na main)",
       "pull_requests": [
         136,
-        41
+        41,
+        141
       ],
       "issues": [
         125,
@@ -1609,8 +1610,8 @@
           "A1-T1 (migration da #131)"
         ]
       },
-      "current_state": "A4-T2 concluída: PR #41 fechada como superada pela #117, com evidência registrada. A4-T3 auditou a Calendar V1 já integrada pela #135 na main 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170: OAuth state atômico e vinculado ao usuário, scope estrito, tokens server-side cifrados, payload sem PII, RLS/grants e retries documentados/testados. Lacunas confirmadas para correção: callback usa request.url.origin como fallback quando NEXT_PUBLIC_SITE_URL ausente; claim/ack do worker não tem fencing token, permitindo worker antigo atualizar job depois de reclaim por timeout. A4-T1 (#136) segue dependente da migration da #131 ainda não mergeada.",
-      "next_action": "Criar PR de hardening Calendar com teste para callback fail-closed e fencing token de lease no outbox; executar CI. Em paralelo, auditar branches antigas via comparação de commits. Após Agent1 integrar #131, atualizar #136, rodar test:db completo e mergear se checklist verde.",
+      "current_state": "A4-T2 concluída: PR #41 fechada como superada pela #117, com evidência registrada. A4-T3: PR #141 aberta para corrigir callback OAuth fail-closed, fencing do lease, revogação externa retryable e search_path das funções Calendar. PR sem conflito; CI ainda pendente no HEAD 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1 (base main cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b). Não mergear até todos os checks passarem no SHA exato. A4-T4: branches antigas auditadas; tabela de disposição abaixo, sem tocar em branches nem nos seis arquivos staged locais. A4-T1 (#136) permanece bloqueada pela migration da #131.",
+      "next_action": "Aguardar CI da #141, revisar os checks no SHA 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1 e corrigir qualquer falha. Após CI verde, mergear #141 e fechar #29 com evidência do V1. Depois da integração da #131 pelo Agent1, atualizar #136 sem force-push, garantir privileges-check e calendar-check em test:db, rodar CI e mergear só com checklist verde.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1623,6 +1624,290 @@
             "#136 depende da migration 20261125130000_table_privileges_matrix.sql da PR #131 (Agent1)."
           ],
           "next_action": "Implementar e testar as duas lacunas do Calendar em branch/PR própria; inventariar branches antigas; depois destravar #136 após merge da #131."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "A4-T3/A4-T4: PR #141 de hardening Calendar e inventário das branches antigas",
+          "status": "in_progress_ci_pending",
+          "result": "PR #141 aberta: https://github.com/deividjmoura/marcou/pull/141, head 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1, base main cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b. Corrige callback sem fallback Host, lease fencing, retry da revogação externa, search_path pg_catalog/public e liga calendar-check a test:db. CI ainda não concluiu; merge não executado. A4-T4 comparou seis branches, registrou commits exclusivos/first-parent e disposição APAGAR/PRESERVAR; nenhuma branch foi modificada.",
+          "head_sha": "PR #141 head:979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; main base:cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b",
+          "tests": "CI da #141 pendente no momento do registro. Testes adicionados: callback fail-closed; origens HTTP(S); fencing unitário e PostgreSQL; revogação retryable; grants/search_path; calendar-check em npm run test:db.",
+          "blockers": [
+            "Aguardar CI verde no SHA exato da #141.",
+            "#136 depende da migration da #131 (Agent1)."
+          ],
+          "next_action": "Aguardar checks #141; se verdes, mergear. Depois da #131, alinhar #136 e rodar test:db completo."
+        }
+      ],
+      "branch_disposition": [
+        {
+          "branch": "feat/29-google-calendar-sync",
+          "tip": "b83e0cd1d1bcf25b0f7543d3aa011cdb8cc75f89",
+          "ahead_by": 3,
+          "behind_by": 20,
+          "exclusive_commits": [
+            [
+              "b83e0cd1",
+              "fix(calendar): handle repeated page query parameters"
+            ],
+            [
+              "c7724a0e",
+              "docs(calendar): update clean review branch handoff"
+            ],
+            [
+              "fcaad22c",
+              "feat(calendar): implement one-way Google Calendar integration"
+            ]
+          ],
+          "disposition": "APAGAR",
+          "reason": "Os três commits são a implementação original Calendar V1; rotas, UI, migration, docs e worker foram substituídos/entregues na main pela #135. Não há delta exclusivo útil."
+        },
+        {
+          "branch": "fix/29-oauth-state-atomic",
+          "tip": "2f577e2810bb66f79d1fdc1c697859bdfa42843d",
+          "ahead_by": 41,
+          "behind_by": 22,
+          "exclusive_commit_heads": [
+            "2f577e2810",
+            "26baee930c",
+            "de11eee945",
+            "82058ff2ed",
+            "5017d66f4f",
+            "7a2e207833",
+            "dde4ccf7d263",
+            "ad97ceb53c",
+            "43b78e5374",
+            "3f6203a471",
+            "9257212954",
+            "598c25973f",
+            "1cb7acb329",
+            "68f41cf902",
+            "2016f4c52c",
+            "1fd3837261",
+            "8f7a05e3e2",
+            "e331f385c2",
+            "b51d97ce9a",
+            "ae52c8747f",
+            "998b1e78a6",
+            "db336d9c77",
+            "73a8b0b139",
+            "ec7f1c3698",
+            "4bb877dded",
+            "5fb6626799",
+            "6c61e25c12",
+            "70f75edb18",
+            "29484a4af8",
+            "c7082dfeb3",
+            "8ddb659e1f",
+            "ccc95fb15a",
+            "f77752fa17",
+            "aa54d1bdb8",
+            "5aad43cac1",
+            "293de5b4ca",
+            "88fb102230",
+            "fde066a7a1",
+            "3e23e3f6bd",
+            "48f4c26e27",
+            "9a306af67c"
+          ],
+          "disposition": "APAGAR",
+          "reason": "A sequência Calendar/OAuth state está integrada ou substituída pela #135 e pela #141. A migration 20261127120000_calendar_oauth_state_consumption.sql usa o schema antigo provider_calendar_connections e assinatura antiga; não portar. scripts/calendar-state-check.mjs e route.test.ts foram substituídos por calendar-check.mjs e testes atuais."
+        },
+        {
+          "branch": "arena/29-calendar-integration",
+          "tip": "26baee930cc48e1ec38561903337d5148d5274c7",
+          "ahead_by": 40,
+          "behind_by": 22,
+          "exclusive_commit_heads": [
+            "26baee930c",
+            "de11eee945",
+            "82058ff2ed",
+            "5017d66f4f",
+            "7a2e207833",
+            "dde4ccf7d263",
+            "ad97ceb53c",
+            "43b78e5374",
+            "3f6203a471",
+            "9257212954",
+            "598c25973f",
+            "1cb7acb329",
+            "68f41cf902",
+            "2016f4c52c",
+            "1fd3837261",
+            "8f7a05e3e2",
+            "e331f385c2",
+            "b51d97ce9a",
+            "ae52c8747f",
+            "998b1e78a6",
+            "db336d9c77",
+            "73a8b0b139",
+            "ec7f1c3698",
+            "4bb877dded",
+            "5fb6626799",
+            "6c61e25c12",
+            "70f75edb18",
+            "29484a4af8",
+            "c7082dfeb3",
+            "8ddb659e1f",
+            "ccc95fb15a",
+            "f77752fa17",
+            "aa54d1bdb8",
+            "5aad43cac1",
+            "293de5b4ca",
+            "88fb102230",
+            "fde066a7a1",
+            "3e23e3f6bd",
+            "48f4c26e27",
+            "9a306af67c"
+          ],
+          "disposition": "APAGAR",
+          "reason": "Mesmo stack Calendar da feat/29, sem a correção final de state atômico; conteúdo útil está na main via #135/#141."
+        },
+        {
+          "branch": "arena/9c0da280-marcou",
+          "tip": "905bb6555a4c8bda6ff1ecc9eb71ad8ceed24436",
+          "ahead_by": 54,
+          "behind_by": 17,
+          "first_parent_unique_commits": [
+            [
+              "905bb6555a",
+              "docs(pr-39): revisão final da rodada 3"
+            ],
+            [
+              "db629d6a22",
+              "docs(pr-39): branch atualizada por merge"
+            ],
+            [
+              "c64e085904",
+              "docs(booking): verificar integridade do lock"
+            ],
+            [
+              "8228ffc45b",
+              "docs(audit): consolidar auditoria da Issue #29"
+            ],
+            [
+              "d98784ca30",
+              "coord(agent_4): resolução da PR #39"
+            ],
+            [
+              "c50aabec23",
+              "coord(agent_4): reentrega entrada PR #39"
+            ],
+            [
+              "51d8c528ca",
+              "docs(coord): entrega entrada do Agente 4"
+            ],
+            [
+              "e8e02adf41",
+              "docs(pr-39): reconfirmação de main, branch e patch"
+            ],
+            [
+              "cdb125904b",
+              "docs(pr-39): corrige identificadores"
+            ],
+            [
+              "a30965151e",
+              "docs(pr-39): entrega resolução da agenda"
+            ],
+            [
+              "bf5262453f",
+              "chore(deps): patch Next.js 16.4.6"
+            ],
+            [
+              "0c67473481",
+              "docs(calendar): versiona patch de OAuth state"
+            ],
+            [
+              "41e4e5e1bc",
+              "security(calendar): consumo atômico de OAuth state"
+            ],
+            [
+              "13a1f8f9f8",
+              "chore(calendar): integra branch de Calendar"
+            ]
+          ],
+          "disposition": "PRESERVAR",
+          "reason": "Branch contém artefatos exclusivos fora do escopo Calendar já integrado: patches e relatórios de PR #39/booking integrity, upgrade Next.js, patch de integração marcou-google e handoffs. Não apagar sem o Agent6 confirmar destino dos artefatos."
+        },
+        {
+          "branch": "arena/9e68c2bb-marcou",
+          "tip": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
+          "ahead_by": 18,
+          "behind_by": 17,
+          "first_parent_unique_commits": [
+            [
+              "8d73650dfc",
+              "fix(public-flow): redirect fora do try/catch (#22)"
+            ],
+            [
+              "fc02e378be",
+              "security(#125): harden legacy table privileges"
+            ],
+            [
+              "335e3f50b1",
+              "feat(calendar): backfill future confirmed bookings"
+            ],
+            [
+              "d8e2fc2859",
+              "docs(calendar): CI/PR #124 compatibility"
+            ],
+            [
+              "138cf6ddbc",
+              "feat(calendar): integrar Calendar na matriz #123"
+            ],
+            [
+              "ba8d2f98d0",
+              "merge: stack na PR #123"
+            ],
+            [
+              "0a82b5b2c1",
+              "docs(calendar): atualizar integração/handoff"
+            ],
+            [
+              "dda5fa4757",
+              "fix(calendar): harden OAuth callback/worker/disconnect"
+            ],
+            [
+              "b7b9c6f0ec",
+              "feat(calendar): rename connections e state atomic"
+            ],
+            [
+              "536e9381a9",
+              "merge: integrar feat/29-google-calendar-sync"
+            ]
+          ],
+          "disposition": "PRESERVAR",
+          "reason": "Além do Calendar V1, contém trabalho de reservas multi-serviço e hardening/matriz #125 ainda dependente da #131; preservar até Agent1 integrar e confirmar ausência de delta exclusivo."
+        },
+        {
+          "branch": "arena/4017109f-marcou",
+          "tip": "16f0166fc06e4ddcaac6b77664515b410f3c4d74",
+          "ahead_by": 5,
+          "behind_by": 22,
+          "exclusive_commits": [
+            [
+              "16f0166fc0",
+              "feat(security): add table privileges matrix and guard"
+            ],
+            [
+              "859116668b",
+              "docs: corrigir typo no handoff #21"
+            ],
+            [
+              "fce09c767b",
+              "fix(booking): privileges, backfill test e buffer"
+            ],
+            [
+              "e96e137ca5",
+              "test(booking): harness cleanup e overloads"
+            ],
+            [
+              "bbc1436596",
+              "feat(booking): reservas com múltiplos serviços"
+            ]
+          ],
+          "disposition": "PRESERVAR",
+          "reason": "Sem código Calendar exclusivo; contém a origem do trabalho de multi-serviços/matriz de privilégios da #131. Preservar até Agent1 concluir a reconciliação."
         }
       ]
     },
