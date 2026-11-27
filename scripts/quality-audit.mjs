@@ -37,6 +37,15 @@ const IGNORED_PREFIXES = [
 ];
 const IGNORED_SUFFIXES = [".md", ".example", ".lock", ".sql"];
 
+const CRON_SERVICE_ROLE_EXCEPTION = "src/app/api/cron/route.ts";
+function isValidCronServiceRoleException(file, source) {
+  return file === CRON_SERVICE_ROLE_EXCEPTION &&
+    source.includes('import "server-only";') &&
+    source.includes("NEXT_PUBLIC_SUPABASE_URL") &&
+    source.includes("SUPABASE_SERVICE_ROLE_KEY") &&
+    source.includes("if (!supabaseUrl || !serviceRoleKey)");
+}
+
 const SECRET_PATTERNS = [
   { name: "private key", regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
   { name: "service_role JWT", regex: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ },
@@ -122,6 +131,11 @@ console.log("\n[guarda de entrada]");
       /createClient\(/.test(content);
     if (!usesSupabase) continue;
 
+    if (isValidCronServiceRoleException(file, content)) {
+      console.log("  ok   " + file + " (server-only service-role exception)");
+      continue;
+    }
+
     if (/isSupabaseConfigured/.test(content)) {
       console.log(`  ok   ${file}`);
     } else {
@@ -148,7 +162,10 @@ console.log("\n[oauth]");
     } catch {
       continue;
     }
-    if (/from\s+"@supabase\/supabase-js"/.test(content)) offenders.push(file);
+    if (/from\s+"@supabase\/supabase-js"/.test(content)) {
+      if (isValidCronServiceRoleException(file, content)) continue;
+      offenders.push(file);
+    }
   }
 
   if (offenders.length === 0) {
