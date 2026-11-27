@@ -25,7 +25,18 @@ foi executada em clone isolado, verificada e entregue como patch aplicável sobr
 `main`; falta apenas o push na branch da PR (comando abaixo). Nenhum merge,
 deploy, migration remota ou configuração foi executado.
 
-## Reconfirmação (2026-11-27, turno atual)
+## Diagnóstico de conflito e merge sem force push (2026-11-27)
+
+- `main` `69d0217`; branch da PR `6f44b50` (base antiga `db0fd8d`) — **conflito único** em
+  `src/app/painel/page.tsx`, confirmado por `git merge --no-ff --no-commit origin/main`.
+- Resolução: manter a árvore da main (`git checkout origin/main -- .`), remover o
+  `booking-agenda.tsx` antigo e reaplicar `pr-39-agenda.patch`; o merge commit resultante
+  (`e8a229e422838552340fb5b840e2e1d20ac285a9`, pais `6f44b50`+`69d0217`) tem árvore
+  `3f8890e1a097069b2a3cc224c8b88dcdead3b101`, com push **fast-forward** (sem force).
+- Suíte verde nesse merge: changelog ok, lint 0 erros, typecheck ok, 165 testes, `test:db` 188,
+  audit 0/0, build ok (`/painel`).
+
+## Reconfirmação (2026-11-27, turno anterior)
 
 - `main` remota: `69d02173653384e082476e7879ee9f33672dec72` — **sem mudança**.
 - Branch `feat/24-provider-agenda`: `6f44b506da887ecc90486c80e6b9789578b23837` — **sem mudança**.
@@ -114,26 +125,34 @@ Resolução aplicada (preservando os dois lados, nada removido):
 | `npm run check:changelog -- --base origin/main` | ok (5 arquivos relevantes) |
 | `git apply --check` em clone limpo de `69d0217` | ok |
 
-## Como finalizar a PR #39 (Codespaces, 6 comandos)
+## Como finalizar a PR #39 — merge sem force push (Codespaces)
+
+A resolução anterior sugeria `--force-with-lease`. Com a restrição explícita do
+documento de coordenação (**sem force push**), o caminho validado passa a ser um
+**merge commit** de `origin/main` sobre a branch da PR: o push é fast-forward,
+nada do histórico da PR é reescrito e nenhum trabalho remoto é sobrescrito.
 
 ```bash
 git fetch origin
-git switch -C feat/24-provider-agenda origin/main
+git switch feat/24-provider-agenda
+git merge origin/main                                   # conflito só em src/app/painel/page.tsx
+git checkout origin/main -- .                           # base = main (histórico da PR preservado no merge)
+git rm -f src/app/painel/booking-agenda.tsx             # recriado pelo patch com o conteúdo final
 git show origin/arena/9c0da280-marcou:patches/pr-39/pr-39-agenda.patch | git apply --3way
-git add -A && git commit -m "feat(provider-admin): agenda do prestador com filtros e busca (#24)"
-git push --force-with-lease origin feat/24-provider-agenda
-git rev-parse HEAD   # novo HEAD da PR: use este SHA no CI, não o da branch arena
+git add -A && git commit -m "Merge origin/main into feat/24-provider-agenda"
+git push origin feat/24-provider-agenda                 # fast-forward, sem --force
+git rev-parse HEAD                                      # novo HEAD da PR (usar este SHA no CI/preview)
 ```
 
-`--force-with-lease` aborta com erro se a branch remota avançou depois do
-`fetch`, então nenhum trabalho posterior é sobrescrito. Depois do push:
+Resultado reproduzido e verificado em clone isolado: merge commit
+`e8a229e422838552340fb5b840e2e1d20ac285a9` (pais `6f44b50` + `69d0217`) com árvore
+`3f8890e1a097069b2a3cc224c8b88dcdead3b101`, **idêntica** à validada anteriormente.
+
+Depois do push:
 
 ```bash
 npm install && npm run lint && npm run typecheck && npm test && npm run test:db && npm run audit && npm run build
 ```
-
-A PR #39 fica `MERGEABLE`; o squash merge só deve ocorrer com CI verde **no SHA
-novo** e com a PR fora do estado Draft.
 
 ## Estado do CI e do Deploy Preview
 
