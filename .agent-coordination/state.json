@@ -1658,7 +1658,7 @@
         "feat/pagina-publica-agendamento",
         "feat/customer-account-area"
       ],
-      "status": "in_progress",
+      "status": "blocked_pending_visual_review",
       "active_assignment": "Resolver #133 até a revisão do responsável, integrar #67 se válida, fechar #46 e #2 se superadas (com evidência) e triar as issues de produto.",
       "tasks": [
         {
@@ -1696,19 +1696,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #46/#2 fechadas como superadas. #133 fechada e substituída pela #140, branch nova baseada na main SHA 90b05a (ahead 7/behind 0), preview Netlify success. CI quality no SHA 4510cbb está verde até build (build em execução). #67 permanece draft/KEEP_PENDING: 40 commits atrás, changelog obrigatório ausente e revisão visual desktop/mobile não disponível.",
-      "next_action": "Aguardar conclusão da CI #140 e validar checks obrigatórios; squash merge se checklist 100% verde; continuar backlog triage/status.",
+      "current_state": "PR #140 mergeada por squash; main verificada no SHA cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b. PRs #133 (substituída), #46 e #2 fechadas com evidência. Triagem issues #19,#28,#43,#47,#52-57,#121,#132 registrada por comentário; #24 tem triagem parcial já registrada por agente anterior, #27 comentada. PR #67 permanece draft/pending por 40 commits behind, changelog ausente sob regra atual e revisão visual humana indisponível.",
+      "next_action": "PR #140 concluída. Para #67, rebase/reconciliação segura sobre main, changelog, CI e inspeção visual desktop/mobile são necessários; não mergear até checklist verde e revisão visual.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Início da rodada 7: leitura do state.json e runbook (seções 0 e 9)",
-          "status": "in_progress",
-          "result": "Autonomia de squash merge autorizada quando checklist da seção 5 estiver 100% verde; autorização inclui #133. Escopo Agent5 confirmado.",
-          "head_sha": null,
-          "tests": "Coordenação lida; checks GitHub em verificação.",
-          "blockers": [],
-          "next_action": "Reconferir main/PRs; executar triagem #46/#2 e corrigir PRs #133/#67."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "Triage/encerramento de PRs legadas #46 e #2 e comentários de status em issues de produto",
@@ -1730,6 +1720,18 @@
             "CI build/checks ainda em execução"
           ],
           "next_action": "Confirmar build e demais checks, então merge squash se todos verdes."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Squash merge PR #140 e verificação de integração",
+          "status": "completed",
+          "result": "PR #140 mergeada. Merge commit cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b confirmado como main; compare main vs merge = identical. Documentos sociais e changelog presentes na main. PR #133 fechada como substituída; #46/#2 superadas e fechadas. #67 não mergeada por pendências documentadas.",
+          "head_sha": "cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b",
+          "tests": "CI run 46081754355 (#301) success: check:changelog, lint, typecheck, audit, unit/domain tests, test:db e build. Netlify deploy-preview #140 success. PR mergeable, não draft, 0 behind, sem review threads bloqueantes.",
+          "blockers": [
+            "PR #67 requer reconciliação com main, changelog e inspeção visual humana desktop/mobile; sem acesso ao preview em navegador nesta sessão."
+          ],
+          "next_action": "Concluir escopo com #67 pendente até revisão visual/CI atualizado."
         }
       ]
     },
