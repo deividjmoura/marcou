@@ -352,27 +352,27 @@
     "agent_6_booking_transition_integrity": {
       "scope": "Integridade concorrente da RPC transition_booking e histórico de migrations",
       "pull_requests": [],
-      "status": "audit_complete_integrated_validated",
-      "active_assignment": "Auditoria da correção FOR UPDATE para transition_booking concluída. Correção já integrada na main e validada. Não é necessário criar nova correção.",
-      "current_state": "main HEAD 69d02173653384e082476e7879ee9f33672dec72 CONTÉM a correção. Migration supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql existe na main (commit d59a81d, ancestral de main). Foi criada como migration incremental (CREATE OR REPLACE FUNCTION), não edição de migration existente. Implementa FOR UPDATE em ambas as leituras da reserva em transition_booking, prevenindo corrida de concorrência. scripts/booking-concurrency.mjs existe e testa 8 cenários de concorrência (25 assertions, 25 passaram/0 falharam). test:db executa 4 scripts: db-check 69/0, social-foundation 47/0, identity 32/0, discovery 40/0 (todos passaram). vitest 155/155 aprovado. typecheck 0 erros. lint 0 erros (3 warnings pré-existentes de next/image).",
-      "next_action": "Tarefa concluída. Correção já integrada na main e validada com testes reais. Não criar nova correção. Não fazer merge, deploy ou alteração de produção.",
+      "status": "incremental_fix_prepared_validation_pending",
+      "active_assignment": "Correção incremental preparada em branch isolada a partir da main; não fazer merge/deploy/produção. Validar testes locais/CI quando houver runner disponível.",
+      "current_state": "A correção não estava integrada: main original 69d02173653384e082476e7879ee9f33672dec72 e branch antiga arena/6f3a9b1f-marcou 6db76085bc866498a587b6346fc443480107a11a. Branch antiga modificava migration histórica 20261116035000_fix_booking_idempotency_authorization.sql e não continha migration incremental; seu script tinha 19 checks e não testava transitions incompatíveis. Preparada branch isolada fix/booking-transition-concurrency-incremental diretamente sobre main, commit 90cd050fa96b7bb5eb191ae43700c636f7b7db31. Adicionada migration incremental 20261127000000_booking_transition_concurrency_lock.sql com FOR UPDATE nos dois SELECTs da RPC transition_booking; migration histórica permanece byte a byte inalterada (blob 9466efa05887ab3c546e3828c43f01d416e2372e). Harness atual da main tem 23 checks, inclui concorrência proof_received vs cancel em dois clientes e asserção de estado/eventos (rollback da operação perdedora); adicionada execução ao npm run test:db. Testes não foram executados neste ambiente. Nenhuma execução de CI/status existe para novo SHA.",
+      "next_action": "Executar npm run test:db e demais verificações no branch fix/booking-transition-concurrency-incremental, confirmando 23/23 e CI no SHA 90cd050fa96b7bb5eb191ae43700c636f7b7db31. Só então reportar prontidão. Manter sem merge, deploy ou produção até autorização.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "branch": "fix/booking-multiple-services-pr123",
-        "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-        "migration": "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql: EXISTS_IN_MAIN",
-        "migration_commit": "d59a81d fix(booking): bloqueia linha com FOR UPDATE via migration incremental",
-        "migration_type": "incremental (CREATE OR REPLACE FUNCTION), não edição de existente",
-        "modified_existing_migration": "não - nenhuma migration existente foi editada",
-        "tests": {
-          "booking_concurrency": "25 passaram, 0 falharam (8 cenários: same-slot race, same-idempotency-key concurrent, sequential idempotency, different-keys conflicting slots, simultaneous incompatible transitions, replay rejection, provider-only approval, expiry-blocks-approval)",
-          "test_db": "db-check 69/0, social-foundation 47/0, identity 32/0, discovery 40/0 - todos passaram",
-          "vitest": "155 passed, 0 failed (19 test files)",
-          "typecheck": "0 erros",
-          "lint": "0 erros (3 warnings pré-existentes de next/image)"
-        },
-        "ci": "Todos os testes executados localmente com sucesso no SHA da branch fix/booking-multiple-services-pr123 (955f9a8d40981096dedeee55b2c77964895f5bf9), base main 69d02173653384e082476e7879ee9f33672dec72. Migration d59a81d é ancestral de main (verificado via git merge-base --is-ancestor).",
-        "notes": "A correção FOR UPDATE para transition_booking já está na main via migration incremental 20261127000000_booking_transition_concurrency_lock.sql (commit d59a81d). Não há edição de migration existente. O script booking-concurrency.mjs testa 25 assertions com 0 falhas, cobrindo races de create_booking, transition_booking simultânea, idempotência, expiração e aprovação restrita a prestador. Não é necessário criar nova correção nem branch isolada."
+        "previous_branch": "arena/6f3a9b1f-marcou",
+        "previous_branch_sha": "6db76085bc866498a587b6346fc443480107a11a",
+        "implementation_branch": "fix/booking-transition-concurrency-incremental",
+        "head_sha": "90cd050fa96b7bb5eb191ae43700c636f7b7db31",
+        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "ahead": 1,
+        "behind": 0,
+        "migration": "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
+        "migration_blob": "c8daf0ae041dab500d8173457c36dddedda30003",
+        "historical_migration_blob_unchanged": "9466efa05887ab3c546e3828c43f01d416e2372e",
+        "harness_blob": "13bad51b28d17b2ac428b42204bffb0e7c5f6ab6",
+        "assertions": 23,
+        "test_db": "npm run test:db now includes node scripts/booking-concurrency.mjs",
+        "ci": "No workflow runs or commit status checks for exact new SHA; pending validation.",
+        "notes": "Incremental migration defines transition_booking with two SELECT ... FOR UPDATE clauses and re-applies REVOKE/GRANT. Existing main harness includes two independent clients racing proof_received vs cancel and asserts exactly one transition, valid final state, and exactly two audit events (booking.created plus winner event), verifying losing statement left no extra event. Tests not run locally because no project checkout/runtime available."
       },
       "updates": [
         {
@@ -400,6 +400,18 @@
           "tests": "booking-concurrency.mjs 25 passou/0 falhou; test:db db-check 69/0 social-foundation 47/0 identity 32/0 discovery 40/0; vitest 155/155; typecheck 0; lint 0 (3 warnings pré-existentes)",
           "blockers": [],
           "next_action": "Tarefa concluída. Correção já integrada na main e validada com testes reais. Não criar nova correção. Não fazer merge, deploy ou alteração de produção."
+        },
+        {
+          "timestamp": "2026-11-27T20:20:00-03:00",
+          "task": "Preparar correção incremental isolada para transition_booking",
+          "status": "incremental_fix_prepared_validation_pending",
+          "result": "Criada branch fix/booking-transition-concurrency-incremental a partir da main 69d02173653384e082476e7879ee9f33672dec72; commit 90cd050fa96b7bb5eb191ae43700c636f7b7db31. Adicionada migration incremental 20261127000000_booking_transition_concurrency_lock.sql com dois FOR UPDATE, sem alterar migration histórica (blob original preservado). Harness main possui 23 assertions, inclui corrida proof_received vs cancel em sessões distintas e confere estado final + exatamente dois eventos; package test:db agora inclui o harness. Branch está 1 ahead/0 behind da main.",
+          "head_sha": "90cd050fa96b7bb5eb191ae43700c636f7b7db31",
+          "tests": "Inspeção estática pós-commit: migration contém 2 FOR UPDATE; harness 23 check(); migration incluída no harness; package test:db inclui booking-concurrency. Nenhum teste foi executado. CI/commit status sem runs para o SHA exato.",
+          "blockers": [
+            "Execução real de npm run test:db e verificação CI pendentes; este ambiente não possui checkout/runtime local do repositório."
+          ],
+          "next_action": "Executar testes e obter CI para o SHA 90cd050fa96b7bb5eb191ae43700c636f7b7db31; não merge/deploy."
         }
       ]
     }
