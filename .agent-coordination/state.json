@@ -412,7 +412,7 @@
       "pull_requests": [
         133
       ],
-      "status": "documentation_pr_open_pending_owner_review",
+      "status": "documentation_pr_open_ci_green_pending_owner_review",
       "active_assignment": "PR #133 documental aberta em arena/f074e752-marcou (HEAD d469ce876a3819a5293ca17c75a4e1447fb1293a) contra main 69d02173653384e082476e7879ee9f33672dec72. Auditoria concluída; decisão de URL canônica /p/[slug] formalizada. Não fazer merge sem revisão do responsável.",
       "current_state": "Auditoria documental (6 docs + prompt), issues #72–#112, rotas src/app, src/server e 11 migrations concluída. Conclusão: arquitetura já é plataforma única (/p/[slug] rota interna com motor real; RPC get_public_provider_discovery com projeção mínima; flags fail-closed). Lacunas eram de explicitação documental, não de desenho. Novo docs/REVISAO-ARQUITETURA-SOCIAL.md criado; ADR §2/§3.3/§10, contrato §1.1/§2.3, roadmap data+§6.5 e prompt de agentes atualizados; CHANGELOG [Unreleased] atualizado. AGENT_TASK_MARCOU.md deliberadamente não editado (concorrência das PRs #2/#32/#41/#46/#67/#126/#131).",
       "next_action": "Aguardar revisão/aprovação da PR #133; depois aplicar acréscimos de critérios de aceite nos corpos das issues #86/#89/#99/#83 (com aprovação do responsável). Decisões futuras registradas: alias /@{slug} via middleware com canonical /p/{slug}; histórico de slugs 301/308.",
@@ -430,7 +430,8 @@
           "docs/ESCOPO-E-ARQUITETURA.md",
           "CHANGELOG.md"
         ],
-        "notes": "Somente documentação. CI da PR pendente de conclusão; nenhuma validação de runtime era aplicável."
+        "notes": "Somente documentação. CI verde no SHA da PR; nenhum runtime alterado.",
+        "ci": "CI run 46047571459 (job quality) success no SHA exato d469ce876a3819a5293ca17c75a4e1447fb1293a; Netlify deploy-preview-133 pass (https://deploy-preview-133--marcoou.netlify.app); 'Pages changed' skipping (esperado, PR documental)."
       },
       "updates": [
         {
@@ -443,6 +444,19 @@
           "blockers": [
             "Aprovação do responsável para merge da PR #133.",
             "Edição dos corpos das issues #86/#89/#99/#83 pendente de aprovação para não sobrescrever trabalho de outros agentes."
+          ],
+          "next_action": "Aguardar revisão da PR #133; depois aplicar critérios de aceite nas issues aprovadas."
+        },
+        {
+          "timestamp": "2026-11-27T15:50:00-03:00",
+          "task": "Registro de CI da PR #133",
+          "status": "documentation_pr_open_ci_green_pending_owner_review",
+          "result": "Job quality (run 46047571459) success no SHA exato da PR; Netlify deploy-preview pass. PR segue aberta aguardando revisão; sem merge.",
+          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
+          "tests": "CI run 46047571459 success (inclui check:changelog, lint, typecheck, test, build); deploy-preview-133 pass.",
+          "blockers": [
+            "Aprovação do responsável para merge da PR #133.",
+            "Edição dos corpos das issues #86/#89/#99/#83 pendente de aprovação."
           ],
           "next_action": "Aguardar revisão da PR #133; depois aplicar critérios de aceite nas issues aprovadas."
         }
