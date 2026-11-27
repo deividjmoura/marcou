@@ -119,6 +119,7 @@ const migrations = [
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
   "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
+  "supabase/migrations/20261127000100_reminder_concurrency_lock.sql",
 ];
 
 for (const file of migrations) {
@@ -842,18 +843,85 @@ console.log("\n[notificações]");
   check("marcar todas zera não lidas do cliente", unread === 0, `obteve ${unread}`);
 
   await db.query(
-    `update public.bookings set starts_at = now() + interval '2 hours' where id = $1`,
+    `update public.bookings
+        set starts_at = now() + interval '2 hours',
+            ends_at = now() + interval '3 hours',
+            occupied_until = now() + interval '3 hours'
+      where id = $1`,
     [nBooking.id],
   );
+
+  // Cria, confirma e cancela outra reserva dentro da janela; reminders não
+  // deve selecionar status que já foi cancelado.
+  const cancelledReminderStart = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+  const reminderDay = (
+    await db.query(
+      `select extract(dow from ($1::timestamptz at time zone 'America/Sao_Paulo'))::int as day`,
+      [cancelledReminderStart],
+    )
+  ).rows[0].day;
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     values ($1, $2, '00:00', '23:59') on conflict do nothing`,
+    [providerN, reminderDay],
+  );
+  const cancelledReminderBooking = await createBooking(
+    customerNClient,
+    "notif-a",
+    serviceN,
+    cancelledReminderStart,
+    `notif-reminder-cancel-${uuid()}`,
+    "Cliente Lembrete Cancelado",
+  );
+  await customerNClient.query(
+    `select * from public.transition_booking($1, 'proof_received')`,
+    [cancelledReminderBooking.id],
+  );
+  await ownerNClient.query(
+    `select * from public.transition_booking($1, 'payment_approved')`,
+    [cancelledReminderBooking.id],
+  );
+  await customerNClient.query(
+    `select * from public.transition_booking($1, 'cancel')`,
+    [cancelledReminderBooking.id],
+  );
+
   const serviceRole = await asRole("service_role");
-  const first = (
-    await serviceRole.query(`select public.create_booking_reminders(24) as total`)
-  ).rows[0].total;
+  const serviceRoleConcurrent = await asRole("service_role");
+  const concurrentReminderRuns = await Promise.all([
+    serviceRole.query(`select public.create_booking_reminders(24) as total`),
+    serviceRoleConcurrent.query(`select public.create_booking_reminders(24) as total`),
+  ]);
+  const concurrentCounts = concurrentReminderRuns.map((result) => Number(result.rows[0].total));
+  check(
+    "lembretes simultâneos não duplicam evento",
+    concurrentCounts.reduce((sum, count) => sum + count, 0) >= 1 &&
+      concurrentCounts.some((count) => count === 0),
+    `obteve ${concurrentCounts.join(",")}`,
+  );
   const second = (
     await serviceRole.query(`select public.create_booking_reminders(24) as total`)
   ).rows[0].total;
-  check("lembretes criados para a reserva confirmada", Number(first) >= 1, `obteve ${first}`);
   check("lembretes são idempotentes no mesmo dia", Number(second) === 0, `obteve ${second}`);
+  await serviceRoleConcurrent.end();
+
+  const cancelledReminderCount = (
+    await db.query(
+      `select count(*)::int as total from public.notifications
+       where booking_id = $1 and kind = 'booking_reminder'`,
+      [cancelledReminderBooking.id],
+    )
+  ).rows[0].total;
+  check(
+    "reservas canceladas não recebem lembretes",
+    cancelledReminderCount === 0,
+    `obteve ${cancelledReminderCount}`,
+  );
+  await expectError(
+    "janela de lembrete inválida é rejeitada",
+    () => serviceRole.query(`select public.create_booking_reminders(0)`),
+    "invalid_reminder_window",
+  );
   const reminders = (
     await db.query(
       `select recipient_id from public.notifications where booking_id = $1 and kind = 'booking_reminder'`,
@@ -864,6 +932,28 @@ console.log("\n[notificações]");
     "lembrete alcança cliente e prestador",
     reminders.length === 2,
     `obteve ${reminders.length}`,
+  );
+  const reminderKeyRow = (
+    await db.query(
+      `select e.external_event_id, b.starts_at, b.timezone
+         from public.booking_events e
+         join public.bookings b on b.id = e.booking_id
+        where e.booking_id = $1 and e.event_type = 'booking.reminder'
+        limit 1`,
+      [nBooking.id],
+    )
+  ).rows[0];
+  const expectedReminderKey = (
+    await db.query(
+      `select 'reminder-' || $1::text || '-'
+        || to_char($2::timestamptz at time zone $3::text, 'YYYYMMDD') as key`,
+      [nBooking.id, reminderKeyRow.starts_at, reminderKeyRow.timezone],
+    )
+  ).rows[0].key.replace(/\s+/g, "");
+  check(
+    "chave do lembrete usa o dia local do agendamento no fuso do prestador",
+    reminderKeyRow.external_event_id === expectedReminderKey,
+    `obteve ${reminderKeyRow.external_event_id}, esperado ${expectedReminderKey}`,
   );
 
   const expiredBooking = await createBooking(
@@ -891,6 +981,30 @@ console.log("\n[notificações]");
       expired.some((row) => row.recipient_id === customerN) &&
       expired.some((row) => row.recipient_id === ownerN),
     `obteve ${expired.length}`,
+  );
+
+  // Reserva já expirada deve continuar inelegível mesmo se seu início for
+  // colocado artificialmente dentro da janela futura do job.
+  await db.query(
+    `update public.bookings
+        set starts_at = now() + interval '2 hours',
+            ends_at = now() + interval '3 hours',
+            occupied_until = now() + interval '3 hours'
+      where id = $1`,
+    [expiredBooking.id],
+  );
+  await serviceRole.query(`select public.create_booking_reminders(24)`);
+  const expiredReminderCount = (
+    await db.query(
+      `select count(*)::int as total from public.notifications
+       where booking_id = $1 and kind = 'booking_reminder'`,
+      [expiredBooking.id],
+    )
+  ).rows[0].total;
+  check(
+    "reservas expiradas não recebem lembretes",
+    expiredReminderCount === 0,
+    `obteve ${expiredReminderCount}`,
   );
 
   await ownerNClient.end();

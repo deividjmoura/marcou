@@ -12,6 +12,11 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 ### Adicionado
 
 - Workflow de expiração automática exclusivamente (PR #128): GitHub Actions protegido por gate, Environment staging, validação de projeto Supabase, recusa explícita do project ref de produção, headers temporários e timeout/retry; reutiliza `expire_stale_bookings()` já existente e não cria RPC/migration de expiração.
+- Pipeline CI passa a executar `npm run audit` junto às validações de PR.
+
+- Rota cron de lembretes marcada como `server-only`, com guarda explícita para URL/chave ausentes e exceção do audit restrita ao arquivo e às garantias server-only.
+
+- Scheduler de lembretes separado da expiração: endpoint protegido chama somente `create_booking_reminders(24)`; migration adiciona lock `FOR UPDATE SKIP LOCKED`, janela validada e harness cobre execução simultânea, cancelamento e expiração.
 
 - `CHANGELOG.md` na raiz do repositório, `CONTRIBUTING.md` com o processo
   obrigatório de registro de mudanças e verificação automatizada
