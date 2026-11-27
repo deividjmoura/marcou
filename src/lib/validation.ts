@@ -114,6 +114,26 @@ export const bookingInputSchema = z.object({
   customerPhone: z.string().trim().max(32).optional().or(z.literal("")),
 });
 
+/** Reserva com um ou mais serviços do mesmo estabelecimento (Issue #21). */
+export const multiBookingInputSchema = z.object({
+  slug: z.string().trim().min(1),
+  serviceIds: z
+    .array(z.string().uuid())
+    .min(1, "Selecione ao menos um serviço.")
+    .max(20, "Uma reserva pode ter no máximo 20 serviços.")
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "Não selecione o mesmo serviço duas vezes.",
+    }),
+  startsAt: z
+    .string()
+    .min(1)
+    .refine((value) => !Number.isNaN(new Date(value).getTime()), {
+      message: "Horário inválido.",
+    }),
+  customerName: z.string().trim().min(1, "Informe seu nome.").max(80),
+  customerPhone: z.string().trim().max(32).optional().or(z.literal("")),
+});
+
 export type ServiceInput = z.infer<typeof serviceInputSchema>;
 export type AvailabilityRuleInput = z.infer<typeof availabilityRuleInputSchema>;
 export type AvailabilityExceptionInput = z.infer<
@@ -121,3 +141,4 @@ export type AvailabilityExceptionInput = z.infer<
 >;
 export type ProviderInput = z.infer<typeof providerInputSchema>;
 export type ProviderSettingsInput = z.infer<typeof providerSettingsSchema>;
+export type MultiBookingInput = z.infer<typeof multiBookingInputSchema>;

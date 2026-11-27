@@ -91,13 +91,30 @@ As migrations estão em `supabase/migrations/`:
 10. `20261123143000_discovery_taxonomy_service_areas.sql` — catálogo versionado,
     modalidades de serviço, áreas aproximadas, moderação e projeção pública
     mínima. Detalhes em `docs/DISCOVERY-TAXONOMY.md`.
+11. `20261125120000_booking_multiple_services.sql` — reservas com um ou mais
+    serviços do mesmo prestador, snapshots por serviço e totais agregados
+    calculados no banco. Detalhes em `docs/handoffs/21-booking.md`.
+12. `20261125130000_table_privileges_matrix.sql` — matriz canônica de
+    privilégios de tabelas/views de `public`. Detalhes em
+    `docs/handoffs/privilegios-tabelas.md`.
+13. `20261125140000_harden_public_table_privileges.sql` — `revoke all` +
+    `grant` exato nas 8 tabelas legadas: sem `TRUNCATE`/`REFERENCES`/`TRIGGER`
+    para clientes e escrita só onde há política (#125).
+14. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
+    transacional, vínculo de eventos e worker de sincronização unidirecional.
+    Detalhes em `docs/CALENDAR-INTEGRATION.md`.
+15. `20261128000000_calendar_worker_fencing.sql` — lease token por claim e
+    fencing para impedir ack tardio de worker após reclaim.
+16. `20261128000100_calendar_disconnect_revocation_retry.sql` — preserva o
+    refresh token até a revogação no Google ser confirmada e endurece o
+    `search_path` das funções Calendar.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
 autorizada, mas não existem políticas de escrita direta para agendamentos: o
 navegador não consegue forjar preço, expiração ou status confirmado.
 
-Não aplique migrations em produção sem autorização.
+A integração Calendar permanece desativada por padrão e exige configuração de secrets e scheduler externo. Não aplique migrations em produção sem autorização.
 
 ## Motor de reservas
 
@@ -108,6 +125,10 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
   reservas vencidas conflitantes e insere a reserva com snapshot do serviço.
 - A constraint de exclusão GiST + `pg_advisory_xact_lock` por prestador impedem
   dupla marcação, inclusive sob requisições simultâneas.
+- Uma reserva pode combinar 1 a 20 serviços ativos do mesmo prestador: duração
+  e preço são somados no banco, o intervalo ocupado é a soma das durações mais o
+  intervalo do último serviço, e o intervalo combinado é validado por completo;
+  reservas de serviço único seguem compatíveis.
 - Transições de estado (`pending_payment`, `pending_review`, `confirmed`,
   `cancelled`, `expired`) são aplicadas por `transition_booking`, com
   autorização, validade e auditoria.
@@ -148,9 +169,22 @@ lembretes). As mensagens ficam em `/notificacoes`, com contador de não lidas no
 painel, em "Meus agendamentos" e na página da reserva. O acesso é isolado por
 RLS: cada usuário só lê e marca as próprias notificações.
 
-Lembretes são criados por `create_booking_reminders()`; ainda não há cron
-configurado. E-mail não está implementado: nenhuma infraestrutura de envio está
-configurada e nenhuma credencial foi criada.
+Lembretes são criados por `create_booking_reminders(24)` via rota protegida
+`GET /api/cron` (PR #38, fail-closed com `CRON_SECRET` e ainda sem scheduler
+externo ativado). A expiração periódica de holds é separada e fica em
+`.github/workflows/booking-expiration.yml` (PR #128, desligado por padrão).
+E-mail não está implementado: nenhuma infraestrutura de envio está configurada
+e nenhuma credencial foi criada.
+
+## Plataforma e operação
+
+O inventário técnico, a matriz de variáveis de ambiente (`PUBLIC` vs
+`SERVER-ONLY / SECRET`), o fluxo de deploy e rollback na Netlify, os mecanismos
+canônicos de schedulers e o checklist de provisionamento estão documentados em:
+
+- [Plataforma, ambientes e operação](docs/PLATFORM.md)
+- [Scheduler de expiração de holds](docs/BOOKING-EXPIRATION-SCHEDULER.md)
+- [Notificações e scheduler de lembretes](docs/NOTIFICACOES.md)
 
 ## Pendências
 

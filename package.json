@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "node scripts/db-check.mjs && node scripts/social-foundation-check.mjs && node scripts/identity-check.mjs && node scripts/discovery-check.mjs",
+    "test:db": "node scripts/db-check.mjs && node scripts/social-foundation-check.mjs && node scripts/identity-check.mjs && node scripts/discovery-check.mjs && node scripts/booking-concurrency.mjs && node scripts/calendar-check.mjs",
     "audit": "node scripts/quality-audit.mjs",
     "check:changelog": "node scripts/changelog-check.mjs"
   },

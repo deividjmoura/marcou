@@ -46,6 +46,13 @@ DECISÕES JÁ TOMADAS — NÃO REABRIR SEM EVIDÊNCIA NOVA
 - A stack continua Next.js + TypeScript + Supabase Auth/PostgreSQL/Storage + RLS.
 - O motor atual continua sendo a única autoridade de disponibilidade e reserva.
 - A rede é centrada em serviços e entra por migrations aditivas/feature flags.
+- O perfil público do profissional é uma rota interna da plataforma, canonicamente
+  `/p/{slug}` (`providers.slug` como identificador público validado). Nunca criar
+  site, subdomínio, hospedagem ou aplicação independente por profissional, nem
+  rota raiz `/{slug}` — ver `docs/REVISAO-ARQUITETURA-SOCIAL.md`.
+- Visitante navega conteúdo público permitido sem criar conta; ações privadas
+  (seguir, salvar, comentar, solicitar, agendar) exigem a autenticação e as
+  permissões existentes.
 - Não será adicionada uma segunda autenticação Firebase.
 - Endereço, telefone, mensagens e documentos não podem vazar em consultas
   públicas, eventos ou logs comuns.

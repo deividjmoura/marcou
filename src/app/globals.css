@@ -658,3 +658,13 @@ a { color: inherit; text-decoration: none; }
   .identity-mode-card p { min-height: 0; }
   .page-account-home { padding-bottom: 38px; }
 }
+
+/* Agenda do prestador (#24): lista de agendamentos agrupada por dia. */
+.agenda-list > section > h3 { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.agenda-list .item-actions { flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .agenda-list .item-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .agenda-list .item-actions { justify-content: flex-start; }
+  .agenda-list .item-actions .btn { flex: 1 1 auto; }
+}

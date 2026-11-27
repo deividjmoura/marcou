@@ -12,6 +12,7 @@ import {
   type Slot,
 } from "@/domain/bookings/availability";
 
+
 export type BookingStatus =
   | "pending_payment"
   | "pending_review"
@@ -206,12 +207,31 @@ export async function listActiveServices(providerId: string): Promise<Service[]>
   return (data ?? []) as Service[];
 }
 
+export interface ScheduleServiceDetail {
+  id: string;
+  name: string;
+  durationMinutes: number;
+  priceCents: number;
+  depositCents: number;
+  bufferMinutes: number;
+}
+
+export interface BookingTotals {
+  durationMinutes: number;
+  bufferMinutes: number;
+  occupiedMinutes: number;
+  priceCents: number;
+  depositCents: number;
+}
+
 export interface ScheduleData {
   timezone: string;
   bookingHoldMinutes: number;
   rules: AvailabilityRule[];
   exceptions: AvailabilityException[];
   busy: BusyInterval[];
+  services: ScheduleServiceDetail[];
+  totals: BookingTotals;
   /**
    * Duração e intervalo já vêm da RPC `get_provider_schedule`, que resolve o
    * serviço no mesmo instante em que monta a agenda. Isso evita que a
@@ -223,7 +243,7 @@ export interface ScheduleData {
 /** Lê a agenda pública (RPC) de um prestador publicado. */
 export async function getProviderSchedule(params: {
   slug: string;
-  serviceId: string;
+  serviceIds: string[];
   date: string;
 }): Promise<ScheduleData | null> {
   const provider = await getProvider(params.slug);
@@ -235,7 +255,7 @@ export async function getProviderSchedule(params: {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_provider_schedule", {
     p_provider_slug: params.slug,
-    p_service_id: params.serviceId,
+    p_service_ids: params.serviceIds,
     p_date: params.date,
     p_from: from.toISOString(),
     p_to: to.toISOString(),
@@ -276,6 +296,18 @@ export async function getProviderSchedule(params: {
     }),
   );
 
+  const services: ScheduleServiceDetail[] = (data.services ?? []).map(
+    (service: Record<string, unknown>) => ({
+      id: String(service.id),
+      name: String(service.name),
+      durationMinutes: Number(service.durationMinutes),
+      priceCents: Number(service.priceCents),
+      depositCents: Number(service.depositCents),
+      bufferMinutes: Number(service.bufferMinutes),
+    }),
+  );
+
+  const totals = (data.totals ?? {}) as Record<string, unknown>;
   const timing = (data.timing ?? {}) as Record<string, unknown>;
 
   return {
@@ -284,6 +316,14 @@ export async function getProviderSchedule(params: {
     rules,
     exceptions,
     busy,
+    services,
+    totals: {
+      durationMinutes: Number(totals.durationMinutes),
+      bufferMinutes: Number(totals.bufferMinutes),
+      occupiedMinutes: Number(totals.occupiedMinutes),
+      priceCents: Number(totals.priceCents),
+      depositCents: Number(totals.depositCents),
+    },
     timing: {
       durationMinutes: Number(timing.durationMinutes),
       bufferMinutes: Number(timing.bufferMinutes),
@@ -297,13 +337,20 @@ export interface SlotPayload {
   label: string;
 }
 
-/** Slots disponíveis de um serviço em uma data, já filtrados contra agora. */
+export interface AvailableSlots {
+  slots: SlotPayload[];
+  services: ScheduleServiceDetail[];
+  totals: BookingTotals;
+  timing: ServiceTiming;
+}
+
+/** Slots disponíveis de um ou mais serviços em uma data, já filtrados contra agora. */
 export async function getAvailableSlots(params: {
   slug: string;
-  serviceId: string;
+  serviceIds: string[];
   date: string;
   minLeadMinutes?: number;
-}): Promise<SlotPayload[] | null> {
+}): Promise<AvailableSlots | null> {
   const schedule = await getProviderSchedule(params);
   if (!schedule) return null;
 
@@ -317,16 +364,21 @@ export async function getAvailableSlots(params: {
     minLeadMinutes: params.minLeadMinutes ?? 0,
   });
 
-  return slots.map((slot) => ({
-    startsAt: slot.startsAt.toISOString(),
-    occupiedUntil: slot.occupiedUntil.toISOString(),
-    label: slot.startsAt.toISOString(),
-  }));
+  return {
+    slots: slots.map((slot) => ({
+      startsAt: slot.startsAt.toISOString(),
+      occupiedUntil: slot.occupiedUntil.toISOString(),
+      label: slot.startsAt.toISOString(),
+    })),
+    services: schedule.services,
+    totals: schedule.totals,
+    timing: schedule.timing,
+  };
 }
 
 export async function createBooking(params: {
   slug: string;
-  serviceId: string;
+  serviceIds: string[];
   startsAt: string;
   customerName: string;
   customerPhone: string;
@@ -334,7 +386,7 @@ export async function createBooking(params: {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_booking", {
     p_provider_slug: params.slug,
-    p_service_id: params.serviceId,
+    p_service_ids: params.serviceIds,
     p_starts_at: params.startsAt,
     p_customer_name: params.customerName,
     p_customer_phone: params.customerPhone,
@@ -370,6 +422,27 @@ export async function transitionBooking(params: {
   return booking;
 }
 
+export interface ProviderBookingsResult {
+  bookings: Booking[];
+  /** `true` quando a consulta falhou; distingue falha de agenda vazia. */
+  failed: boolean;
+}
+
+export async function listProviderBookingsForPanel(
+  providerId: string,
+): Promise<ProviderBookingsResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("provider_id", providerId)
+    .order("starts_at", { ascending: false });
+
+  if (error) return { bookings: [], failed: true };
+  return { bookings: (data ?? []) as Booking[], failed: false };
+}
+
+/** Compatibilidade: devolve apenas a lista, sem sinalizar falha de consulta. */
 export async function listProviderBookings(
   providerId: string,
 ): Promise<Booking[]> {
