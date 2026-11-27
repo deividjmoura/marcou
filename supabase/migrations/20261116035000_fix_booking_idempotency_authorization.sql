@@ -178,7 +178,8 @@ begin
   -- Primeiro carrega a reserva solicitada e valida o participante.
   select * into v_booking
   from public.bookings
-  where id = p_booking_id;
+  where id = p_booking_id
+  for update;
 
   if not found then
     raise exception 'booking_not_found' using errcode = 'P0001';
@@ -226,7 +227,8 @@ begin
     -- Restaura a linha alvo depois da consulta de replay (que pode não achar).
     select * into v_booking
     from public.bookings
-    where id = p_booking_id;
+    where id = p_booking_id
+    for update;
   end if;
 
   if p_event <> 'expire'
