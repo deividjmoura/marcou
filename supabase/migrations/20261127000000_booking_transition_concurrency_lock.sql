@@ -1,25 +1,12 @@
--- Corrige corrida de concorrência na transição de estado de agendamentos.
---
--- A RPC `transition_booking` carregava a reserva com `SELECT ... INTO`
--- sem `FOR UPDATE`, permitindo que duas sessões simultâneas lessem o
--- mesmo estado inicial e aplicassem transições incompatíveis, com a
--- última sobrescrevendo a anterior e duplicando eventos de auditoria.
---
--- Esta migration aplica `CREATE OR REPLACE FUNCTION` adicionando
--- `FOR UPDATE` em ambas as leituras da reserva, de forma que o lock
--- de linha seja adquirido antes de qualquer validação de estado. A
--- assinatura, autorização, ownership, expiração, pagamento,
--- idempotência e eventos de auditoria são preservados integralmente.
---
--- Aplica-se sobre bancos que já executaram a migration
--- `20261116035000_fix_booking_idempotency_authorization.sql`; é segura
--- para reexecução (`CREATE OR REPLACE`).
+-- Correção incremental: serializa transições concorrentes sobre a mesma reserva.
+-- Preserva o histórico: não altera migrations anteriores já aplicadas.
 
 create or replace function public.transition_booking(
   p_booking_id uuid,
   p_event text,
   p_idempotency_key text default null
-) returns public.bookings
+)
+returns public.bookings
 language plpgsql
 security definer
 set search_path = public
@@ -36,8 +23,6 @@ begin
   end if;
 
   -- Primeiro carrega a reserva solicitada e valida o participante.
-  -- O FOR UPDATE adquire o lock de linha antes de qualquer validação,
-  -- impedindo que duas sessões simultâneas leiam o mesmo estado inicial.
   select * into v_booking
   from public.bookings
   where id = p_booking_id
@@ -98,8 +83,6 @@ begin
     and v_booking.expires_at is not null
     and v_booking.expires_at <= now()
   then
-    -- Atualiza e retorna (sem RAISE) para que o commit preserve a expiração;
-    -- a camada de aplicação traduz o status em erro para quem chamou.
     update public.bookings
     set status = 'expired', updated_at = now()
     where id = v_booking.id
@@ -123,7 +106,6 @@ begin
       v_new_status := 'pending_review';
       v_audit_event := 'booking.proof_received';
     when 'payment_approved' then
-      -- Somente o prestador (ou fonte confiável) aprova o sinal.
       if v_provider.owner_id <> v_actor then
         raise exception 'forbidden' using errcode = 'P0001';
       end if;
@@ -170,6 +152,8 @@ begin
   return v_booking;
 end;
 $$;
+
+revoke all on function public.transition_booking(uuid, text, text) from public, anon;
 
 revoke all on function public.transition_booking(uuid, text, text) from public, anon;
 grant execute on function public.transition_booking(uuid, text, text) to authenticated;
