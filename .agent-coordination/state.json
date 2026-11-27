@@ -74,29 +74,22 @@
     "agent_1_pr_131": {
       "scope": "PR #131 multi-service model and privilege matrix",
       "pull_requests": [
-        131
+        131,
+        68
       ],
-      "status": "final_review_complete_pending_merge",
-      "active_assignment": "PR #131: revisão final independente concluída. HEAD remoto em 955f9a8d40981096dedeee55b2c77964895f5bf9, CI verde (quality pass, deploy-preview pass), MERGEABLE, não Draft. Diff vs main: 17 arquivos, 1755 inserções, 57 deleções. Contrato multi-serviços validado: migration 20261125120000 (booking_services, booking_service_totals, create_booking/get_provider_schedule com uuid[] + legadas), matriz de privilégios 20261125130000 (REVOKE ALL antes de GRANT), multiBookingInputSchema, bookings.ts/updated actions/widget com serviceIds[] e fallback serviceId. PR #126 (dependência): OPEN, Draft=true, CONFLICTING com main — precisa ser resolvida antes do merge da #126, não bloqueia a #131.",
-      "current_state": "Revisão final concluída: PR #131 aprovada. Diff vs main revisado (contrato multi-serviços, migration/compatibilidade RPCs, matriz de privilégios). CI verde em todos os checks. PR #126 dependente está CONFLICTING com main. Não realizado merge.",
-      "next_action": "Aguardar revisão/merge da PR #131 por responsável com autorização. Não fazer merge nem alterar #126.",
+      "status": "audit_complete_recommendations_delivered",
+      "active_assignment": "Auditar PR #68 (confirmação de agendamento) em conjunto com PR #131 (múltiplos serviços). Verificar se confirmação, resumo, preço total, duração, serviços selecionados, payloads e estados continuam corretos quando uma reserva contém vários serviços; identificar regressões, campos legados serviceId/serviceIds e compatibilidade com reservas de um serviço. Revisão somente leitura: não editar código, não alterar PRs/issues, não fazer merge. Entregar matriz arquivo/cenário/risco, evidências com SHAs exatos, testes existentes/faltantes e recomendação objetiva.",
+      "current_state": "Auditoria PR #68 + PR #131 concluída. PR #68 (feat/reservation: polish booking confirmation experience): OPEN, Draft=true, CONFLICTING, SHA a18a0d73bf073a06b8a8b21ff89d01a07489769a, base 051942b7 (NÃO é ancestral de main 69d0217). CI verde (quality pass, deploy-preview pass, run 44107794777). PR #68 altera 4 arquivos frontend (reserva/[id]/page.tsx, calendar-download.tsx NEW, globals.css, design-tokens.css) — nenhuma alteração em RPCs, migrations, criação de reservas. PR #131 (SHA 955f9a8): MERGEABLE, CI verde. Não há sobreposição de arquivos entre #68 e #131. Riscos identificados: (1) service_name_snapshot no bookings armazena nome agregado truncado a 180 chars com múltiplos serviços, exibido como h1 único na confirmação sem breakdown individual; (2) .ics download usa serviceName agregado; (3) não há lista de serviços individuais na página de confirmação; (4) não há testes de confirmação com múltiplos serviços; (5) PR #68 tem base desatualizada e está CONFLICTING com main.",
+      "next_action": "Aguardar decisão do responsável sobre compatibilidade multi-serviço na confirmação. Não fazer merge, não alterar código, não alterar PRs/issues.",
       "last_verified": {
         "branch": "fix/booking-multiple-services-pr123",
         "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-        "ci": "quality pass, netlify/deploy-preview pass, pages/header/redirect rules pass; typecheck 0 errors, lint 0, audit 0 failures/0 warnings, unit 155/155, test:db 4 scripts passed (69/0,47/0,32/0,40/0), build and changelog passed",
-        "notes": "PR #131: OPEN, não Draft, MERGEABLE. Diff vs main: 17 arquivos, 1755+ / 57-. Migração multi-serviços e matriz de privilégios revisadas. PR #126 (dependência): OPEN, Draft=true, CONFLICTING com main."
+        "pr68_head_sha": "a18a0d73bf073a06b8a8b21ff89d01a07489769a",
+        "pr68_base_sha": "051942b7d82f7cd3984031929267fba0488f476f",
+        "ci": "PR #131: quality pass, deploy-preview pass, typecheck 0, lint 0, audit 0/0, vitest 155/155, test:db 4 scripts ok (69/0,47/0,32/0,40/0), build ok, check:changelog ok. PR #68: quality pass, deploy-preview pass, run 44107794777.",
+        "notes": "PR #68 exibe service_name_snapshot como h1 único e usa-o no .ics download. Com PR #131 multi-serviço, esse campo contém nomes agregados (ex: 'Serviço A + Serviço B') truncados a 180 chars. Não há breakdown de serviços individuais na confirmação. Não há testes de confirmação multi-serviço. PR #68 não toca RPCs/migrations — risco é apenas de apresentação/UX."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T18:00:00-03:00",
-          "task": "Revalidação ao vivo antes da próxima delegação",
-          "status": "ci_green_final_review_pending",
-          "result": "PR #131 permanece aberta, não Draft, mergeable=true, HEAD 955f9a8d40981096dedeee55b2c77964895f5bf9; CI associado verde. HEAD coincide com SHA da auditoria aprovada.",
-          "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-          "tests": "CI associado ao HEAD: success. Auditoria anterior registrada: unit 155/155, DB scripts 69/0,47/0,32/0,40/0, typecheck/lint/audit/build/changelog.",
-          "blockers": [],
-          "next_action": "Revisão final independente do diff e checagem da dependência #126; não fazer merge."
-        },
         {
           "timestamp": "2026-11-27T19:30:00-03:00",
           "task": "Referência à auditoria Issue #29 (agent_5_calendar_audit)",
@@ -121,6 +114,19 @@
             "PR #126 (dependência) está CONFLICTING com main e Draft — requer resolução antes do merge da #126, não da #131."
           ],
           "next_action": "Aguardar revisão/merge da PR #131 por responsável com autorização. Não fazer merge nem alterar #126."
+        },
+        {
+          "timestamp": "2026-11-27T22:00:00-03:00",
+          "task": "Auditoria PR #68 (confirmação de agendamento) com PR #131 (múltiplos serviços)",
+          "status": "audit_complete_recommendations_delivered",
+          "result": "PR #68 é puramente frontend/UI (confirmação, .ics download, CSS, tokens) — não altera RPCs, migrations, criação de reservas ou dados. Compatível com PR #131 no nível de dados (usa service_name_snapshot, starts_at, ends_at, price_cents_snapshot etc. que são agregados corretamente no bookings). Riscos: (1) service_name_snapshot agregado/truncado a 180 chars exibido como h1 único sem breakdown individual de serviços; (2) .ics usa serviceName agregado como título do evento; (3) não há lista de serviços individuais com duração/preço separados na confirmação; (4) não há testes de confirmação com múltiplos serviços; (5) PR #68 base (051942b7) não é ancestral de main (69d0217) — PR CONFLICTING, precisa de rebase antes do merge. Nenhum teste existente cobre confirmação de reserva com múltiplos serviços.",
+          "head_sha": "main 69d02173653384e082476e7879ee9f33672dec72; PR #68 a18a0d73bf073a06b8a8b21ff89d01a07489769a; PR #131 955f9a8d40981096dedeee55b2c77964895f5bf9",
+          "tests": "Nenhum teste de confirmação multi-serviço existe. Testes existentes: vitest 155/155 (nenhum testa ReservaPage ou calendar-download), test:db 4 scripts aprovados (não cobrem fluxo de confirmação UI). PR #68 CI: quality pass, deploy-preview pass (run 44107794777).",
+          "blockers": [
+            "PR #68 está CONFLICTING com main (base 051942b7 não é ancestral de main 69d0217) — requer rebase antes do merge.",
+            "Não há testes de confirmação com múltiplos serviços (gap de cobertura)."
+          ],
+          "next_action": "Recomendar: (1) adicionar breakdown de serviços individuais na confirmação (lista de services com duração/preço); (2) considerar service_name_snapshot completo sem truncamento ou exibir nomes individuais no .ics; (3) adicionar testes unitários para ReservaPage com dados multi-serviço; (4) fazer rebase da PR #68 em main atual antes de qualquer merge."
         }
       ]
     },
