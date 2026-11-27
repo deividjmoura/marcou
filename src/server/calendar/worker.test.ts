@@ -372,12 +372,20 @@ describe("calendar — desconexão", () => {
     expect(google.calls.some((c) => c.method === "insert")).toBe(false);
   });
 
-  it("falha de revogação não impede finalizar, mas é registrada", async () => {
+  it("falha de revogação mantém a conexão para retry e só remove após sucesso", async () => {
     google.revokeOk = false;
     store.mappings.clear();
     await store.requestDisconnect(PROVIDER);
-    const result = await cleanupProviderDisconnect(deps(), PROVIDER);
-    expect(result.finalized).toBe(true);
+    const first = await cleanupProviderDisconnect(deps(), PROVIDER);
+    expect(first).toMatchObject({ finalized: false, pending: true });
+    expect(store.connections.has(PROVIDER)).toBe(true);
+    expect(store.connections.get(PROVIDER)!.refresh_token_ciphertext).toBe("enc:refresh");
     expect(logs).toContainEqual(expect.objectContaining({ event: "revoke_failed" }));
+
+    google.revokeOk = true;
+    const retry = await cleanupProviderDisconnect(deps(), PROVIDER);
+    expect(retry.finalized).toBe(true);
+    expect(store.connections.has(PROVIDER)).toBe(false);
+    expect(google.revoked).toEqual(["refresh", "refresh"]);
   });
 });
