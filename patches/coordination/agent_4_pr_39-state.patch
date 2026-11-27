@@ -1,52 +1,61 @@
 diff --git a/.agent-coordination/state.json b/.agent-coordination/state.json
-index 5e221ea..b573887 100644
+index 7b618e9..b9fd2c0 100644
 --- a/.agent-coordination/state.json
 +++ b/.agent-coordination/state.json
-@@ -224,20 +224,43 @@
+@@ -223,20 +223,47 @@
        "pull_requests": [
          39
        ],
 -      "status": "conflict_diagnosis_pending",
-+      "status": "merge_resolution_ready_push_blocked",
++      "status": "pr39_patch_ready__calendar_audit_delivered",
        "active_assignment": "PR #39: HEAD 6f44b506da887ecc90486c80e6b9789578b23837, base SHA registrado diverge da main e PR está mergeable=false. Diagnostique conflitos exatos entre feat/24-provider-agenda e main; atualize a branch com segurança sem sobrescrever trabalho remoto, resolva somente conflitos pertencentes à PR #39 e execute testes/CI/Preview no SHA final. Sem force push, merge ou fechamento. Se não for seguro, entregue passos mínimos para Codespaces.",
 -      "current_state": "PR #39 continua aberta/Draft, HEAD 6f44b506da887ecc90486c80e6b9789578b23837; CI associado ao HEAD está verde, mas a PR está mergeable=false e base_sha informado é db0fd8d84e7f5a1a1b41385a9abb1cd2e4f3c63f, diferente da main atual 69d02173653384e082476e7879ee9f33672dec72.",
 -      "next_action": "Diagnosticar conflitos com main atual e atualizar branch sem sobrescrever trabalho remoto; sem force push/merge.",
-+      "current_state": "Diagnóstico concluído e resolução pronta SEM force push. A branch feat/24-provider-agenda (6f44b506da887ecc90486c80e6b9789578b23837, base antiga db0fd8d) recebe um merge commit de origin/main (69d02173653384e082476e7879ee9f33672dec72) com o único conflito em src/app/painel/page.tsx resolvido e o patch da agenda reaplicado; a árvore resultante é 3f8890e1a097069b2a3cc224c8b88dcdead3b101, reproduzida localmente no merge commit e8a229e422838552340fb5b840e2e1d20ac285a9 (pais 6f44b50 + 69d0217), e o push é fast-forward. A branch real segue intocada porque esta sessão só tem push em arena/9c0da280-marcou.",
-+      "next_action": "Quem tiver push em feat/24-provider-agenda, no Codespaces: git fetch origin; git switch feat/24-provider-agenda; git merge origin/main; git checkout origin/main -- .; git rm -f src/app/painel/booking-agenda.tsx; git show origin/arena/9c0da280-marcou:patches/pr-39/pr-39-agenda.patch | git apply --3way; git add -A && git commit; git push origin feat/24-provider-agenda (fast-forward, sem force). Depois registrar o novo HEAD e aguardar CI/Deploy Preview nesse SHA; a PR continua sem merge.",
++      "current_state": "PR #39: resolução por merge pronta e verificada (merge commit local e8a229e, árvore 3f8890e1a097069b2a3cc224c8b88dcdead3b101, push fast-forward, sem force), bloqueada apenas por permissão de push desta sessão (só arena/9c0da280-marcou). Além disso, a pedido explícito do responsável neste turno, finalizei a auditoria da Issue #29 (Google Calendar) em patches/calendar-audit/AUDITORIA-29.md; a entrada agent_5_calendar_audit não foi alterada.",
++      "next_action": "PR #39: executar no Codespaces o merge de origin/main na branch da PR, reaplicar patches/pr-39/pr-39-agenda.patch, push fast-forward e validar CI/preview no novo HEAD. Auditoria #29: iniciar a Fase 0 (merge de main em fix/29-oauth-state-atomic sem force) e então Fase 1 (validar escopo concedido + PKCE). Referência: patches/calendar-audit/AUDITORIA-29.md.",
        "last_verified": {
-+        "verified_at": "2026-11-27",
-         "branch": "feat/24-provider-agenda",
-         "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
-         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-+        "pr_state": "open_draft_conflicting",
-+        "strategy": "merge commit de main sobre a branch da PR, sem force push",
-+        "merge_commit_local": "e8a229e422838552340fb5b840e2e1d20ac285a9",
-+        "merge_parents": [
-+          "6f44b506da887ecc90486c80e6b9789578b23837",
-+          "69d02173653384e082476e7879ee9f33672dec72"
-+        ],
-+        "result_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
-+        "push_type": "fast_forward_sem_force",
-         "patch": "patches/pr-39/pr-39-agenda.patch",
-         "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
+-        "branch": "feat/24-provider-agenda",
+-        "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
+-        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+-        "patch": "patches/pr-39/pr-39-agenda.patch",
+-        "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
 -        "previous_local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
 -        "notes": "Historical values only; recheck. PR previously Draft. Do not merge/close."
++        "verified_at": "2026-11-27",
++        "pr39": {
++          "branch": "feat/24-provider-agenda",
++          "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
++          "pr_state": "open_draft_conflicting",
++          "merge_commit_local": "e8a229e422838552340fb5b840e2e1d20ac285a9",
++          "result_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
++          "patch": "patches/pr-39/pr-39-agenda.patch",
++          "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb"
++        },
++        "issue_29_audit": {
++          "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
++          "calendar_branch": "arena/29-calendar-integration",
++          "calendar_branch_sha": "26baee930cc48e1ec38561903337d5148d5274c7",
++          "atomic_branch": "fix/29-oauth-state-atomic",
++          "atomic_branch_sha": "2f577e2810bb66f79d1fdc1c697859bdfa42843d",
++          "pr_126_sha": "335e3f50b1d8dba862c2c769039a1750e94a6681",
++          "pr_126_state": "open_draft_conflicting",
++          "report": "patches/calendar-audit/AUDITORIA-29.md",
++          "evidence": "clone isolado de 2f577e2: build ok, tsc ok, lint 0 erros/4 warnings, vitest 136, audit 0 falhas/5 avisos, calendar-state-check 25/25"
++        },
 +        "ci": null,
-+        "ci_note": "Nenhum CI no merge commit; a execução quality success é de 2026-11-16 no HEAD 6f44b50.",
-+        "deploy_preview": null,
-+        "deploy_preview_note": "Somente status Vercel de 2026-11-16 no HEAD 6f44b50.",
-+        "notes": "Merge reproduzido e validado em clone isolado. coordination/agents lido em 41f859a."
++        "ci_note": "Nenhum CI nos SHAs de resolução/auditoria; execuções existentes são antigas (16/11 no HEAD 6f44b50).",
++        "notes": "Somente leitura para #29; nenhuma alteração staged do responsável foi tocada. coordination/agents lido em 99ecd78 (blob 7b618e96)."
        },
        "updates": [
 +        {
-+          "timestamp": "2026-11-27T18:20:00-03:00",
-+          "task": "PR #39 - diagnóstico de conflitos e resolução sem force push",
-+          "status": "merge_resolution_ready_push_blocked",
-+          "result": "Merge de origin/main (69d0217) sobre a branch da PR testado em clone isolado: conflito único em src/app/painel/page.tsx, resolvido com a versão da main + reaplicação do patch da agenda; gerou o merge commit e8a229e (pais 6f44b50 + 69d0217) com árvore 3f8890e1, e o push é fast-forward, sem force. Suíte verde: changelog ok, lint 0 erros, typecheck ok, 165 testes, test:db 188, audit 0/0, build ok. Branch remota e PR inalteradas; CI/preview no SHA final inexistentes.",
-+          "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
-+          "tests": "check:changelog ok; lint 0 erros/3 warnings preexistentes; typecheck ok; vitest 165 passed; test:db 188 passed; audit 0 falhas; build ok",
-+          "blockers": "Sem permissão de sessão para push fora de arena/9c0da280-marcou.",
-+          "next_action": "Executar o merge no Codespaces, push fast-forward, registrar novo HEAD, rodar CI e conferir preview nesse SHA."
++          "timestamp": "2026-11-27T18:45:00-03:00",
++          "task": "Auditoria final da Issue #29 (Google Calendar), por solicitação do responsável",
++          "status": "audit_delivered_read_only",
++          "result": "Relatório consolidado em patches/calendar-audit/AUDITORIA-29.md. Confirmados: P0 escopo concedido não validado (granted_scope gravado e nunca lido) e ausência de PKCE; P1 refresh sem cache e sem persistir rotação, corrida desconexão×worker ressuscitando jobs, 5 avisos de audit com isCalendarAdminConfigured morto, SUPABASE_SERVICE_ROLE_KEY ausente do .env.example; P2 search_path do trigger, HTTPS do redirect, versionamento de chave AES e outbox enfileirando com flag off. Os seis arquivos staged (commit 2f577e2) cobrem apenas o consumo atômico do state.",
++          "head_sha": "2f577e2810bb66f79d1fdc1c697859bdfa42843d",
++          "tests": "Sem novos testes (auditoria read-only); evidência executada em clone de 2f577e2: build ok, tsc ok, lint 0 erros/4 warnings, 136 testes, audit 0 falhas/5 avisos, calendar-state-check 25/25",
++          "blockers": "Push fora de arena/9c0da280-marcou continua bloqueado; nenhum CI existe nos SHAs auditados",
++          "next_action": "Fase 0 do relatório: merge de main em fix/29-oauth-state-atomic (sem force); depois validar escopo + PKCE"
 +        },
          {
            "timestamp": "2026-11-27T18:00:00-03:00",
