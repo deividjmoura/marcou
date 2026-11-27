@@ -4,8 +4,10 @@ import {
   loginRedirectUrl,
   normalizePhone,
   oauthErrorMessage,
+  PKCE_VERIFIER_MISSING_MESSAGE,
   passwordLoginErrorMessage,
   safeLoginErrorMessage,
+  stripFormatCharacters,
   trustedAppOrigin,
   safeNextPath,
   safeNextPathFromUrl,
@@ -13,6 +15,11 @@ import {
 } from "./identity";
 
 describe("identity helpers", () => {
+  it("exports a safe message for missing PKCE verifier", () => {
+    expect(PKCE_VERIFIER_MISSING_MESSAGE).toBe(
+      "Abra o link no mesmo navegador em que solicitou a recuperação.",
+    );
+  });
   afterEach(() => vi.unstubAllEnvs());
 
   it("uses a configured public origin and never reflects an untrusted host", () => {
@@ -25,6 +32,54 @@ describe("identity helpers", () => {
 
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://attacker.example");
     expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
+  });
+
+  it("allows only the production Netlify host and numbered PR previews as request origins", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
+
+    expect(trustedAppOrigin("https://marcoou.netlify.app")).toBe(
+      "https://marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://deploy-preview-127--marcoou.netlify.app")).toBe(
+      "https://deploy-preview-127--marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://deploy-preview-abc--marcoou.netlify.app")).toBe(
+      "https://marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://marcoou--attacker.netlify.app")).toBe(
+      "https://marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://attacker.example")).toBe(
+      "https://marcoou.netlify.app",
+    );
+  });
+
+  it("remove caracteres de formato invisíveis da origem configurada", () => {
+    // U+2060 (WORD JOINER) no final do domínio, como observado em produção.
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\u2060");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\u200B/path");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\uFEFF");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+  });
+
+  it("stripFormatCharacters remove caracteres de formato invisíveis", () => {
+    expect(stripFormatCharacters("https://marcou.example\u2060")).toBe(
+      "https://marcou.example",
+    );
+    expect(stripFormatCharacters("https://marcou.example\u200B/path")).toBe(
+      "https://marcou.example/path",
+    );
+    expect(stripFormatCharacters("https://marcou.example\uFEFF")).toBe(
+      "https://marcou.example",
+    );
+    expect(stripFormatCharacters("https://marcou.example")).toBe(
+      "https://marcou.example",
+    );
+    expect(stripFormatCharacters("")).toBe("");
   });
 
   it("accepts only normalized local post-authentication paths", () => {
