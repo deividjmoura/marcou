@@ -335,7 +335,7 @@ try {
   claimed = await claim();
   check("reserva com job em processing é ignorada (cancelamento não corre em paralelo)", claimed.length === 0, JSON.stringify(claimed));
 
-  await db.query(`update public.calendar_sync_outbox set status='succeeded', completed_at=now() where id = $1`, [jobsA[0].id]);
+  await db.query(`update public.calendar_sync_outbox set status='succeeded', completed_at=now(), processing_started_at=null, lease_token=null where id = $1`, [jobsA[0].id]);
   claimed = await claim();
   check(
     "depois do primeiro concluído, o próximo job da reserva é liberado",
@@ -349,7 +349,7 @@ try {
   await addEvent(bookingB, "booking.cancelled");
   const jobsB = await jobsFor(bookingB);
   await db.query(
-    `update public.calendar_sync_outbox set status='failed', attempts=1, available_at = now() + interval '1 hour' where id = $1`,
+    `update public.calendar_sync_outbox set status='failed', attempts=1, processing_started_at=null, lease_token=null, available_at = now() + interval '1 hour' where id = $1`,
     [jobsB[0].id],
   );
   claimed = await claim();
@@ -369,7 +369,7 @@ try {
   let incompleteRounds = 0;
   for (let round = 0; round < 15; round += 1) {
     await db.query(
-      `update public.calendar_sync_outbox set status='pending', attempts=0, processing_started_at=null, available_at=now()
+      `update public.calendar_sync_outbox set status='pending', attempts=0, processing_started_at=null, lease_token=null, available_at=now()
        where booking_id = any($1::uuid[])`,
       [concurrentBookings],
     );
@@ -391,7 +391,7 @@ try {
   check("15 rodadas de 8 claims paralelos: nunca dois jobs da mesma reserva", violations === 0, `violações=${violations}`);
   console.log(`  info rodadas em que algum worker pulou reserva travada: ${incompleteRounds}/15 (esperado com SKIP LOCKED)`);
   await db.query(
-    `update public.calendar_sync_outbox set status='succeeded' where booking_id = any($1::uuid[])`,
+    `update public.calendar_sync_outbox set status='succeeded', processing_started_at=null, lease_token=null where booking_id = any($1::uuid[])`,
     [concurrentBookings],
   );
 
@@ -400,7 +400,7 @@ try {
   await addEvent(bookingDead, "booking.confirmed");
   const [deadJob] = await jobsFor(bookingDead);
   await db.query(
-    `update public.calendar_sync_outbox set status='processing', attempts=8,
+    `update public.calendar_sync_outbox set status='processing', attempts=8, lease_token=gen_random_uuid(),
        processing_started_at = now() - interval '11 minutes' where id = $1`,
     [deadJob.id],
   );
@@ -415,7 +415,7 @@ try {
   await addEvent(staleBooking, "booking.confirmed");
   const [staleJob] = await jobsFor(staleBooking);
   await db.query(
-    `update public.calendar_sync_outbox set status='processing', attempts=2,
+    `update public.calendar_sync_outbox set status='processing', attempts=2, lease_token=gen_random_uuid(),
        processing_started_at = now() - interval '11 minutes' where id = $1`,
     [staleJob.id],
   );
@@ -513,7 +513,7 @@ try {
   const finalize = async () => (await service_role.query(`select * from public.finalize_calendar_disconnect($1)`, [provider])).rows[0];
   check("finalize sem desconexão pedida não apaga", (await finalize()).finalized === false);
 
-  await db.query(`update public.calendar_sync_outbox set status='succeeded' where status in ('processing','pending','failed')`);
+  await db.query(`update public.calendar_sync_outbox set status='succeeded', processing_started_at=null, lease_token=null where status in ('processing','pending','failed')`);
   const mapped = await createBooking();
   await db.query(
     `insert into public.booking_calendar_events (booking_id, provider_id, calendar_id, google_event_id) values ($1,$2,'primary','evt1')`,
@@ -531,12 +531,12 @@ try {
   await addEvent(mapped, "booking.confirmed");
   const [processingJob] = await jobsFor(mapped);
   await db.query(
-    `update public.calendar_sync_outbox set status='processing', processing_started_at=now() where id=$1`,
+    `update public.calendar_sync_outbox set status='processing', lease_token=gen_random_uuid(), processing_started_at=now() where id=$1`,
     [processingJob.id],
   );
   check("finalize bloqueado por job em processing do prestador", (await finalize()).finalized === false);
 
-  await db.query(`update public.calendar_sync_outbox set status='succeeded' where id=$1`, [processingJob.id]);
+  await db.query(`update public.calendar_sync_outbox set status='succeeded', processing_started_at=null, lease_token=null where id=$1`, [processingJob.id]);
   const finalized = await finalize();
   check(
     "finalize apaga a conexão e devolve o refresh token cifrado para revogação",
@@ -636,7 +636,7 @@ try {
   check("claim entrega o job de backfill", bfClaimed.length === 1 && bfClaimed[0].reason === "backfill", JSON.stringify(bfClaimed));
 
   await db.query(
-    `update public.calendar_sync_outbox o set status='succeeded', completed_at=now(), processing_started_at=null
+    `update public.calendar_sync_outbox o set status='succeeded', completed_at=now(), processing_started_at=null, lease_token=null
        from public.bookings b where b.id = o.booking_id and b.provider_id = $1`,
     [bfProvider],
   );
