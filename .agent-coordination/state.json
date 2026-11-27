@@ -1607,25 +1607,12 @@
       "dependencies": {
         "blocks": [],
         "blocked_by": [
-          "A1-T1: PR #139 (substitui #131), migration da matriz 20261127130000_table_privileges_matrix.sql; aguardar merge sobre main após #141."
+          "A1-T1: PR #142 (substitui #131 e #139), migration final 20261127130000_table_privileges_matrix.sql; aguardar CI e merge na main."
         ]
       },
-      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131. A dependência de #136 mudou: #131 foi fechada sem merge e substituída pela PR #139 do Agent1. PR #139 tem CI success e Netlify preview success no HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6, mas ainda está mergeable=false/atrás da main após #141; Agent1 precisa atualizar/mesclar main e concluir o merge antes de A4-T1.",
-      "next_action": "Aguardar Agent1 atualizar e mergear #139 sobre a main atual. Depois atualizar a #136 com migration final 20261127130000, preservando calendar-check no test:db, executar CI e mergear com SHA verde.",
+      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131. A dependência de #136 mudou: #131 foi fechada sem merge e substituída pela PR #139 do Agent1. PR #139 tem CI success e Netlify preview success no HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6, mas ainda está mergeable=false/atrás da main após #141; Agent1 precisa atualizar/mesclar main e concluir o merge antes de A4-T1. Atualização da dependência: PR #139 foi fechada sem merge e substituída pela #142 (`fix/139-multi-services-final`), baseada na main atual `cd6065ad6a46187510bde58e51f474d0ff66a4c0`; HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2`, mergeable=true, CI in_progress. #136 permanece bloqueada até #142 integrar migration 20261127130000.",
+      "next_action": "Aguardar CI verde e merge da #142 pelo Agent1. Assim que a migration estiver na main, atualizar #136 sem force-push, adicionar privileges-check mantendo calendar-check no test:db, rodar CI completo e mergear só com checks verdes no SHA exato.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T3/A4-T4: PR #141 de hardening Calendar e inventário das branches antigas",
-          "status": "in_progress_ci_pending",
-          "result": "PR #141 aberta: https://github.com/deividjmoura/marcou/pull/141, head 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1, base main cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b. Corrige callback sem fallback Host, lease fencing, retry da revogação externa, search_path pg_catalog/public e liga calendar-check a test:db. CI ainda não concluiu; merge não executado. A4-T4 comparou seis branches, registrou commits exclusivos/first-parent e disposição APAGAR/PRESERVAR; nenhuma branch foi modificada.",
-          "head_sha": "PR #141 head:979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; main base:cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b",
-          "tests": "CI da #141 pendente no momento do registro. Testes adicionados: callback fail-closed; origens HTTP(S); fencing unitário e PostgreSQL; revogação retryable; grants/search_path; calendar-check em npm run test:db.",
-          "blockers": [
-            "Aguardar CI verde no SHA exato da #141.",
-            "#136 depende da migration da #131 (Agent1)."
-          ],
-          "next_action": "Aguardar checks #141; se verdes, mergear. Depois da #131, alinhar #136 e rodar test:db completo."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "A4-T3: validação CI da PR #141",
@@ -1661,6 +1648,18 @@
             "Agent1 precisa atualizar #139 com main cd6065a e resolver conflito/mergeability."
           ],
           "next_action": "Após #139 mergear, atualizar #136 sem force-push e preservar ambas as checks em test:db."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "A4-T1: dependência #131/#139 substituída pela PR #142",
+          "status": "blocked_waiting_agent1_pr142",
+          "result": "PR #139 fechada sem merge (comentário: substituída por fix/139-multi-services-final). Nova PR #142 aberta sobre main atual cd6065ad6a46187510bde58e51f474d0ff66a4c0, HEAD 8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2, mergeable=true. Contém migrations 20261127120000_booking_multiple_services.sql e 20261127130000_table_privileges_matrix.sql; CI in_progress no SHA exato.",
+          "head_sha": "PR #142:8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
+          "tests": "CI in_progress e Netlify pending; não mergear até sucesso.",
+          "blockers": [
+            "Aguardar CI/merge da #142 pelo Agent1."
+          ],
+          "next_action": "Atualizar #136 depois da migration 20261127130000 estar na main."
         }
       ],
       "branch_disposition": [
