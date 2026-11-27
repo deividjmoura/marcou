@@ -92,3 +92,65 @@ Pergunta ao responsável: *Esta entrega (junto com as mudanças acumuladas desde
 Resumo para a decisão: o conteúdo acumulado está no `CHANGELOG.md` em `[Unreleased]`; versão sugerida se houver release: `0.2.0` (SemVer, funcionalidades novas sem quebra); recomendo pré-release **beta** caso a decisão seja publicar antes da Onda 3; os testes da `main` estão verdes conforme a seção 1, com as limitações de não haver validação do fluxo OAuth real, de Google API nem de envio de e-mail.
 
 Resposta: **não autorizado**. Nada foi publicado.
+
+## 7. Atualização de auditoria — 2026-11-27T23:18:02Z
+
+Entrega conforme `docs/FECHAMENTO-AGENTES.md` (seções 0 e 9) e a entrada `agent_6_r7_coordinator`. Nenhum PR foi mergeado por este agente: a entrada não atribui PR a ele, e a seção 9 limita o Agente 6 a auditar, manter a ordem de merges e limpar branches ao final.
+
+### 7.1 Estado da `main` e merges novos
+
+- `main` avançou de `5b4e894` para **`90b05aa`**: #138 (`44ed540`, plataforma/CI/schedulers, substitui a #32) e #137 (`90b05aa`, docs/autorização r7).
+- **Validação independente em `90b05aa`** (clone limpo, sem alterações de código): `check:changelog`, `lint`, `typecheck`, `audit`, `test`, `test:db` e `build` — todos exit 0.
+- CI no GitHub: `quality` verde em `44ed540` e `90b05aa`.
+- #138 não altera migrations, nem `.env.example` com valores; `ci.yml` mantém todos os gates e remove só o `audit` duplicado.
+- **PR #32 fechada sem merge** (23:11Z) como substituída pela #138, com comentário de fechamento. Nenhuma divergência encontrada.
+
+### 7.2 Estado das PRs abertas (GitHub, agora)
+
+Abertas: #136 (draft), #133, #131, #130 (draft), #127, #124, #68 (draft), #67 (draft), #41 (draft). **Fechadas desde a auditoria anterior:** #46, #2 (agente 5), #41 segue aberta; #32 (agente 3). Todas as abertas com `mergeable=CONFLICTING` exceto #127, #136, #67, em que `MERGEABLE`. Nenhum merge de rodada 7 além de #137/#138 até este momento. A #41 é a única que ainda aparece aberta e atribuída ao Agente 4 como "superada" sem fechamento.
+
+### 7.3 Alegações dos agentes r7 verificadas
+
+| Agente | Alegação | Verificação |
+|---|---|---|
+| 3 | #138 mergeada em `44ed540`, #32 substituída | **Confirmado** (merge SHA e fechamento da #32 conferidos) |
+| 2 | #127 atrasada (9 à frente / 16 atrás) e bloqueada por rede no ambiente dele | **Confirmado** o divergir (`cc212db`, `mergeable=MERGEABLE`, 16 commits atrás de `90b05aa`). A PR continua não integrada. |
+| 5 | #46 e #2 fechadas com evidência | **Confirmado** (ambas `CLOSED`). Evidência de conteúdo não auditada aqui. |
+| 1, 4 | "nenhum trabalho iniciado" (rodada 7) | Nenhum merge; #131 continua `CONFLICTING`. Branch `fix/131-multi-services-r7` existe, apontando para `90b05aa`, sem PR ainda. |
+
+### 7.4 Candidatas à limpeza (A6-T2) — deleção **adiada** para a Onda 4
+
+Critério: PR `MERGED` + tip remoto igual ao `headRefOid` + diff vazio nos arquivos da PR em relação à `main`.
+
+- `arena/fdad472c-marcou` (PR #138, merge `44ed540`): **atende** (8 arquivos da PR idênticos na `main`; tip `39855f0`).
+- `docs/runbook-r7-autonomia` (PR #137, merge `90b05aa`): **atende** (1 arquivo idêntico; tip `c5d03e5`).
+
+Não apagadas agora: o runbook (seção 3, Onda 4) manda limpar só depois dos merges da rodada. Outras candidatas da lista do A6-T2 (`feat/24-provider-agenda`, `fix/booking-transition-test-wiring`, `fix/booking-expiration-scheduler`) **não existem mais no remoto**; ficam fora.
+
+Branches com PR fechada sem merge, a decidir pelo responsável: `arena/4017109f-marcou` (#123), `arena/9e68c2bb-marcou` (#126, tip diverge do último head), `feat/30-platform-hardening` (#32, o agente 3 pede preservar o texto de `docs/MOTION.md` para a Issue #27), `feat/customer-account-area` (#48), `feat/pagina-publica-agendamento` (#1), `feat/calendario-mobile` (#2), `arena/116298da-marcou` (#46), `fix/auth-recovery-redirect-production` (#71), `fix/security-definer-execute-grants` (#41, ainda aberta).
+
+Sem PR e com trabalho possivelmente exclusivo, preservar: `arena/29-calendar-integration`, `arena/3b7c9d2f-marcou` (o agente 3 marcou como APAGAR por duplicação; confirmar antes), `arena/6f3a9b1f-marcou`, `arena/9c0da280-marcou`, `cc212db`, `feat/21-booking-multiple-services`, `feat/29-google-calendar-sync`, `fix/29-oauth-state-atomic`, `fix/booking-transition-concurrency-incremental`, `fix/calendar-callback-fail-closed-worker-fencing`, `coordination/agents` (preservar sempre). `fix/131-multi-services-r7` está em `90b05aa` (sem commits próprios) e é nova; não apagar até o agente 1 decidir.
+
+### 7.5 Limitação de escrita no `state.json`
+
+A sessão só permite enviar para `arena/3938e7c2-marcou`. Não consigo empurrar para `coordination/agents`. Por isso a entrada abaixo fica aqui, para o responsável copiar ou para o coordenador aplicar quando necessário:
+
+```json
+{
+  "agent_6_r7_coordinator": {
+    "status": "in_progress_waiting_for_merges",
+    "head_sha": "90b05aa (main); branch arena/3938e7c2-marcou em b681450",
+    "tests": "main 90b05aa: check:changelog, lint, typecheck, audit, test, test:db, build = exit 0 (clone limpo)",
+    "merges_verified": ["#137 (90b05aa)", "#138 (44ed540)"],
+    "closed_verified": ["#32 substituída por #138", "#46", "#2"],
+    "branches_deleted": [],
+    "branches_candidates_verified": ["arena/fdad472c-marcou", "docs/runbook-r7-autonomia"],
+    "blockers": ["escrita no state.json bloqueada pela sessão (apenas branch próprio)", "#127 atrasada e sem checkout do agente 2"],
+    "next_action": "Aguardar merges de #131, #127, #124, #136, #68, #67, #130, #133 e #41 (ordem da seção 3). Depois: verificar cada merge, limpar branches verificadas (Onda 4) e publicar relatório final."
+  }
+}
+```
+
+## 8. Pergunta sobre release (adiada)
+
+Sem mudança desde a seção 6: não recomendo release agora. Só será formulada no relatório final, depois da Onda 3.
