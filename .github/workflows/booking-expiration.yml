@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   expire-stale-bookings:
-    if: vars.BOOKING_EXPIRATION_ENABLED == 'true'
+    if: vars.BOOKING_EXPIRATION_ENABLED == 'true' && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     # Use environment-scoped credentials/config; production requires a separate deliberate workflow/environment.
     environment: booking-expiration-staging
     runs-on: ubuntu-latest
