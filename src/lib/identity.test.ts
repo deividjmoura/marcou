@@ -37,6 +37,9 @@ describe("identity helpers", () => {
     expect(safeNextPath("///evil.example")).toBe("/inicio");
     expect(safeNextPath("https://evil.example")).toBe("/inicio");
     expect(safeNextPath("/\\evil.example")).toBe("/inicio");
+    expect(safeNextPath("/folder\\file")).toBe("/inicio");
+    expect(safeNextPath("/folder%5cfile")).toBe("/inicio");
+    expect(safeNextPath("/folder%255cfile")).toBe("/inicio");
     expect(safeNextPath("/%5c%5cevil.example")).toBe("/inicio");
     expect(safeNextPath("/%2f%2fevil.example")).toBe("/inicio");
     expect(safeNextPath("/%252f%252fevil.example")).toBe("/inicio");
