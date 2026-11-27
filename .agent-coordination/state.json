@@ -61,7 +61,9 @@
   "agents": {
     "agent_1_pr_131": {
       "scope": "PR #131 multi-service model and privilege matrix",
-      "pull_requests": [131],
+      "pull_requests": [
+        131
+      ],
       "status": "prompt_sent_after_canceling_accidental_broad_prompt",
       "current_state": "Final security/integrity audit requested. Mandatory focus: effective grants and RLS on notifications for public, anon and authenticated.",
       "next_action": "Audit notifications grants and RLS, migrations, tests and CI at exact current SHA; report verdict and update this file.",
@@ -75,7 +77,10 @@
     },
     "agent_2_pr_128_and_38": {
       "scope": "PR #128 booking expiration and PR #38 reminders",
-      "pull_requests": [128, 38],
+      "pull_requests": [
+        128,
+        38
+      ],
       "status": "awaiting_agent_execution",
       "current_state": "Joint final review requested, with separate verdicts per PR.",
       "next_action": "Verify expiration/idempotency/scheduler default-off for #128; verify cron auth, service-role scope, env failures, duplicate-send protection and audit for #38. Confirm current SHAs and CI.",
@@ -89,21 +94,38 @@
     },
     "agent_3_pr_130": {
       "scope": "PR #130 password recovery code/documentation review",
-      "pull_requests": [130],
-      "status": "awaiting_agent_execution",
-      "current_state": "Review code and operational docs only. Supabase auth configuration has been updated and read back successfully; Netlify production URL was confirmed by user.",
-      "next_action": "Verify recovery flow contract, preview origin handling, env/build documentation, OAuth redirect preservation and exact current SHA. Do not touch external services or send email.",
+      "pull_requests": [
+        130
+      ],
+      "status": "code_and_docs_review_complete_external_functional_test_pending",
+      "current_state": "Revisão final do código e documentação operacional da PR #130 concluída no SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. Fluxo requestPasswordResetAction → /auth/confirm → /redefinir-senha, token_hash/type=recovery, template RedirectTo/TokenHash, allowlist preview estrita, instruções de NEXT_PUBLIC_SITE_URL e metadados de build conferidos. Checklist reforçado para reprovar preview que termina em produção e detectar caracteres invisíveis no Site URL. CI #277 passou integralmente neste SHA. Teste funcional externo continua pendente.",
+      "next_action": "Aguardar autorização para teste funcional controlado de recuperação em produção e Deploy Preview, usando conta de teste; confirmar que o preview retorna ao próprio hostname. Não enviar e-mail, acessar/alterar serviços externos ou fazer deploy sem autorização explícita.",
       "last_verified": {
-        "branch": null,
-        "head_sha": null,
-        "ci": "previous context said green; re-verify current SHA",
-        "notes": "Supabase template now uses RedirectTo + TokenHash + type=recovery. Functional test is still pending."
+        "branch": "fix/auth-recovery-preview-origin",
+        "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+        "ci": "CI #277 concluída com success neste SHA; quality job passou changelog, audit, lint, typecheck, npm test, test:db e build.",
+        "notes": "PR #130 aberta, Draft, não merged. Nenhum teste funcional externo executado nesta tarefa. Estado compartilhado registra Site URL Supabase atualizado e verificado por Management API e NEXT_PUBLIC_SITE_URL Netlify confirmado pelo usuário; não revalidado por este agente. PR #127 e demais agentes não foram alterados."
       },
-      "updates": []
+      "updates": [
+        {
+          "timestamp": "2026-11-27T14:25:00-03:00",
+          "task": "Revisão final PR #130 e protocolo de coordenação",
+          "status": "code_docs_review_complete_ci_green_external_test_pending",
+          "result": "Ajustes documentais em AUTH-RECOVERY-PREVIEW-ORIGIN.md e IDENTITY.md; fluxo de recuperação e allowlist revisados. CI #277 success no SHA registrado.",
+          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+          "tests": "CI #277: check:changelog, audit, lint, typecheck, npm test, test:db e build — todos success.",
+          "blockers": [
+            "Teste funcional externo de produção e Deploy Preview ainda não executado; requer autorização/conta de teste."
+          ],
+          "next_action": "Executar teste funcional controlado apenas após autorização explícita; preview que termina em produção deve reprovar."
+        }
+      ]
     },
     "agent_4_pr_39": {
       "scope": "PR #39 provider agenda",
-      "pull_requests": [39],
+      "pull_requests": [
+        39
+      ],
       "status": "awaiting_agent_execution",
       "current_state": "Update the real feature branch safely, then validate the exact resulting SHA.",
       "next_action": "Recheck main and PR branch against historical references, validate/apply patch without overwriting remote work, then run tests and wait for CI and preview on the new SHA.",
