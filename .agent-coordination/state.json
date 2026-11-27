@@ -243,30 +243,22 @@
       "pull_requests": [
         130
       ],
-      "status": "pr71_review_complete_keep_pending_until_owner_decision",
-      "active_assignment": "Revisão documental/técnica da PR #71 versus #127/#130 concluída. PR #71 é runbook-only e funcionalmente substituída, mas manter aberta por ora porque o comentário mais recente do responsável a classificou KEEP_PENDING. Não alterar #71/#127.",
-      "current_state": "PR #130 revalidada aberta/Draft/mergeable no HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9; CI run 46040285407 success nesse SHA. Revisão comparativa: #71 (8daa15651acbe74c98e1150b0f1cdcd71af89a60) contém apenas docs/ISSUE-70-RECUPERACAO-SENHA-PRODUCAO.md, sem código; descreve callback legado /auth/callback?flow=recovery e template {{ .ConfirmationURL }}. #127 (cc212db05cfc14ee70dd05e353a66484b7cef2c8) implementa fallback seguro code/token_hash, proxy sem loop, callback PKCE e testes; CI runs 46014586526 e 46001938452 success. #130 documenta fluxo atual /auth/confirm com RedirectTo + token_hash/type=recovery, origem confiável por deployment e runbook operacional. Conteúdo operacional da #71 está obsoleto, mas diagnóstico histórico e cuidados de segurança ainda têm valor. Comentário mais recente do responsável na #71 classificou KEEP_PENDING em 2026-11-27; não encerrar sem decisão explícita.",
-      "next_action": "Aguardar decisão do responsável sobre manter #71 até integração/validação de #127/#130 ou encerrá-la como substituída. Não alterar #71 nem #127. Continuar sem enviar e-mails, testar contas reais ou alterar serviços externos; teste funcional #130 permanece pendente de autorização.",
+      "status": "recovery_hardening_audit_complete_local_tests_green",
+      "active_assignment": "PR #130 — concluir hardening e testes locais do fluxo de recuperação de senha: revalidar HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9 e main, auditar RedirectTo/origens confiáveis, token_hash/type=recovery, code/PKCE, callback, open redirect e loops preview/produção, adicionar testes com mocks para casos válidos, origem não confiável, token ausente/inválido, recovery vs outros tipos e prevenção de loop/open redirect. Corrigir somente defeitos reprodutíveis; atualizar CHANGELOG se exigido. Nunca chamar Supabase/Netlify reais, enviar e-mails, usar contas reais ou alterar configuração externa. Rodar CI e registrar SHA final. Não remover Draft, não mergear.",
+      "current_state": "Auditoria do head 852f1dcdc29a034c3fc3983f304a0fef7a09aca9 concluída (PR #130 OPEN/Draft/MERGEABLE CLEAN, main 69d02173653384e082476e7879ee9f33672dec72, CI run 46040285407 success no SHA exato). Hardening verificado no código: trustedAppOrigin fixado à origem canônica em produção (Host/X-Forwarded-Host ignorados), contexto deploy-preview obtido de metadados de build (next.config.ts) com regex estrita deploy-preview-N--marcoou.netlify.app e fallback a produção; parseOrigin endurecido (sem userinfo/query/hash/path não-raiz/porta em https); /auth/confirm exige token_hash e type em {email,recovery} e recovery sempre redireciona a /redefinir-senha ignorando next (loop/open redirect impossíveis); /auth/callback faz exchangeCodeForSession (PKCE) e flow=recovery vai a /redefinir-senha sem onboarding; todos os redirects private,no-store. Espelho local do job quality no head: 157/157 testes, lint 0 erros (3 warnings <img> preexistentes), typecheck ok, quality-audit 0 falhas, check:changelog ok. Lacunas cobertas com 3 testes novos com mocks (link sem token_hash e sem parâmetros; recovery com next em formato de loop; callback sem code e sem erro): 160/160 verdes em árvore destacada do head; patch pr130-recovery-tests.patch aplica limpo no head (git apply --check OK) e validado isoladamente (22/22). Nenhum defeito reprodutivo: nenhuma alteração de runtime; diff test-only não exige CHANGELOG (changelog-check ignora *.test.*).",
+      "next_action": "Aplicar pr130-recovery-tests.patch (test-only) na branch fix/auth-recovery-preview-origin via push autorizado — esta sessão está fixada em arena/f074e752-marcou (PR #133) e não pode empurrar em outra branch; depois reexecutar CI no novo SHA e registrá-lo. Remoção de Draft e merge permanecem decisão do responsável.",
       "last_verified": {
-        "branch": "fix/auth-recovery-preview-origin",
+        "branch": "fix/auth-recovery-preview-origin (auditada); sessão fixada em arena/f074e752-marcou",
         "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-        "ci": "CI run 46040285407 completed success on exact #130 HEAD. #71 HEAD 8daa15651acbe74c98e1150b0f1cdcd71af89a60 has CI run 45052811370 success; #127 HEAD cc212db05cfc14ee70dd05e353a66484b7cef2c8 has CI runs 46014586526 and 46001938452 success.",
-        "notes": "Live PR states: #130 open/Draft/mergeable; #71 open/Draft/mergeable; #127 open/not Draft/mergeable. #71 has one documentation file only. Latest owner comment on #71 says KEEP_PENDING. No PR modified, no email sent, no external system changed."
+        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "main_sha_at_revalidation": "69d02173653384e082476e7879ee9f33672dec72",
+        "pull_request": 130,
+        "pr_state": "open; draft=true; mergeable=MERGEABLE (mergeStateStatus CLEAN)",
+        "ci": "CI run 46040285407 completed success no headSha exato 852f1dcd; Netlify deploy-preview-130 pass. Espelho local: vitest 160/160 (157 head + 3 novos), lint 0 erros, typecheck ok, audit 0 falhas, changelog ok.",
+        "tests": "Mocks existentes (válido, origem não confiável, token expirado, email/recovery/magiclink, flow=recovery, destino isolado, sem PII em métricas) + 3 novos (token ausente, loop na recovery, callback sem code/erro); git apply --check ok; suíte verde isolada.",
+        "notes": "Patch salvo como pr130-recovery-tests.patch no workspace da sessão (não commitado). Nenhum acesso a Supabase/Netlify reais, nenhum e-mail, nenhuma conta real."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T09:45:00-03:00",
-          "task": "Reverify PR #130 and deliver controlled functional-test runbook",
-          "status": "runbook_complete_functional_test_pending",
-          "result": "Live PR remains open/Draft at SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. CI #277 and Netlify Deploy Preview check passed on exact SHA. Supplied production/Preview test steps, email link contract and mandatory failure condition when Preview returns to production.",
-          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-          "tests": "Verified CI run 46040285407 quality job success: changelog, audit, lint, typecheck, npm test, test:db and build; Netlify preview check success. No email or functional recovery test run.",
-          "blockers": [
-            "Functional test requires explicit authorization and controlled test account; no real email may be sent before approval.",
-            "Previously exposed OAuth/SMTP credentials need provider-side rotation as a separate authorized security follow-up; no secrets handled."
-          ],
-          "next_action": "Await explicit authorization for separate production and Deploy Preview recovery tests; do not change external systems or deploy."
-        },
         {
           "timestamp": "2026-11-27T18:00:00-03:00",
           "task": "Revalidação ao vivo PR #130 e nova revisão documental",
@@ -292,6 +284,19 @@
             "Teste funcional de recuperação em produção/preview da #130 segue pendente de autorização explícita e conta controlada."
           ],
           "next_action": "Aguardar decisão do responsável; não alterar #71/#127, não enviar e-mails nem alterar serviços externos."
+        },
+        {
+          "timestamp": "2026-11-27T19:28:15-03:00",
+          "task": "PR #130 — hardening e testes locais do fluxo de recuperação de senha (agente 3, round 4)",
+          "status": "recovery_hardening_audit_complete_local_tests_green",
+          "result": "Auditoria completa sem defeito reprodutivo; 3 lacunas de teste cobertas com mocks validados (160/160); patch test-only pronto e aplicável no head 852f1dcd; CI do head verde (run 46040285407). Push para a branch da PR impedido pela fixação de sessão; patch aguarda aplicação autorizada.",
+          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+          "tests": "vitest 160/160 (com patch); lint/typecheck/audit/changelog ok; git apply --check ok.",
+          "blockers": [
+            "Sessão fixada em arena/f074e752-marcou: não é possível empurrar o patch em fix/auth-recovery-preview-origin.",
+            "CI no novo SHA depende da aplicação autorizada do patch; remoção de Draft/merge são decisão do responsável."
+          ],
+          "next_action": "Responsável/agente autorizado aplica pr130-recovery-tests.patch na branch da PR #130, reexecuta CI e registra o novo SHA."
         }
       ]
     },
@@ -608,14 +613,48 @@
     "agent_3_repo_cleanup": {
       "scope": "Limpeza operacional conservadora de branches e referências",
       "pull_requests": [],
-      "status": "assigned_round_5",
+      "status": "cleanup_round_complete_one_proven_removal",
       "active_assignment": "Faça inventário completo e limpeza conservadora do repositório Marcou. Reconfirme main, branches, PRs e issues no remoto antes de cada ação. Classifique branches como ativa/protegida, associada a PR aberta, integrada comprovadamente, substituída comprovadamente ou incerta. Não use idade/nome como critério isolado. Preserve obrigatoriamente PRs/branches #124 e #127, #126, #128, #130, #131, #133, #134, #38, #39, #68, #71 e todos os trabalhos ativos. Preserve também os seis arquivos staged locais relacionados ao Calendar: não acessar, editar, apagar ou sobrescrever. A limpeza anterior já removeu branches das PRs #122, #118, #66, #129 e #40 e fechou #69 como superseded; não repetir ações sem verificar o estado atual. Pode excluir somente branches comprovadamente integradas/superseded, sem commits exclusivos úteis, e fechar PR/issue somente se duplicada/substituída de forma inequívoca e sem trabalho exclusivo. Antes de cada exclusão/fechamento, reconfirme o estado remoto imediatamente. Não fazer force-push, merge, deploy, alteração de produção, Supabase, Netlify, Google Cloud, secrets ou migrations remotas. Registre inventário antes/depois, cada ação, SHA, evidência de equivalência em main, checks e pendências. Atualize somente este registro histórico no state.json, usando blob SHA mais recente.",
-      "current_state": "Tarefa atribuída no round 5; manter a limpeza restrita a resíduos comprovados.",
-      "next_action": "Inventariar branches/PRs e separar candidatas seguras de itens protegidos/incertos.",
+      "current_state": "Limpeza conservadora concluída. Histórico unshallowed antes de classificar (clone estava shallow em 69d0217; contagens sem unshallow seriam falsas). Inventário prévio: 32 heads. Protegidos preservados: branches de #124, #127, #126, #128, #130, #131, #133, #134, #38, #39, #68, #71 e todos os PRs abertos ativos (#2, #32, #41, #46, #67). Trabalho ativo sem PR preservado: arena/9c0da280 (Calendar OAuth/worker, 53 commits exclusivos, migrations de 27/11), arena/3b7c9d2f (rascunho endpoint de expiração, 27/11), arena/6f3a9b1f e cc212db (rascunhos FOR UPDATE de 27/11 com conteúdo NÃO idêntico ao entregue pela PR #129 mergeada), fix/booking-transition-concurrency-incremental (behind=0; iteração da migration de concorrência pendente de revisão do responsável). Incertos preservados (fechados sem merge, descarte pendente de decisão): feat/customer-account-area (PR #48), feat/pagina-publica-agendamento (PR #1), feat/21-booking-multiple-services (#21; veículo atual é a PR #131 protegida), arena/29-calendar-integration, fix/29-oauth-state-atomic e feat/29-google-calendar-sync (legado Calendar; análise documentada indica supersessão pela arquitetura da PR #126, aguardando landing/decisão). Ação executada: exclusão única de arena/ee322640-marcou (tip 85af322dcb34cd9fb4ea7e43a7b5729e9b538fa5; 1 commit exclusivo de 18/11; PR #69 reconfirmada CLOSED em 2026-11-27T15:53:55Z como superseded pelo responsável; finalidade implementada canonicamente na PR #127 protegida e contrato documentado na PR #130; estado remoto reconfirmado por ls-remote imediatamente antes da exclusão). Inventário posterior: 31 heads. coordination/agents e main intactos; seis arquivos staged do Calendar não acessados; sem force-push, merge, deploy ou alteração externa.",
+      "next_action": "Pendências para decisão do responsável (nenhuma ação sem aprovação): descarte de feat/customer-account-area, feat/pagina-publica-agendamento, feat/21-booking-multiple-services, arena/29-calendar-integration, fix/29-oauth-state-atomic, feat/29-google-calendar-sync e dos rascunhos arena/3b7c9d2f, arena/6f3a9b1f e cc212db (conteúdo não idêntico ao mergeado; exportar patch antes de qualquer descarte).",
       "last_verified": {
         "coordination_branch": "coordination/agents",
-        "coordination_commit": "65b4dcb9f85abb92fa6e4a1529eda9d173b45f9a"
-      }
+        "before_heads": 32,
+        "after_heads": 31,
+        "deleted": [
+          {
+            "branch": "arena/ee322640-marcou",
+            "tip_sha": "85af322dcb34cd9fb4ea7e43a7b5729e9b538fa5",
+            "pr": 69,
+            "evidence": "PR #69 CLOSED (2026-11-27T15:53:55Z) como superseded pelo responsável; 1 commit exclusivo cuja finalidade está implementada na PR #127 protegida e documentada na PR #130; ls-remote reconfirmado imediatamente antes da exclusão"
+          }
+        ],
+        "preserved_counts": {
+          "protected_pr_branches": 12,
+          "active_open_pr_branches": 5,
+          "active_no_pr": 4,
+          "incerta_pending_owner": 9,
+          "infra": [
+            "main",
+            "coordination/agents"
+          ]
+        },
+        "notes": "Equivalência provada por rev-list, git cherry e diff de conteúdo; clone unshallow obrigatório para provas; nenhum critério de idade/nome isolado."
+      },
+      "updates": [
+        {
+          "timestamp": "2026-11-27T19:28:15-03:00",
+          "task": "Round 5 — inventário e limpeza conservadora de branches",
+          "status": "cleanup_round_complete_one_proven_removal",
+          "result": "31/32 heads preservados após prova; 1 exclusão comprovada (arena/ee322640-marcou, PR #69 superseded); 9 incertas com pendência de decisão; protegidos e trabalho ativo intactos.",
+          "head_sha": null,
+          "tests": "Provas por branch: rev-list ahead/behind, git cherry, diff de conteúdo vs main e PRs protegidas, reconfirmação gh pr + ls-remote imediatamente antes da exclusão.",
+          "blockers": [
+            "Descartes adicionais exigem decisão explícita do responsável; conteúdo não idêntico ao mergeado em todos os casos incertos."
+          ],
+          "next_action": "Aguardar decisões de descarte; antes de qualquer nova exclusão, exportar patch dos commits exclusivos."
+        }
+      ]
     },
     "agent_4_recovery_validation": {
       "scope": "Validação do contrato de recuperação de senha entre app, Supabase e Netlify",
