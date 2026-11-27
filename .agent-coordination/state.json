@@ -138,28 +138,68 @@
         128,
         38
       ],
-      "status": "integrated_cluster_review_in_progress",
+      "status": "integrated_review_complete_merge_sequence_recommended_activation_blocked",
       "active_assignment": "state_entry=agent_2_pr_128_and_38. PRs #38 e #128 — revisão integrada final do cluster de lembretes e expiração. Reconfirme HEADs remotos atuais (últimos observados: #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd; #128 246f95df33013d495b1cda36675a04c2761637e8), compare workflows/código compartilhado com main atual. Verifique timezone, janelas de envio, idempotência, retries, concorrência, elegibilidade, gates/segredos, dispatch manual e risco de scheduler duplicado. Confirme CI/test:db nos SHAs exatos. Entregue decisão sobre coexistência, ordem de merge e o que deve permanecer desabilitado até autorização. Somente leitura: não alterar workflows/PRs, não habilitar scheduler, não disparar notificações e não mergear.",
-      "current_state": "Assumindo a atribuição agent_2 da rodada 2026-11-27-round-4-reassigned. Revisão integrada somente leitura das PRs #38 e #128; revalidando HEADs, workflows, código compartilhado, timezone, janelas, idempotência, retries, concorrência, elegibilidade, gates/segredos, dispatch manual, CI/test:db e risco de scheduler duplicado. Nenhuma alteração em PR/workflow/scheduler.",
-      "next_action": "Conferir PRs #38/#128, workflows, código e CI nos SHAs exatos; emitir decisão de coexistência, sequência de merge e controles que devem permanecer desabilitados. Não alterar PRs/workflows nem habilitar scheduler.",
+      "current_state": "Revisão integrada somente leitura concluída para PRs #38 e #128. Main atual confirmado em 69d02173653384e082476e7879ee9f33672dec72. PR #38: OPEN/Draft/mergeable, HEAD e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd, 6 ahead/0 behind; CI run 46037902215 (#276) success em check:changelog, lint, typecheck, npm test, test:db, audit e build; Netlify preview status success. PR #128: OPEN/Draft/mergeable, HEAD 246f95df33013d495b1cda36675a04c2761637e8, 4 ahead/0 behind; CI run 46043394357 (#279) success em check:changelog, lint, typecheck, npm test, test:db e build; Netlify preview status success. Arquitetura coexistente: #38 executa somente create_booking_reminders(24); #128 executa somente expire_stale_bookings(); status elegíveis são distintos (confirmed vs pending_payment/pending_review). Nenhuma duplicação de RPC/job de expiração na implementação. Há sobreposição de arquivos scripts/db-check.mjs e CHANGELOG.md: os hunks de db-check são em regiões diferentes, mas CHANGELOG adiciona itens no mesmo ponto após ### Adicionado e requer reconciliação/CI combinada após integração. Risco timezone #38: chave diária usa to_char(now(),'YYYYMMDD') no timezone da sessão do banco, não o timezone do prestador, podendo criar novo lembrete após virada de data do banco enquanto ainda está na janela de 24h. Risco operacional #128: gate BOOKING_EXPIRATION_ENABLED e Environment booking-expiration-staging existem no YAML, mas não verifiquei configuração externa; a validação só confere consistência entre URL e SUPABASE_PROJECT_REF, não fixa um project ref staging permitido. Não habilitar até credenciais/Environment serem confirmados e o alvo staging ser tecnicamente garantido. #38 não inclui scheduler; depende de provedor externo, CRON_SECRET e service-role/url no ambiente servidor, todos não configurados/verificados nesta auditoria.",
+      "next_action": "Recomendação: manter ambas Draft e sem ativação. Se o responsável aprovar integração, priorizar PR #128 e depois atualizar #38 sobre a nova main, resolver o ponto comum de CHANGELOG.md preservando os hunks distintos de scripts/db-check.mjs e executar CI/Preview combinados. Antes de ativar #128, manter BOOKING_EXPIRATION_ENABLED diferente de true até verificar Environment/secrets e restringir o project ref ao staging correto. Antes de ativar #38, escolher provedor/frequência e corrigir/confirmar a semântica de idempotência diária por timezone do prestador. Nenhum merge, scheduler, notificação ou serviço externo foi alterado.",
       "last_verified": {
-        "branch": "fix/booking-expiration-scheduler",
-        "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
-        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "GitHub Actions CI run #279 (46043394357) concluído success no SHA exato; job quality, todos steps: changelog, lint, typecheck, npm test, test:db, build success.",
-        "notes": "PR #128 aberta, Draft, mergeable=true, 4 commits, 4 arquivos alterados. Revisão final aprovada. Testes DB confirmados via CI, não executados localmente (sem checkout). PR #38 status open/Draft/mergeable, sem alteração."
+        "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "pr38": {
+          "url": "https://github.com/deividjmoura/marcou/pull/38",
+          "branch": "feat/26-notification-scheduler",
+          "head_sha": "e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
+          "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+          "ahead": 6,
+          "behind": 0,
+          "state": "open",
+          "draft": true,
+          "mergeable": true,
+          "changed_files": 9,
+          "ci_run": 46037902215,
+          "ci_run_number": 276,
+          "ci_steps": "check:changelog, lint, typecheck, npm test, test:db, audit, build: success",
+          "preview": "netlify/marcoou/deploy-preview success; https://deploy-preview-38--marcoou.netlify.app",
+          "changed_file_blobs": {
+            "src/app/api/cron/route.ts": "b60f46e0b8df53ce7c2d916af15edf5b4ac480f9",
+            "src/server/cron-auth.ts": "01ac4b39c1a2bba962be9a17a921fa6abf559de6",
+            "src/app/api/cron/route.test.ts": "be83a7219516d2a0e7e245c82e86da2924797bb8",
+            "supabase/migrations/20261127000100_reminder_concurrency_lock.sql": "3fc83ebed9bb51d806caeb550c9d1f8e5fdc7233",
+            "scripts/db-check.mjs": "25b0fe2b28cc828ee6a8283dc93d81134e127f0a"
+          }
+        },
+        "pr128": {
+          "url": "https://github.com/deividjmoura/marcou/pull/128",
+          "branch": "fix/booking-expiration-scheduler",
+          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
+          "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+          "ahead": 4,
+          "behind": 0,
+          "state": "open",
+          "draft": true,
+          "mergeable": true,
+          "changed_files": 4,
+          "ci_run": 46043394357,
+          "ci_run_number": 279,
+          "ci_steps": "check:changelog, lint, typecheck, npm test, test:db, build: success",
+          "preview": "netlify/marcoou/deploy-preview success; https://deploy-preview-128--marcoou.netlify.app",
+          "changed_file_blobs": {
+            ".github/workflows/booking-expiration.yml": "8164da2708ae2e44b36437f303e6f9cd313a0a08",
+            "docs/BOOKING-EXPIRATION-SCHEDULER.md": "4f6d9d79a91f4dcc990c29ef5096e422933e05e3",
+            "scripts/db-check.mjs": "aea5cc0c4d34f6181a770a8f55f993aab4c628e4"
+          }
+        },
+        "review": "Somente leitura. Nenhum teste executado pelo auditor. CI/Preview são resultados remotos associados aos HEADs consultados. Main confirmado idêntico ao SHA base 69d0217.",
+        "integration": "Ambas as PRs alteram scripts/db-check.mjs em hunks separados (PR38 notification tests/migration list; PR128 expiration tests). Ambas inserem bullets em CHANGELOG.md após o mesmo cabeçalho ### Adicionado; reconciliação necessária após integrar a primeira.",
+        "findings": [
+          "Coexistência funcional: reminder RPC e expiration RPC separadas; #38 endpoint não chama expire_stale_bookings; #128 workflow não chama create_booking_reminders.",
+          "PR38 idempotency key usa to_char(now(),'YYYYMMDD') sem timezone do prestador; com scheduler frequente pode gerar outro lembrete após virada de data do banco dentro da janela de 24h.",
+          "PR128 workflow schedule*/5 e workflow_dispatch; job gate BOOKING_EXPIRATION_ENABLED e Environment booking-expiration-staging; job dispatch em branch diferente de main é skipped. Workflow valida URL/ref consistentes, mas não fixa allowlist de ref staging. Configuração externa não verificada.",
+          "PR38 não inclui scheduler; depende de configuração externa de cron + CRON_SECRET + SUPABASE_SERVICE_ROLE_KEY + URL. Docs afirmam não provisionados pela PR."
+        ],
+        "recommended_order": "PR #128 primeiro, depois atualizar PR #38 sobre main atual e reconciliar CHANGELOG; manter ambas Draft até decisão do responsável.",
+        "activation": "Não habilitar scheduler de lembretes nem expiração; manter BOOKING_EXPIRATION_ENABLED != true até validar credenciais/Environment staging e destino. Não configurar serviços externos."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T18:00:00-03:00",
-          "task": "Revalidação ao vivo PR #128",
-          "status": "ci_green_final_review_pending",
-          "result": "HEAD remoto 246f95df33013d495b1cda36675a04c2761637e8; workflow run 46043394357 concluído success. PR continua Draft, aberta e mergeable. #38 permanece sem alterações segundo estado verificado.",
-          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
-          "tests": "CI associado ao HEAD: success; validação final dos detalhes de workflow/test:db delegada.",
-          "blockers": [],
-          "next_action": "Confirmar logs/steps do run #279 e emitir relatório final; sem merge/scheduler."
-        },
         {
           "timestamp": "2026-11-27T14:46:00-03:00",
           "task": "Revisão final e confirmação CI exato PR #128",
@@ -179,6 +219,20 @@
           "tests": "Ainda não executados; revalidação remota em andamento.",
           "blockers": [],
           "next_action": "Revalidar HEADs, base/main, workflows e CI/test:db nos SHAs exatos e concluir parecer de coexistência/sequência."
+        },
+        {
+          "timestamp": "2026-11-27T16:09:00-03:00",
+          "task": "Revisão integrada final PR #38 + PR #128 (round-4-reassigned, agent_2)",
+          "status": "integrated_review_complete_merge_sequence_recommended_activation_blocked",
+          "result": "PRs coexistem arquiteturalmente: #38 chama somente create_booking_reminders(24), #128 somente expire_stale_bookings(); estados elegíveis são disjuntos. Main 69d0217; #38 HEAD e8ee5e3 (6 ahead/0 behind), #128 HEAD 246f95d (4 ahead/0 behind). Ambas abertas/Draft/mergeable; CI e Deploy Preview verdes nos HEADs exatos. Sobreposição em scripts/db-check.mjs com hunks separados e CHANGELOG.md no mesmo ponto de inserção. Encontrado risco de idempotência diária #38 baseada na data da sessão DB (não timezone do prestador) e lacuna de garantia de alvo staging no workflow #128 (URL/ref só são comparados entre si; Environment não foi verificado). Recomendação: #128 primeiro, atualizar #38 depois, resolver CHANGELOG e rodar CI combinado; manter schedulers desligados até configurar/validar controles.",
+          "head_sha": "#38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd; #128 246f95df33013d495b1cda36675a04c2761637e8; main 69d02173653384e082476e7879ee9f33672dec72",
+          "tests": "Auditor não executou testes. CI #276 (46037902215) sucesso em check:changelog/lint/typecheck/npm test/test:db/audit/build no SHA exato #38; CI #279 (46043394357) sucesso em check:changelog/lint/typecheck/npm test/test:db/build no SHA exato #128. Deploy Preview status success em ambos.",
+          "blockers": [
+            "CHANGELOG.md é alterado pelas duas PRs no mesmo ponto; reconciliar e validar CI combinado após a primeira integração.",
+            "PR #38 requer provedor/frequência de scheduler, CRON_SECRET e configuração server-side; nenhuma configuração externa foi verificada. Definir timezone da chave diária de idempotência.",
+            "PR #128: manter BOOKING_EXPIRATION_ENABLED desligada até validar Environment/secrets de staging e garantir tecnicamente que SUPABASE_URL/project ref apontem apenas ao projeto staging; o YAML não fixa allowlist de staging."
+          ],
+          "next_action": "Aguardar decisão do responsável. Se aprovado: integrar #128 primeiro, atualizar #38 sem force-push e reconciliar CHANGELOG; executar CI/Preview combinados. Não mergear, não habilitar scheduler e não alterar serviços externos."
         }
       ]
     },
