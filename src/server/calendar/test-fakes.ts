@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 /* Fakes em memória para testes do Calendar (não usados em produção). */
 import { CalendarSyncError, RECONNECT_REQUIRED } from "./errors";
 import type { CalendarEventBody, EventWriteResult, GoogleCalendarApi, OAuthTokens } from "./google";
@@ -47,6 +48,7 @@ export class FakeStore implements CalendarStore {
       operation: "upsert",
       status: "pending",
       attempts: 0,
+      lease_token: null,
       ...job,
     });
   }
@@ -59,25 +61,26 @@ export class FakeStore implements CalendarStore {
       if (job.status === "pending" || job.status === "failed") {
         job.status = "processing";
         job.attempts += 1;
+        job.lease_token = randomUUID();
         claimed.push({ ...job });
       }
     }
     return claimed;
   }
-  private setJob(id: string, values: Partial<JobRow>, name: string) {
+  private setJob(id: string, leaseToken: string, values: Partial<JobRow>, name: string) {
     this.guard(name);
     const job = this.jobs.get(id);
-    if (!job || job.status !== "processing") throw new CalendarSyncError(`${name}_failed`, true);
-    Object.assign(job, values);
+    if (!job || job.status !== "processing" || !leaseToken || job.lease_token !== leaseToken) throw new CalendarSyncError(`${name}_failed`, true);
+    Object.assign(job, values, { lease_token: null });
   }
-  async completeJob(id: string, code: string | null) {
-    this.setJob(id, { status: "succeeded", last_error_code: code }, "completeJob");
+  async completeJob(id: string, leaseToken: string, code: string | null) {
+    this.setJob(id, leaseToken, { status: "succeeded", last_error_code: code }, "completeJob");
   }
-  async failJob(id: string, code: string, availableAt: string) {
-    this.setJob(id, { status: "failed", last_error_code: code, available_at: availableAt }, "failJob");
+  async failJob(id: string, leaseToken: string, code: string, availableAt: string) {
+    this.setJob(id, leaseToken, { status: "failed", last_error_code: code, available_at: availableAt }, "failJob");
   }
-  async killJob(id: string, code: string) {
-    this.setJob(id, { status: "dead", last_error_code: code }, "killJob");
+  async killJob(id: string, leaseToken: string, code: string) {
+    this.setJob(id, leaseToken, { status: "dead", last_error_code: code }, "killJob");
   }
 
   async getBooking(id: string) {
