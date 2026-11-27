@@ -103,7 +103,7 @@ Não altere configurações remotas do Supabase durante os testes.
   - `https://deploy-preview-*--marcoou.netlify.app/auth/confirm**`
   - `https://deploy-preview-*--marcoou.netlify.app/auth/callback**`
   - Opcional, apenas desenvolvimento: `http://localhost:3000/auth/confirm**` e `http://localhost:3000/auth/callback**`.
-- **Como validar:** conferir literalmente o Site URL e os quatro padrões; não aceitar wildcard genérico como `https://**.netlify.app/**`.
+- **Como validar:** conferir literalmente o Site URL e os quatro padrões; não aceitar wildcard genérico como `https://**.netlify.app/**`. O Site URL deve ser exatamente `https://marcoou.netlify.app`, sem espaço, quebra de linha, barra final ou caractere Unicode invisível. Se houver dúvida, copie o valor para um editor de texto simples e compare os pontos de código; não confie apenas na aparência visual.
 - **Evidência correta:** produção e preview oficial são aceitos; URLs externas, outro site Netlify e hosts com sufixos adicionais não são permitidos. A query `next` não provoca fallback para Site URL.
 
 ### 2. Supabase Auth — Reset Password template
@@ -133,7 +133,8 @@ Não altere configurações remotas do Supabase durante os testes.
 
 - **Onde:** páginas `/esqueci-senha` e `/redefinir-senha` do domínio de produção e de um Deploy Preview oficial.
 - **Como validar:** somente após aprovação do responsável para enviar um e-mail real, solicitar recuperação com uma conta de teste controlada, abrir o link no mesmo ambiente que iniciou a solicitação, confirmar a nova senha e entrar com ela. Repetir separadamente em produção e preview; nunca compartilhar o link ou token.
-- **Evidência correta:** produção termina em `https://marcoou.netlify.app/redefinir-senha`; preview termina no hostname do próprio preview em `/redefinir-senha`; a senha atualiza e o login com a nova senha funciona. Token expirado/reutilizado deve falhar com mensagem segura.
+- **Evidência correta:** produção termina em `https://marcoou.netlify.app/redefinir-senha`; preview termina no hostname exato do próprio preview em `/redefinir-senha`; a senha atualiza e o login com a nova senha funciona. Token expirado/reutilizado deve falhar com mensagem segura.
+- **Critério obrigatório para preview:** se a solicitação começou em `https://deploy-preview-<número>--marcoou.netlify.app` e a confirmação terminar em `https://marcoou.netlify.app` (produção), o teste de preview é **REPROVADO**, mesmo que a página de redefinição abra. Esse fallback é fail-closed para segurança, mas não comprova o round-trip do preview; registrar como falha de configuração/build e investigar os metadados `CONTEXT`/`DEPLOY_PRIME_URL` e a allowlist.
 - **Limite desta entrega:** nenhum e-mail foi enviado e nenhuma configuração externa foi alterada; o teste funcional permanece pendente de execução autorizada pelo responsável.
 
 ## Relação com as PRs #71 e #127
