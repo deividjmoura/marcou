@@ -1,0 +1,1001 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 14b112a..bac29cb 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -30,9 +30,23 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
+ - Matriz canônica de requisitos de produto e sequência de dependências das
+   Issues `#84`, `#91` e `#93` registrada em `docs/ROADMAP-MARCOU-SOCIAL.md`,
+   preservando a arquitetura da Issue `#72`.
++- Agenda do prestador (`src/app/painel/booking-agenda.tsx`) com filtros
++  Próximos/Anteriores/Todos, busca por cliente, telefone ou serviço e
++  agrupamento por dia local, apoiada nas regras puras de
++  `src/domain/agenda/agenda.ts` e cobertas por `agenda.test.ts`.
++- `listProviderBookingsForPanel` em `src/server/bookings.ts`, que devolve
++  `{ bookings, failed }` para diferenciar falha de consulta de agenda
++  realmente vazia. Detalhes em `docs/AGENDA-PRESTADOR.md`.
+ 
+ ### Alterado
+ 
++- Painel do prestador (`/painel`) passa a renderizar a agenda pelo componente
++  `BookingAgenda` dentro do `ProviderPanelMenu`, substituindo a tabela inline:
++  a consulta continua filtrada pelo prestador dono da sessão, mas falha de
++  consulta agora aparece como aviso (`role="alert"`), e não como "nenhum
++  agendamento". A lista ganhou contagem anunciada por leitor de tela,
++  `aria-pressed` nos filtros, dia agrupado com título acessível e layout em
++  coluna em telas estreitas.
+ - Fluxo de login por senha (`loginAction`), cadastro imediato (`signupAction`),
+   callback OAuth (`/auth/callback`) e confirmação de e-mail (`/auth/confirm`)
+   unificados em `ensureAuthProfile`: logins recorrentes executam 1 único
+diff --git a/docs/AGENDA-PRESTADOR.md b/docs/AGENDA-PRESTADOR.md
+new file mode 100644
+index 0000000..bea8e5b
+--- /dev/null
++++ b/docs/AGENDA-PRESTADOR.md
+@@ -0,0 +1,87 @@
++# Agenda do prestador (Issue #24)
++
++Documento de referência da agenda exibida em `/painel`, entregue pela PR #39.
++
++## Escopo
++
++- Lista os agendamentos do **prestador dono da sessão**, agrupados por dia local.
++- Filtro de período: **Próximos**, **Anteriores** e **Todos**.
++- Busca textual por **cliente**, **telefone** ou **serviço**.
++- Ações por agendamento seguem inalteradas: marcar comprovante, confirmar
++  pagamento e cancelar (Server Action `providerBookingAction`).
++
++## Arquitetura
++
++| Camada | Arquivo | Responsabilidade |
++|---|---|---|
++| Domínio (puro) | `src/domain/agenda/agenda.ts` | normalização da busca, filtro por período, ordenação e agrupamento por dia local |
++| Servidor | `src/server/bookings.ts` (`listProviderBookingsForPanel`) | consulta filtrada por `provider_id` e sinalização de falha |
++| Cliente | `src/app/painel/booking-agenda.tsx` | filtros, busca, estados vazios, estado de erro e ações |
++| Página | `src/app/painel/page.tsx` | busca dados do prestador autenticado e injeta a agenda no `ProviderPanelMenu` |
++
++O componente é injetado como `bookingsContent` no `ProviderPanelMenu`, preservando
++a navegação por seções da `main` (Agendamentos, Meu negócio, Serviços,
++Disponibilidade e Descoberta quando a flag está ativa).
++
++## Autorização e isolamento
++
++- `requireUser("/painel")` garante sessão; `getOwnedProvider(user.id)` resolve o
++  prestador pelo `owner_id`.
++- Toda consulta usa `.eq("provider_id", provider.id)` **do prestador da sessão**;
++  nenhum `provider_id` vem de query string, formulário ou cliente.
++- A RLS de `bookings` continua sendo a autoridade: mesmo com filtro forjado, o
++  banco só entrega linhas do dono.
++- As Server Actions de transição revalidam ownership no banco
++  (`transition_booking`), não no componente.
++
++## Datas, horários e fusos
++
++- Todos os horários são formatados no **fuso IANA do prestador** salvo no
++  agendamento (`timezone`), usando `Intl.DateTimeFormat`
++  (`src/lib/format.ts`).
++- O agrupamento por dia usa a mesma regra (`agendaLocalDateKey`), então um
++  evento às `02:30Z` em `America/Sao_Paulo` aparece no dia anterior — igual ao
++  que o prestador vê no calendário dele.
++- A ordenação é por instante absoluto (`Date.parse`), não por string.
++- O "agora" é lido **apenas no cliente**, depois da hidratação, e recalculado a
++  cada troca de filtro: evita divergência entre o HTML do servidor e o cliente.
++
++## Estados
++
++| Situação | Comportamento |
++|---|---|
++| Sem nenhum agendamento | "Nenhum agendamento por enquanto." |
++| Filtro de busca sem resultado | "Nenhum agendamento corresponde a essa busca." |
++| Próximos vazio | "Nenhum agendamento futuro por enquanto." |
++| Anteriores vazio | "Nenhum agendamento anterior registrado." |
++| **Falha de consulta** | Bloco `role="alert"` informando que a agenda não pôde ser carregada, sem lista e sem dados fictícios |
++
++Falha e vazio são estados distintos: `listProviderBookingsForPanel` devolve
++`failed: true` quando o Supabase retorna erro, e a página repassa isso ao
++componente.
++
++## Acessibilidade e responsividade
++
++- Contagem de resultados em `role="status"` com `aria-live="polite"`.
++- Botões de período com `aria-pressed` e agrupados em `role="group"` rotulado.
++- Campo de busca com rótulo textual (`<label>`), `type="search"` e
++  `autoComplete="off"`.
++- Cada dia é uma `<section>` com título `<h3 id>` referenciado por
++  `aria-labelledby`.
++- Notificação de falha em `role="alert"`.
++- Em telas ≤ 640 px cada item vira coluna e os botões de ação ocupam a largura
++  disponível (`.agenda-list` em `src/app/globals.css`).
++
++## Testes
++
++- `src/domain/agenda/agenda.test.ts` — busca (acentos, telefone, serviço),
++  período (limite `starts_at === now`), ordenação crescente/decrescente,
++  ausência de mutação, data inválida, agrupamento por fuso
++  (`America/Sao_Paulo`, `Asia/Tokyo`) e listas vazias.
++- `src/server/bookings.test.ts` — filtro por `provider_id`, distinção entre
++  falha e agenda vazia e retorno dos dados quando a consulta funciona.
++
++## Fora de escopo
++
++Paginação/scroll infinito, filtro por status, reagendamento, exportação,
++notificações por e-mail e sincronização com Google Calendar (Issue #29).
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 7ea1902..be091ba 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -658,3 +658,13 @@ a { color: inherit; text-decoration: none; }
+   .identity-mode-card p { min-height: 0; }
+   .page-account-home { padding-bottom: 38px; }
+ }
++
++/* Agenda do prestador (#24): lista de agendamentos agrupada por dia. */
++.agenda-list > section > h3 { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
++.agenda-list .item-actions { flex-wrap: wrap; }
++
++@media (max-width: 640px) {
++  .agenda-list .item-row { flex-direction: column; align-items: stretch; gap: 10px; }
++  .agenda-list .item-actions { justify-content: flex-start; }
++  .agenda-list .item-actions .btn { flex: 1 1 auto; }
++}
+diff --git a/src/app/painel/booking-agenda.tsx b/src/app/painel/booking-agenda.tsx
+new file mode 100644
+index 0000000..1f956f8
+--- /dev/null
++++ b/src/app/painel/booking-agenda.tsx
+@@ -0,0 +1,237 @@
++"use client";
++
++import { useMemo, useState } from "react";
++import type { Booking } from "@/server/bookings";
++import {
++  BOOKING_STATUS_CLASSES,
++  BOOKING_STATUS_LABELS,
++  formatBookingDate,
++  formatBookingTime,
++  formatCents,
++} from "@/lib/format";
++import {
++  filterAgendaBookings,
++  groupAgendaByLocalDate,
++  type AgendaPeriod,
++} from "@/domain/agenda/agenda";
++import { providerBookingAction } from "./actions";
++
++const PERIOD_OPTIONS: Array<{ id: AgendaPeriod; label: string }> = [
++  { id: "upcoming", label: "Próximos" },
++  { id: "past", label: "Anteriores" },
++  { id: "all", label: "Todos" },
++];
++
++function BookingActions({ booking }: { booking: Booking }) {
++  return (
++    <div className="item-actions">
++      {booking.status === "pending_payment" ? (
++        <form action={providerBookingAction}>
++          <input type="hidden" name="bookingId" value={booking.id} />
++          <input type="hidden" name="event" value="proof_received" />
++          <button type="submit" className="btn btn-small">
++            Marcar comprovante
++          </button>
++        </form>
++      ) : null}
++
++      {booking.status === "pending_review" ? (
++        <form action={providerBookingAction}>
++          <input type="hidden" name="bookingId" value={booking.id} />
++          <input type="hidden" name="event" value="payment_approved" />
++          <button type="submit" className="btn btn-small">
++            Confirmar pagamento
++          </button>
++        </form>
++      ) : null}
++
++      {booking.status === "pending_payment" ||
++      booking.status === "pending_review" ||
++      booking.status === "confirmed" ? (
++        <form action={providerBookingAction}>
++          <input type="hidden" name="bookingId" value={booking.id} />
++          <input type="hidden" name="event" value="cancel" />
++          <button type="submit" className="btn btn-small btn-ghost">
++            Cancelar
++          </button>
++        </form>
++      ) : null}
++    </div>
++  );
++}
++
++function emptyMessage(options: {
++  total: number;
++  period: AgendaPeriod;
++  searching: boolean;
++}): string {
++  if (options.total === 0) return "Nenhum agendamento por enquanto.";
++  if (options.searching) {
++    return "Nenhum agendamento corresponde a essa busca.";
++  }
++  if (options.period === "upcoming") {
++    return "Nenhum agendamento futuro por enquanto.";
++  }
++  if (options.period === "past") {
++    return "Nenhum agendamento anterior registrado.";
++  }
++  return "Nenhum agendamento para este filtro.";
++}
++
++export function BookingAgenda({
++  bookings,
++  failed = false,
++}: {
++  bookings: Booking[];
++  failed?: boolean;
++}) {
++  const [period, setPeriod] = useState<AgendaPeriod>("all");
++  const [search, setSearch] = useState("");
++  // O relógio é lido apenas no clique do filtro (no cliente), nunca durante a
++  // renderização, para não divergir do HTML gerado no servidor.
++  const [now, setNow] = useState<number | null>(null);
++
++  const filtered = useMemo(() => {
++    if (now === null) return filterAgendaBookings(bookings, { period: "all", search, now: 0 });
++    return filterAgendaBookings(bookings, { period, search, now });
++  }, [bookings, now, period, search]);
++
++  const grouped = useMemo(() => groupAgendaByLocalDate(filtered), [filtered]);
++
++  const headingId = "booking-agenda-title";
++  const countLabel =
++    filtered.length === 1
++      ? "1 agendamento encontrado"
++      : `${filtered.length} agendamentos encontrados`;
++
++  if (failed) {
++    return (
++      <section className="card" aria-labelledby={headingId}>
++        <div className="card-heading">
++          <h2 id={headingId}>Agenda de agendamentos</h2>
++        </div>
++        <p role="alert" className="muted">
++          Não foi possível carregar a agenda agora. Nenhum dado foi exibido
++          para não confundir falha de consulta com agenda vazia — tente
++          novamente em instantes.
++        </p>
++      </section>
++    );
++  }
++
++  return (
++    <section className="card" aria-labelledby={headingId}>
++      <div className="card-heading">
++        <div>
++          <h2 id={headingId}>Agenda de agendamentos</h2>
++          <p className="muted small" role="status" aria-live="polite">
++            {countLabel}
++          </p>
++        </div>
++      </div>
++
++      <div className="form-stack">
++        <div
++          className="item-actions"
++          role="group"
++          aria-label="Filtrar período da agenda"
++        >
++          {PERIOD_OPTIONS.map((option) => (
++            <button
++              key={option.id}
++              type="button"
++              className={
++                period === option.id ? "btn btn-small" : "btn btn-small btn-ghost"
++              }
++              aria-pressed={period === option.id}
++              onClick={() => {
++                setNow(Date.now());
++                setPeriod(option.id);
++              }}
++            >
++              {option.label}
++            </button>
++          ))}
++        </div>
++
++        <label className="field">
++          <span>Buscar por cliente, telefone ou serviço</span>
++          <input
++            type="search"
++            value={search}
++            onChange={(event) => setSearch(event.target.value)}
++            placeholder="Digite para filtrar a agenda"
++            autoComplete="off"
++          />
++        </label>
++      </div>
++
++      {grouped.length === 0 ? (
++        <p className="muted">
++          {emptyMessage({
++            total: bookings.length,
++            period,
++            searching: search.trim().length > 0,
++          })}
++        </p>
++      ) : (
++        <div className="form-stack agenda-list">
++          {grouped.map((group) => {
++            const groupLabel = formatBookingDate(
++              group.referenceStartsAt,
++              group.timezone,
++            );
++            const titleId = `agenda-day-${group.date}`;
++            return (
++              <section key={group.date} aria-labelledby={titleId}>
++                <h3 id={titleId}>
++                  {groupLabel}
++                  <span className="muted small">
++                    {" · "}
++                    {group.bookings.length === 1
++                      ? "1 agendamento"
++                      : `${group.bookings.length} agendamentos`}
++                  </span>
++                </h3>
++                <ul className="item-list">
++                  {group.bookings.map((booking) => (
++                    <li key={booking.id} className="item-row">
++                      <div className="form-stack">
++                        <strong>
++                          {formatBookingTime(booking.starts_at, booking.timezone)}–
++                          {formatBookingTime(booking.ends_at, booking.timezone)}
++                          {" · "}
++                          {booking.customer_name}
++                        </strong>
++                        <span>{booking.service_name_snapshot}</span>
++                        {booking.customer_phone ? (
++                          <span className="muted small">
++                            {booking.customer_phone}
++                          </span>
++                        ) : null}
++                        <span className="muted small">
++                          {formatCents(booking.price_cents_snapshot)}
++                        </span>
++                        <span>
++                          <span
++                            className={`status-pill ${
++                              BOOKING_STATUS_CLASSES[booking.status] ?? ""
++                            }`}
++                          >
++                            {BOOKING_STATUS_LABELS[booking.status] ??
++                              booking.status}
++                          </span>
++                        </span>
++                      </div>
++                      <BookingActions booking={booking} />
++                    </li>
++                  ))}
++                </ul>
++              </section>
++            );
++          })}
++        </div>
++      )}
++    </section>
++  );
++}
+diff --git a/src/app/painel/page.tsx b/src/app/painel/page.tsx
+index 1c94d7e..dbb5352 100644
+--- a/src/app/painel/page.tsx
++++ b/src/app/painel/page.tsx
+@@ -1,19 +1,11 @@
+ import {
+   getOwnedProvider,
+-  listProviderBookings,
++  listProviderBookingsForPanel,
+   requireUser,
+-  type Booking,
+ } from "@/server/bookings";
+ import { listExceptions, listRules, listServicesForOwner } from "@/server/services";
+-import {
+-  BOOKING_STATUS_CLASSES,
+-  BOOKING_STATUS_LABELS,
+-  formatBookingDate,
+-  formatBookingTime,
+-  formatCents,
+-} from "@/lib/format";
+ import { ProviderForm, ProviderPanelMenu } from "./painel-client";
+-import { providerBookingAction } from "./actions";
++import { BookingAgenda } from "./booking-agenda";
+ import { logoutAction } from "../(auth)/actions";
+ import { isSupabaseConfigured } from "@/lib/env";
+ import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
+@@ -34,44 +26,6 @@ import {
+ 
+ export const dynamic = "force-dynamic";
+ 
+-function BookingActions({ booking }: { booking: Booking }) {
+-  return (
+-    <div className="item-actions">
+-      {booking.status === "pending_payment" ? (
+-        <form action={providerBookingAction}>
+-          <input type="hidden" name="bookingId" value={booking.id} />
+-          <input type="hidden" name="event" value="proof_received" />
+-          <button type="submit" className="btn btn-small">
+-            Marcar comprovante
+-          </button>
+-        </form>
+-      ) : null}
+-
+-      {booking.status === "pending_review" ? (
+-        <form action={providerBookingAction}>
+-          <input type="hidden" name="bookingId" value={booking.id} />
+-          <input type="hidden" name="event" value="payment_approved" />
+-          <button type="submit" className="btn btn-small">
+-            Confirmar pagamento
+-          </button>
+-        </form>
+-      ) : null}
+-
+-      {booking.status === "pending_payment" ||
+-      booking.status === "pending_review" ||
+-      booking.status === "confirmed" ? (
+-        <form action={providerBookingAction}>
+-          <input type="hidden" name="bookingId" value={booking.id} />
+-          <input type="hidden" name="event" value="cancel" />
+-          <button type="submit" className="btn btn-small btn-ghost">
+-            Cancelar
+-          </button>
+-        </form>
+-      ) : null}
+-    </div>
+-  );
+-}
+-
+ export default async function PainelPage() {
+   if (!isSupabaseConfigured()) {
+     return (
+@@ -138,14 +92,15 @@ export default async function PainelPage() {
+     );
+   }
+ 
+-  const [services, rules, exceptions, bookings, discoveryEnabled] =
++  const [services, rules, exceptions, agenda, discoveryEnabled] =
+     await Promise.all([
+       listServicesForOwner(provider.id),
+       listRules(provider.id),
+       listExceptions(provider.id),
+-      listProviderBookings(provider.id),
++      listProviderBookingsForPanel(provider.id),
+       isSocialFeatureEnabled("social_discovery", { providerId: provider.id }),
+     ]);
++  const { bookings, failed: bookingsFailed } = agenda;
+ 
+   const [categories, serviceAreas, categorySuggestions] = discoveryEnabled
+     ? await Promise.all([
+@@ -177,66 +132,7 @@ export default async function PainelPage() {
+         serviceAreas={serviceAreas}
+         categorySuggestions={categorySuggestions}
+         unreadCount={unread}
+-        bookingsContent={(
+-      <section className="card">
+-        <h2>Agendamentos</h2>
+-        {bookings.length === 0 ? (
+-          <p className="muted">Nenhum agendamento por enquanto.</p>
+-        ) : (
+-          <div className="table-wrap">
+-            <table className="table">
+-              <thead>
+-                <tr>
+-                  <th>Data e hora</th>
+-                  <th>Cliente</th>
+-                  <th>Serviço</th>
+-                  <th>Valor</th>
+-                  <th>Status</th>
+-                  <th>Ações</th>
+-                </tr>
+-              </thead>
+-              <tbody>
+-                {bookings.map((booking) => (
+-                  <tr key={booking.id}>
+-                    <td>
+-                      {formatBookingDate(booking.starts_at, booking.timezone)}
+-                      <br />
+-                      <span className="muted small">
+-                        {formatBookingTime(booking.starts_at, booking.timezone)} às{" "}
+-                        {formatBookingTime(booking.ends_at, booking.timezone)}
+-                      </span>
+-                    </td>
+-                    <td>
+-                      {booking.customer_name}
+-                      {booking.customer_phone ? (
+-                        <>
+-                          <br />
+-                          <span className="muted small">
+-                            {booking.customer_phone}
+-                          </span>
+-                        </>
+-                      ) : null}
+-                    </td>
+-                    <td>{booking.service_name_snapshot}</td>
+-                    <td>{formatCents(booking.price_cents_snapshot)}</td>
+-                    <td>
+-                      <span
+-                        className={`status-pill ${BOOKING_STATUS_CLASSES[booking.status] ?? ""}`}
+-                      >
+-                        {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+-                      </span>
+-                    </td>
+-                    <td>
+-                      <BookingActions booking={booking} />
+-                    </td>
+-                  </tr>
+-                ))}
+-              </tbody>
+-            </table>
+-          </div>
+-        )}
+-      </section>
+-        )}
++        bookingsContent={<BookingAgenda bookings={bookings} failed={bookingsFailed} />}
+       />
+     </main>
+   );
+diff --git a/src/domain/agenda/agenda.test.ts b/src/domain/agenda/agenda.test.ts
+new file mode 100644
+index 0000000..092b9a7
+--- /dev/null
++++ b/src/domain/agenda/agenda.test.ts
+@@ -0,0 +1,197 @@
++import { describe, expect, it } from "vitest";
++import {
++  agendaLocalDateKey,
++  filterAgendaBookings,
++  groupAgendaByLocalDate,
++  normalizeAgendaText,
++  type AgendaBooking,
++} from "./agenda";
++
++const NOW = Date.parse("2026-12-01T12:00:00Z");
++
++function booking(overrides: Partial<AgendaBooking> = {}): AgendaBooking {
++  return {
++    starts_at: "2026-12-01T13:00:00Z",
++    timezone: "America/Sao_Paulo",
++    customer_name: "Ana Souza",
++    customer_phone: "47999991234",
++    service_name_snapshot: "Corte feminino",
++    ...overrides,
++  };
++}
++
++describe("agenda — busca", () => {
++  it("ignora acentos, caixa e espaços extras", () => {
++    expect(normalizeAgendaText("  José   DA Silva  ")).toBe("jose da silva");
++    const bookings = [booking({ customer_name: "José da Silva" })];
++    expect(
++      filterAgendaBookings(bookings, { period: "all", search: "  jose ", now: NOW }),
++    ).toHaveLength(1);
++  });
++
++  it("encontra por telefone digitado sem formatação", () => {
++    const bookings = [booking({ customer_phone: "(47) 99999-1234" })];
++    expect(
++      filterAgendaBookings(bookings, { period: "all", search: "479999", now: NOW }),
++    ).toHaveLength(1);
++    expect(
++      filterAgendaBookings(bookings, { period: "all", search: "11 98888", now: NOW }),
++    ).toHaveLength(0);
++  });
++
++  it("encontra pelo nome do serviço", () => {
++    const bookings = [booking({ service_name_snapshot: "Barba completa" })];
++    expect(
++      filterAgendaBookings(bookings, { period: "all", search: "barba", now: NOW }),
++    ).toHaveLength(1);
++  });
++
++  it("busca vazia ou só com espaços devolve tudo", () => {
++    const bookings = [booking(), booking({ starts_at: "2026-11-01T13:00:00Z" })];
++    expect(
++      filterAgendaBookings(bookings, { period: "all", search: "   ", now: NOW }),
++    ).toHaveLength(2);
++  });
++});
++
++describe("agenda — período", () => {
++  const past = booking({ starts_at: "2026-11-30T13:00:00Z" });
++  const future = booking({ starts_at: "2026-12-02T13:00:00Z" });
++  const exactlyNow = booking({ starts_at: "2026-12-01T12:00:00Z" });
++
++  it("separa próximos e anteriores pelo instante de referência", () => {
++    const bookings = [past, future, exactlyNow];
++    const upcoming = filterAgendaBookings(bookings, {
++      period: "upcoming",
++      search: "",
++      now: NOW,
++    });
++    const previous = filterAgendaBookings(bookings, {
++      period: "past",
++      search: "",
++      now: NOW,
++    });
++
++    expect(upcoming.map((item) => item.starts_at)).toEqual([
++      "2026-12-01T12:00:00Z",
++      "2026-12-02T13:00:00Z",
++    ]);
++    expect(previous.map((item) => item.starts_at)).toEqual([
++      "2026-11-30T13:00:00Z",
++    ]);
++  });
++
++  it("ordena próximos de forma crescente e anteriores de forma decrescente", () => {
++    const bookings = [
++      booking({ starts_at: "2026-11-01T13:00:00Z" }),
++      booking({ starts_at: "2026-11-20T13:00:00Z" }),
++      booking({ starts_at: "2026-12-05T13:00:00Z" }),
++      booking({ starts_at: "2026-12-03T13:00:00Z" }),
++    ];
++
++    const upcoming = filterAgendaBookings(bookings, {
++      period: "upcoming",
++      search: "",
++      now: NOW,
++    });
++    const previous = filterAgendaBookings(bookings, {
++      period: "past",
++      search: "",
++      now: NOW,
++    });
++    const all = filterAgendaBookings(bookings, {
++      period: "all",
++      search: "",
++      now: NOW,
++    });
++
++    expect(upcoming.map((item) => item.starts_at)).toEqual([
++      "2026-12-03T13:00:00Z",
++      "2026-12-05T13:00:00Z",
++    ]);
++    expect(previous.map((item) => item.starts_at)).toEqual([
++      "2026-11-20T13:00:00Z",
++      "2026-11-01T13:00:00Z",
++    ]);
++    expect(all.map((item) => item.starts_at)).toEqual([
++      "2026-11-01T13:00:00Z",
++      "2026-11-20T13:00:00Z",
++      "2026-12-03T13:00:00Z",
++      "2026-12-05T13:00:00Z",
++    ]);
++  });
++
++  it("não muta a lista recebida", () => {
++    const bookings = [
++      booking({ starts_at: "2026-12-05T13:00:00Z" }),
++      booking({ starts_at: "2026-12-03T13:00:00Z" }),
++    ];
++    const original = bookings.map((item) => item.starts_at);
++    filterAgendaBookings(bookings, { period: "all", search: "", now: NOW });
++    expect(bookings.map((item) => item.starts_at)).toEqual(original);
++  });
++
++  it("descarta data inválida em vez de quebrar a agenda", () => {
++    const bookings = [booking({ starts_at: "not-a-date" }), booking()];
++    expect(
++      filterAgendaBookings(bookings, { period: "all", search: "", now: NOW }),
++    ).toHaveLength(1);
++  });
++});
++
++describe("agenda — fuso e agrupamento", () => {
++  it("usa o fuso do prestador para a data local", () => {
++    expect(agendaLocalDateKey("2026-12-01T02:30:00Z", "America/Sao_Paulo")).toBe(
++      "2026-11-30",
++    );
++    expect(agendaLocalDateKey("2026-12-01T12:00:00Z", "America/Sao_Paulo")).toBe(
++      "2026-12-01",
++    );
++    expect(agendaLocalDateKey("2026-12-01T12:00:00Z", "Asia/Tokyo")).toBe(
++      "2026-12-01",
++    );
++    expect(agendaLocalDateKey("2026-12-01T23:30:00Z", "Asia/Tokyo")).toBe(
++      "2026-12-02",
++    );
++  });
++
++  it("agrupa eventos do mesmo dia local mesmo com ISO em dias diferentes", () => {
++    const bookings = [
++      // 02:30Z e 02:45Z caem em 2026-11-30 23:30/23:45 em America/Sao_Paulo (UTC-3).
++      booking({ starts_at: "2026-12-01T02:30:00Z" }),
++      booking({ starts_at: "2026-12-01T02:45:00Z" }),
++      booking({ starts_at: "2026-12-01T12:00:00Z" }),
++    ];
++
++    const groups = groupAgendaByLocalDate(bookings);
++
++    expect(groups.map((group) => group.date)).toEqual([
++      "2026-11-30",
++      "2026-12-01",
++    ]);
++    expect(groups[0].bookings).toHaveLength(2);
++    expect(groups[1].bookings).toHaveLength(1);
++    expect(groups[0].timezone).toBe("America/Sao_Paulo");
++    expect(groups[0].referenceStartsAt).toBe("2026-12-01T02:30:00Z");
++  });
++
++  it("mantém o fuso de cada grupo separado", () => {
++    const groups = groupAgendaByLocalDate([
++      booking({ starts_at: "2026-12-01T23:00:00Z", timezone: "America/Sao_Paulo" }),
++      booking({ starts_at: "2026-12-01T23:00:00Z", timezone: "Asia/Tokyo" }),
++    ]);
++
++    expect(groups.map((group) => group.date)).toEqual(["2026-12-01", "2026-12-02"]);
++    expect(groups.map((group) => group.timezone)).toEqual([
++      "America/Sao_Paulo",
++      "Asia/Tokyo",
++    ]);
++  });
++
++  it("devolve lista vazia quando não há agendamentos", () => {
++    expect(groupAgendaByLocalDate([])).toEqual([]);
++    expect(
++      filterAgendaBookings([], { period: "upcoming", search: "ana", now: NOW }),
++    ).toEqual([]);
++  });
++});
+diff --git a/src/domain/agenda/agenda.ts b/src/domain/agenda/agenda.ts
+new file mode 100644
+index 0000000..cfaedc7
+--- /dev/null
++++ b/src/domain/agenda/agenda.ts
+@@ -0,0 +1,134 @@
++/**
++ * Regras puras da agenda do prestador (Issue #24).
++ *
++ * Filtro por período, busca textual e agrupamento por dia local vivem aqui, sem
++ * React e sem acesso a dados, para serem testáveis de forma determinística.
++ * O instante de referência (`now`) é sempre informado pelo chamador: nenhuma
++ * função lê o relógio, evitando divergência entre servidor e cliente.
++ */
++
++export type AgendaPeriod = "upcoming" | "past" | "all";
++
++export interface AgendaBooking {
++  starts_at: string;
++  timezone: string;
++  customer_name: string;
++  customer_phone: string;
++  service_name_snapshot: string;
++}
++
++export interface AgendaFilters {
++  period: AgendaPeriod;
++  search: string;
++  now: number;
++}
++
++export interface AgendaDayGroup<T extends AgendaBooking> {
++  /** Data local do prestador no formato `YYYY-MM-DD`. */
++  date: string;
++  /** Instante de referência usado no agrupamento (primeiro item do dia). */
++  referenceStartsAt: string;
++  timezone: string;
++  bookings: T[];
++}
++
++/**
++ * Normaliza texto para busca: remove acentos, colapsa espaços e aplica caixa
++ * baixa em `pt-BR`, de modo que "José" seja encontrado por "jose".
++ */
++export function normalizeAgendaText(value: string): string {
++  return value
++    .normalize("NFD")
++    .replace(/\p{Diacritic}/gu, "")
++    .replace(/\s+/g, " ")
++    .trim()
++    .toLocaleLowerCase("pt-BR");
++}
++
++/** Somente dígitos, para casar telefone digitado com telefone formatado. */
++function onlyDigits(value: string): string {
++  return value.replace(/\D/g, "");
++}
++
++function matchesSearch(booking: AgendaBooking, search: string): boolean {
++  const haystacks = [
++    normalizeAgendaText(booking.customer_name),
++    normalizeAgendaText(booking.service_name_snapshot),
++  ];
++  if (haystacks.some((value) => value.includes(search))) return true;
++
++  const digits = onlyDigits(search);
++  return digits.length > 0 && onlyDigits(booking.customer_phone).includes(digits);
++}
++
++/**
++ * Data local (`YYYY-MM-DD`) do agendamento no fuso IANA do prestador.
++ * Lança quando o fuso é inválido, para não agrupar datas erradas em silêncio.
++ */
++export function agendaLocalDateKey(iso: string, timeZone: string): string {
++  const parts = new Intl.DateTimeFormat("en-CA", {
++    timeZone,
++    year: "numeric",
++    month: "2-digit",
++    day: "2-digit",
++  }).formatToParts(new Date(iso));
++  const values: Record<string, string> = {};
++  for (const part of parts) values[part.type] = part.value;
++  return `${values.year}-${values.month}-${values.day}`;
++}
++
++/**
++ * Aplica busca e período e devolve nova lista ordenada.
++ * - `upcoming`: `starts_at >= now`, ordem crescente;
++ * - `past`: `starts_at < now`, ordem decrescente (mais recente primeiro);
++ * - `all`: tudo, ordem crescente.
++ * O array recebido não é mutado.
++ */
++export function filterAgendaBookings<T extends AgendaBooking>(
++  bookings: readonly T[],
++  { period, search, now }: AgendaFilters,
++): T[] {
++  const normalized = normalizeAgendaText(search);
++
++  const filtered = bookings.filter((booking) => {
++    const start = Date.parse(booking.starts_at);
++    if (Number.isNaN(start)) return false;
++    if (period === "upcoming" && start < now) return false;
++    if (period === "past" && start >= now) return false;
++    if (!normalized) return true;
++    return matchesSearch(booking, normalized);
++  });
++
++  const sorted = [...filtered].sort(
++    (a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at),
++  );
++  return period === "past" ? sorted.reverse() : sorted;
++}
++
++/**
++ * Agrupa agendamentos por dia local do prestador, preservando a ordem recebida.
++ * A chave usa o fuso de cada agendamento, então dois eventos no mesmo dia local
++ * do prestador caem no mesmo grupo mesmo quando o ISO em UTC é de outro dia.
++ */
++export function groupAgendaByLocalDate<T extends AgendaBooking>(
++  bookings: readonly T[],
++): AgendaDayGroup<T>[] {
++  const groups = new Map<string, AgendaDayGroup<T>>();
++
++  for (const booking of bookings) {
++    const date = agendaLocalDateKey(booking.starts_at, booking.timezone);
++    const existing = groups.get(date);
++    if (existing) {
++      existing.bookings.push(booking);
++      continue;
++    }
++    groups.set(date, {
++      date,
++      referenceStartsAt: booking.starts_at,
++      timezone: booking.timezone,
++      bookings: [booking],
++    });
++  }
++
++  return [...groups.values()];
++}
+diff --git a/src/server/bookings.test.ts b/src/server/bookings.test.ts
+index b6bc9e7..fa18eab 100644
+--- a/src/server/bookings.test.ts
++++ b/src/server/bookings.test.ts
+@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({
+   redirect: mocks.redirect,
+ }));
+ 
+-import { requireUser } from "./bookings";
++import { listProviderBookingsForPanel, requireUser } from "./bookings";
+ 
+ describe("requireUser", () => {
+   beforeEach(() => {
+@@ -46,3 +46,56 @@ describe("requireUser", () => {
+     expect(mocks.redirect).not.toHaveBeenCalled();
+   });
+ });
++
++describe("listProviderBookingsForPanel", () => {
++  const query = {
++    select: vi.fn(),
++    eq: vi.fn(),
++    order: vi.fn(),
++  };
++  const from = vi.fn();
++
++  beforeEach(() => {
++    vi.clearAllMocks();
++    query.select.mockReturnValue(query);
++    query.eq.mockReturnValue(query);
++    query.order.mockResolvedValue({ data: [], error: null });
++    from.mockReturnValue(query);
++    mocks.createClient.mockResolvedValue({ from });
++  });
++
++  it("filtra pelo prestador dono da sessão", async () => {
++    await listProviderBookingsForPanel("provider-1");
++
++    expect(from).toHaveBeenCalledWith("bookings");
++    expect(query.eq).toHaveBeenCalledWith("provider_id", "provider-1");
++    expect(query.order).toHaveBeenCalledWith("starts_at", { ascending: false });
++  });
++
++  it("distingue falha de consulta de agenda vazia", async () => {
++    query.order.mockResolvedValue({
++      data: null,
++      error: { message: "permission denied" },
++    });
++    await expect(listProviderBookingsForPanel("provider-1")).resolves.toEqual({
++      bookings: [],
++      failed: true,
++    });
++
++    query.order.mockResolvedValue({ data: [], error: null });
++    await expect(listProviderBookingsForPanel("provider-1")).resolves.toEqual({
++      bookings: [],
++      failed: false,
++    });
++  });
++
++  it("devolve os agendamentos do prestador quando a consulta funciona", async () => {
++    const bookings = [{ id: "booking-1", provider_id: "provider-1" }];
++    query.order.mockResolvedValue({ data: bookings, error: null });
++
++    await expect(listProviderBookingsForPanel("provider-1")).resolves.toEqual({
++      bookings,
++      failed: false,
++    });
++  });
++});
+diff --git a/src/server/bookings.ts b/src/server/bookings.ts
+index b1123a2..16f07c4 100644
+--- a/src/server/bookings.ts
++++ b/src/server/bookings.ts
+@@ -370,9 +370,23 @@ export async function transitionBooking(params: {
+   return booking;
+ }
+ 
+-export async function listProviderBookings(
++export interface ProviderBookingsResult {
++  bookings: Booking[];
++  /** `true` quando a consulta falhou; distingue falha de agenda vazia. */
++  failed: boolean;
++}
++
++/**
++ * Lista os agendamentos do prestador autenticado.
++ *
++ * O filtro é sempre por `provider_id` do prestador que pertence ao usuário da
++ * sessão (`getOwnedProvider`), e a RLS de `bookings` só libera as linhas do
++ * dono. O resultado informa explicitamente se a consulta falhou, para a UI não
++ * apresentar erro de carregamento como se fosse agenda vazia.
++ */
++export async function listProviderBookingsForPanel(
+   providerId: string,
+-): Promise<Booking[]> {
++): Promise<ProviderBookingsResult> {
+   const supabase = await createClient();
+   const { data, error } = await supabase
+     .from("bookings")
+@@ -380,8 +394,16 @@ export async function listProviderBookings(
+     .eq("provider_id", providerId)
+     .order("starts_at", { ascending: false });
+ 
+-  if (error) return [];
+-  return (data ?? []) as Booking[];
++  if (error) return { bookings: [], failed: true };
++  return { bookings: (data ?? []) as Booking[], failed: false };
++}
++
++/** Compatibilidade: devolve apenas a lista, sem sinalizar falha de consulta. */
++export async function listProviderBookings(
++  providerId: string,
++): Promise<Booking[]> {
++  const { bookings } = await listProviderBookingsForPanel(providerId);
++  return bookings;
+ }
+ 
+ export async function listCustomerBookings(): Promise<Booking[]> {
