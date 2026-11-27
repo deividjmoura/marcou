@@ -32,8 +32,8 @@ valores do navegador para essas variáveis.
 | `NEXT_PUBLIC_SITE_URL` | Desenvolvimento local; produção deve usar a origem canônica. Não é usada para escolher o domínio em Deploy Preview. |
 | `CONTEXT` | Metadado read-only da Netlify no build; capturado por `next.config.ts`. |
 | `DEPLOY_PRIME_URL` | Metadado read-only da Netlify no build; capturado por `next.config.ts`. |
-| `MARCOU_AUTH_DEPLOY_CONTEXT` | Valor de `CONTEXT` injetado pelo Next.js no bundle do servidor. |
-| `MARCOU_AUTH_DEPLOY_PRIME_URL` | Valor de `DEPLOY_PRIME_URL` injetado pelo Next.js no bundle do servidor. |
+| `MARCOU_AUTH_DEPLOY_CONTEXT` | Valor de `CONTEXT` injetado pelo Next.js no bundle JavaScript do Next.js. |
+| `MARCOU_AUTH_DEPLOY_PRIME_URL` | Valor de `DEPLOY_PRIME_URL` injetado pelo Next.js no bundle JavaScript do Next.js. |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase usado no ambiente. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave pública do projeto Supabase. |
 
