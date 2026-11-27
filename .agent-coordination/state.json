@@ -2031,7 +2031,7 @@
         "feat/pagina-publica-agendamento",
         "feat/customer-account-area"
       ],
-      "status": "completed_with_blocker",
+      "status": "in_progress",
       "active_assignment": "Resolver #133 até a revisão do responsável, integrar #67 se válida, fechar #46 e #2 se superadas (com evidência) e triar as issues de produto.",
       "tasks": [
         {
@@ -2069,21 +2069,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Escopo Agent5 concluído: #140 mergeada; #133/#46/#2 fechadas; issues de produto classificadas e comentadas. Única pendência deliberada é PR #67, mantida Draft por falta de inspeção visual e necessidade de reconciliação/changelog/CI atuais.",
-      "next_action": "A PR #67 só pode avançar após branch reconciliada com main, changelog atualizado, CI completo no SHA exato e revisão visual desktop/mobile; então remover Draft e merge se checklist estiver verde.",
+      "current_state": "Wave 2 W2-A5 iniciada. main reconfirmada no SHA 4badea4b8ba8ecfa95bfdfa526dad606c5a56691 (#142), runbook seções 0/4/5/9 relidas. #67 reconfirmada draft, head b35653c, 43 commits behind; visual headless requer browser, mas navegador conectado só possui abas sem controle/preview.",
+      "next_action": "Reconstruir #67 sobre main sem force push, adicionar changelog, CI exato e deploy preview; inspeção visual headless será tentada com ferramenta disponível. Triar #121/#27 e comentar status em issues abertas.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Reconciliação e substituição da PR #133",
-          "status": "in_progress",
-          "result": "PR #133 fechada (não merge) e substituída por #140, branch agent5/133-docs-main-reconciled baseada diretamente em main 90b05aaf; diff 7 docs, changelog preserva entradas recentes; preview Netlify sucesso. CI quality (run 46081754355) check:changelog/lint/typecheck/audit/test/test:db verdes; build em andamento.",
-          "head_sha": "4510cbb7cfe7b9380ff3053317d035d6ff9dad8a",
-          "tests": "Quality workflow #301: 6 steps verdes; production build pendente; Netlify deploy preview success.",
-          "blockers": [
-            "CI build/checks ainda em execução"
-          ],
-          "next_action": "Confirmar build e demais checks, então merge squash se todos verdes."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "Squash merge PR #140 e verificação de integração",
@@ -2107,6 +2095,16 @@
             "#67: inspeção visual desktop/mobile indisponível nesta sessão; branch 40 commits atrás e sem CHANGELOG no diff original."
           ],
           "next_action": "Aguardar/reabrir #67 quando puder realizar inspeção visual e atualizar a PR sobre main."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Wave 2 W2-A5 — confirmação inicial de main, runbook e PR #67",
+          "status": "in_progress",
+          "result": "main SHA 4badea4b8ba8ecfa95bfdfa526dad606c5a56691 confirmada (merge #142); #67 draft, head b35653c, compare main: 3 ahead/43 behind, mergeable; changelog não está no diff original. Browser conectado sem preview e sem controles de navegação; inspeção headless ainda não executada.",
+          "head_sha": "4badea4b8ba8ecfa95bfdfa526dad606c5a56691",
+          "tests": "Main commit foi consultado. #67 CI antigo não satisfaz SHA atual; será necessário workflow novo.",
+          "blockers": [],
+          "next_action": "Reconciliar #67 com main e validar CI."
         }
       ]
     },
