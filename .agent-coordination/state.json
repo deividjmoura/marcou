@@ -254,16 +254,16 @@
     "agent_5_calendar_audit": {
       "scope": "Revisão independente da integração Google Calendar (Issue #29), sem alterações",
       "pull_requests": [],
-      "status": "review_pending",
-      "active_assignment": "Auditoria Google Calendar: faça somente revisão independente, sem editar, stagear, commitar, push, criar branch ou abrir PR. Inspecione main atual e branches/PRs remotas relacionadas à Issue #29, especialmente arena/29-calendar-integration e fix/29-oauth-state-atomic. Compare com os achados já registrados: escopos concedidos, state OAuth de uso único/concorrência, PKCE, persistência/renovação/rotação de tokens, isolamento server-only, desconexão durante worker/outbox, RLS/grants/RPCs e cobertura de test:db. Produza plano de correção priorizado com arquivos e testes. Há alterações locais staged relatadas pelo responsável em fix/29-oauth-state-atomic que não são visíveis no remoto: não tente substituí-las nem peça para o responsável descartá-las.",
-      "current_state": "Auditoria inicial identificou riscos em validação de escopos, consumo atômico do state, ausência de PKCE Google, renovação de tokens, rotação de chave, isolamento server-only, desconexão concorrente com worker e cobertura da migration em test:db. Há alterações locais staged relatadas pelo responsável em fix/29-oauth-state-atomic que não estão visíveis no remoto.",
-      "next_action": "Produzir plano técnico priorizado com evidências, caminhos de arquivos, testes e estratégia que preserve o trabalho local staged; não modificar repositório.",
+      "status": "audit_complete_blocked_for_safe_implementation",
+      "active_assignment": "Auditoria independente da Issue #29 concluída em modo somente leitura. Nenhum código, staged local, migration remota, serviço externo, PR ou deploy foi alterado.",
+      "current_state": "Veredito: NÃO APROVAR a integração para produção no estado remoto auditado. O consumo atômico do OAuth state foi corrigido na branch fix/29-oauth-state-atomic e está estruturalmente bem implementado (UPDATE único, expiração, hash SHA-256, SECURITY DEFINER com search_path fixo, EXECUTE somente service_role, testes concorrentes). Porém permanecem riscos P1: desconexão não é coordenada com worker em andamento e pode deixar/criar eventos órfãos no Google; disconnect apaga mappings/conexão mesmo quando limpeza externa falha; callback aceita url.origin como fallback de origem confiável. Riscos P2: ausência de PKCE, não validação do scope realmente concedido (fallback grava scope solicitado como se concedido), ausência de suporte operacional à rotação de refresh token/chave de cifragem, e cobertura automatizada incompleta dos fluxos worker/desconexão. Issue #29 ainda exige decisão explícita sobre escopo somente leitura/escrita/bidirecional; código/docs assumem sincronização unidirecional Marcou→Google. A branch fix/29-oauth-state-atomic está em 2f577e2810bb66f79d1fdc1c697859bdfa42843d; arena/29-calendar-integration em 26baee930cc48e1ec38561903337d5148d5274c7; main em 69d02173653384e082476e7879ee9f33672dec72. fix está 41 commits ahead e 12 behind de main; é 1 commit à frente de arena. Os seis arquivos staged são apenas informação reportada pelo responsável: não foram vistos, enumerados, lidos, comparados byte a byte, nem modificados; a comparação limita-se à arquitetura/alterações remotas observáveis e à restrição de preservação.",
+      "next_action": "Antes de qualquer implementação, obter decisão explícita do responsável sobre direção de sincronização e política de desconexão/remoção de eventos. Depois integrar com segurança a branch atualizada sobre main sem descartar os seis arquivos staged; revisar diff completo e resolver divergências, implementar primeiro fencing/lock de conexão e cleanup retryável, depois OAuth PKCE/scope/origin e rotação de credenciais; adicionar testes unitários e test:db listados no relatório. Não aplicar patch, não alterar staged locais, não fazer push/merge/deploy nem migration remota sem autorização específica.",
       "last_verified": {
-        "branch": "arena/29-calendar-integration",
-        "head_sha": "26baee930cc48e1ec38561903337d5148d5274c7",
+        "branch": "fix/29-oauth-state-atomic",
+        "head_sha": "2f577e2810bb66f79d1fdc1c697859bdfa42843d",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "Nenhuma execução de CI encontrada associada ao SHA auditado.",
-        "notes": "Revisão anterior somente leitura. Branch divergente da main: 40 commits ahead, 12 behind no momento da comparação."
+        "ci": "Nenhuma workflow run retornada para o SHA 2f577e2810bb66f79d1fdc1c697859bdfa42843d; não há evidência de CI verde para esse SHA.",
+        "notes": "Issue #29 aberta em deividjmoura/marcou. arena/29-calendar-integration HEAD 26baee930cc48e1ec38561903337d5148d5274c7. fix/29-oauth-state-atomic HEAD 2f577e2810bb66f79d1fdc1c697859bdfa42843d. main HEAD 69d02173653384e082476e7879ee9f33672dec72. Compare main...fix: 41 ahead/12 behind; arena...fix: 1 commit ahead. Issue body mantém bloqueio para confirmar modo read/write/bidirectional. Nenhuma PR vinculada foi localizada/inspecionada como PR existente. Seis arquivos staged locais não acessados por ordem expressa do usuário."
       },
       "updates": [
         {
@@ -277,6 +277,20 @@
             "Alterações locais staged não estão visíveis no remoto; não tocar nessa árvore/branch."
           ],
           "next_action": "Entregar plano de correção priorizado e critérios de aceite."
+        },
+        {
+          "timestamp": "2026-11-27T19:00:00-03:00",
+          "task": "Auditoria final independente da Issue #29 e plano seguro de implementação",
+          "status": "audit_complete_not_approved",
+          "result": "NÃO APROVAR produção. Consumo atômico do OAuth state confirmado estruturalmente correto na migration/RPC e callback, mas há falhas P1 no ciclo desconexão/worker e limpeza de eventos Google; callback ainda usa url.origin como fallback. P2: PKCE ausente, scope concedido não validado, rotação de refresh token/chave sem suporte operacional e testes incompletos. Escopo read/write/bidirectional continua bloqueado na issue; implementação atual assume unidirecional. Seis arquivos staged não foram acessados nem comparados diretamente.",
+          "head_sha": "fix/29-oauth-state-atomic 2f577e2810bb66f79d1fdc1c697859bdfa42843d; arena/29-calendar-integration 26baee930cc48e1ec38561903337d5148d5274c7; main 69d02173653384e082476e7879ee9f33672dec72",
+          "tests": "Auditoria somente leitura; nenhum teste executado. CI runs não retornadas para o SHA auditado. scripts/calendar-state-check.mjs está incluído em npm run test:db e cobre atomicidade/replay/concorrrência/grants/RLS da RPC; não cobre corrida worker-disconnect nem falhas de remoção Google.",
+          "blockers": [
+            "Decisão explícita sobre sincronização somente leitura, escrita ou bidirecional.",
+            "Seis arquivos staged locais não acessados por instrução expressa; comparação direta não é possível sem violar essa restrição.",
+            "Branch fix diverge da main (41 ahead/12 behind); requer integração/revisão antes de implementação segura."
+          ],
+          "next_action": "Aguardar decisão de escopo; implementar por etapas com preservação integral do staged local, fencing worker/desconexão, limpeza externa retryável, hardening OAuth e testes unitários/DB. Sem escrita em código, push, merge, deploy ou migration remota sem autorização específica."
         }
       ]
     }
