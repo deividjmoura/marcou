@@ -17,6 +17,16 @@ O worker usa `FOR UPDATE SKIP LOCKED` via RPC para reivindicar lotes. Falhas tra
 ## OAuth e armazenamento
 OAuth independente do Supabase Auth; solicita somente `calendar.events`, offline access e consentimento explícito. State aleatório é validado e expira. Refresh token e access token são cifrados AES-256-GCM com chave exclusiva do servidor. Nunca retornados ao navegador nem registrados em logs. Desconectar revoga best-effort o token e elimina a conexão cifrada.
 
+### Consumo do state
+`/api/calendar/connect` grava apenas `sha256(state)` em `provider_calendar_connections` com validade de 10 minutos. O callback consome esse hash pela RPC `consume_calendar_oauth_state(text)` (`SECURITY DEFINER`, `search_path = pg_catalog, public`, `EXECUTE` somente para `service_role`), que anula `oauth_state_hash`/`oauth_state_expires_at` e devolve o `provider_id` na **mesma instrução**, antes de `exchangeOAuthCode()`.
+
+Consequências do contrato:
+
+- o primeiro callback válido recebe o `provider_id`; callbacks concorrentes ou repetidos recebem conjunto vazio e caem em `calendar=expired-state`;
+- state expirado, inexistente ou malformado nunca é consumido nem aceito;
+- se a troca do código, a propriedade do prestador ou a persistência dos tokens falhar depois do consumo, o state não é restaurado e o usuário precisa autorizar novamente;
+- um `connect` concorrente que grave um state novo não é apagado pela persistência de tokens, porque o `UPDATE` final não toca mais nas colunas de state.
+
 ## Dados e privacidade
 V1 usa `service_name_snapshot`, `starts_at`, `ends_at` e `timezone`. Não inclui nome do cliente. A descrição deve permanecer vazia ou conter somente informação operacional não pessoal. Não sincroniza reservas pendentes de pagamento/revisão.
 

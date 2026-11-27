@@ -30,6 +30,15 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - Matriz canônica de requisitos de produto e sequência de dependências das
   Issues `#84`, `#91` e `#93` registrada em `docs/ROADMAP-MARCOU-SOCIAL.md`,
   preservando a arquitetura da Issue `#72`.
+- RPC `public.consume_calendar_oauth_state(text)`
+  (`supabase/migrations/20261127120000_calendar_oauth_state_consumption.sql`),
+  que consome o OAuth state do Google Calendar em uma única instrução e devolve
+  o `provider_id` dono, com `search_path` fixo, sem grant para `PUBLIC`, `anon`
+  ou `authenticated` e execução restrita a `service_role`.
+- Testes de `GET /api/calendar/callback` cobrindo state válido, expirado,
+  inexistente, replay sequencial, callbacks concorrentes, ownership, falha na
+  troca do código e ausência de refresh token, além do harness PostgreSQL
+  `scripts/calendar-state-check.mjs` agregado a `npm run test:db`.
 
 ### Alterado
 
@@ -57,6 +66,13 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   desconhecido.
 
 ### Segurança
+
+- Consumo atômico e de uso único do OAuth state do Google Calendar: o callback
+  passou a consumir o hash via RPC antes de trocar o código na Google, em vez de
+  ler o state com `SELECT` e limpá-lo apenas no `UPDATE` final. Requisições
+  simultâneas ou repetidas recebem resultado vazio e são tratadas como state
+  expirado, e qualquer falha posterior à troca do código exige nova autorização
+  sem restaurar o state consumido.
 
 - Proteção contra condições de corrida no provisionamento de `profiles`:
   inserção inicial com `ON CONFLICT (id) DO NOTHING` (`ignoreDuplicates: true`)
