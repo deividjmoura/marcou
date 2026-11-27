@@ -104,28 +104,18 @@
         128,
         38
       ],
-      "status": "in_progress",
+      "status": "validation_pending",
       "active_assignment": "Fix the two #128 caveats only: main-ref restriction for workflow_dispatch and stronger DB tests for eligibility, ineligible states, idempotency and concurrency. Re-run tests and CI on the new SHA. Do not merge or enable scheduler.",
-      "current_state": "Implemented PR #128 manual-dispatch main-ref guard and stronger expiration integration tests. The current branch SHA is 246f95df33013d495b1cda36675a04c2761637e8. GitHub CI quality check is queued for this exact SHA; local DB test could not be run in this environment because the repository working tree is not available.",
-      "next_action": "Wait for CI on SHA 246f95df33013d495b1cda36675a04c2761637e8. Review results, resolve any failures, and update coordination. Keep PR #38 untouched; no merge or scheduler activation.",
+      "current_state": "Assigned PR #128 fixes are pushed and reviewed remotely: workflow_dispatch now requires refs/heads/main (plus opt-in gate); DB integration assertions exercise pending_payment and pending_review expired, future pending remains, confirmed/cancelled with expired timestamps remain unchanged, exactly one booking.expired event each, repeat RPC returns 0, and concurrent calls expire a single fixture once. PR #128 CI run #279 is in progress on SHA 246f95df33013d495b1cda36675a04c2761637e8. Local test execution unavailable because no checkout in this session.",
+      "next_action": "Await CI run #279 on exact SHA; review test:db outcome. If green, report fixes validated; if fail, correct only #128 and update coordination again. Do not merge or enable scheduler; do not change #38.",
       "last_verified": {
         "branch": "fix/booking-expiration-scheduler",
         "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "GitHub Actions quality check queued (run 46043394357) for this exact SHA; local test not run (repository checkout unavailable in session).",
-        "notes": "Workflow condition verified remotely. #38 remains unchanged."
+        "ci": "Run #279 / quality in progress on exact SHA 246f95df33013d495b1cda36675a04c2761637e8; local test:db not executed because checkout unavailable.",
+        "notes": "PR #128 open Draft, mergeable, 4 commits ahead/0 behind main. PR #38 untouched."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T14:40:00-03:00",
-          "task": "Start assigned PR #128 caveat fixes per coordination state",
-          "status": "in_progress",
-          "result": "Read latest shared state; confirmed scope only #128. Starting on dispatch branch guard and batch expiration integration tests.",
-          "head_sha": "9258b5962f6c5545ce53aa6e408fd179769e10b9",
-          "tests": "Existing CI #266 green on baseline SHA.",
-          "blockers": [],
-          "next_action": "Implement and validate fixes. #38 stays untouched."
-        },
         {
           "timestamp": "2026-11-27T14:47:00-03:00",
           "task": "Implement PR #128 audit caveats",
@@ -147,6 +137,18 @@
             "Await CI."
           ],
           "next_action": "Monitor CI for exact SHA and fix if needed."
+        },
+        {
+          "timestamp": "2026-11-27T14:53:00-03:00",
+          "task": "Checkpoint implementation and validation status for PR #128",
+          "status": "validation_pending",
+          "result": "Fixes pushed, remote diff verified, branch compare shows 4 ahead and 0 behind. CI run #279 (quality) in progress for current SHA. Local tests not run due missing repository checkout. #38 remains unchanged.",
+          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
+          "tests": "Await CI #279 exact SHA.",
+          "blockers": [
+            "CI run #279 not complete."
+          ],
+          "next_action": "Check run #279 result and DB integration test."
         }
       ]
     },
