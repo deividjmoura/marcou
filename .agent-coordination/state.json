@@ -857,27 +857,11 @@
       "issues": [
         125
       ],
-      "status": "round_6_agent5_pr39_merged_pr136_blocked_by_pr131",
+      "status": "round_6_partial_closeout_complete_with_pr136_dependency",
       "active_assignment": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos.",
-      "current_state": "Agent5 assumido pelo responsável. PR #71 fechada como runbook diagnóstico superseded por #127/#130 e Issue #70; Issue #70 permanece aberta. PR #39 atualizada contra main, recebeu audit no CI, CI/Preview verdes e foi squash-merged (merge SHA 6f6f4cd30fecf902f97e64348052adef02f9ab16). Issue #24 atualizada, permanece aberta para critérios restantes. PR #133 permanece HOLD por revisão/aprovação explicitamente pendente. Issue #125: migration 20261125140000_harden_public_table_privileges.sql e script privileges-check já estão na main via PR #135, mas test:db não invocava o script. PR #136 criada para ligar o teste; CI no SHA 70fdc37cfedb44e5c66532046d9e8704f7265126 falhou porque o script exige migration 20261125130000_table_privileges_matrix.sql, que está na PR #131 (Agent1), ainda não integrada. PR #136 depende da integração/reconciliação da #131; issue #125 permanece aberta.",
-      "next_action": "Aguardar merge/reconciliação da PR #131 pelo Agent1; depois atualizar PR #136 contra main sem force-push, rodar suíte completa e mergear somente com CI verde. Fechar Issue #125 somente após comprovar a migration e o harness em main. Não mexer nos clusters dos Agents1-4.",
+      "current_state": "PR #39 merged (6f6f4cd30fecf902f97e64348052adef02f9ab16) after merge-base refresh and full CI incl. audit; PR #71 closed as superseded runbook. Issue #24 remains open after partial agenda delivery. PR #133 is HOLD due explicit owner review. Issue #125 has migration/script in main via #135, but `test:db` wiring is missing; PR #136 adds it but first CI failed because privileges-check expects #131's migration 20261125130000_table_privileges_matrix.sql. PR #136 converted to Draft while blocked; CI run 46060571287: changelog/lint/typecheck/audit/unit pass, test:db fails at missing migration, build skipped. #131 belongs Agent1 and is not integrated yet. Current open PR inventory: 14; no other issues/PRs closed beyond #71.",
+      "next_action": "Após Agent1 integrar/reconciliar #131, atualizar PR #136 sobre main sem force-push, rerodar changelog/lint/typecheck/audit/unit/test:db/build e Preview; marcar Ready e squash merge somente se verde. Depois fechar Issue #125. Outros PRs não atribuídos: #133 HOLD por owner review; #67/#46/#41/#32/#2 HOLD/FIX por bases antigas, revisão ou conteúdo futuro. Não fechar roadmap.",
       "updates": [
-        {
-          "timestamp": "2026-11-27T22:12:00-03:00",
-          "task": "Round 6 — triagem das PRs restantes, fechamento superseded e atualização de issues",
-          "status": "partial_closeout_completed_no_unsafe_merges",
-          "result": "Fechada PR #71 (head 8daa15651acbe74c98e1150b0f1cdcd71af89a60) como runbook diagnóstico superseded por #127/#130 e Issue #70; comentário #7227006193. Issue #70 permanece aberta. PR #39: head 7a1e270e369023020f27ea6afddb07df76a014d7, base main 69d02173653384e082476e7879ee9f33672dec72, 0 behind, mergeable clean; CI run 46048421298 success com changelog/lint/typecheck/npm test/test:db/build; audit não consta no job (install com --no-audit), então sem Ready/merge até prova do audit no SHA. Issue #24 recebeu comentário #7227015313 e permanece aberta para o restante do painel. PR #133 head d469ce876a3819a5293ca17c75a4e1447fb1293a, CI run 46047571459 success, mergeable clean e não-Draft, mas corpo exige aprovação do responsável; HOLD. Issue #125 recebeu comentário #7227011103: PR #131 contém migration 20261125130000_table_privileges_matrix.sql e scripts/privileges-check.mjs, ainda pendente de integração; issue permanece aberta. Inventário geral: 17 PRs abertas após fechar #71; 64 issues abertas, majoritariamente roadmap/épicos futuros, mantidas abertas.",
-          "head_sha": null,
-          "tests": "Verificados PR metadata, compares contra main, workflow runs e jobs; sem execução local. #39 CI exact SHA: check:changelog, lint, typecheck, npm test, test:db, build success; audit ausente do workflow. #133 CI run success. #71 CI antigo 45052811370 não foi usado como gate porque PR fechada como superseded.",
-          "blockers": [
-            "#39 audit precisa ser executado e comprovado no SHA exato; não existe step de audit no CI observado.",
-            "#133 aguarda revisão/aprovação do responsável conforme próprio corpo da PR.",
-            "#125 aguarda merge/validação da #131 (Agent1); não duplicar migration/script.",
-            "#67, #46, #41, #32 e #2 têm branches antigas/base divergente e precisam de rebase/revisão/decisão; #41 é segurança e não deve ser descartada sem revisão específica.",
-            "#2 usa base branch antiga de página pública e horários demonstrativos; é futura/placeholder, não pronta para merge."
-          ],
-          "next_action": "Continuar triagem dos issues abertos e monitorar merges dos Agents1-4; não fechar roadmap nem atuar em clusters atribuídos a outros agentes."
-        },
         {
           "timestamp": "2026-11-27T22:25:00-03:00",
           "task": "Round 6 — merge PR #39 e criação de correção mínima para completar Issue #125",
@@ -905,6 +889,20 @@
             "PR #133 continua aguardando revisão/aprovação do responsável conforme seu próprio corpo."
           ],
           "next_action": "Retomar PR #136 após atualização da main por #131; revalidar branch, CI completa e Preview antes do merge."
+        },
+        {
+          "timestamp": "2026-11-27T22:40:00-03:00",
+          "task": "Round 6 — triagem final do inventário restante de PRs e estado da PR #136",
+          "status": "partial_closeout_inventory_recorded",
+          "result": "Inventário remoto atualizado: 14 PRs abertas. Clusters atribuídos a Agents1-4 preservados sem alterações. Não atribuídas: #133 HOLD (owner review expresso); #67 HOLD (31 commits atrás da main, revisão visual e CI antiga); #46 HOLD (92 commits atrás, só registro documental de limpeza, conteúdo não comprovadamente descartável); #41 FIX/HOLD (hardening SECURITY DEFINER, 101 commits atrás, precisa rebase e revisão de segurança; não descartar); #32 HOLD (129 commits atrás, hardening operacional e workflow antigos); #2 HOLD (branch baseada em feat/pagina-publica-agendamento, horários demonstrativos e sem testes). PR #39 merged; #71 closed; PR #136 em Draft por bloqueio real na migration #131. Issue #125 permanece aberta; Issue #24 permanece aberta; 64 issues abertas, com roadmap/epics futuros preservados.",
+          "head_sha": "70fdc37cfedb44e5c66532046d9e8704f7265126",
+          "tests": "Triagem por GitHub PR metadata, compare refs, CI workflow runs/jobs/logs, review threads, PR file lists e issue search. PR #39 full CI success. PR #136 failure explicada por log exato em test:db; não houve bypass.",
+          "blockers": [
+            "PR #136 depende da integração da migration 20261125130000_table_privileges_matrix.sql da PR #131 (Agent1).",
+            "PR #133 requer aprovação do responsável conforme texto da PR.",
+            "PRs #67/#46/#41/#32/#2 exigem rebase/revisão ou decisão; #41 é segurança e requer tratamento cuidadoso."
+          ],
+          "next_action": "Aguardar #131 e retomar #136; não mexer nas atribuições dos outros agentes nem fechar issues de roadmap."
         }
       ]
     },
