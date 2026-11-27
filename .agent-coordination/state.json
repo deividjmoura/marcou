@@ -92,9 +92,9 @@
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
     "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios.",
     "execution_order": [
-      "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (decidir mecanismo #128/#38), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
+      "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
-      "Onda 2: #136, #124, #130 (após #127), #128 e depois #38",
+      "Onda 2: #136, #124, #130 (após #127), #38 (a #128 já foi mergeada)",
       "Onda 3: #68, #67, #32; triagem final de issues",
       "Onda 4: A6-T2/T3/T4 (limpeza, roadmap, relatório e pergunta de release)"
     ],
@@ -103,7 +103,6 @@
       131,
       136,
       124,
-      128,
       38,
       130,
       68,
@@ -155,9 +154,9 @@
     },
     "github_snapshot_2026_11_27": {
       "verified_by": "coordenador via API do GitHub; velho assim que a main mudar: reconfirme antes de agir",
-      "main_sha": "6f6f4cd30fecf902f97e64348052adef02f9ab16 (depois do runbook: f1983b108121c8c69a2becc86e2860c4e07a901e)",
+      "main_sha": "f1983b108121c8c69a2becc86e2860c4e07a901e (runbook) sobre 8a5e4e7f0b78f28439200ce74be5dc174748fb46 (#128 mergeada); a 6f6f4cd30fecf902f97e64348052adef02f9ab16 era a main no início do inventário",
       "counts": {
-        "open_prs": 14,
+        "open_prs": 13,
         "open_issues_excluding_prs": 64,
         "remote_branches": 32
       },
@@ -166,7 +165,8 @@
         "#135 Calendar #29 + hardening #125 (substitui a #126, fechada)",
         "#39 agenda do prestador",
         "#129 lock de transição",
-        "#117 grants SECURITY DEFINER"
+        "#117 grants SECURITY DEFINER",
+        "#128 scheduler de expiração endurecido (merge 8a5e4e7f0b78f28439200ce74be5dc174748fb46, 2026-11-27 20:11) — mergeada por outro agente durante a montagem desta rodada"
       ],
       "migrations_on_main_latest": [
         "20261125140000_harden_public_table_privileges.sql",
@@ -215,16 +215,6 @@
           "behind": 3,
           "ci": "success",
           "owner": "agent_2"
-        },
-        {
-          "pr": 128,
-          "head": "488f9a9",
-          "draft": true,
-          "mergeable": true,
-          "ahead": 6,
-          "behind": 2,
-          "ci": "success",
-          "owner": "agent_3"
         },
         {
           "pr": 127,
@@ -292,11 +282,12 @@
           "pr": 38,
           "head": "e8ee5e3",
           "draft": true,
-          "mergeable": true,
+          "mergeable": null,
           "ahead": 6,
-          "behind": 3,
+          "behind": 5,
           "ci": "success",
-          "owner": "agent_3"
+          "owner": "agent_3",
+          "note": "atualizar sobre a main que já contém a #128 (conflitos prováveis em scripts/db-check.mjs e CHANGELOG.md)"
         },
         {
           "pr": 32,
@@ -341,7 +332,8 @@
           "feat/customer-account-area",
           "feat/pagina-publica-agendamento",
           "arena/9e68c2bb-marcou",
-          "arena/4017109f-marcou"
+          "arena/4017109f-marcou",
+          "fix/booking-expiration-scheduler"
         ]
       },
       "issues_open_by_group": {
@@ -1356,7 +1348,6 @@
     "agent_3_r7_ops_schedulers": {
       "scope": "Scheduler de expiração/lembretes e plataforma/ops",
       "pull_requests": [
-        128,
         38,
         32
       ],
@@ -1379,9 +1370,9 @@
       "tasks": [
         {
           "id": "A3-T1",
-          "target": "PR #128 (HEAD 488f9a9, rascunho, limpa, 2 atrás) e PR #38 (HEAD e8ee5e3, rascunho, limpa, 3 atrás)",
-          "action": "Comparar os dois mecanismos e a branch arena/3b7c9d2f-marcou (endpoint /api/bookings/expire) para evitar duplicação. Resolver a sobreposição em scripts/db-check.mjs e CHANGELOG.md. Manter BOOKING_EXPIRATION_ENABLED desligado por padrão e impedir que a expiração aponte para produção por engano (gate). Em #38, definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade. Documentar o scheduler externo necessário, sem ativá-lo. Integrar em sequência (um merge, atualizar o outro, CI de novo).",
-          "done_when": "#128 e #38 mergeadas (ou uma delas fechada como duplicada, com justificativa) e documento de operação do scheduler atualizado."
+          "target": "PR #38 (HEAD e8ee5e3, rascunho, atrás da main) — a PR #128 JÁ FOI MERGEADA na main (8a5e4e7, 2026-11-27 20:11)",
+          "action": "ATUALIZAÇÃO: a #128 já está na main; não a refaça. Leia o que ela entregou (gate contra produção, flag BOOKING_EXPIRATION_ENABLED, workflow) e atualize a #38 sobre essa main resolvendo a sobreposição em scripts/db-check.mjs e CHANGELOG.md. Compare também com a branch arena/3b7c9d2f-marcou (endpoint /api/bookings/expire) para não duplicar mecanismo; use UM mecanismo canônico. Mantenha BOOKING_EXPIRATION_ENABLED desligado por padrão e sem apontar para produção por engano. Em #38, defina idempotência diária considerando timezone do prestador, retries, janela e elegibilidade. Documente o scheduler externo necessário, sem ativá-lo. Rode a suíte completa e mergeie se o checklist estiver verde.",
+          "done_when": "#38 mergeada (ou fechada como duplicada com justificativa) e documento de operação do scheduler atualizado; disposição da arena/3b7c9d2f-marcou registrada."
         },
         {
           "id": "A3-T2",
@@ -1406,8 +1397,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
-      "next_action": "Comparar #128, #38 e arena/3b7c9d2f-marcou e escolher o mecanismo canônico.",
+      "current_state": "Atribuição da rodada 7 registrada; #128 já mergeada (8a5e4e7) por outro agente; nenhum trabalho da rodada 7 iniciado.",
+      "next_action": "Atualizar a #38 sobre a main (que já inclui a #128) e comparar com arena/3b7c9d2f-marcou.",
       "updates": []
     },
     "agent_4_r7_security_calendar": {
@@ -1577,7 +1568,7 @@
         {
           "id": "A6-T2",
           "target": "Limpeza de branches (somente no fim, após os merges)",
-          "action": "Apagar apenas branch cuja PR esteja merged e cujo conteúdo esteja na main (squash: PR merged + diff vazio nos arquivos da PR) ou que tenha disposição APAGAR registrada pelo agente dono. Candidatas de partida (verificar antes): feat/24-provider-agenda (#39 merged), fix/booking-transition-test-wiring (#134 merged), fix/booking-transition-concurrency-incremental (#129 merged), arena/6f3a9b1f-marcou (harness já na main), a branch avulsa chamada 'cc212db' (nome é um SHA; 10 à frente, parece cópia anterior de trabalho já integrado), fix/auth-recovery-redirect-production (#71 fechada), feat/customer-account-area e feat/pagina-publica-agendamento (PRs fechadas). Preservar: main, coordination/agents, branches de PR aberta, branches com trabalho exclusivo e sessões ativas.",
+          "action": "Apagar apenas branch cuja PR esteja merged e cujo conteúdo esteja na main (squash: PR merged + diff vazio nos arquivos da PR) ou que tenha disposição APAGAR registrada pelo agente dono. Candidatas de partida (verificar antes): feat/24-provider-agenda (#39 merged), fix/booking-transition-test-wiring (#134 merged), fix/booking-expiration-scheduler (#128 merged), fix/booking-transition-concurrency-incremental (#129 merged), arena/6f3a9b1f-marcou (harness já na main), a branch avulsa chamada 'cc212db' (nome é um SHA; 10 à frente, parece cópia anterior de trabalho já integrado), fix/auth-recovery-redirect-production (#71 fechada), feat/customer-account-area e feat/pagina-publica-agendamento (PRs fechadas). Preservar: main, coordination/agents, branches de PR aberta, branches com trabalho exclusivo e sessões ativas.",
           "done_when": "Tabela final branch → disposição → evidência."
         },
         {
@@ -1606,7 +1597,7 @@
           "timestamp": "2026-11-27",
           "task": "Rodada 7: inventário e distribuição das atribuições",
           "status": "round7_dispatched",
-          "result": "Inventário feito via API do GitHub: 14 PRs abertas, 32 branches, 64 issues abertas. Constatado que o Calendar entrou na main pela #135 (#126 fechada), #134/#39 mergeadas, e que a #131 tem conflito e regressão de redirect. Atribuições dos Agents 1–6 e runbook publicados.",
+          "result": "Inventário feito via API do GitHub: 14 PRs abertas, 32 branches, 64 issues abertas. Constatado que o Calendar entrou na main pela #135 (#126 fechada), #134/#39 mergeadas, e que a #131 tem conflito e regressão de redirect. Atribuições dos Agents 1–6 e runbook publicados. Correção às 20:1x: a #128 foi mergeada (8a5e4e7) por outro agente durante a montagem da rodada; snapshot e atribuição do Agent 3 ajustados (13 PRs abertas).",
           "head_sha": "main=6f6f4cd30fecf902f97e64348052adef02f9ab16 (runbook em f1983b108121c8c69a2becc86e2860c4e07a901e)",
           "tests": "não aplicável (apenas inventário/documentação)",
           "blockers": "nenhum",
