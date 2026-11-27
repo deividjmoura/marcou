@@ -214,8 +214,11 @@ export class FakeStore implements CalendarStore {
     if (!connection?.disconnect_requested_at || this.finalizeBlocked) return { finalized: false, refreshCiphertext: null };
     const active = [...this.mappings.values()].some((m) => m.provider_id === providerId && !m.orphaned_at);
     if (active) return { finalized: false, refreshCiphertext: null };
-    this.connections.delete(providerId);
     return { finalized: true, refreshCiphertext: connection.refresh_token_ciphertext };
+  }
+  async completeDisconnect(providerId: string) {
+    this.guard("completeDisconnect");
+    this.connections.delete(providerId);
   }
 }
 
