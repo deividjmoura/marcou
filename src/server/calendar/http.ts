@@ -6,7 +6,9 @@ export const CALENDAR_PAGE_PATH = "/painel/integracoes/calendario";
 export function calendarSiteOrigin(siteUrl = process.env.NEXT_PUBLIC_SITE_URL): string | null {
   if (!siteUrl) return null;
   try {
-    return new URL(siteUrl).origin;
+    const url = new URL(siteUrl);
+    if ((url.protocol !== "https:" && url.protocol !== "http:") || url.origin === "null") return null;
+    return url.origin;
   } catch {
     return null;
   }
