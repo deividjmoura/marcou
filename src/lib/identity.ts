@@ -75,7 +75,7 @@ export function trustedAppOrigin(requestOrigin?: string): string {
 
   return PRODUCTION_ORIGIN;
 }
-const CONTROL_CHARACTERS = /[\\u0000-\\u001f\\u007f]/;
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 
 /** Decode nested percent-encoding so encoded slashes and backslashes cannot
  * turn into a network-path redirect after a later URL parse. */
@@ -188,7 +188,7 @@ export function safeNextPathFromUrl(
 }
 
 export function normalizePhone(value: string): string {
-  return value.replace(/\\D/g, "");
+  return value.replace(/\D/g, "");
 }
 
 export function isValidPhone(value: string): boolean {
