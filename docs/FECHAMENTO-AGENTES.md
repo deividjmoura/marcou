@@ -2,7 +2,7 @@
 
 > **Fonte de verdade viva:** `.agent-coordination/state.json` na branch `coordination/agents`.
 > Este documento é o runbook estável (regras, ordem, critérios). O estado volátil (SHAs, CI, status por agente) fica **somente** no `state.json`.
-> Snapshot de referência: 2026-11-27, `main` = `6f6f4cd`. Sempre reconfirme a `main` atual antes de agir.
+> Snapshot de referência: 2026-11-27, `main` = `f1983b1` (sobre `8a5e4e7`, #128 mergeada). Sempre reconfirme a `main` atual antes de agir.
 
 ## 1. Objetivo
 
@@ -17,8 +17,8 @@ Levar o repositório a um estado limpo: cada PR aberta vira **mergeada**, **corr
 | #124 | conflito, 10 atrás | 1 | após #131; parser BRL, sinal, ações por papel |
 | #68 | rascunho, conflito, 34 atrás | 1 | após #124/#131; confirmação e `.ics` multi-serviço |
 | #130 | rascunho, conflito, depende de #127 | 2 | reconstruir sobre main após #127, testes com mocks |
-| #128 | rascunho, limpa | 3 | reconciliar com #38 (um único mecanismo de expiração) |
-| #38 | rascunho, limpa | 3 | idempotência diária por timezone, retries, documentação |
+| #128 | **mergeada** (`8a5e4e7`, 20:11) | — | nada a fazer; serve de base para a #38 |
+| #38 | rascunho; atualizar sobre a main que já tem a #128 | 3 | integrar com um único mecanismo de expiração; idempotência diária por timezone, retries, documentação |
 | #32 | pronta, conflito, 132 atrás | 3 | triagem: reaproveitar o que falta ou fechar como superada |
 | #136 | rascunho; `test:db` falha: espera migration que só existe na #131 | 4 | após decisão da migration em #131; ligar `privileges-check` ao CI |
 | #41 | rascunho, conflito, 104 atrás | 4 | provável superada por #117/#135; fechar com evidência |
@@ -27,13 +27,13 @@ Levar o repositório a um estado limpo: cada PR aberta vira **mergeada**, **corr
 | #46 | conflito, 95 atrás, 1 arquivo | 5 | provável fechar como superada |
 | #2 | rascunho, base `feat/pagina-publica-agendamento` | 5 | provável fechar como superada |
 
-Já integrado e **não deve ser refeito**: #134 (harness de concorrência no `test:db`), #135 (Calendar #29 + endurecimento de privilégios #125), #39 (agenda do prestador), #129 (lock de transição). A PR #126 está **fechada** (substituída pela #135).
+Já integrado e **não deve ser refeito**: #128 (scheduler de expiração), #134 (harness de concorrência no `test:db`), #135 (Calendar #29 + endurecimento de privilégios #125), #39 (agenda do prestador), #129 (lock de transição). A PR #126 está **fechada** (substituída pela #135).
 
 ## 3. Ordem de execução
 
-1. **Onda 0 (paralelo):** Agente 2 → #127; Agente 3 → decidir canônico entre #128/#38; Agente 1 → corrigir #131; Agente 5 → fechar #46/#2 (com evidência) e resolver #133; Agente 4 → auditar #41 e branches de Calendar; Agente 6 → baseline independente.
+1. **Onda 0 (paralelo):** Agente 2 → #127; Agente 3 → atualizar a #38 sobre a main (a #128 já foi integrada); Agente 1 → corrigir #131; Agente 5 → fechar #46/#2 (com evidência) e resolver #133; Agente 4 → auditar #41 e branches de Calendar; Agente 6 → baseline independente.
 2. **Onda 1:** merge da #131 (destrava Agente 4, #124 e #68).
-3. **Onda 2:** #136, #124, #130 (após #127), #128 → #38.
+3. **Onda 2:** #136, #124, #130 (após #127), #38.
 4. **Onda 3:** #68, #67, #32; triagem final de issues.
 5. **Onda 4:** Agente 6 limpa branches comprovadamente integradas e consolida o relatório.
 
