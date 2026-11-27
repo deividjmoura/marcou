@@ -42,7 +42,8 @@
       "agent_2_pr_128_and_38": "PR #128: HEAD remoto 246f95df33013d495b1cda36675a04c2761637e8 e CI #279 está verde. Confirme os detalhes do run e que o sucesso corresponde exatamente ao HEAD; revise workflow_dispatch restrito a refs/heads/main e assertions DB de elegibilidade, não elegibilidade, idempotência e concorrência. Entregue relatório final de prontidão. Não faça merge, não habilite scheduler e mantenha #38 intacta.",
       "agent_3_pr_130": "PR #130: HEAD remoto 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, CI #277 verde e runbook funcional já entregue. Faça revisão documental/técnica da PR #71 em relação à solução atual #127/#130 e diga se está realmente obsoleta/substituída, quais trechos ainda têm valor e se pode ser encerrada. Não altere #71 nem #127; não envie e-mails, não teste contas reais e não altere serviços externos.",
       "agent_4_pr_39": "PR #39: HEAD 6f44b506da887ecc90486c80e6b9789578b23837, base SHA registrado diverge da main e PR está mergeable=false. Diagnostique conflitos exatos entre feat/24-provider-agenda e main; atualize a branch com segurança sem sobrescrever trabalho remoto, resolva somente conflitos pertencentes à PR #39 e execute testes/CI/Preview no SHA final. Sem force push, merge ou fechamento. Se não for seguro, entregue passos mínimos para Codespaces.",
-      "agent_5_calendar_audit": "Auditoria Google Calendar: faça somente revisão independente, sem editar, stagear, commitar, push, criar branch ou abrir PR. Inspecione main atual e branches/PRs remotas relacionadas à Issue #29, especialmente arena/29-calendar-integration e fix/29-oauth-state-atomic. Compare com os achados já registrados: escopos concedidos, state OAuth de uso único/concorrência, PKCE, persistência/renovação/rotação de tokens, isolamento server-only, desconexão durante worker/outbox, RLS/grants/RPCs e cobertura de test:db. Produza plano de correção priorizado com arquivos e testes. Há alterações locais staged relatadas pelo responsável em fix/29-oauth-state-atomic que não são visíveis no remoto: não tente substituí-las nem peça para o responsável descartá-las."
+      "agent_5_calendar_audit": "Auditoria Google Calendar: faça somente revisão independente, sem editar, stagear, commitar, push, criar branch ou abrir PR. Inspecione main atual e branches/PRs remotas relacionadas à Issue #29, especialmente arena/29-calendar-integration e fix/29-oauth-state-atomic. Compare com os achados já registrados: escopos concedidos, state OAuth de uso único/concorrência, PKCE, persistência/renovação/rotação de tokens, isolamento server-only, desconexão durante worker/outbox, RLS/grants/RPCs e cobertura de test:db. Produza plano de correção priorizado com arquivos e testes. Há alterações locais staged relatadas pelo responsável em fix/29-oauth-state-atomic que não são visíveis no remoto: não tente substituí-las nem peça para o responsável descartá-las.",
+      "agent_5_arquitetura_social": "Consolidação da arquitetura social (Agente 5): auditar docs/issues/código, formalizar plataforma única + perfil público interno como rota canônica /p/[slug], preparar PR documental sem merge. PR #133, branch arena/f074e752-marcou, HEAD d469ce876a3819a5293ca17c75a4e1447fb1293a. Nenhum código, migration, RLS, Supabase, Netlify ou produção alterado."
     }
   },
   "shared_project_state": {
@@ -403,6 +404,47 @@
             "CI não disponível para SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971."
           ],
           "next_action": "Executar testes e CI no SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971; sem merge/deploy/produção."
+        }
+      ]
+    },
+    "agent_5_arquitetura_social": {
+      "scope": "Revisão e consolidação da arquitetura social: plataforma única e perfil público interno (documentação)",
+      "pull_requests": [
+        133
+      ],
+      "status": "documentation_pr_open_pending_owner_review",
+      "active_assignment": "PR #133 documental aberta em arena/f074e752-marcou (HEAD d469ce876a3819a5293ca17c75a4e1447fb1293a) contra main 69d02173653384e082476e7879ee9f33672dec72. Auditoria concluída; decisão de URL canônica /p/[slug] formalizada. Não fazer merge sem revisão do responsável.",
+      "current_state": "Auditoria documental (6 docs + prompt), issues #72–#112, rotas src/app, src/server e 11 migrations concluída. Conclusão: arquitetura já é plataforma única (/p/[slug] rota interna com motor real; RPC get_public_provider_discovery com projeção mínima; flags fail-closed). Lacunas eram de explicitação documental, não de desenho. Novo docs/REVISAO-ARQUITETURA-SOCIAL.md criado; ADR §2/§3.3/§10, contrato §1.1/§2.3, roadmap data+§6.5 e prompt de agentes atualizados; CHANGELOG [Unreleased] atualizado. AGENT_TASK_MARCOU.md deliberadamente não editado (concorrência das PRs #2/#32/#41/#46/#67/#126/#131).",
+      "next_action": "Aguardar revisão/aprovação da PR #133; depois aplicar acréscimos de critérios de aceite nos corpos das issues #86/#89/#99/#83 (com aprovação do responsável). Decisões futuras registradas: alias /@{slug} via middleware com canonical /p/{slug}; histórico de slugs 301/308.",
+      "last_verified": {
+        "branch": "arena/f074e752-marcou",
+        "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
+        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "pull_request": 133,
+        "files_changed": [
+          "docs/REVISAO-ARQUITETURA-SOCIAL.md (novo)",
+          "docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md",
+          "docs/CONTRATO-DOMINIO-MARCOU-SOCIAL.md",
+          "docs/ROADMAP-MARCOU-SOCIAL.md",
+          "docs/PROMPT-AGENTE-MARCOU-SOCIAL.md",
+          "docs/ESCOPO-E-ARQUITETURA.md",
+          "CHANGELOG.md"
+        ],
+        "notes": "Somente documentação. CI da PR pendente de conclusão; nenhuma validação de runtime era aplicável."
+      },
+      "updates": [
+        {
+          "timestamp": "2026-11-27T15:40:00-03:00",
+          "task": "Agente 5 — revisão e consolidação da arquitetura social",
+          "status": "documentation_pr_open_pending_owner_review",
+          "result": "Auditoria completa; decisão formalizada: perfil público é rota interna canônica /p/[slug]; /{slug} rejeitada, /@{slug} adiada como alias, /profissional/{slug} adiada. PR #133 aberta (documental), sem merge.",
+          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
+          "tests": "git diff --check ok; node scripts/changelog-check.mjs --base origin/main ok; mudança exclusivamente documental (sem testes de runtime); CI da PR a acompanhar.",
+          "blockers": [
+            "Aprovação do responsável para merge da PR #133.",
+            "Edição dos corpos das issues #86/#89/#99/#83 pendente de aprovação para não sobrescrever trabalho de outros agentes."
+          ],
+          "next_action": "Aguardar revisão da PR #133; depois aplicar critérios de aceite nas issues aprovadas."
         }
       ]
     }
