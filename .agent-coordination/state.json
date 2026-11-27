@@ -254,16 +254,45 @@
     "agent_5_calendar_audit": {
       "scope": "Revisão independente da integração Google Calendar (Issue #29), sem alterações",
       "pull_requests": [],
-      "status": "audit_complete_blocked_for_safe_implementation",
+      "status": "audit_complete_findings_delivered",
       "active_assignment": "Auditoria independente da Issue #29 concluída em modo somente leitura. Nenhum código, staged local, migration remota, serviço externo, PR ou deploy foi alterado.",
-      "current_state": "Veredito: NÃO APROVAR a integração para produção no estado remoto auditado. O consumo atômico do OAuth state foi corrigido na branch fix/29-oauth-state-atomic e está estruturalmente bem implementado (UPDATE único, expiração, hash SHA-256, SECURITY DEFINER com search_path fixo, EXECUTE somente service_role, testes concorrentes). Porém permanecem riscos P1: desconexão não é coordenada com worker em andamento e pode deixar/criar eventos órfãos no Google; disconnect apaga mappings/conexão mesmo quando limpeza externa falha; callback aceita url.origin como fallback de origem confiável. Riscos P2: ausência de PKCE, não validação do scope realmente concedido (fallback grava scope solicitado como se concedido), ausência de suporte operacional à rotação de refresh token/chave de cifragem, e cobertura automatizada incompleta dos fluxos worker/desconexão. Issue #29 ainda exige decisão explícita sobre escopo somente leitura/escrita/bidirecional; código/docs assumem sincronização unidirecional Marcou→Google. A branch fix/29-oauth-state-atomic está em 2f577e2810bb66f79d1fdc1c697859bdfa42843d; arena/29-calendar-integration em 26baee930cc48e1ec38561903337d5148d5274c7; main em 69d02173653384e082476e7879ee9f33672dec72. fix está 41 commits ahead e 12 behind de main; é 1 commit à frente de arena. Os seis arquivos staged são apenas informação reportada pelo responsável: não foram vistos, enumerados, lidos, comparados byte a byte, nem modificados; a comparação limita-se à arquitetura/alterações remotas observáveis e à restrição de preservação.",
-      "next_action": "Antes de qualquer implementação, obter decisão explícita do responsável sobre direção de sincronização e política de desconexão/remoção de eventos. Depois integrar com segurança a branch atualizada sobre main sem descartar os seis arquivos staged; revisar diff completo e resolver divergências, implementar primeiro fencing/lock de conexão e cleanup retryável, depois OAuth PKCE/scope/origin e rotação de credenciais; adicionar testes unitários e test:db listados no relatório. Não aplicar patch, não alterar staged locais, não fazer push/merge/deploy nem migration remota sem autorização específica.",
+      "current_state": "Auditoria remota Issue #29 concluída somente leitura. Main 69d0217 não contém Calendar. PR #126 aberta Draft mergeable=false, head PR 335e3f50 (CI run 45646944918 success), mas branch remota arena/9e68c2bb-marcou está em 8d73650, 2 commits à frente do head da PR e sem CI para esse SHA; 18 ahead/7 behind main. PR base antiga 9b92451 (main avançou 7 commits). Branch antiga arena/29-calendar-integration SHA 26baee930 usa modelo legado. fix/29-oauth-state-atomic SHA 2f577e28 adiciona consumo atômico na arquitetura antiga e não deve ser cherry-picked na versão PR126, que já tem RPC diferente (text,uuid) e state vinculado a user.",
+      "next_action": "Implementação deve preservar os seis arquivos staged locais (não acessados nesta auditoria); escolher/confirmar branch canônica PR #126 e sincronizá-la com main/dependências antes de corrigir P1: timeout/lease da desconexão-worker, revogação best-effort rastreável, validar scopes estritos, PKCE, rotação de token/chave. Não deploy/migration remota sem autorização.",
       "last_verified": {
-        "branch": "fix/29-oauth-state-atomic",
-        "head_sha": "2f577e2810bb66f79d1fdc1c697859bdfa42843d",
-        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "Nenhuma workflow run retornada para o SHA 2f577e2810bb66f79d1fdc1c697859bdfa42843d; não há evidência de CI verde para esse SHA.",
-        "notes": "Issue #29 aberta em deividjmoura/marcou. arena/29-calendar-integration HEAD 26baee930cc48e1ec38561903337d5148d5274c7. fix/29-oauth-state-atomic HEAD 2f577e2810bb66f79d1fdc1c697859bdfa42843d. main HEAD 69d02173653384e082476e7879ee9f33672dec72. Compare main...fix: 41 ahead/12 behind; arena...fix: 1 commit ahead. Issue body mantém bloqueio para confirmar modo read/write/bidirectional. Nenhuma PR vinculada foi localizada/inspecionada como PR existente. Seis arquivos staged locais não acessados por ordem expressa do usuário."
+        "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "issue_29": "open",
+        "pr_126": {
+          "state": "open",
+          "draft": true,
+          "mergeable": false,
+          "head_sha": "335e3f50b1d8dba862c2c769039a1750e94a6681",
+          "base_sha": "9b92451d2761f2292385b99468f024402d35211b",
+          "ci": "Run 45646944918 success on PR head SHA only."
+        },
+        "branch_pr126_current": {
+          "branch": "arena/9e68c2bb-marcou",
+          "head_sha": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
+          "ahead": 18,
+          "behind": 7,
+          "ci": "No CI workflow runs found for this exact branch HEAD."
+        },
+        "branch_legacy": {
+          "branch": "arena/29-calendar-integration",
+          "head_sha": "26baee930cc48e1ec38561903337d5148d5274c7",
+          "ahead": 40,
+          "behind": 12
+        },
+        "branch_oauth_atomic": {
+          "branch": "fix/29-oauth-state-atomic",
+          "head_sha": "2f577e2810bb66f79d1fdc1c697859bdfa42843d",
+          "notes": "Adds consume_calendar_oauth_state(text) for legacy provider_calendar_connections; not compatible to cherry-pick with PR126 architecture's calendar_connections and consume_calendar_oauth_state(text,uuid)."
+        },
+        "local_staged_files": {
+          "count": 6,
+          "inspected": false,
+          "modified": false,
+          "notes": "Per user instruction, do not access or modify the six staged local files; content-level comparison cannot be verified."
+        }
       },
       "updates": [
         {
@@ -291,6 +320,19 @@
             "Branch fix diverge da main (41 ahead/12 behind); requer integração/revisão antes de implementação segura."
           ],
           "next_action": "Aguardar decisão de escopo; implementar por etapas com preservação integral do staged local, fencing worker/desconexão, limpeza externa retryável, hardening OAuth e testes unitários/DB. Sem escrita em código, push, merge, deploy ou migration remota sem autorização específica."
+        },
+        {
+          "timestamp": "2026-11-27T14:46:00-03:00",
+          "task": "Auditoria final independente da Issue #29 e comparação de referências remotas",
+          "status": "audit_complete_findings_delivered",
+          "result": "Main não contém Calendar. PR #126 draft/open/mergeable=false, CI run 45646944918 success no head PR 335e3f50; branch arena/9e68c2bb atual 8d73650 está 2 commits à frente do head PR e sem CI nesse SHA, 18 ahead/7 behind main. Branch antiga arena/29 (26baee9) e fix/29-oauth-state-atomic (2f577e2) são arquiteturas distintas; não cherry-pick da RPC state antiga. Findings: PKCE ausente; escopo permite extras; revogação após scope/refresh ausente é best-effort sem estado/log persistente; sem rotação de refresh token/chave cifradora; timeout e lease/finalize disconnect race; conexões service-role sem guard explícito server-only; teste real OAuth/API não feito. #126 inclui POST+Origin, state atomic/user-bound, RLS/grants, outbox ordered per booking, dead-letter, disconnect workflow e backfill; harness DB/unit cobre bastante.",
+          "head_sha": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
+          "tests": "Audit read-only. CI success run 45646944918 only exact PR head 335e3f50b1d8dba862c2c769039a1750e94a6681; no CI for branch HEAD. Local six staged files not accessed. No tests executed by auditor.",
+          "blockers": [
+            "PR #126 stale head/base and branch latest lacks CI; main advanced 7 commits from PR base and PR mergeable=false.",
+            "Six local staged files were not accessed by explicit instruction; cannot claim content-level comparison."
+          ],
+          "next_action": "Preserve staged local work; confirm canonical branch, update branch to current main/dependencies without force push, address prioritized findings and run CI/test:db; no deploy or remote migration."
         }
       ]
     }
