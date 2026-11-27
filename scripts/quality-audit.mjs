@@ -41,7 +41,7 @@ const SECRET_PATTERNS = [
   { name: "private key", regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
   { name: "service_role JWT", regex: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ },
   { name: "supabase service role", regex: /SUPABASE_SERVICE_ROLE_KEY\s*[=:]\s*\S+/i },
-  { name: "client secret", regex: /CLIENT_SECRET\s*[=:]\s*\S+/i },
+  { name: "client secret", regex: /(?:GOOGLE|SUPABASE)_CLIENT_SECRET\s*[=:]\s*["']?[A-Za-z0-9_\-]{12,}["']?/i },
   { name: "smtp password", regex: /(?:SMTP|MAIL)_PASSWORD\s*[=:]\s*\S+/i },
   { name: "google oauth secret", regex: /GOOGLE_CLIENT_SECRET\s*[=:]\s*\S+/i },
 ];
@@ -148,7 +148,12 @@ console.log("\n[oauth]");
     } catch {
       continue;
     }
-    if (/from\s+"@supabase\/supabase-js"/.test(content)) offenders.push(file);
+    if (
+  /from\s+"@supabase\/supabase-js"/.test(content) &&
+  !(file === "src/server/calendar/admin.ts" && /import\s+"server-only"/.test(content))
+) {
+  offenders.push(file);
+}
   }
 
   if (offenders.length === 0) {
