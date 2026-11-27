@@ -111,9 +111,9 @@
       32
     ],
     "owner_decision_items": {
+      "29": "conexão real com Google e variáveis de produção",
       "133": "merge AUTORIZADO se CI verde (2026-11-27); deixar resumo na PR para leitura posterior do responsável",
       "130/70": "validação real da recuperação de senha e conferência do Supabase Auth; rotação das credenciais OAuth/SMTP expostas",
-      "29": "conexão real com Google e variáveis de produção",
       "schedulers": "ativar BOOKING_EXPIRATION_ENABLED, lembretes e worker do Calendar",
       "30/20": "provisionar Supabase, cron, ambientes e deploy",
       "roadmap 72–112": "priorizar ou manter como backlog",
@@ -1377,7 +1377,7 @@
         "fix/auth-recovery-preview-origin",
         "fix/auth-recovery-redirect-production"
       ],
-      "status": "assigned_round_7",
+      "status": "blocked_execution_environment",
       "active_assignment": "Integrar #127 (pronta, limpa) e depois reconstruir/integrar #130 sobre a main resultante. Testes com mocks; sem e-mail real.",
       "tasks": [
         {
@@ -1409,9 +1409,22 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
-      "next_action": "Atualizar a #127 com a main, rodar a suíte e mergear.",
-      "updates": []
+      "current_state": "Runbook das seções 0 e 9 relido na main. PR #127 revalidada: HEAD cc212db05cfc14ee70dd05e353a66484b7cef2c8, 9 commits à frente e 16 atrás da main atual; workflow success existente é de SHA antigo. Tentativa de obter checkout para atualizar/rodar suíte falhou por DNS/rede indisponível no ambiente. Nenhum merge ou alteração de código realizado.",
+      "next_action": "Obter checkout executável (Codespaces/local clone ou ambiente com acesso GitHub), mesclar main em arena/18c3a3fa-marcou sem force-push, executar checklist completo no novo SHA e só então mergear #127. Depois reconstruir #130.",
+      "updates": [
+        {
+          "timestamp": "2026-11-27",
+          "task": "A2-T1 — revalidação inicial da PR #127 e leitura do runbook",
+          "status": "blocked",
+          "result": "Runbook seções 0 e 9 confirmam autonomia de squash merge condicionada ao checklist integral. #127 está aberta, não draft, mergeable no estado reportado, mas branch divergiu: 9 commits ahead/16 behind; CI success consultado refere-se ao HEAD antigo. Clone local falhou: não foi possível resolver github.com (DNS/rede). Nenhum arquivo, branch ou PR foi alterado.",
+          "head_sha": "cc212db05cfc14ee70dd05e353a66484b7cef2c8",
+          "tests": "Não executados neste ambiente; CI existente é de SHA antigo e não conta para o checklist atual.",
+          "blockers": [
+            "Ambiente sem conectividade DNS para obter checkout; sem execução local da suíte completa no SHA atualizado."
+          ],
+          "next_action": "Disponibilizar checkout executável com acesso ao GitHub; atualizar branch com main sem force-push, rodar check:changelog, lint, typecheck, audit, test, test:db e build; conferir checks Netlify e reviews."
+        }
+      ]
     },
     "agent_3_r7_ops_schedulers": {
       "scope": "Scheduler de expiração/lembretes e plataforma/ops",
@@ -1522,11 +1535,11 @@
           "arena/fdad472c-marcou": "PRESERVAR_ENQUANTO_SESSAO_ATIVA (branch desta sessão Arena; PR #138 merged em 44ed540, tip == head 39855f0; pode ser apagada após encerramento da sessão)"
         },
         "issues": {
+          "13": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/13#issuecomment-7229959625)",
+          "20": "OPEN (OWNER_DECISION — comentário: https://github.com/deividjmoura/marcou/issues/20#issuecomment-7229960101)",
           "25": "CLOSED (verificado na main; critérios atendidos por #35/#129/#134/#128)",
           "26": "OPEN (OWNER_DECISION — comentário atualizado: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7229959409)",
-          "13": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/13#issuecomment-7229959625)",
           "30": "OPEN (OWNER_DECISION — comentário: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7229959848)",
-          "20": "OPEN (OWNER_DECISION — comentário: https://github.com/deividjmoura/marcou/issues/20#issuecomment-7229960101)",
           "31": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7229960433)"
         }
       }
