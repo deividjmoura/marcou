@@ -69,6 +69,10 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   antes de montar URLs de redirect. Isso evita que o Supabase rejeite o
   `redirectTo` por causa de um caractere invisível e faça fallback silencioso
   para a raiz do Site URL, enviando o usuário de volta à landing page.
+- Segurança do fallback de recuperação: redirecionamentos do proxy agora usam
+  origem validada (domínio oficial Marcou, previews numerados da Netlify ou
+  localhost), não o Host recebido; testes cobrem Host malicioso e preservam
+  previews e ambiente local.
 
 ### Segurança
 
