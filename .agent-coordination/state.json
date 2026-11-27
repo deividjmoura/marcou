@@ -857,10 +857,10 @@
       "issues": [
         125
       ],
-      "status": "in_progress_round_6_agent5_assumed_by_user",
+      "status": "round_6_partial_closeout_triaged_with_blockers",
       "active_assignment": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos.",
-      "current_state": "Agent5 assumido expressamente pelo responsável após verificação de que os cinco slots permaneciam sem updates. Triagem inicial: PR #39 está sincronizada à main e CI verde no SHA 7a1e270, mas workflow não executou audit; manter Draft/sem merge até comprovação do gate de audit ou execução autorizada equivalente. PR #133 está não-Draft, CI verde, porém corpo exige revisão/aprovação do responsável; HOLD. PR #71 é investigação documental de recovery e sobrepõe cluster Agent2 (#127/#130); HOLD para não duplicar/fechar prematuramente. Issue #125 segue diagnóstico sem migration/script versionados; verificar sobreposição com #131 antes de decidir.",
-      "next_action": "Auditar PR #133/#71 e todas as PRs abertas restantes, verificar Issue #125 contra implementação de #131, identificar trabalho exclusivo e executar somente itens sem dependência/approval bloqueante. Depois registrar relatório final Agent5.",
+      "current_state": "Agent5 assumido pelo responsável. PR #71 fechada como runbook diagnóstico superseded por #127/#130 e Issue #70; Issue #70 permanece aberta. PR #39 revisada: branch 0 behind, mergeable clean, CI run 46048421298 verde em changelog/lint/typecheck/unit/test:db/build, mas workflow não roda audit; corpo relata audit local 0/0 sem evidência reproduzida nesta sessão, portanto Draft e sem merge. Issue #24 atualizada e permanece aberta para escopo restante. PR #133 tem CI verde e está fora de Draft, mas o próprio corpo exige revisão/aprovação do responsável; HOLD. Issue #125 comentada: PR #131 inclui migration 20261125130000_table_privileges_matrix.sql e scripts/privileges-check.mjs, mas #131 ainda não está integrada; issue permanece aberta até verificar em main.",
+      "next_action": "Aguardar integração de #131 pelo Agent1 para validar e fechar #125; manter #39 bloqueada até audit executado/comprovado no SHA exato; não mergear #133 sem aprovação indicada no próprio PR. Manter #67/#46/#41/#32/#2 em HOLD por base antiga, dependência, revisão ou escopo futuro. Não mexer nos clusters dos Agents1-4.",
       "updates": [
         {
           "timestamp": "2026-11-27T22:00:00-03:00",
@@ -876,6 +876,22 @@
             "#125: não há implementação versionada; verificar matriz de privilégios #131 para evitar duplicação."
           ],
           "next_action": "Concluir inventário de PRs/Issues e confirmar dependências antes de integrar/fechar qualquer item."
+        },
+        {
+          "timestamp": "2026-11-27T22:12:00-03:00",
+          "task": "Round 6 — triagem das PRs restantes, fechamento superseded e atualização de issues",
+          "status": "partial_closeout_completed_no_unsafe_merges",
+          "result": "Fechada PR #71 (head 8daa15651acbe74c98e1150b0f1cdcd71af89a60) como runbook diagnóstico superseded por #127/#130 e Issue #70; comentário #7227006193. Issue #70 permanece aberta. PR #39: head 7a1e270e369023020f27ea6afddb07df76a014d7, base main 69d02173653384e082476e7879ee9f33672dec72, 0 behind, mergeable clean; CI run 46048421298 success com changelog/lint/typecheck/npm test/test:db/build; audit não consta no job (install com --no-audit), então sem Ready/merge até prova do audit no SHA. Issue #24 recebeu comentário #7227015313 e permanece aberta para o restante do painel. PR #133 head d469ce876a3819a5293ca17c75a4e1447fb1293a, CI run 46047571459 success, mergeable clean e não-Draft, mas corpo exige aprovação do responsável; HOLD. Issue #125 recebeu comentário #7227011103: PR #131 contém migration 20261125130000_table_privileges_matrix.sql e scripts/privileges-check.mjs, ainda pendente de integração; issue permanece aberta. Inventário geral: 17 PRs abertas após fechar #71; 64 issues abertas, majoritariamente roadmap/épicos futuros, mantidas abertas.",
+          "head_sha": null,
+          "tests": "Verificados PR metadata, compares contra main, workflow runs e jobs; sem execução local. #39 CI exact SHA: check:changelog, lint, typecheck, npm test, test:db, build success; audit ausente do workflow. #133 CI run success. #71 CI antigo 45052811370 não foi usado como gate porque PR fechada como superseded.",
+          "blockers": [
+            "#39 audit precisa ser executado e comprovado no SHA exato; não existe step de audit no CI observado.",
+            "#133 aguarda revisão/aprovação do responsável conforme próprio corpo da PR.",
+            "#125 aguarda merge/validação da #131 (Agent1); não duplicar migration/script.",
+            "#67, #46, #41, #32 e #2 têm branches antigas/base divergente e precisam de rebase/revisão/decisão; #41 é segurança e não deve ser descartada sem revisão específica.",
+            "#2 usa base branch antiga de página pública e horários demonstrativos; é futura/placeholder, não pronta para merge."
+          ],
+          "next_action": "Continuar triagem dos issues abertos e monitorar merges dos Agents1-4; não fechar roadmap nem atuar em clusters atribuídos a outros agentes."
         }
       ]
     },
