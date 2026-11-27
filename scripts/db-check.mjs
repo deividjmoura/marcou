@@ -118,6 +118,7 @@ const migrations = [
   "supabase/migrations/202611160001_provider_description.sql",
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
+  "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
 ];
 
 for (const file of migrations) {
