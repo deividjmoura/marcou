@@ -3,12 +3,17 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { bookingInputSchema, isoDate } from "@/lib/validation";
+import { safeNextPath } from "@/lib/identity";
+import { isSupabaseConfigured } from "@/lib/env";
 import {
   BookingOperationError,
   createBooking,
   getAvailableSlots,
   getCurrentUser,
 } from "@/server/bookings";
+
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 
 export interface SlotsState {
   slots: Array<{ startsAt: string; occupiedUntil: string; label: string }> | null;
@@ -22,6 +27,10 @@ const slotsSchema = z.object({
 });
 
 export async function fetchSlotsAction(input: unknown): Promise<SlotsState> {
+  if (!isSupabaseConfigured()) {
+    return { slots: null, error: SUPABASE_UNAVAILABLE_MESSAGE };
+  }
+
   const parsed = slotsSchema.safeParse(input);
   if (!parsed.success) return { slots: null };
 
@@ -56,6 +65,8 @@ export async function bookSlotAction(
   _prev: BookState,
   formData: FormData,
 ): Promise<BookState> {
+  if (!isSupabaseConfigured()) return { error: SUPABASE_UNAVAILABLE_MESSAGE };
+
   const user = await getCurrentUser();
   const slug = String(formData.get("slug") ?? "");
   const serviceId = String(formData.get("serviceId") ?? "");
@@ -68,7 +79,7 @@ export async function bookSlotAction(
       date,
       slot: startsAt,
     });
-    const target = `/p/${slug}?${query.toString()}`;
+    const target = safeNextPath(`/p/${slug}?${query.toString()}`);
     redirect(`/login?next=${encodeURIComponent(target)}`);
   }
 
@@ -86,19 +97,23 @@ export async function bookSlotAction(
     };
   }
 
+  let booking: Awaited<ReturnType<typeof createBooking>>;
   try {
-    const booking = await createBooking({
+    booking = await createBooking({
       slug: parsed.data.slug,
       serviceId: parsed.data.serviceId,
       startsAt: parsed.data.startsAt,
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone ?? "",
     });
-    redirect(`/reserva/${booking.id}`);
   } catch (error) {
     if (error instanceof BookingOperationError) {
       return { error: error.message };
     }
     return { error: "Não foi possível concluir a reserva. Tente novamente." };
   }
+
+  // Next.js redirect() throws an internal control-flow exception.
+  // Keep it outside this catch so a successful booking is not shown as a failure.
+  redirect(`/reserva/${booking.id}`);
 }

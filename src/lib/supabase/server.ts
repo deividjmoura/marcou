@@ -7,6 +7,11 @@ export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient(url, publishableKey, {
+    auth: {
+      flowType: "pkce",
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();

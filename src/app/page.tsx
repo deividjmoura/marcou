@@ -1,111 +1,56 @@
 import Link from "next/link";
+import StepsSection from "@/components/StepsSection";
 
-const steps = [
-  {
-    number: "01",
-    title: "Apresente seus serviços",
-    description: "Organize serviços, duração e valores em um catálogo simples.",
-  },
-  {
-    number: "02",
-    title: "Compartilhe seus horários",
-    description: "Deixe seus clientes encontrarem os horários disponíveis.",
-  },
-  {
-    number: "03",
-    title: "Cuide da sua agenda",
-    description: "Acompanhe solicitações e confirmações em um só lugar.",
-  },
-];
+const headline = "Mais tempo atendendo.";
+const headlineWords = ["Mais", "tempo", "atendendo."];
 
 export default function Home() {
   return (
     <main className="page-shell">
       <nav className="topbar" aria-label="Navegação principal">
-        <Link className="brand" href="/" aria-label="Marcou, início">
-          marcou<span>.</span>
-        </Link>
+        <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-logo.svg" alt="Marcou." /></Link>
         <div className="topbar-actions">
           <Link href="/login">Entrar</Link>
-          <Link href="/cadastro" className="btn btn-small">
-            Criar conta
-          </Link>
+          <Link href="/cadastro" className="btn btn-small">Criar conta</Link>
         </div>
       </nav>
 
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">SUA AGENDA, NO SEU RITMO</span>
-          <h1>
-            Menos tempo
-            <br />
-            organizando.
-            <br />
-            <span>Mais tempo atendendo.</span>
-          </h1>
+          <h1>Menos tempo<br />organizando.<br /><span className="headline-reveal" aria-label={headline}>{headlineWords.map((word, wordIndex) => <span className="headline-word-wrap" key={word}>{wordIndex > 0 ? " " : ""}<span className="headline-word">{word.split("").map((character, characterIndex) => { const previousLetters = headlineWords.slice(0, wordIndex).reduce((total, item) => total + item.length, 0) + wordIndex; return <span className="smoke-letter" aria-hidden="true" style={{ animationDelay: `${(previousLetters + characterIndex) * 0.075}s` }} key={characterIndex}>{character}</span>; })}</span></span> )}</span></h1>
           <p>
             O Marcou está sendo preparado para ajudar prestadores de serviço a
             organizar horários e facilitar a vida de quem precisa marcar.
           </p>
-          <span className="status-note">
-            <span className="status-dot" />
-            Estamos construindo a primeira versão
-          </span>
         </div>
 
         <div className="hero-card" aria-label="Prévia ilustrativa da agenda">
           <div className="card-heading">
-            <div>
-              <span className="muted-label">VISÃO DA AGENDA</span>
-              <h2>Seu dia, mais claro.</h2>
-            </div>
-            <span className="calendar-mark">M</span>
+            <div><span className="muted-label">VISÃO DA AGENDA</span><h2>Seu dia, mais claro.</h2></div>
+            <span className="calendar-mark" aria-hidden="true">M</span>
           </div>
-          <div className="calendar-date">
-            <span>TERÇA-FEIRA</span>
-            <strong>Uma agenda que trabalha com você.</strong>
-          </div>
-          <div className="schedule-line">
-            <span>09:00</span>
-            <div className="schedule-event">
-              <strong>Seu primeiro horário</strong>
-              <small>Serviço e cliente</small>
-            </div>
-          </div>
-          <div className="schedule-line">
-            <span>10:30</span>
-            <div className="schedule-event event-soft">
-              <strong>Próximo atendimento</strong>
-              <small>Horário organizado</small>
-            </div>
-          </div>
-          <div className="schedule-line">
-            <span>13:00</span>
-            <div className="schedule-open">Espaço para você respirar</div>
-          </div>
+          <div className="calendar-date"><span>TERÇA-FEIRA</span><strong>Uma agenda que trabalha com você.</strong></div>
+          <div className="schedule-line"><span>09:00</span><div className="schedule-event"><strong>Seu primeiro horário</strong><small>Serviço e cliente</small></div></div>
+          <div className="schedule-line"><span>10:30</span><div className="schedule-event event-soft"><strong>Próximo atendimento</strong><small>Horário organizado</small></div></div>
+          <div className="schedule-line"><span>13:00</span><div className="schedule-open">Espaço para você respirar</div></div>
           <p className="card-footnote">Prévia conceitual · dados fictícios</p>
         </div>
       </section>
 
-      <section className="steps" aria-labelledby="steps-title">
-        <div className="section-heading">
-          <span className="eyebrow">SIMPLES DESDE O COMEÇO</span>
-          <h2 id="steps-title">Uma rotina mais organizada.</h2>
-        </div>
-        <div className="steps-grid">
-          {steps.map((step) => (
-            <article className="step" key={step.number}>
-              <span>{step.number}</span>
-              <h3>{step.title}</h3>
-              <p>{step.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      <StepsSection />
 
       <footer className="footer">
-        <Link className="brand" href="/">marcou<span>.</span></Link>
-        <p>Feito para deixar os encontros mais simples.</p>
+        <Link className="brand brand-logo" href="/" aria-label="Marcou, início"><img src="/branding/marcou-logo.svg" alt="Marcou." /></Link>
+        <div className="footer-content">
+          <p>Feito para deixar os encontros mais simples.</p>
+          <nav className="footer-links" aria-label="Documentos e políticas">
+            <Link href="/documentos">Documentos</Link>
+            <Link href="/termos">Termos</Link>
+            <Link href="/privacidade">Privacidade</Link>
+            <Link href="/diretrizes-da-comunidade">Comunidade</Link>
+          </nav>
+        </div>
       </footer>
     </main>
   );

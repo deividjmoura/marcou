@@ -48,9 +48,7 @@ e só pode ser executada por `service_role` (`anon`/`authenticated` não têm
 Ainda não existe cron configurado para chamá-la. Para agendar:
 
 - Supabase: `pg_cron` + `pg_net`, ou uma Edge Function agendada chamando a RPC
-  com a `service_role` key; ou
-- Vercel Cron: uma rota protegida por `CRON_SECRET` chamando a RPC com a
-  `service_role` key.
+  com a `service_role` key.
 
 Nenhuma dessas opções está provisionada. Nenhuma credencial nova foi criada.
 

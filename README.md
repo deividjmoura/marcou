@@ -2,6 +2,20 @@
 
 Plataforma de agendamento online para prestadores de serviços.
 
+**Aplicação publicada:** https://marcoou.netlify.app
+
+## Evolução: Marcou Social
+
+O roadmap para transformar o Marcou em uma rede social de serviços integrada ao
+motor de agendamentos está na [Issue #72](https://github.com/deividjmoura/marcou/issues/72).
+A implementação será incremental; a stack e o motor de reservas atuais continuam
+canônicos.
+
+- [Decisão de arquitetura](docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md)
+- [Árvore de milestones, issues e PRs](docs/ROADMAP-MARCOU-SOCIAL.md)
+- [Prompt para agentes colaboradores](docs/PROMPT-AGENTE-MARCOU-SOCIAL.md)
+- [Taxonomia e áreas de atendimento](docs/DISCOVERY-TAXONOMY.md)
+
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript.
@@ -29,13 +43,22 @@ coloque chaves secretas ou service-role no navegador nem no repositório.
 ## Comandos
 
 ```bash
-npm run dev        # ambiente de desenvolvimento
-npm run lint       # eslint
-npm run typecheck  # tsc --noEmit
-npm run test       # testes de domínio (vitest)
-npm run test:db    # testes de integração em PostgreSQL real (embedded-postgres)
-npm run build      # build de produção
+npm run dev              # ambiente de desenvolvimento
+npm run check:changelog  # valida formato e exigência de CHANGELOG.md
+npm run lint             # eslint
+npm run typecheck        # tsc --noEmit
+npm run test             # testes de domínio (vitest)
+npm run test:db          # testes de integração em PostgreSQL real (embedded-postgres)
+npm run build            # build de produção
 ```
+
+## Processo obrigatório de Changelog
+
+Toda Pull Request com mudanças **funcionais**, **visuais**, **estruturais** ou de
+**banco de dados** deve atualizar [`CHANGELOG.md`](CHANGELOG.md) na seção
+`## [Unreleased]` antes da revisão. O CI executa `npm run check:changelog`
+automaticamente em toda PR contra `main`. Consulte as diretrizes completas em
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Banco de dados
 
@@ -50,6 +73,24 @@ As migrations estão em `supabase/migrations/`:
 3. `202611150003_notifications.sql` — notificações no aplicativo: tabela,
    RLS, trigger sobre `booking_events`, RPC de lembrete e RPCs para marcar como
    lida. Detalhes em `docs/NOTIFICACOES.md`.
+4. `202611160001_provider_description.sql` — frase pública opcional do negócio.
+5. `20261116035000_fix_booking_idempotency_authorization.sql` — autorização
+   obrigatória antes de reproduzir resultados idempotentes de booking.
+6. `202611230001_legal_documents_and_acceptances.sql` — metadata versionada dos
+   documentos e recibos de aceite protegidos por RLS/RPC. As versões semeadas
+   são minutas e não exigem aceite.
+7. `20261123130000_social_rollout_foundation.sql` — feature flags sociais
+   fail-closed, ambiente por projeto, coortes/overrides privados e avaliadores
+   server-side. Convenções e rollback em `docs/FUNDACAO-ROLLOUT-SOCIAL.md`.
+8. `20261123133000_harden_security_definer_grants.sql` — remove o grant implícito
+   de `PUBLIC` das funções privilegiadas e restabelece a matriz de menor
+   privilégio descrita em `docs/SECURITY-DEFINER-GRANTS.md`.
+9. `20261123140000_account_modes.sql` — preferência privada de navegação entre
+   os espaços Cliente e Profissional, sem transformar preferência em autorização.
+   Detalhes em `docs/IDENTITY.md`.
+10. `20261123143000_discovery_taxonomy_service_areas.sql` — catálogo versionado,
+    modalidades de serviço, áreas aproximadas, moderação e projeção pública
+    mínima. Detalhes em `docs/DISCOVERY-TAXONOMY.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
@@ -77,14 +118,27 @@ O núcleo é descrito em `docs/MOTOR-RESERVAS.md`. Resumo:
 
 1. Cadastro e login do prestador (e-mail/senha e Google).
 2. Criação e configuração do negócio (nome, slug, fuso, prazo da reserva).
-3. Cadastro de serviços (duração, preço, sinal, intervalo).
-4. Expediente semanal, vigências e exceções (bloqueio/horário especial).
-5. Página pública `/p/[slug]` com os serviços do negócio.
-6. Escolha de serviço, data e horário pelo cliente.
-7. Criação da reserva temporária e página de acompanhamento `/reserva/[id]`.
-8. Painel do prestador com agendamentos, confirmação e cancelamento.
-9. Notificações no aplicativo (`/notificacoes`) para cliente e prestador,
+3. Cadastro de serviços (duração, preço, sinal, intervalo e, sob rollout,
+   categoria/modalidades).
+4. Gestão de áreas aproximadas e sugestões moderadas de categoria sob a flag
+   `social_discovery`.
+5. Expediente semanal, vigências e exceções (bloqueio/horário especial).
+6. Página pública `/p/[slug]` com os serviços do negócio.
+7. Escolha de serviço, data e horário pelo cliente.
+8. Criação da reserva temporária e página de acompanhamento `/reserva/[id]`.
+9. Painel do prestador com agendamentos, confirmação e cancelamento.
+10. Notificações no aplicativo (`/notificacoes`) para cliente e prestador,
    geradas pelos eventos de agendamento.
+
+## Documentos e políticas
+
+As rotas `/documentos`, `/termos`, `/privacidade`,
+`/diretrizes-da-comunidade` e `/politica-de-conteudo-e-avaliacoes` publicam
+versões auditáveis dos textos. As versões atuais são **minutas não vigentes** e
+não exigem aceite. A infraestrutura de aceite registra usuário, versão, hash e
+instante somente para uma versão futura publicada, efetiva e marcada como
+obrigatória. Consulte `docs/legal/README.md` e o checklist antes de promover
+qualquer documento.
 
 ## Notificações
 

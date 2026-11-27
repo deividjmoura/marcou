@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isSupabaseConfigured } from "@/lib/env";
+import { createClient } from "@/lib/supabase/server";
 import {
   providerInputSchema,
   providerSettingsSchema,
@@ -8,6 +10,13 @@ import {
   availabilityRuleInputSchema,
   availabilityExceptionInputSchema,
 } from "@/lib/validation";
+import {
+  categorySuggestionInputSchema,
+  serviceAreaInputSchema,
+  serviceDiscoveryInputSchema,
+  type ServiceDiscoveryInput,
+} from "@/domain/discovery/discovery";
+import { isSocialFeatureEnabled } from "@/server/feature-flags";
 import {
   BookingOperationError,
   getOwnedProvider,
@@ -27,10 +36,22 @@ import {
   updateRule,
   updateService,
 } from "@/server/services";
+import {
+  createCategorySuggestion,
+  createProviderServiceArea,
+  deleteProviderServiceArea,
+} from "@/server/discovery";
 
 export interface PainelActionState {
   error?: string;
   success?: string;
+}
+
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
+function unavailableState(): PainelActionState {
+  return { error: SUPABASE_UNAVAILABLE_MESSAGE };
 }
 
 async function ownedProviderOrError() {
@@ -38,21 +59,31 @@ async function ownedProviderOrError() {
   return getOwnedProvider(user.id);
 }
 
+async function discoveryEnabledForProvider(providerId: string): Promise<boolean> {
+  return isSocialFeatureEnabled("social_discovery", { providerId });
+}
+
 function firstIssue(error: { issues?: Array<{ message?: string }> }): string {
   return error.issues?.[0]?.message ?? "Dados inválidos.";
 }
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 
 export async function saveProviderAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const user = await requireUser();
   const existing = await getOwnedProvider(user.id);
 
   const raw = {
     slug: formData.get("slug"),
     displayName: formData.get("displayName"),
-    timezone: formData.get("timezone"),
+    description: formData.get("description"),
+    timezone: existing?.timezone ?? "America/Sao_Paulo",
     isPublished: formData.get("isPublished"),
     bookingHoldMinutes: formData.get("bookingHoldMinutes"),
   };
@@ -71,7 +102,16 @@ export async function saveProviderAction(
     const parsed = providerInputSchema.safeParse(raw);
     if (!parsed.success) return { error: firstIssue(parsed.error) };
     await createProvider(user.id, parsed.data);
+    try {
+      const supabase = await createClient();
+      await supabase.rpc("set_preferred_mode", { p_mode: "provider" });
+    } catch {
+      // The provider is still created under the same auth.users identity. The
+      // preference is only navigation and can be changed again from the hub.
+    }
     revalidatePath("/painel");
+    revalidatePath("/minha-conta");
+    revalidatePath("/inicio");
     return { success: "Negócio criado. Agora cadastre seus serviços." };
   } catch (error) {
     return {
@@ -84,13 +124,20 @@ export async function saveServiceAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const intent = String(formData.get("intent") ?? "create");
   const serviceId = String(formData.get("serviceId") ?? "");
 
   const toCents = (value: FormDataEntryValue | null): number => {
-    const normalized = String(value ?? "").trim().replace(/\s/g, "").replace(",", ".");
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? Math.round(parsed * 100) : Number.NaN;
+    const normalized = String(value ?? "")
+      .trim()
+      .replace(/\s/g, "")
+      .replace(",", ".");
+    const valueAsNumber = Number(normalized);
+    return Number.isFinite(valueAsNumber)
+      ? Math.round(valueAsNumber * 100)
+      : Number.NaN;
   };
 
   const parsed = serviceInputSchema.safeParse({
@@ -107,14 +154,30 @@ export async function saveServiceAction(
   try {
     const provider = await ownedProviderOrError();
     if (!provider) return { error: "Você ainda não configurou seu negócio." };
+
+    let discovery: ServiceDiscoveryInput | undefined;
+    if (await discoveryEnabledForProvider(provider.id)) {
+      const parsedDiscovery = serviceDiscoveryInputSchema.safeParse({
+        categoryId: formData.get("categoryId"),
+        deliveryModes: formData.getAll("deliveryModes"),
+      });
+      if (!parsedDiscovery.success) {
+        return { error: firstIssue(parsedDiscovery.error) };
+      }
+      discovery = parsedDiscovery.data;
+    }
+
     if (intent === "update") {
       if (!serviceId) return { error: "Serviço não informado." };
-      await updateService(provider.id, serviceId, parsed.data);
+      await updateService(provider.id, serviceId, parsed.data, discovery);
     } else {
-      await createService(provider.id, parsed.data);
+      await createService(provider.id, parsed.data, discovery);
     }
     revalidatePath("/painel");
-    return { success: intent === "update" ? "Serviço atualizado." : "Serviço criado." };
+    revalidatePath(`/p/${provider.slug}`);
+    return {
+      success: intent === "update" ? "Serviço atualizado." : "Serviço criado.",
+    };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Não foi possível salvar.",
@@ -122,26 +185,137 @@ export async function saveServiceAction(
   }
 }
 
-export async function toggleServiceAction(formData: FormData): Promise<void> {
-  const provider = await ownedProviderOrError();
-  if (!provider) return revalidatePath("/painel");
+export async function toggleServiceAction(
+  _prev: PainelActionState,
+  formData: FormData,
+): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
 
   const serviceId = String(formData.get("serviceId") ?? "");
-  const isActive = formData.get("isActive") === "true";
-
-  try {
-    await setServiceActive(provider.id, serviceId, isActive);
-  } catch {
-    // A UI será atualizada com o estado atual do servidor.
+  const requestedState = String(formData.get("isActive") ?? "");
+  if (!UUID_PATTERN.test(serviceId) || !["true", "false"].includes(requestedState)) {
+    return { error: "Serviço ou estado inválido." };
   }
 
-  revalidatePath("/painel");
+  try {
+    const provider = await ownedProviderOrError();
+    if (!provider) return { error: "Você ainda não configurou seu negócio." };
+
+    const isActive = requestedState === "true";
+    await setServiceActive(provider.id, serviceId, isActive);
+    revalidatePath("/painel");
+    revalidatePath(`/p/${provider.slug}`);
+    return { success: isActive ? "Serviço ativado." : "Serviço desativado." };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível alterar o serviço.",
+    };
+  }
+}
+
+export async function saveServiceAreaAction(
+  _prev: PainelActionState,
+  formData: FormData,
+): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  const parsed = serviceAreaInputSchema.safeParse({
+    stateCode: formData.get("stateCode"),
+    city: formData.get("city"),
+    ibgeCityCode: formData.get("ibgeCityCode") ?? "",
+    precision: formData.get("precision"),
+    neighborhood: formData.get("neighborhood") ?? "",
+    radiusKm: formData.get("radiusKm") ?? "",
+  });
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  try {
+    const provider = await ownedProviderOrError();
+    if (!provider) return { error: "Você ainda não configurou seu negócio." };
+    if (!(await discoveryEnabledForProvider(provider.id))) {
+      return { error: "As áreas de atendimento ainda não foram liberadas para esta conta." };
+    }
+
+    await createProviderServiceArea(provider.id, parsed.data);
+    revalidatePath("/painel");
+    revalidatePath(`/p/${provider.slug}`);
+    return { success: "Área de atendimento adicionada." };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Não foi possível salvar a área.",
+    };
+  }
+}
+
+export async function deleteServiceAreaAction(
+  _prev: PainelActionState,
+  formData: FormData,
+): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  const areaId = String(formData.get("areaId") ?? "");
+  if (!UUID_PATTERN.test(areaId)) {
+    return { error: "Área de atendimento inválida." };
+  }
+
+  try {
+    const provider = await ownedProviderOrError();
+    if (!provider) return { error: "Você ainda não configurou seu negócio." };
+    if (!(await discoveryEnabledForProvider(provider.id))) {
+      return { error: "As áreas de atendimento ainda não foram liberadas para esta conta." };
+    }
+
+    await deleteProviderServiceArea(provider.id, areaId);
+    revalidatePath("/painel");
+    revalidatePath(`/p/${provider.slug}`);
+    return { success: "Área removida." };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Não foi possível remover a área.",
+    };
+  }
+}
+
+export async function suggestServiceCategoryAction(
+  _prev: PainelActionState,
+  formData: FormData,
+): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  const parsed = categorySuggestionInputSchema.safeParse({
+    proposedName: formData.get("proposedName"),
+    proposedParentId: formData.get("proposedParentId") ?? "",
+    rationale: formData.get("rationale"),
+  });
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  try {
+    const user = await requireUser();
+    const provider = await getOwnedProvider(user.id);
+    if (!provider) return { error: "Você ainda não configurou seu negócio." };
+    if (!(await discoveryEnabledForProvider(provider.id))) {
+      return { error: "As sugestões de categoria ainda não foram liberadas para esta conta." };
+    }
+
+    await createCategorySuggestion(provider.id, user.id, parsed.data);
+    revalidatePath("/painel");
+    return { success: "Sugestão enviada para moderação." };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Não foi possível enviar a sugestão.",
+    };
+  }
 }
 
 export async function saveRuleAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = availabilityRuleInputSchema.safeParse({
     dayOfWeek: formData.get("dayOfWeek"),
     startsAt: formData.get("startsAt"),
@@ -172,6 +346,8 @@ export async function saveRuleAction(
 }
 
 export async function deleteRuleAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 
@@ -187,6 +363,8 @@ export async function saveExceptionAction(
   _prev: PainelActionState,
   formData: FormData,
 ): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = availabilityExceptionInputSchema.safeParse({
     date: formData.get("date"),
     kind: formData.get("kind"),
@@ -211,6 +389,8 @@ export async function saveExceptionAction(
 }
 
 export async function deleteExceptionAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 
@@ -233,6 +413,8 @@ const BOOKING_EVENTS: BookingEventName[] = [
 ];
 
 export async function providerBookingAction(formData: FormData): Promise<void> {
+  if (!isSupabaseConfigured()) return revalidatePath("/painel");
+
   const provider = await ownedProviderOrError();
   if (!provider) return revalidatePath("/painel");
 

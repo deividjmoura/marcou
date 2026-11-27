@@ -1,10 +1,23 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { isValidPhone, normalizePhone, safeNextPath } from "@/lib/identity";
+import { isSupabaseConfigured } from "@/lib/env";
+import {
+  isValidPhone,
+  loginRedirectUrl,
+  normalizePhone,
+  passwordLoginErrorMessage,
+  safeNextPath,
+  trustedAppOrigin,
+  signupErrorMessage,
+} from "@/lib/identity";
+import {
+  ensureAuthProfile,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 
 export interface AuthState {
   error?: string;
@@ -29,103 +42,103 @@ const profileSchema = z.object({
 
 const passwordSchema = z.object({
   password: z.string().min(8, "A senha precisa de ao menos 8 caracteres.").max(100),
+  confirmPassword: z.string().min(1, "Confirme a nova senha."),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem.",
+  path: ["confirmPassword"],
 });
 
-async function getAppOrigin() {
-  const headerStore = await headers();
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) {
-    try {
-      const url = new URL(configured);
-      if (url.protocol === "https:" || url.hostname === "localhost") return url.origin;
-    } catch {
-      // Usa a origem encaminhada pela requisição quando a configuração é inválida.
-    }
-  }
-
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
-  if (!host || /[\s/@\\]/.test(host)) return "http://localhost:3000";
-  const forwardedProto = headerStore.get("x-forwarded-proto");
-  const proto = forwardedProto === "http" && host.startsWith("localhost")
-    ? "http"
-    : "https";
-  return `${proto}://${host}`;
+function getAppOrigin() {
+  return trustedAppOrigin();
 }
 
-async function saveAuthProfile(
-  user: { id: string; user_metadata?: Record<string, unknown> },
-) {
-  const supabase = await createClient();
-  const displayName =
-    user.user_metadata?.display_name ??
-    user.user_metadata?.full_name ??
-    user.user_metadata?.name ??
-    null;
-
-  const profileRow: { id: string; display_name?: string } = { id: user.id };
-  if (typeof displayName === "string" && displayName.trim()) {
-    profileRow.display_name = displayName.trim().slice(0, 80);
-  }
-  const { error } = await supabase.from("profiles").upsert(profileRow, {
-    onConflict: "id",
-    ignoreDuplicates: false,
-  });
-  if (error) throw new Error("Não foi possível preparar seu perfil.");
+function emailConfirmationRedirect(origin: string, next: string): string {
+  const redirectTo = new URL("/auth/confirm", origin);
+  redirectTo.searchParams.set("next", safeNextPath(next));
+  return redirectTo.toString();
 }
 
-async function profileNeedsPhone(userId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("phone")
-    .eq("id", userId)
-    .maybeSingle();
+function oauthCallbackRedirect(origin: string, next: string): string {
+  const redirectTo = new URL("/auth/callback", origin);
+  redirectTo.searchParams.set("next", safeNextPath(next));
+  return redirectTo.toString();
+}
 
-  if (error) throw new Error("Não foi possível verificar seu perfil.");
-  return !data?.phone;
+const GENERIC_CONFIRMATION_MESSAGE =
+  "Se for necessário confirmar esse endereço, enviaremos instruções por e-mail. Você também pode tentar entrar normalmente.";
+const GENERIC_RECOVERY_MESSAGE =
+  "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Verifique também a caixa de spam ou lixo eletrônico, pois a mensagem pode ser direcionada para lá.";
+
+const SUPABASE_UNAVAILABLE_MESSAGE =
+  "O Supabase não está configurado neste ambiente. Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
+function unavailableState(): AuthState {
+  return { error: SUPABASE_UNAVAILABLE_MESSAGE };
 }
 
 export async function loginAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
+  return measureAuthFlow("password_login", async (setOutcome) => {
+    if (!isSupabaseConfigured()) {
+      setOutcome("unconfigured");
+      return unavailableState();
+    }
+
+    const parsed = await measureAuthStep("validate_input", () =>
+      loginSchema.safeParse({
+        email: formData.get("email"),
+        password: formData.get("password"),
+      }),
+    );
+
+    if (!parsed.success) {
+      setOutcome("validation_failed");
+      return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+    }
+
+    const supabase = await measureAuthStep("supabase_client", () =>
+      createClient(),
+    );
+    const { data, error } = await measureAuthStep("auth_sign_in", () =>
+      supabase.auth.signInWithPassword(parsed.data),
+    );
+
+    if (error || !data.user) {
+      setOutcome("auth_failed");
+      return { error: passwordLoginErrorMessage(error?.code) };
+    }
+
+    let needsPhone: boolean;
+    try {
+      const profile = await measureAuthStep(
+        "ensure_profile",
+        () => ensureAuthProfile(supabase, data.user),
+        (result) => ({ profileWritten: result.wroteProfile }),
+      );
+      needsPhone = profile.needsPhone;
+    } catch {
+      setOutcome("profile_failed");
+      return { error: "Não foi possível carregar seu perfil. Tente novamente." };
+    }
+
+    const next = safeNextPath(String(formData.get("next") ?? ""));
+    if (needsPhone) {
+      setOutcome("redirect_profile_onboarding");
+      redirect(`/perfil?next=${encodeURIComponent(next)}`);
+    }
+    setOutcome("redirect_next");
+    redirect(next);
   });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
-
-  if (error || !data.user) {
-    return { error: "E-mail ou senha incorretos." };
-  }
-
-  try {
-    await saveAuthProfile(data.user);
-  } catch {
-    return { error: "Não foi possível carregar seu perfil. Tente novamente." };
-  }
-
-  const next = safeNextPath(String(formData.get("next") ?? ""));
-  let needsPhone: boolean;
-  try {
-    needsPhone = await profileNeedsPhone(data.user.id);
-  } catch {
-    return { error: "Não foi possível verificar seu perfil. Tente novamente." };
-  }
-  if (needsPhone) redirect(`/perfil?next=${encodeURIComponent(next)}`);
-  redirect(next);
 }
 
 export async function signupAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = signupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -136,7 +149,7 @@ export async function signupAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
-  const origin = await getAppOrigin();
+  const origin = getAppOrigin();
   const next = safeNextPath(String(formData.get("next") ?? ""));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -144,46 +157,94 @@ export async function signupAction(
     password: parsed.data.password,
     options: {
       data: { display_name: parsed.data.name },
-      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: emailConfirmationRedirect(origin, next),
     },
   });
 
   if (error) {
-    return { error: "Não foi possível criar a conta com esses dados." };
+    if (error.code === "email_exists" || error.code === "user_already_exists") {
+      return { success: GENERIC_CONFIRMATION_MESSAGE };
+    }
+    return { error: signupErrorMessage(error.code) };
   }
 
   if (!data.user) {
-    return { error: "Não foi possível criar a conta." };
+    return { success: GENERIC_CONFIRMATION_MESSAGE };
   }
 
   if (data.session) {
     try {
-      await saveAuthProfile(data.user);
+      await ensureAuthProfile(supabase, data.user);
     } catch {
-      return { error: "A conta foi criada, mas não foi possível preparar o perfil. Entre novamente." };
+      // Do not turn profile setup into an account-enumeration side channel.
     }
-    const next = safeNextPath(String(formData.get("next") ?? ""));
-    redirect(`/perfil?next=${encodeURIComponent(next)}`);
+    try {
+      // A signup without email confirmation may return a session. Clear it so
+      // the public signup response stays indistinguishable; login continues the
+      // normal profile/onboarding flow.
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // Keep the generic signup response even if local sign-out needs retry.
+    }
   }
 
-  return {
-    success: "Conta criada. Confirme o e-mail enviado; depois complete seu perfil para continuar.",
-  };
+  return { success: GENERIC_CONFIRMATION_MESSAGE };
+}
+
+export async function resendSignupConfirmationAction(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  const email = z.string().trim().email("Informe um e-mail válido.").safeParse(formData.get("email"));
+  if (!email.success) {
+    return { error: email.error.issues[0]?.message ?? "Informe um e-mail válido." };
+  }
+
+  try {
+    const origin = getAppOrigin();
+    const next = safeNextPath(String(formData.get("next") ?? ""));
+    const supabase = await createClient();
+    // Supabase errors are intentionally not reflected in the response: the
+    // message is identical whether the address is unknown, confirmed, or
+    // temporarily rate-limited.
+    await supabase.auth.resend({
+      type: "signup",
+      email: email.data,
+      options: { emailRedirectTo: emailConfirmationRedirect(origin, next) },
+    });
+  } catch {
+    // Keep the response non-enumerating even when the provider is unavailable.
+  }
+
+  return { success: GENERIC_CONFIRMATION_MESSAGE };
 }
 
 export async function googleLoginAction(formData: FormData): Promise<void> {
-  const origin = await getAppOrigin();
-  const supabase = await createClient();
+  const origin = getAppOrigin();
   const next = safeNextPath(String(formData.get("next") ?? ""));
+
+  if (!isSupabaseConfigured()) {
+    redirect(loginRedirectUrl(origin, next, SUPABASE_UNAVAILABLE_MESSAGE));
+  }
+
+  const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: oauthCallbackRedirect(origin, next),
     },
   });
 
   if (error || !data.url) {
-    redirect(`/login?error=${encodeURIComponent("Não foi possível iniciar o login com Google.")}`);
+    redirect(
+      loginRedirectUrl(
+        origin,
+        next,
+        "Não foi possível iniciar o login com Google.",
+      ),
+    );
   }
 
   redirect(data.url);
@@ -193,6 +254,8 @@ export async function saveProfileAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const parsed = profileSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -224,24 +287,36 @@ export async function requestPasswordResetAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
   const email = z.string().trim().email("Informe um e-mail válido.").safeParse(formData.get("email"));
   if (!email.success) return { error: email.error.issues[0]?.message ?? "E-mail inválido." };
 
-  const origin = await getAppOrigin();
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${origin}/auth/callback?next=/redefinir-senha`,
-  });
+  try {
+    const origin = getAppOrigin();
+    const supabase = await createClient();
+    const redirectTo = new URL("/auth/confirm", origin);
+    redirectTo.searchParams.set("next", "/redefinir-senha");
+    await supabase.auth.resetPasswordForEmail(email.data, {
+      redirectTo: redirectTo.toString(),
+    });
+  } catch {
+    // A recovery request must not reveal whether the account exists.
+  }
 
-  if (error) return { error: "Não foi possível solicitar a recuperação. Tente novamente." };
-  return { success: "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha." };
+  return { success: GENERIC_RECOVERY_MESSAGE };
 }
 
 export async function updatePasswordAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  const parsed = passwordSchema.safeParse({ password: formData.get("password") });
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  const parsed = passwordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Informe uma senha válida." };
   }
@@ -254,10 +329,18 @@ export async function updatePasswordAction(
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { error: "Não foi possível atualizar a senha. Solicite um novo link." };
-  redirect("/painel");
+
+  // End the recovery session so the user explicitly signs in with the new password.
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    return { error: "A senha foi atualizada, mas não foi possível encerrar a sessão. Saia da conta e entre novamente." };
+  }
+  redirect("/login?passwordUpdated=1");
 }
 
 export async function logoutAction(): Promise<void> {
+  if (!isSupabaseConfigured()) redirect("/");
+
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");

@@ -1,13 +1,28 @@
-import Link from "next/link";
-import { getOwnedProvider, listProviderBookings, requireUser } from "@/server/bookings";
+import {
+  getOwnedProvider,
+  listProviderBookingsForPanel,
+  requireUser,
+} from "@/server/bookings";
 import { listExceptions, listRules, listServicesForOwner } from "@/server/services";
+import { ProviderForm, ProviderPanelMenu } from "./painel-client";
 import { BookingAgenda } from "./booking-agenda";
-import { AvailabilityManager, ProviderForm, ServicesManager } from "./painel-client";
 import { logoutAction } from "../(auth)/actions";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
+import { AccountModeSwitcher } from "@/components/account-mode-switcher";
 import { countUnreadNotifications } from "@/server/notifications";
+import { isSocialFeatureEnabled } from "@/server/feature-flags";
+import {
+  listCategorySuggestions,
+  listProviderServiceAreas,
+  listServiceCategories,
+} from "@/server/discovery";
+import {
+  getPreferredMode,
+  measureAuthFlow,
+  measureAuthStep,
+} from "@/server/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +41,29 @@ export default async function PainelPage() {
     );
   }
 
-  const user = await requireUser("/painel");
-  const provider = await getOwnedProvider(user.id);
-  const unread = await countUnreadNotifications();
+  const { provider, unread, activeMode } = await measureAuthFlow(
+    "account_bootstrap",
+    async (setOutcome) => {
+      const currentUser = await measureAuthStep("auth_get_user", () =>
+        requireUser("/painel"),
+      );
+      const [ownedProvider, unreadCount, preferredMode] = await measureAuthStep(
+        "load_account_context",
+        () =>
+          Promise.all([
+            getOwnedProvider(currentUser.id),
+            countUnreadNotifications(),
+            getPreferredMode(),
+          ]),
+      );
+      setOutcome("loaded");
+      return {
+        provider: ownedProvider,
+        unread: unreadCount,
+        activeMode: preferredMode,
+      };
+    },
+  );
 
   if (!provider) {
     return (
@@ -51,17 +86,29 @@ export default async function PainelPage() {
           </div>
         </header>
 
+        <AccountModeSwitcher activeMode={activeMode} hasProvider={false} />
         <ProviderForm provider={null} />
       </main>
     );
   }
 
-  const [services, rules, exceptions, bookings] = await Promise.all([
-    listServicesForOwner(provider.id),
-    listRules(provider.id),
-    listExceptions(provider.id),
-    listProviderBookings(provider.id),
-  ]);
+  const [services, rules, exceptions, agenda, discoveryEnabled] =
+    await Promise.all([
+      listServicesForOwner(provider.id),
+      listRules(provider.id),
+      listExceptions(provider.id),
+      listProviderBookingsForPanel(provider.id),
+      isSocialFeatureEnabled("social_discovery", { providerId: provider.id }),
+    ]);
+  const { bookings, failed: bookingsFailed } = agenda;
+
+  const [categories, serviceAreas, categorySuggestions] = discoveryEnabled
+    ? await Promise.all([
+        listServiceCategories(),
+        listProviderServiceAreas(provider.id),
+        listCategorySuggestions(provider.id),
+      ])
+    : [[], [], []];
 
   return (
     <main className="page-shell page-painel">
@@ -69,38 +116,24 @@ export default async function PainelPage() {
         <div>
           <span className="eyebrow">PAINEL DO PRESTADOR</span>
           <h1>{provider.display_name}</h1>
-          <p className="muted">
-            {provider.is_published ? (
-              <>
-                Página pública:{" "}
-                <Link href={`/p/${provider.slug}`} target="_blank">
-                  /p/{provider.slug}
-                </Link>
-              </>
-            ) : (
-              "Sua página pública ainda está desativada."
-            )}
-          </p>
-        </div>
-        <div className="item-actions">
-          <Link href="/perfil?next=%2Fpainel" className="btn btn-ghost">Meu perfil</Link>
-          <NotificationBell unreadCount={unread} />
-          <form action={logoutAction}>
-            <button type="submit" className="btn btn-ghost">
-              Sair
-            </button>
-          </form>
+          <p className="muted">Acompanhe e gerencie seus agendamentos.</p>
         </div>
       </header>
 
-      <div className="painel-grid">
-        <ProviderForm provider={provider} />
-        <ServicesManager services={services} />
-        <AvailabilityManager rules={rules} exceptions={exceptions} />
-      </div>
+      <AccountModeSwitcher activeMode={activeMode} hasProvider />
 
-      <BookingAgenda bookings={bookings} />
-
+      <ProviderPanelMenu
+        provider={provider}
+        services={services}
+        rules={rules}
+        exceptions={exceptions}
+        discoveryEnabled={discoveryEnabled}
+        categories={categories}
+        serviceAreas={serviceAreas}
+        categorySuggestions={categorySuggestions}
+        unreadCount={unread}
+        bookingsContent={<BookingAgenda bookings={bookings} failed={bookingsFailed} />}
+      />
     </main>
   );
 }

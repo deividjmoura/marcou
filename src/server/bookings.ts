@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeNextPath } from "@/lib/identity";
 import { timeStringToMinutes } from "@/lib/time";
 import {
   generateSlots,
@@ -7,6 +8,7 @@ import {
   type AvailabilityException,
   type AvailabilityRule,
   type BusyInterval,
+  type ServiceTiming,
   type Slot,
 } from "@/domain/bookings/availability";
 
@@ -22,6 +24,7 @@ export interface Provider {
   owner_id: string;
   slug: string;
   display_name: string;
+  description: string | null;
   timezone: string;
   is_published: boolean;
   booking_hold_minutes: number;
@@ -32,6 +35,10 @@ export interface Provider {
 export interface Service {
   id: string;
   provider_id: string;
+  category_id: string;
+  delivery_modes: Array<
+    "provider_location" | "customer_location" | "remote"
+  >;
   name: string;
   description: string | null;
   duration_minutes: number;
@@ -144,7 +151,8 @@ export async function getCurrentUser() {
 export async function requireUser(next?: string) {
   const user = await getCurrentUser();
   if (!user) {
-    redirect(next ?? "/login");
+    const destination = safeNextPath(next);
+    redirect(`/login?next=${encodeURIComponent(destination)}`);
   }
   return user;
 }
@@ -204,6 +212,12 @@ export interface ScheduleData {
   rules: AvailabilityRule[];
   exceptions: AvailabilityException[];
   busy: BusyInterval[];
+  /**
+   * Duração e intervalo já vêm da RPC `get_provider_schedule`, que resolve o
+   * serviço no mesmo instante em que monta a agenda. Isso evita que a
+   * projeção exibida use uma segunda leitura que pode divergir da validação.
+   */
+  timing: ServiceTiming;
 }
 
 /** Lê a agenda pública (RPC) de um prestador publicado. */
@@ -262,12 +276,18 @@ export async function getProviderSchedule(params: {
     }),
   );
 
+  const timing = (data.timing ?? {}) as Record<string, unknown>;
+
   return {
     timezone: String(data.timezone),
     bookingHoldMinutes: Number(data.bookingHoldMinutes),
     rules,
     exceptions,
     busy,
+    timing: {
+      durationMinutes: Number(timing.durationMinutes),
+      bufferMinutes: Number(timing.bufferMinutes),
+    },
   };
 }
 
@@ -287,17 +307,13 @@ export async function getAvailableSlots(params: {
   const schedule = await getProviderSchedule(params);
   if (!schedule) return null;
 
-  const { getServiceTiming } = await import("@/server/services");
-  const timing = await getServiceTiming(params.serviceId);
-  if (!timing) return null;
-
   const slots: Slot[] = generateSlots({
     date: params.date,
     timeZone: schedule.timezone,
     rules: schedule.rules,
     exceptions: schedule.exceptions,
     busyIntervals: schedule.busy,
-    timing,
+    timing: schedule.timing,
     minLeadMinutes: params.minLeadMinutes ?? 0,
   });
 
@@ -354,9 +370,23 @@ export async function transitionBooking(params: {
   return booking;
 }
 
-export async function listProviderBookings(
+export interface ProviderBookingsResult {
+  bookings: Booking[];
+  /** `true` quando a consulta falhou; distingue falha de agenda vazia. */
+  failed: boolean;
+}
+
+/**
+ * Lista os agendamentos do prestador autenticado.
+ *
+ * O filtro é sempre por `provider_id` do prestador que pertence ao usuário da
+ * sessão (`getOwnedProvider`), e a RLS de `bookings` só libera as linhas do
+ * dono. O resultado informa explicitamente se a consulta falhou, para a UI não
+ * apresentar erro de carregamento como se fosse agenda vazia.
+ */
+export async function listProviderBookingsForPanel(
   providerId: string,
-): Promise<Booking[]> {
+): Promise<ProviderBookingsResult> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
@@ -364,8 +394,16 @@ export async function listProviderBookings(
     .eq("provider_id", providerId)
     .order("starts_at", { ascending: false });
 
-  if (error) return [];
-  return (data ?? []) as Booking[];
+  if (error) return { bookings: [], failed: true };
+  return { bookings: (data ?? []) as Booking[], failed: false };
+}
+
+/** Compatibilidade: devolve apenas a lista, sem sinalizar falha de consulta. */
+export async function listProviderBookings(
+  providerId: string,
+): Promise<Booking[]> {
+  const { bookings } = await listProviderBookingsForPanel(providerId);
+  return bookings;
 }
 
 export async function listCustomerBookings(): Promise<Booking[]> {

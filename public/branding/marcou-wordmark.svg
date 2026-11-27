@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 960" role="img" aria-labelledby="title desc">
+  <title id="title">Marcou.</title>
+  <desc id="desc">Lettering ornamental preto e itálico para fundo claro, com laço inferior em forma de coração e pequenas estrelas decorativas.</desc>
+  <g fill="none" stroke="#050505" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Laço inferior reposicionado para não interferir na leitura -->
+    <path d="M286 466
+      C205 446 165 513 195 568
+      C231 633 345 639 431 578
+      C487 539 520 484 556 425
+      C596 494 641 553 716 576
+      C822 610 930 532 1032 535
+      C1116 538 1175 602 1138 661
+      C1105 716 1017 721 968 681
+      C944 662 948 626 976 610"
+      stroke-width="18"/>
+  </g>
+  <text x="565" y="500" fill="#050505"
+    font-family="'Bodoni 72', Didot, 'Times New Roman', Georgia, serif"
+    font-size="248" font-style="italic" font-weight="700" letter-spacing="-13">Marcou.</text>
+  <g fill="#050505">
+    <circle cx="280" cy="316" r="18"/>
+    <circle cx="700" cy="696" r="13"/>
+    <circle cx="1190" cy="281" r="18"/>
+    <path d="M676 177 L688 211 L722 223 L688 235 L676 270 L664 235 L630 223 L664 211 Z"/>
+    <path d="M1390 302 L1400 330 L1428 340 L1400 350 L1390 378 L1380 350 L1352 340 L1380 330 Z"/>
+    <path d="M1236 548 L1247 579 L1278 590 L1247 601 L1236 632 L1225 601 L1194 590 L1225 579 Z"/>
+    <path d="M500 546 L510 574 L538 584 L510 594 L500 622 L490 594 L462 584 L490 574 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,378 @@
+[
+  {
+    "key": "terms",
+    "title": "Termos de Uso",
+    "version": "0.1-draft",
+    "status": "draft",
+    "updatedAt": "2026-11-23",
+    "route": "/termos",
+    "requiresAcceptance": false,
+    "materialChangeSummary": "Primeira minuta adaptada ao funcionamento atual do Marcou e ao roadmap Marcou Social.",
+    "reviewNotice": "MINUTA INTERNA — NÃO VIGENTE. Este texto ainda depende da confirmação da pessoa operadora, das regras comerciais e de revisão jurídica brasileira. Ele é exibido para transparência e revisão, não constitui uma versão aprovada e não exige aceite.",
+    "sections": [
+      {
+        "heading": "1. Escopo atual da plataforma",
+        "paragraphs": [
+          "O Marcou é uma plataforma digital em desenvolvimento para apresentação de prestadores e serviços, organização de disponibilidade e criação e acompanhamento de agendamentos.",
+          "Hoje, a aplicação oferece cadastro e autenticação, perfil do usuário, cadastro do negócio e de serviços, página pública do prestador, escolha de data e horário, reserva, painel do prestador e notificações internas relacionadas ao agendamento.",
+          "Recursos do roadmap Marcou Social — como feed, posts, comentários, mensagens, solicitações de orçamento, avaliações e moderação — somente estarão sujeitos a estes Termos depois de efetivamente ativados e refletidos em uma versão publicada dos documentos."
+        ]
+      },
+      {
+        "heading": "2. Elegibilidade e conta",
+        "paragraphs": [
+          "A versão destinada ao público deverá ser utilizada por pessoas com capacidade civil para contratar. A idade mínima, o tratamento de contas empresariais e eventuais fluxos para representantes ainda precisam de confirmação jurídica.",
+          "A pessoa usuária deve fornecer informações verdadeiras e atualizadas, proteger suas credenciais e comunicar suspeitas de acesso indevido pelo canal oficial que será confirmado antes da publicação."
+        ],
+        "bullets": [
+          "Não criar conta em nome de terceiro sem autorização.",
+          "Não compartilhar credenciais nem tentar acessar dados de outra pessoa.",
+          "Não informar documentos, endereço completo ou dados sensíveis em campos que não tenham essa finalidade."
+        ]
+      },
+      {
+        "heading": "3. Prestadores, perfis e serviços",
+        "paragraphs": [
+          "O prestador é responsável pela exatidão da identificação pública, descrição, duração, preço, sinal, disponibilidade e demais informações dos serviços que oferece.",
+          "A publicação de um perfil não representa, por si só, certificação, vínculo trabalhista, garantia de qualidade ou verificação de antecedentes. Qualquer selo futuro deverá explicar exatamente o que foi verificado."
+        ]
+      },
+      {
+        "heading": "4. Agendamentos",
+        "paragraphs": [
+          "O cliente escolhe um serviço e um horário exibido como disponível. O backend confirma novamente as regras e pode recusar o horário quando houver conflito, expiração, alteração de disponibilidade ou outra condição válida.",
+          "A reserva pode passar pelos estados de aguardando pagamento, aguardando revisão, confirmada, cancelada ou expirada. A interface deve informar o estado real; criar uma reserva pendente não equivale automaticamente a serviço confirmado.",
+          "Prestador e cliente são responsáveis por conferir o escopo, local, materiais, preço, sinal, horário e condições aplicáveis antes da execução."
+        ]
+      },
+      {
+        "heading": "5. Pagamento e comprovantes",
+        "paragraphs": [
+          "O Marcou ainda não possui provedor de pagamento integrado nem custódia valores. Os campos de preço e sinal e os estados de pagamento organizam a reserva, mas não comprovam liquidação automática.",
+          "A marcação de comprovante recebido e a aprovação pelo prestador são controles operacionais. Nenhum texto ou imagem deve ser tratado como confirmação automática sem uma integração confiável e explicitamente ativada."
+        ]
+      },
+      {
+        "heading": "6. Cancelamento, reagendamento e ausência",
+        "paragraphs": [
+          "A aplicação permite cancelamentos autorizados e preserva histórico, mas a política comercial de antecedência, reembolso, atraso, ausência e reagendamento ainda precisa ser definida antes de uma versão vigente.",
+          "Não poderá ser aplicada multa, retenção ou condição que não tenha sido informada de forma clara e validamente incorporada à contratação."
+        ]
+      },
+      {
+        "heading": "7. Conteúdo e conduta",
+        "paragraphs": [
+          "A pessoa usuária é responsável pelos textos, imagens e informações que publicar e deve possuir os direitos e autorizações necessários.",
+          "As Diretrizes da Comunidade e a Política de Conteúdo e Avaliações complementam estas regras. Enquanto recursos sociais não estiverem ativos, suas seções futuras não devem ser apresentadas como funcionalidade disponível."
+        ],
+        "bullets": [
+          "São proibidos fraude, ameaça, assédio, discriminação, extorsão, spam e conteúdo ilegal.",
+          "É proibido divulgar dados pessoais de terceiros sem autorização ou finalidade legítima.",
+          "É proibido explorar falhas, contornar autorização, automatizar abuso ou coletar dados por scraping não autorizado."
+        ]
+      },
+      {
+        "heading": "8. Contratação entre as partes",
+        "paragraphs": [
+          "Salvo quando uma funcionalidade futura informar expressamente o contrário, o serviço é contratado e executado diretamente entre cliente e prestador. O Marcou fornece ferramentas digitais de apresentação, organização e comunicação, mas não executa o serviço profissional.",
+          "Esta descrição não afasta responsabilidades que a legislação brasileira atribua à pessoa operadora da plataforma em cada situação concreta."
+        ]
+      },
+      {
+        "heading": "9. Disponibilidade e alterações",
+        "paragraphs": [
+          "A plataforma pode passar por manutenção, indisponibilidade ou correções. Não há promessa de funcionamento ininterrupto, sem prejuízo dos direitos obrigatórios aplicáveis.",
+          "Mudanças materiais em uma versão vigente deverão gerar nova versão, resumo da alteração e, quando necessário, novo aceite explícito."
+        ]
+      },
+      {
+        "heading": "10. Privacidade e propriedade intelectual",
+        "paragraphs": [
+          "O tratamento de dados pessoais é descrito na Política de Privacidade. Cada usuário também deve respeitar a privacidade e os direitos de imagem, marca e autoria de terceiros.",
+          "A licença necessária para hospedar e exibir conteúdo futuro deverá ser limitada às finalidades da plataforma, ao período necessário e às configurações de visibilidade."
+        ]
+      },
+      {
+        "heading": "11. Recusa, encerramento e contato",
+        "paragraphs": [
+          "Quando houver Termos vigentes e obrigatórios, a pessoa poderá recusar o aceite. A consequência será não acessar funcionalidades autenticadas que dependam do contrato, sem caixas previamente marcadas nem obstáculos artificiais para sair.",
+          "Aceite contratual não deve ser confundido com consentimento para toda atividade de tratamento de dados. Pedidos de privacidade e eventual encerramento da conta seguirão fluxo próprio.",
+          "Pessoa operadora, endereço, canal de suporte, canal de privacidade e foro competente permanecem PENDENTES DE CONFIRMAÇÃO E REVISÃO JURÍDICA."
+        ]
+      }
+    ]
+  },
+  {
+    "key": "privacy",
+    "title": "Política de Privacidade",
+    "version": "0.1-draft",
+    "status": "draft",
+    "updatedAt": "2026-11-23",
+    "route": "/privacidade",
+    "requiresAcceptance": false,
+    "materialChangeSummary": "Primeiro inventário público em formato de minuta, limitado aos fluxos presentes no repositório Marcou.",
+    "reviewNotice": "MINUTA INTERNA — NÃO VIGENTE. O controlador, os canais oficiais, as bases legais, os prazos de retenção, os contratos com operadores e as transferências internacionais ainda precisam ser confirmados e revisados. Nenhum aceite é solicitado para esta minuta.",
+    "sections": [
+      {
+        "heading": "1. Quem trata os dados",
+        "paragraphs": [
+          "A identidade completa da pessoa operadora do Marcou, endereço comercial, papel de controladora ou operadora por atividade e canal oficial de privacidade precisam ser confirmados antes da publicação de uma versão vigente.",
+          "Esta minuta descreve o comportamento identificável no produto e no roadmap, mas não substitui o inventário de dados nem a revisão jurídica exigidos pela LGPD."
+        ]
+      },
+      {
+        "heading": "2. Dados tratados atualmente",
+        "bullets": [
+          "Conta e autenticação: identificador de usuário, e-mail, metadados mínimos de autenticação e informações de sessão administradas pelo Supabase Auth.",
+          "Perfil: nome de exibição e telefone informado pela pessoa usuária.",
+          "Prestador e catálogo: nome do negócio, endereço público em formato de slug, descrição, fuso horário, serviços, duração, preços, sinal e disponibilidade.",
+          "Agendamentos: participantes, serviço, data e horário, snapshots de nome, duração e valores, estado, expiração e histórico de eventos.",
+          "Notificações: destinatário, tipo, título, mensagem operacional, referência à reserva e estado de leitura.",
+          "Dados técnicos necessários ao funcionamento, segurança e hospedagem, conforme os registros efetivamente configurados nos fornecedores."
+        ]
+      },
+      {
+        "heading": "3. Recursos planejados, ainda não ativos",
+        "paragraphs": [
+          "O roadmap Marcou Social prevê avatar, capa, portfólio, posts, relações sociais, comentários, salvos, solicitações, mensagens, avaliações, denúncias, moderação, áreas de atendimento e locais de serviço. Esses dados não devem ser descritos como coletados de forma geral antes da implementação e ativação de cada módulo.",
+          "CPF, documentos de identidade, endereço residencial completo, geolocalização precisa, anexos de conversa e dados de cartão não fazem parte do schema atual. Qualquer introdução exige finalidade, acesso, retenção, segurança e transparência próprios."
+        ]
+      },
+      {
+        "heading": "4. Finalidades",
+        "bullets": [
+          "Criar, autenticar, proteger e administrar a conta.",
+          "Exibir o perfil e catálogo que o prestador decidiu publicar.",
+          "Calcular disponibilidade, criar e acompanhar reservas.",
+          "Comunicar mudanças operacionais por notificações internas.",
+          "Prevenir conflito de agenda, fraude, abuso e acesso indevido.",
+          "Cumprir obrigações legais e exercer direitos quando aplicável.",
+          "Melhorar o produto por métricas agregadas ou minimizadas quando uma solução de analytics for efetivamente configurada."
+        ]
+      },
+      {
+        "heading": "5. Bases legais",
+        "paragraphs": [
+          "As bases legais devem ser definidas por finalidade. Execução de contrato ou procedimentos preliminares, legítimo interesse com avaliação apropriada, cumprimento de obrigação legal, exercício regular de direitos e consentimento quando realmente necessário são hipóteses possíveis, não uma declaração genérica já aprovada.",
+          "Aceitar Termos de Uso não transforma todas as atividades de tratamento em consentimento. Quando o consentimento for a base adequada, ele deverá ser específico, livre, informado e revogável."
+        ]
+      },
+      {
+        "heading": "6. Dados públicos e privados",
+        "paragraphs": [
+          "Perfis de prestadores publicados e serviços ativos podem ser lidos publicamente. Perfil pessoal, telefone, reservas, eventos e notificações ficam limitados aos titulares ou participantes autorizados pelas políticas RLS e pelas operações server-side.",
+          "Endereço residencial completo e mensagens futuras não poderão aparecer em busca, perfil, feed, eventos analíticos ou logs comuns. A liberação a participantes dependerá do estado da contratação definido no contrato de domínio."
+        ]
+      },
+      {
+        "heading": "7. Compartilhamento e fornecedores",
+        "paragraphs": [
+          "O repositório utiliza Supabase para autenticação e banco de dados e documenta Netlify como hospedagem. Login Google pode ser habilitado por configuração do Supabase. As entidades contratantes, regiões de processamento, contratos, suboperadores e transferências internacionais precisam ser inventariados antes da publicação.",
+          "Não há provedor de pagamento, WhatsApp Business, Google Calendar, analytics de terceiros ou serviço próprio de e-mail transacional implementado no código atual. A eventual ativação exigirá atualização desta política."
+        ]
+      },
+      {
+        "heading": "8. Retenção e exclusão",
+        "paragraphs": [
+          "Os prazos por categoria ainda precisam ser definidos considerando finalidade, obrigações legais, prevenção a fraude e exercício regular de direitos.",
+          "A exclusão da conta não deve manter dados pessoais sem necessidade, mas também não pode apagar silenciosamente registros que precisem ser preservados. Exportação, exclusão ou anonimização e descarte periódico ainda dependem da implementação do módulo de privacidade previsto no roadmap."
+        ]
+      },
+      {
+        "heading": "9. Segurança",
+        "paragraphs": [
+          "A base atual usa autenticação gerenciada, validação no servidor, RLS, operações transacionais, idempotência e restrições no PostgreSQL. Segredos não devem chegar ao navegador ou ao repositório.",
+          "Nenhum sistema é isento de riscos. Plano de resposta a incidentes, responsáveis, registros, comunicação à ANPD e titulares e prazos operacionais ainda precisam ser formalizados."
+        ]
+      },
+      {
+        "heading": "10. Direitos dos titulares",
+        "bullets": [
+          "Confirmação e acesso, quando aplicável.",
+          "Correção de dados incompletos, inexatos ou desatualizados.",
+          "Informações sobre compartilhamento e consequências de não fornecer dados.",
+          "Anonimização, bloqueio, eliminação, portabilidade, oposição e revisão nos limites legais.",
+          "Revogação de consentimento quando essa for a base legal utilizada."
+        ],
+        "paragraphs": [
+          "O canal, procedimento de autenticação do solicitante, responsáveis e prazos internos precisam ser confirmados antes da versão vigente."
+        ]
+      },
+      {
+        "heading": "11. Cookies e métricas",
+        "paragraphs": [
+          "Cookies estritamente necessários podem ser usados para autenticação, segurança e funcionamento. Não há, no repositório atual, banner ou provedor de publicidade configurado.",
+          "Se cookies não essenciais ou analytics que dependam de consentimento forem ativados, aceitar e rejeitar deverão ter destaque equivalente e as preferências poderão ser alteradas depois."
+        ]
+      },
+      {
+        "heading": "12. Crianças, atualizações e contato",
+        "paragraphs": [
+          "O produto é planejado para pessoas adultas. A idade mínima e o procedimento para cadastro indevido precisam de validação jurídica.",
+          "Mudanças materiais em uma política vigente deverão gerar versão, resumo e novo aceite ou consentimento quando necessário.",
+          "Pessoa operadora, endereço, canal de suporte, canal de privacidade e eventual encarregado permanecem PENDENTES DE CONFIRMAÇÃO."
+        ]
+      }
+    ]
+  },
+  {
+    "key": "community_guidelines",
+    "title": "Diretrizes da Comunidade",
+    "version": "0.1-draft",
+    "status": "draft",
+    "updatedAt": "2026-11-23",
+    "route": "/diretrizes-da-comunidade",
+    "requiresAcceptance": false,
+    "materialChangeSummary": "Primeira minuta de regras de convivência e segurança para o Marcou Social.",
+    "reviewNotice": "MINUTA INTERNA — NÃO VIGENTE. As ferramentas sociais, de denúncia e de moderação ainda estão no roadmap. Estas diretrizes antecipam critérios para revisão e não afirmam que esses controles já estejam disponíveis.",
+    "sections": [
+      {
+        "heading": "1. Propósito",
+        "paragraphs": [
+          "O Marcou Social pretende aproximar clientes e profissionais por meio de perfis, serviços, conteúdo e contratações. A convivência deve ser respeitosa, segura, útil e relacionada a serviços legítimos."
+        ]
+      },
+      {
+        "heading": "2. Respeito e não discriminação",
+        "bullets": [
+          "Não assediar, ameaçar, perseguir, humilhar ou incentivar violência.",
+          "Não discriminar por raça, cor, origem, nacionalidade, religião, deficiência, idade, sexo, identidade de gênero, orientação sexual ou outra condição protegida.",
+          "Não publicar discurso de ódio, exploração sexual, conteúdo de abuso ou incentivo a dano."
+        ]
+      },
+      {
+        "heading": "3. Identidade, fraude e confiança",
+        "bullets": [
+          "Não se passar por outra pessoa, empresa ou autoridade.",
+          "Não falsificar experiência, avaliações, preço, disponibilidade, documentos ou alcance de uma verificação.",
+          "Não criar engajamento artificial, contas coordenadas, avaliações combinadas ou reservas fictícias.",
+          "Não solicitar pagamento, credencial ou documento por pretexto fraudulento."
+        ]
+      },
+      {
+        "heading": "4. Privacidade",
+        "bullets": [
+          "Não divulgar telefone, endereço, documento, mensagem ou imagem privada de terceiro sem autorização e finalidade legítima.",
+          "Não usar dados obtidos em uma contratação para publicidade, perseguição ou finalidade incompatível.",
+          "Não inserir endereço completo, CPF, dado de saúde ou informação financeira em posts, comentários, avaliações ou campos públicos."
+        ]
+      },
+      {
+        "heading": "5. Segurança dos serviços",
+        "bullets": [
+          "Não oferecer atividade ilegal, perigosa ou para a qual falte habilitação obrigatória.",
+          "Informar riscos, materiais, restrições e qualificações relevantes de forma honesta.",
+          "Não usar a plataforma para exploração, tráfico, violência, fraude financeira ou acesso indevido a residências e contas."
+        ]
+      },
+      {
+        "heading": "6. Spam e manipulação",
+        "bullets": [
+          "Não enviar mensagens repetitivas ou não solicitadas.",
+          "Não automatizar follows, curtidas, comentários, solicitações ou scraping sem autorização.",
+          "Não publicar links maliciosos, malware, phishing ou instruções para burlar controles de segurança.",
+          "Não manipular ranking, reputação, agenda ou disponibilidade."
+        ]
+      },
+      {
+        "heading": "7. Conteúdo profissional",
+        "paragraphs": [
+          "Fotos e relatos de trabalho devem respeitar direitos autorais, imagem, privacidade e regras da profissão. Antes e depois de um serviço só podem ser publicados com autorização válida das pessoas identificáveis e sem revelar endereço ou detalhes privados.",
+          "Posts e portfólio devem representar serviço real do próprio profissional. Conteúdo patrocinado futuro deverá ser identificado."
+        ]
+      },
+      {
+        "heading": "8. Denúncia, bloqueio e moderação",
+        "paragraphs": [
+          "Bloqueio, denúncia, fila de moderação, sanções e recurso estão planejados no roadmap e não devem ser apresentados como disponíveis antes da implementação.",
+          "Quando ativos, os controles deverão preservar a identidade do denunciante, registrar decisões e aplicar medidas proporcionais, reversíveis quando cabível e auditáveis. Em emergência, a pessoa deve procurar os serviços públicos competentes."
+        ]
+      },
+      {
+        "heading": "9. Consequências e recurso",
+        "paragraphs": [
+          "Uma política vigente poderá prever aviso, limitação, ocultação de conteúdo, suspensão ou encerramento conforme gravidade, recorrência, risco e obrigação legal.",
+          "Sempre que compatível com segurança e prevenção a fraude, a pessoa afetada deverá receber motivo e meio de contestação. Os detalhes operacionais ainda dependem da implementação de moderação e revisão jurídica."
+        ]
+      }
+    ]
+  },
+  {
+    "key": "content_reviews_policy",
+    "title": "Política de Conteúdo e Avaliações",
+    "version": "0.1-draft",
+    "status": "draft",
+    "updatedAt": "2026-11-23",
+    "route": "/politica-de-conteudo-e-avaliacoes",
+    "requiresAcceptance": false,
+    "materialChangeSummary": "Primeira minuta para perfil, catálogo, portfólio, posts e avaliações verificadas.",
+    "reviewNotice": "MINUTA INTERNA — NÃO VIGENTE. O Marcou ainda não possui posts, comentários ou avaliações. Esta política define requisitos para a futura implementação e será revisada antes da ativação.",
+    "sections": [
+      {
+        "heading": "1. Conteúdo atualmente disponível",
+        "paragraphs": [
+          "A aplicação atual permite dados de perfil do usuário, dados públicos do prestador, descrição de serviços e informações operacionais de agendamentos. Imagens de serviço, avatar, portfólio, posts, comentários e avaliações ainda não fazem parte da main na data desta minuta."
+        ]
+      },
+      {
+        "heading": "2. Autoria e autorização",
+        "bullets": [
+          "Publicar apenas conteúdo próprio ou licenciado/autorizado.",
+          "Obter autorização adequada antes de mostrar clientes, imóveis, documentos, marcas ou obras de terceiros.",
+          "Não remover créditos, marcas d'água ou informações de autoria para sugerir trabalho próprio.",
+          "Responder por informações profissionais, ofertas e alegações publicadas."
+        ]
+      },
+      {
+        "heading": "3. Privacidade em mídia e texto",
+        "paragraphs": [
+          "Conteúdo público não pode revelar endereço completo, telefone privado, documento, placa, chave, conversa, comprovante ou outra informação que identifique ou coloque alguém em risco.",
+          "Metadados de arquivo e localização devem ser minimizados. Texto alternativo deve descrever a mídia sem repetir dados privados."
+        ]
+      },
+      {
+        "heading": "4. Conteúdo proibido",
+        "bullets": [
+          "Material ilegal, fraudulento, enganoso, discriminatório, ameaçador ou que incentive dano.",
+          "Nudez ou exploração sexual não relacionada a finalidade legítima e permitida do serviço.",
+          "Malware, phishing, spam, venda proibida ou instrução para burlar segurança.",
+          "Antes/depois falsificado, credencial inexistente ou resultado garantido sem base.",
+          "Promoção disfarçada ou destaque pago sem identificação, quando esses recursos existirem."
+        ]
+      },
+      {
+        "heading": "5. Vínculo entre post e serviço",
+        "paragraphs": [
+          "Um post futuro só poderá vincular serviço pertencente ao mesmo perfil profissional. O vínculo não poderá alterar preço, duração, disponibilidade ou estado da reserva, que continuam sob autoridade do catálogo e do motor de agendamentos."
+        ]
+      },
+      {
+        "heading": "6. Avaliações verificadas",
+        "paragraphs": [
+          "Avaliações futuras só poderão ser criadas após contratação elegível e concluída conforme regra publicada. Curtidas, seguidores e comentários não equivalem a avaliação verificada.",
+          "Cada autor deverá avaliar a própria experiência de forma honesta, específica e respeitosa, sem incluir dado pessoal desnecessário. A pessoa avaliada não poderá apagar unilateralmente uma avaliação apenas por ser desfavorável."
+        ],
+        "bullets": [
+          "Uma avaliação por autor, alvo e contratação elegível.",
+          "Proibição de autoavaliação, troca de avaliações, recompensa condicionada à nota ou ameaça.",
+          "Resposta pública, contestação e moderação com trilha de auditoria.",
+          "Agregados devem excluir avaliações inelegíveis segundo regra determinística."
+        ]
+      },
+      {
+        "heading": "7. Moderação e preservação",
+        "paragraphs": [
+          "Conteúdo poderá ser limitado ou removido por violação, risco, fraude ou obrigação legal quando o sistema de moderação estiver ativo. A decisão deverá registrar alvo, motivo, responsável e instante.",
+          "Excluir da exibição não significa apagar imediatamente evidência necessária para recurso, segurança ou exercício de direitos. A retenção deverá seguir a política específica ainda pendente no roadmap de privacidade."
+        ]
+      },
+      {
+        "heading": "8. Ranking e transparência",
+        "paragraphs": [
+          "O ranking inicial do feed e da busca deverá usar sinais limitados e explicáveis. Pagamento futuro por destaque não poderá ser apresentado como relevância orgânica ou verificação.",
+          "Mudanças materiais nos critérios, elegibilidade de avaliações ou sanções exigem atualização desta política e, quando aplicável, novo aceite."
+        ]
+      }
+    ]
+  }
+]
