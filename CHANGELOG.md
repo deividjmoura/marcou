@@ -33,6 +33,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
+- `npm run test:db` passa a executar também `scripts/booking-concurrency.mjs`, integrando à validação padrão os cenários concorrentes de criação e transição de agendamentos.
 - Fluxo de login por senha (`loginAction`), cadastro imediato (`signupAction`),
   callback OAuth (`/auth/callback`) e confirmação de e-mail (`/auth/confirm`)
   unificados em `ensureAuthProfile`: logins recorrentes executam 1 único
