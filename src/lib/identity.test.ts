@@ -28,6 +28,26 @@ describe("identity helpers", () => {
     expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
   });
 
+  it("allows only the production Netlify host and numbered PR previews as request origins", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
+
+    expect(trustedAppOrigin("https://marcoou.netlify.app")).toBe(
+      "https://marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://deploy-preview-127--marcoou.netlify.app")).toBe(
+      "https://deploy-preview-127--marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://deploy-preview-abc--marcoou.netlify.app")).toBe(
+      "https://marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://marcoou--attacker.netlify.app")).toBe(
+      "https://marcoou.netlify.app",
+    );
+    expect(trustedAppOrigin("https://attacker.example")).toBe(
+      "https://marcoou.netlify.app",
+    );
+  });
+
   it("remove caracteres de formato invisíveis da origem configurada", () => {
     // U+2060 (WORD JOINER) no final do domínio, como observado em produção.
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\u2060");
