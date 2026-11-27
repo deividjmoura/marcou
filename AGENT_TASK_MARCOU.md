@@ -1,6 +1,32 @@
 # Marcou — estado atual e continuidade
 
-Última atualização: 24/11/2026
+Última atualização: 25/11/2026
+
+## Google Calendar — Issue #29 — 25/11/2026
+
+- Branch `arena/9e68c2bb-marcou` integra `feat/29-google-calendar-sync`
+  (`b83e0cd`) sobre a `main` `9b92451`. Sem push, PR ou Supabase remoto; a
+  migration `20261125153000_google_calendar_sync.sql` segue não aplicada.
+- Tabela de tokens renomeada para `calendar_connections`. OAuth com state
+  consumido atomicamente e preso ao usuário, escopo `calendar.events`
+  obrigatório e `/connect` só via POST com checagem de origem. Worker com um
+  job por reserva, escritas verificadas, estado `dead` e suspensão por
+  `invalid_grant`. Desconexão mantém tokens/vínculos até a limpeza terminar.
+- Validação local: lint, typecheck, 204 testes Vitest, `test:db` (legado 69,
+  social 47, identidade 32, discovery 40, calendar 83 — todos sem falha) e
+  build. Fluxo OAuth real, Google API, scheduler e CI não validados.
+- Branch empilhada sobre a PR #123 (merge de `16f0166`, autorizado): as 3
+  tabelas do Calendar entram na matriz de `scripts/privileges-check.mjs`
+  (fase `before` exclui matriz e Calendar) e em
+  `docs/handoffs/privilegios-tabelas.md`. A #123 precisa ser mesclada antes.
+  PR #126 (draft). Reenvio ao conectar (backfill) via trigger em
+  `calendar_connections`. Validação empilhada: 217 testes, `test:db` (booking
+  116, social 50, identidade 32, discovery 40, privilégios 43/49, calendar 107
+  — sem falhas),
+  `audit` 0/0 e build.
+- #125 na mesma branch: `20261125140000_harden_public_table_privileges.sql`.
+  `privileges-check` emula os defaults desde a primeira migration: after 94/0
+  fluxos e 31/0 estruturais. Sem o hardening, 42 falhas.
 
 ## Estabilização de autenticação, velocidade de login e changelog obrigatório — 24/11/2026
 
