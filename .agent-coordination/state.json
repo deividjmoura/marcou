@@ -362,8 +362,8 @@
       "pull_requests": [],
       "status": "ci_retry_pending",
       "active_assignment": "A correção FOR UPDATE já está integrada na main via migration incremental. Foi identificada divergência de validação: scripts/booking-concurrency.mjs existe na main, mas npm run test:db não o executa. Preparada branch isolada fix/booking-transition-test-wiring com alteração somente em package.json; não fazer merge/deploy/produção.",
-      "current_state": "A primeira CI da PR #134 executou npm install com sucesso, mas parou no primeiro gate check:changelog: detectou alteração em package.json sem entrada nova no CHANGELOG.md. Nenhum dos testes seguintes foi executado nessa tentativa. Corrigido o motivo na branch de validação: adicionado registro em CHANGELOG.md explicando que test:db passa a executar booking-concurrency.mjs. Novo HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef; branch agora 2 commits à frente/0 atrás de main. PR #134 continua Draft; GitHub reportou mergeable=false imediatamente após atualização, aguardando recálculo/CI.",
-      "next_action": "Acompanhar a nova execução CI da PR #134 no HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Verificar check:changelog e todos os testes seguintes, especialmente test:db e o harness concorrente. Não fazer merge.",
+      "current_state": "A primeira CI da PR #134 executou npm install com sucesso, mas parou no primeiro gate check:changelog: detectou alteração em package.json sem entrada nova no CHANGELOG.md. Nenhum dos testes seguintes foi executado nessa tentativa. Corrigido o motivo na branch de validação: adicionado registro em CHANGELOG.md explicando que test:db passa a executar booking-concurrency.mjs. Novo HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef; branch agora 2 commits à frente/0 atrás de main. PR #134 continua Draft; GitHub reportou mergeable=false imediatamente após atualização, aguardando recálculo/CI. Nova CI #283 (run 46048704272) iniciou no HEAD atualizado 1ee63754a08adb68e15f05b73b86861ba4fd68ef; setup/checkout concluídos, npm install ainda em andamento na última consulta. Os gates restantes aguardam execução.",
+      "next_action": "Aguardar conclusão do run 46048704272 e validar check:changelog, lint, typecheck, npm test, npm run test:db (incluindo booking-concurrency.mjs) e build no SHA 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Não fazer merge.",
       "last_verified": {
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72",
         "integrated_migration_commit": "d59a81db0d387095e249b1870b50c19c55d50499",
@@ -379,7 +379,7 @@
         "validation_branch_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
         "validation_branch_ahead": 1,
         "validation_branch_behind": 0,
-        "ci": "Run 46048607429 falhou em check:changelog antes dos testes; falha corrigida com atualização do CHANGELOG. Nova execução pendente no HEAD 1ee63754a08adb68e15f05b73b86861ba4fd68ef.",
+        "ci": "Run 46048704272 (#283) em andamento no SHA exato 1ee63754a08adb68e15f05b73b86861ba4fd68ef; setup/checkout success, npm install in_progress, demais steps pending.",
         "notes": "Primeira CI: npm install success; check:changelog failure porque package.json mudou sem CHANGELOG; lint/typecheck/npm test/test:db/build skipped. Alteração adicionada em CHANGELOG.md, diff total agora 2 arquivos (package.json e CHANGELOG.md), sem migrations ou lógica de produção.",
         "pr": 134,
         "pr_url": "https://github.com/deividjmoura/marcou/pull/134",
@@ -387,19 +387,6 @@
         "workflow": "CI trigger confirmado por pull_request para main; runs ainda não visíveis na consulta inicial"
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T15:09:00-03:00",
-          "task": "Revalidar integridade concorrente de transition_booking, histórico de migrations, harness e CI; preparar apenas wiring incremental faltante",
-          "status": "incremental_test_wiring_prepared_validation_pending",
-          "result": "Migration incremental já está na main no commit d59a81d; dois FOR UPDATE confirmados. Migration histórica preservada (blob 9466efa em main e branch). Harness na main tem 25 assertions e cobre duas sessões com proof_received vs cancel, estado final e exatamente dois eventos. Divergência: package.json da main não chama booking-concurrency.mjs em test:db. Criada branch isolada fix/booking-transition-test-wiring a partir de main, commit 1bf0a601d95bde3fb45e4008a60dac677b5ab971, alterando somente package.json. Não mexeu na migration nem em produção.",
-          "head_sha": "main 69d02173653384e082476e7879ee9f33672dec72; validation branch 1bf0a601d95bde3fb45e4008a60dac677b5ab971",
-          "tests": "Inspeção estática: 25 chamadas check(); transições incompatíveis em clientes distintos; perdedora falha e total de eventos permanece 2. Testes não executados por ausência de checkout/runtime. CI/status checks vazios para SHA exato 1bf0a601d95bde3fb45e4008a60dac677b5ab971. O registro 21/21 é histórico do commit d59a81d, não validação atual do harness.",
-          "blockers": [
-            "Execução npm run test:db, npm test, typecheck, lint e build pendente em runner com checkout.",
-            "CI não disponível para SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971."
-          ],
-          "next_action": "Executar testes e CI no SHA 1bf0a601d95bde3fb45e4008a60dac677b5ab971; sem merge/deploy/produção."
-        },
         {
           "timestamp": "2026-11-27T18:19:51.426Z",
           "task": "Abrir PR Draft de validação para executar CI do wiring do harness concorrente",
@@ -423,6 +410,18 @@
             "Aguardar nova CI no HEAD atualizado e validar test:db."
           ],
           "next_action": "Conferir CI no novo HEAD e logs de todos os steps."
+        },
+        {
+          "timestamp": "2026-11-27T18:20:50.129Z",
+          "task": "Acompanhar reinício da CI após correção do changelog",
+          "status": "ci_running",
+          "result": "Nova CI run 46048704272 (#283) iniciou no SHA atualizado 1ee63754a08adb68e15f05b73b86861ba4fd68ef. Setup e checkout concluídos; npm install em andamento na última leitura. Nenhum resultado dos testes disponível ainda.",
+          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
+          "tests": "Run #283 in_progress; steps de qualidade ainda pendentes.",
+          "blockers": [
+            "Aguardar conclusão da CI."
+          ],
+          "next_action": "Verificar todos os steps, especialmente test:db e o harness concorrente."
         }
       ]
     },
