@@ -1,4 +1,6 @@
 {
+  "coordination_branch_head": "be6fe7e635ee182a3d827a06128c9da656c03882",
+  "state_blob_sha": "2b5c2efcd20ad5b4c62082274b4086c09a46debd",
   "updated_at": "2026-11-27",
   "agents": {
     "agent_4_pr_39": {
@@ -7,34 +9,36 @@
         39
       ],
       "status": "patch_ready_push_blocked",
-      "current_state": "Resolução da PR #39 validada e reaplicada: o patch aplica limpo sobre a main 69d02173653384e082476e7879ee9f33672dec72 e reproduz exatamente a árvore 3f8890e1a097069b2a3cc224c8b88dcdead3b101. A branch real feat/24-provider-agenda segue em 6f44b506da887ecc90486c80e6b9789578b23837 (Draft, CONFLICTING): este agente não tem permissão de sessão para push fora de arena/9c0da280-marcou, então a atualização remota e o CI no novo SHA continuam pendentes.",
-      "next_action": "No Codespaces: git fetch origin; git switch -C feat/24-provider-agenda origin/main; git show origin/arena/9c0da280-marcou:patches/pr-39/pr-39-agenda.patch | git apply --3way; commit; git push --force-with-lease origin feat/24-provider-agenda. Depois registrar o novo HEAD, rodar check:changelog, lint, typecheck, test, test:db, audit e build e aguardar CI e Deploy Preview nesse SHA. Não mergear enquanto Draft/conflitante/sem CI.",
+      "active_assignment": "Recheck main and feat/24-provider-agenda, safely apply/port the agenda patch without overwriting remote work, then run tests and verify CI/preview at exact resulting SHA. If push unavailable, give minimal Codespaces steps.",
+      "current_state": "Resolução da PR #39 validada e reaplicada sobre a main 69d02173653384e082476e7879ee9f33672dec72 (patch aplica com --check e reproduz a árvore 3f8890e1a097069b2a3cc224c8b88dcdead3b101). A branch real feat/24-provider-agenda segue em 6f44b506da887ecc90486c80e6b9789578b23837 (Draft, CONFLICTING). Bloqueio: esta sessão só pode fazer push em arena/9c0da280-marcou, então a atualização remota, o CI e o preview no novo SHA continuam pendentes.",
+      "next_action": "No Codespaces (quem tiver push em feat/24-provider-agenda): git fetch origin; git switch -C feat/24-provider-agenda origin/main; git show origin/arena/9c0da280-marcou:patches/pr-39/pr-39-agenda.patch | git apply --3way; commit; git push --force-with-lease origin feat/24-provider-agenda. Registrar o novo HEAD, rodar check:changelog, lint, typecheck, test, test:db, audit e build, e aguardar CI/Deploy Preview nesse SHA. Não mergear enquanto Draft/conflitante/sem CI.",
       "last_verified": {
         "verified_at": "2026-11-27",
         "branch": "feat/24-provider-agenda",
         "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "pr_state": "open_draft_conflicting",
         "patch": "patches/pr-39/pr-39-agenda.patch",
         "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
         "patch_bytes": 36241,
         "local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
-        "commit_in_work_branch": "e8e02adf4135ea8944912b18c990c97941db3f31",
+        "commit_in_work_branch": "51d8c528ca1de7a95fb4a18541d6035eb27cfa90",
         "ci": null,
-        "ci_note": "Somente execução antiga de 2026-11-16 no HEAD 6f44b50; nenhum CI no SHA da resolução.",
+        "ci_note": "Nenhum CI no SHA da resolução; única execução quality (success) é de 2026-11-16 no HEAD 6f44b50.",
         "deploy_preview": null,
-        "deploy_preview_note": "Só status Vercel de 2026-11-16 no HEAD 6f44b50; sem Deploy Preview Netlify nesse SHA.",
-        "notes": "Valores reconferidos neste turno; a árvore local é reprodutível aplicando o patch sobre 69d0217."
+        "deploy_preview_note": "Somente status Vercel de 2026-11-16 no HEAD 6f44b50; sem Deploy Preview Netlify.",
+        "notes": "Fatos reconferidos em 2026-11-27, incluindo coordination/agents em be6fe7e."
       },
       "updates": [
         {
           "timestamp": "2026-11-27",
-          "task": "PR #39 - portar a resolução da agenda para a branch real e validar o SHA final",
+          "task": "PR #39 - levar a resolução da agenda à branch real e validar o SHA final",
           "status": "blocked_on_push_permission",
-          "result": "main e branch da PR sem mudança; patch íntegro (SHA-256 eaba825b...), aplica com --check em clone limpo e reproduz a árvore 3f8890e1...; validações repetidas: changelog ok, lint 0 erros, typecheck ok, 165 testes, test:db 188, audit 0/0, build ok. Branch remota não atualizada: sessão restrita a push em arena/9c0da280-marcou.",
+          "result": "main (69d0217) e branch da PR (6f44b50) sem mudança; patch íntegro (eaba825b...), aplica com --check em clone limpo e reproduz a árvore 3f8890e1...; suíte completa verde; push em feat/24-provider-agenda negado pela política de sessão, então o SHA final e o CI não existem.",
           "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
           "tests": "check:changelog ok; lint 0 erros/3 warnings preexistentes; typecheck ok; vitest 165 passed; test:db 188 passed; audit 0 falhas; build ok",
-          "blockers": "Sem permissão de sessão para push em feat/24-provider-agenda; CI e preview não podem ser gerados no SHA da resolução.",
-          "next_action": "Aplicar o patch no Codespaces, push --force-with-lease, registrar o novo HEAD, rodar CI e conferir preview nesse SHA; não mergear em Draft."
+          "blockers": "Sem permissão de sessão para push fora de arena/9c0da280-marcou; CI/preview impassíveis de gerar no SHA da resolução.",
+          "next_action": "Aplicar o patch no Codespaces, push --force-with-lease, registrar o novo HEAD, rodar CI e conferir preview nesse SHA; sem merge em Draft."
         }
       ]
     }
