@@ -147,6 +147,7 @@ try {
     "oauth_state_user_id",
     "connected_at",
     "disconnect_requested_at",
+    "revocation_pending_at",
     "updated_at",
   ];
   check(
@@ -214,6 +215,7 @@ try {
     "public.claim_calendar_sync_jobs(integer)": true,
     "public.consume_calendar_oauth_state(text, uuid)": true,
     "public.finalize_calendar_disconnect(uuid)": true,
+    "public.complete_calendar_disconnect(uuid)": true,
   };
   for (const [signature, serviceRoleExecutes] of Object.entries(functions)) {
     const meta = await db.query(
@@ -224,7 +226,7 @@ try {
     check(`${signature}: SECURITY DEFINER`, row?.prosecdef === true);
     check(
       `${signature}: search_path fixo`,
-      Array.isArray(row?.proconfig) && row.proconfig.some((item) => item.startsWith("search_path=")),
+      Array.isArray(row?.proconfig) && row.proconfig.some((item) => item === "search_path=pg_catalog, public"),
     );
     check(`${signature}: sem EXECUTE para PUBLIC`, !/(^|[{,])=X/.test(row?.acl ?? ""), row?.acl);
     for (const role of ["anon", "authenticated"]) {
@@ -511,6 +513,7 @@ try {
     "calendar_connections_disconnect_suspended",
   );
   const finalize = async () => (await service_role.query(`select * from public.finalize_calendar_disconnect($1)`, [provider])).rows[0];
+  const complete = async () => (await service_role.query(`select public.complete_calendar_disconnect($1) as completed`, [provider])).rows[0].completed;
   check("finalize sem desconexão pedida não apaga", (await finalize()).finalized === false);
 
   await db.query(`update public.calendar_sync_outbox set status='succeeded', processing_started_at=null, lease_token=null where status in ('processing','pending','failed')`);
@@ -539,12 +542,18 @@ try {
   await db.query(`update public.calendar_sync_outbox set status='succeeded', processing_started_at=null, lease_token=null where id=$1`, [processingJob.id]);
   const finalized = await finalize();
   check(
-    "finalize apaga a conexão e devolve o refresh token cifrado para revogação",
+    "finalize preserva token cifrado até a revogação externa",
     finalized.finalized === true && finalized.revoke_token_ciphertext === "cipher",
     JSON.stringify(finalized),
   );
+  const revocationPending = await db.query(
+    `select revocation_pending_at from public.calendar_connections where provider_id=$1`,
+    [provider],
+  );
+  check("revogação pendente permanece persistida para retry", revocationPending.rowCount === 1 && revocationPending.rows[0].revocation_pending_at !== null);
+  check("complete_calendar_disconnect remove após revogação confirmada", await complete() === true);
   const remaining = await db.query(`select count(*)::int as n from public.calendar_connections where provider_id=$1`, [provider]);
-  check("conexão (tokens) removida", remaining.rows[0].n === 0);
+  check("conexão (tokens) removida após complete", remaining.rows[0].n === 0);
   const orphanKept = await db.query(`select orphaned_at from public.booking_calendar_events where booking_id=$1`, [mapped]);
   check("vínculo órfão mantido como rastro", orphanKept.rowCount === 1 && orphanKept.rows[0].orphaned_at !== null);
 
