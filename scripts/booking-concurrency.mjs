@@ -30,6 +30,11 @@ const DATABASE = "marcou_concurrency";
 let passed = 0;
 let failed = 0;
 
+process.on("unhandledRejection", (reason) => {
+  console.error("UNHANDLED REJECTION:", reason);
+  process.exit(1);
+});
+
 function check(name, condition, extra = "") {
   if (condition) {
     passed += 1;
@@ -124,6 +129,7 @@ const migrations = [
 for (const file of migrations) {
   const sql = await readFile(file, "utf8");
   await db.query(sql);
+  console.log(`aplicada: ${file}`);
 }
 
 function clientFor(role) {
@@ -192,6 +198,7 @@ const D3_09 = "2026-12-15T12:00:00.000Z"; // 09:00 BRT
 const D3_1030 = "2026-12-15T13:30:00.000Z"; // 10:30 BRT
 const D4_09 = "2026-12-22T12:00:00.000Z"; // 09:00 BRT
 const D4_1030 = "2026-12-22T13:30:00.000Z"; // 10:30 BRT
+const D5_09 = "2026-12-29T12:00:00.000Z"; // 09:00 BRT (nova data para não conflitar)
 
 async function createBooking(client, startsAt, key, name = "Cliente") {
   const result = await client.query(
@@ -317,9 +324,41 @@ console.log("\n[transição simultânea: duas confirmações de comprovante no m
   check("estado final é pending_review (não corrompido)", final.status === "pending_review", `obteve ${final.status}`);
 }
 
+console.log("\n[transições mutuamente excludentes: prova vs cancelamento]");
+{
+  const booking = await createBooking(c1, D3_1030, `mutex-${uuid()}`, "Mutex");
+  // proof_received (vai para pending_review) e cancel (vai para cancelled)
+  // são mutuamente excludentes a partir de pending_payment.
+  const attempts = await Promise.allSettled([
+    c1.query(
+      `select * from public.transition_booking($1, 'proof_received', $2)`,
+      [booking.id, `mutex-key-1-${uuid()}`],
+    ),
+    c2.query(
+      `select * from public.transition_booking($1, 'cancel', $2)`,
+      [booking.id, `mutex-key-2-${uuid()}`],
+    ),
+  ]);
+  const fulfilled = attempts.filter((a) => a.status === "fulfilled");
+  const rejected = attempts.filter((a) => a.status === "rejected");
+  check("exatamente uma transição mutuamente excludente aplica", fulfilled.length === 1, `obteve ${fulfilled.length}`);
+  check("a outra é rejeitada com invalid_transition", rejected.length === 1, `obteve ${rejected.length}`);
+  const final = (
+    await db.query(`select status from public.bookings where id = $1`, [booking.id])
+  ).rows[0];
+  check("estado final é válido (pending_review ou cancelled)", ["pending_review", "cancelled"].includes(final.status), `obteve ${final.status}`);
+  const events = (
+    await db.query(
+      `select count(*)::int as total from public.booking_events where booking_id = $1`,
+      [booking.id],
+    )
+  ).rows[0];
+  check("não há eventos de auditoria duplicados", events.total === 2, `obteve ${events.total}`);
+}
+
 console.log("\n[repetição de transição já aplicada]");
 {
-  const booking = await createBooking(c1, D3_1030, `idem-trans-${uuid()}`, "IdemTrans");
+  const booking = await createBooking(c1, D5_09, `idem-trans-${uuid()}`, "IdemTrans");
   const first = (
     await c1.query(`select * from public.transition_booking($1, 'proof_received')`, [
       booking.id,
