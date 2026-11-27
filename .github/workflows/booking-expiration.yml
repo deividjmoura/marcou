@@ -39,6 +39,12 @@ jobs:
           if not re.fullmatch(r"[a-z0-9]{20}", project_ref):
               print("::error::SUPABASE_PROJECT_REF must be a 20-character lowercase project ref")
               raise SystemExit(1)
+          # Hard safety gate: this scheduler may only target a staging project.
+          # The production project ref is public configuration, not a secret.
+          production_project_ref = "peornypgltuueubmsucm"
+          if project_ref == production_project_ref:
+              print("::error::Refusing to run booking expiration against the production project ref; configure a staging ref in the booking-expiration-staging environment")
+              raise SystemExit(1)
           parsed = urlparse(url)
           host = (parsed.hostname or "").lower()
           expected_host = f"{project_ref}.supabase.co"

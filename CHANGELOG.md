@@ -11,7 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
-- Workflow de expiração automática exclusivamente (PR #128): GitHub Actions protegido por gate, Environment staging, validação de projeto Supabase, headers temporários e timeout/retry; reutiliza `expire_stale_bookings()` já existente e não cria RPC/migration de expiração.
+- Workflow de expiração automática exclusivamente (PR #128): GitHub Actions protegido por gate, Environment staging, validação de projeto Supabase, recusa explícita do project ref de produção, headers temporários e timeout/retry; reutiliza `expire_stale_bookings()` já existente e não cria RPC/migration de expiração.
 
 - `CHANGELOG.md` na raiz do repositório, `CONTRIBUTING.md` com o processo
   obrigatório de registro de mudanças e verificação automatizada
@@ -35,6 +35,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
+- Auditoria de segredos (`scripts/quality-audit.mjs`) passa a aceitar a forma `${{ secrets.NOME }}` do GitHub Actions como referência a placeholder, eliminando falso positivo em workflows legítimos; atribuições literais de valor e JWTs continuam sendo acusados.
 - `npm run test:db` passa a executar também `scripts/booking-concurrency.mjs`, integrando à validação padrão os cenários concorrentes de criação e transição de agendamentos.
 - Fluxo de login por senha (`loginAction`), cadastro imediato (`signupAction`),
   callback OAuth (`/auth/callback`) e confirmação de e-mail (`/auth/confirm`)

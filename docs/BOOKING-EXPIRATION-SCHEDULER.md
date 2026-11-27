@@ -36,7 +36,7 @@ Configure o GitHub Environment **`booking-expiration-staging`** e mantenha as cr
 
 - Environment secret `SUPABASE_URL`: URL HTTPS do projeto staging.
 - Environment secret `SUPABASE_SERVICE_ROLE_KEY`: service-role secret key do staging.
-- Environment variable `SUPABASE_PROJECT_REF`: project ref exato do staging (20 caracteres minúsculos), não é secret. O workflow exige que o hostname seja exatamente `${SUPABASE_PROJECT_REF}.supabase.co`; sufixo genérico não basta.
+- Environment variable `SUPABASE_PROJECT_REF`: project ref exato do staging (20 caracteres minúsculos), não é secret. O workflow exige que o hostname seja exatamente `${SUPABASE_PROJECT_REF}.supabase.co`; sufixo genérico não basta. O workflow também **recusa explicitamente o project ref de produção** (`peornypgltuueubmsucm`): qualquer configuração acidental do Environment com credenciais/variáveis de produção faz o job falhar antes de qualquer chamada RPC.
 
 Não use publishable/anon key como service-role credential. Nunca coloque a
 service role em variável pública, arquivo versionado, Netlify ou código client-side.
