@@ -91,7 +91,7 @@
     "dispatched_at": "2026-11-27",
     "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
-    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir.",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada.",
     "execution_order": [
       "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
@@ -127,7 +127,63 @@
       "agent_5": "state_entry=agent_5_r7_product_backlog",
       "agent_6": "state_entry=agent_6_r7_coordinator"
     },
-    "agent_model": "Seis agentes numerados Agent1–Agent6; Agent6 é coordenador/auditor independente e faz a limpeza final de branches."
+    "agent_model": "Seis agentes numerados Agent1–Agent6; Agent6 é coordenador/auditor independente e faz a limpeza final de branches.",
+    "wave_2": {
+      "opened_at": "2026-11-27 (noite)",
+      "origin": "Análise do coordenador/responsável após a primeira leva da rodada 7. Releia o GitHub antes de agir; os SHAs abaixo valem para este momento.",
+      "coordinator_analysis": {
+        "main": "4badea4b8ba8ecfa95bfdfa526dad606c5a56691 (CI quality success). Mergeadas na rodada: #137, #138 (substitui #32), #140 (substitui #133), #141 (Calendar), #142 (multi-serviços, substitui #131/#139).",
+        "fechadas_como_superadas": "#133, #46, #2, #41, #32, #131, #139.",
+        "abertas": "#127 (auth, pronta/limpa), #124 (reservas B3/B4), #68 (draft), #136 (draft, privilégios no CI), #130 (draft, auth), #67 (draft, design).",
+        "riscos_abertos": [
+          "ORDEM DE MIGRATIONS: a #142 trouxe 20261125120000 e 20261125130000, mas a main já tinha 20261125140000, 20261125153000 e depois 20261128000000/100. Violou o item 'versão maior que a última da main' do checklist (Agent 4 apontou antes do merge). Em banco novo funciona (CI verde); em ambiente que já aplicou migrations posteriores, a ordem pode exigir tratamento. Migration já mergeada NÃO deve ser editada: decidir e documentar (ver W2-A1-T3/W2-A6-T1).",
+          "Agent 2 relatou bloqueio de rede (DNS) para clonar o repo; #127 segue aberta. Alternativa: operar só pela API do GitHub (update-branch, CI no GitHub, merge via API).",
+          "Agent 6 ainda não iniciou a auditoria; 35 branches remotas e 61 issues abertas."
+        ]
+      },
+      "merge_queue": [
+        127,
+        124,
+        136,
+        130,
+        68,
+        67
+      ],
+      "tasks": {
+        "agent_1": [
+          "W2-A1-T1: #124 — atualizar sobre a main atual (4badea4+), resolver conflitos sem force-push, garantir parser BRL com milhar (B3), sinal, ações por papel (B4), autorização no banco, teste de regressão, CHANGELOG. CI verde no SHA exato e squash merge.",
+          "W2-A1-T2: #68 — após #124: confirmação e .ics com múltiplos serviços (duração e preço totais), reservas antigas de 1 serviço intactas, testes. Sair de Draft e mergear se o checklist estiver verde.",
+          "W2-A1-T3: ordem das migrations da #142 — documentar o problema em docs/BOOKING-OPS.md ou no runbook de produção (W2-A3-T2): qual ordem aplicar, se precisa de flag de aplicação fora de ordem, ou propor migration corretiva NOVA (versão maior que 20261128000100) se algo de fato quebrar. Nunca editar migration mergeada.",
+          "W2-A1-T4: fechar #21/#22 com aceite comprovado ou comentar o que falta."
+        ],
+        "agent_2": [
+          "W2-A2-T1: DESBLOQUEIO. Se o checkout não funciona, use SÓ a API do GitHub: PUT /pulls/127/update-branch, aguardar o CI no novo SHA, conferir o checklist e squash merge via API com expected_head_sha. Se nem a API estiver acessível, registre o bloqueio no state.json e avise o Agent 6, que está autorizado a assumir a #127 (registrando a troca de dono).",
+          "W2-A2-T2: #130 — reconstruir sobre a main com a #127 integrada: origem confiável/redirectTo, token_hash/type=recovery, code/PKCE, sem open redirect/loop produção-preview, testes com mocks. Sem e-mail real. Sair de Draft e mergear se verde.",
+          "W2-A2-T3: comentar em #70/#23 a evidência; o que exigir teste real em produção fica listado para o responsável (W2-A3-T2)."
+        ],
+        "agent_3": [
+          "W2-A3-T1: validar que expiração (#128) e lembretes (#38) continuam corretos com reservas de MÚLTIPLOS serviços após a #142 (duração/preço agregados, RPCs, idempotência por fuso). Corrigir com teste se achar defeito.",
+          "W2-A3-T2: criar docs/TESTE-REAL-PRODUCAO.md — roteiro ordenado para o RESPONSÁVEL testar em produção depois da rodada: ordem de aplicação das migrations (inclusive a questão da ordem da #142), variáveis de ambiente por fase, como ativar cada scheduler com segurança e como desligar, teste de recuperação de senha, OAuth/Google Calendar, reserva multi-serviço ponta a ponta, rollback. Só documentação; nada é aplicado ou ativado por agente. Pode pedir insumos aos demais pelo state.json.",
+          "W2-A3-T3: confirmar que issues #26/#13/#30/#20/#31 têm status e próxima ação atuais."
+        ],
+        "agent_4": [
+          "W2-A4-T1: #136 — atualizar sobre a main pós-#142, incluir os harnesses no test:db e ligar o privileges-check ao CI; garantir que a matriz cobre as tabelas novas (multi-serviços). Sair de Draft e mergear se verde. Fechar #125 se o aceite estiver cumprido.",
+          "W2-A4-T2: auditoria de segurança da #142 e #141 já na main (SECURITY DEFINER com search_path fixo, grants mínimos, RLS das tabelas novas, sem EXECUTE para PUBLIC/anon/authenticated onde não deve). Abrir PR corretiva pequena (migration NOVA) se achar falha.",
+          "W2-A4-T3: com a #142 integrada, informar ao Agent 6 se arena/9e68c2bb-marcou e arena/4017109f-marcou podem ser apagadas (comparar commits exclusivos)."
+        ],
+        "agent_5": [
+          "W2-A5-T1: #67 — reconciliar com a main, atualizar CHANGELOG, CI completo no SHA exato e inspeção visual com navegador headless a 1440 px e 390 px (sem overflow, sem erro de console, anexar evidência na PR). Se verde, sair de Draft e mergear; se não, registrar exatamente o que falta.",
+          "W2-A5-T2: revisar a #121 (temas claro/escuro) e as issues de design para ver se algo da #67 as cobre; comentar status.",
+          "W2-A5-T3: garantir que cada uma das ~61 issues abertas tem status e próxima ação em comentário (roadmap #72–#112 permanece aberto como backlog, sem fechar por contagem)."
+        ],
+        "agent_6": [
+          "W2-A6-T1: INICIAR AGORA a auditoria independente: para #137, #138, #140, #141, #142 confirmar SHA do merge, CI no SHA, vínculo com issues e conteúdo na main. Verificar em especial o ponto das migrations da #142 e informar o responsável no relatório.",
+          "W2-A6-T2: limpeza de branches em lotes, só com prova (PR MERGED e tip igual ao headRefOid, ou sem commits exclusivos, ou superada com evidência registrada). Candidatas já indicadas: docs/runbook-r7-autonomia, agent5/133-docs-main-reconciled, fix/131-multi-services-r7, fix/139-multi-services-final, fix/calendar-callback-fail-closed-worker-fencing, arena/f074e752-marcou, arena/fdad472c-marcou, arena/3b7c9d2f-marcou, feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration. Aguardar o Agent 4 para arena/9e68c2bb-marcou e arena/4017109f-marcou. Preservar main, coordination/agents e branches de PR aberta.",
+          "W2-A6-T3: acompanhar a fila de merges (127, 124, 136, 130, 68, 67) e verificar cada merge de forma independente; se o Agent 2 continuar bloqueado, assumir a #127.",
+          "W2-A6-T4: ao final, relatório no state.json + pergunta sobre GitHub Release (sem tag/Release sem autorização)."
+        ]
+      }
+    }
   },
   "shared_project_state": {
     "netlify": {
