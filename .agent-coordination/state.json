@@ -4,14 +4,14 @@
   "coordination_branch": "coordination/agents",
   "coordination_file": ".agent-coordination/state.json",
   "updated_at": "2026-11-27",
-  "purpose": "Shared, compact handoff state for parallel agents. This file is the source of truth for task ownership, latest outcomes, SHAs, blockers and next actions.",
+  "purpose": "Shared compact handoff and dispatch state for parallel agents. Source of truth for ownership, latest outcomes, SHAs, blockers and next actions.",
   "protocol": {
     "read_before_work": true,
     "write_after_every_task": true,
     "write_after_material_progress": true,
-    "update_scope": "Modify only the current agent's entry and shared metadata directly affected by its work. Preserve all other agents' entries.",
+    "update_scope": "Modify only your own agent entry and shared metadata directly affected. Preserve all other entries.",
     "history_limit_per_agent": 3,
-    "history_policy": "Append one concise update per completed task or material milestone. Keep only the newest 3 updates. Keep current_state and next_action accurate even when older updates are dropped.",
+    "history_policy": "Append one concise update per completed task or material milestone; retain only newest 3. Keep current_state and next_action current.",
     "required_update_fields": [
       "timestamp",
       "task",
@@ -22,16 +22,27 @@
       "blockers",
       "next_action"
     ],
-    "sha_policy": "Always record the exact branch and commit SHA actually inspected or changed. Never report CI, preview, tests or deployment as current if they belong to another SHA.",
-    "concurrency": "Before writing, fetch the latest file from coordination/agents and use its current blob SHA. If update fails due to conflict/stale SHA, fetch again, merge only your own entry, and retry. Never overwrite another agent's update.",
-    "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or explicitly marked unknown.",
-    "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values. Record only secret names and rotation status if relevant.",
+    "sha_policy": "Record exact branch and SHA inspected/changed. CI, preview and tests count only for that exact SHA.",
+    "concurrency": "Before every write fetch latest state.json from coordination/agents, use current blob SHA, merge only your entry. On stale SHA/conflict refetch and retry. Never overwrite another agent.",
+    "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or marked unknown.",
+    "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values.",
     "safety": [
-      "No production changes, external configuration changes, deploys, remote migrations or merges unless the user explicitly authorizes that exact action.",
+      "No merge, production changes, external configuration changes, deploys or remote migrations without explicit user authorization for that exact action.",
       "Do not change PR #127.",
-      "Do not expand task scope or modify another agent's ownership area without coordination."
+      "Do not expand scope or modify another agent's ownership."
     ],
-    "handoff": "A new agent must read this file first, inspect the live PR/branch state, then continue from current_state and next_action. Historical entries are context, not proof of current remote state."
+    "handoff": "New agents read this file first, inspect live PR/branch state, then continue from active_assignment/current_state/next_action. Historical entries are not proof of current remote state.",
+    "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update."
+  },
+  "dispatch": {
+    "instruction": "These are the current delegated tasks. Each agent should read this file and execute only the assignment matching its own key. User will send a short message: 'Leia o state.json na branch coordination/agents e continue sua tarefa atribuída. Atualize o arquivo após cada marco.'",
+    "dispatched_at": "2026-11-27",
+    "assignments": {
+      "agent_1_pr_131": "Verify PR #131 remains at the audited SHA with current CI and review status; produce a concise merge-readiness report only. Do not merge. If SHA changed, rerun relevant checks before verdict.",
+      "agent_2_pr_128_and_38": "Implement only the two identified #128 caveats: restrict workflow_dispatch to refs/heads/main and add DB assertions for eligible/ineligible expiration, repeated-call idempotency and concurrent calls. Then run tests/CI on exact new SHA. Do not merge or enable scheduler. Leave #38 unchanged unless a regression is discovered.",
+      "agent_3_pr_130": "Reverify PR #130 live HEAD/CI and produce a precise functional-test runbook for production and Deploy Preview using a controlled test account. Check preview-origin behavior and expected email link contract. Do not send emails, use external services, change settings or deploy. Note credential rotation as an external security follow-up without handling secrets.",
+      "agent_4_pr_39": "Continue PR #39: recheck main and feature branch, safely apply/port the agenda patch to the real feature branch without overwriting remote work, then validate tests, CI and preview on exact resulting SHA. If push is unavailable, provide minimal Codespaces steps. Do not merge or close."
+    }
   },
   "shared_project_state": {
     "netlify": {
@@ -54,8 +65,8 @@
       ],
       "recovery_template_status": "updated_and_verified_by_management_api_readback",
       "recovery_template_contract": "Uses {{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery",
-      "pending": "Perform controlled functional recovery test only after code/preview readiness. No recovery email has been reported as sent or tested yet.",
-      "security_note": "A previous pasted configuration contained OAuth/SMTP credential material. Rotate exposed credentials at their providers and update secrets through the approved secure path. Never copy credential values into this file, logs, prompts or chat."
+      "pending": "Controlled functional recovery test remains pending; no email sent/tested reported.",
+      "security_note": "Previously pasted configuration contained OAuth/SMTP credential material. Rotate exposed credentials at providers and update secrets securely. Never copy credential values into this file, logs, prompts or chat."
     }
   },
   "agents": {
@@ -65,27 +76,27 @@
         131
       ],
       "status": "audit_completed_approved",
-      "current_state": "Auditoria final de segurança e integridade concluída. PR #131 aprovada. Tabela notifications: authenticated tem apenas SELECT, public/anon sem privilégios, UPDATE direto negado por teste. RLS policies correspondem aos privilégios. Migrations seguras e consistentes.",
-      "next_action": "Aguardando revisão final e merge da PR #131. Não realizar merge.",
+      "active_assignment": "Verify current PR head and CI still match audited SHA 955f9a8d40981096dedeee55b2c77964895f5bf9; provide merge-readiness only. If changed, re-audit relevant checks. No merge.",
+      "current_state": "Final security/integrity audit completed and approved. notifications: authenticated SELECT only; public/anon no privileges; direct UPDATE denied by test; RLS policies match grants; migrations consistent.",
+      "next_action": "Verify live PR head/review/CI and report whether approved audit remains valid. Do not merge.",
       "last_verified": {
         "branch": "fix/booking-multiple-services-pr123",
         "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-        "ci": "typecheck 0 erros, lint 0 erros, audit 0 falhas/0 avisos, testes unitários 155/155, test:db 4 scripts aprovados (db-check 69/0, social-foundation 47/0, identity 32/0, discovery 40/0), build aprovado, check:changelog aprovado",
-        "notes": "Tabela notifications auditada: authenticated mantém apenas SELECT; public e anon sem privilégios; sem INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER indevidos. RLS policies notifications_select_own e notifications_update_own correspondem aos privilégios. Via RPCs mark_notification_read/mark_all_notifications_read (SECURITY DEFINER) filtram por recipient_id = auth.uid(). Migration 20261125130000 usa REVOKE ALL antes de GRANT. Histórico preservado (serviço único → booking_services espelho)."
+        "ci": "typecheck 0 errors, lint 0, audit 0 failures/0 warnings, unit 155/155, test:db 4 scripts passed (69/0,47/0,32/0,40/0), build and changelog passed",
+        "notes": "notifications grants and RLS verified; RPCs mark_notification_read/mark_all_notifications_read filter recipient_id=auth.uid(); migration 20261125130000 REVOKE ALL before GRANT."
       },
       "updates": [
         {
           "timestamp": "2026-11-27T17:13:00-03:00",
-          "task": "Auditoria final de segurança e integridade PR #131",
+          "task": "Final security and integrity audit PR #131",
           "status": "audit_completed_approved",
-          "result": "APROVADA — grants efetivos de notifications confirmados por teste de privilégios: authenticated=[SELECT], public/anon=[nenhum], UPDATE direto negado. Todos os testes passaram.",
+          "result": "APPROVED. authenticated=[SELECT], public/anon=[none], direct UPDATE denied. All relevant tests passed.",
           "head_sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
-          "tests": "privileges-check 43/0 antes + 43/0 depois; test:db db-check 69/0 social-foundation 47/0 identity 32/0 discovery 40/0; unit tests 155/155; typecheck 0; lint 0; audit 0/0; build aprovado; check:changelog aprovado",
+          "tests": "privileges-check 43/0 before+after; DB scripts 69/0,47/0,32/0,40/0; unit 155/155; typecheck/lint/audit/build/changelog passed.",
           "blockers": [],
-          "next_action": "Aguardando revisão final e merge da PR #131. Não realizar merge."
+          "next_action": "Verify current PR SHA and CI; report merge readiness without merging."
         }
-      ],
-      "updated_at": "2026-11-27T17:13:00-03:00"
+      ]
     },
     "agent_2_pr_128_and_38": {
       "scope": "PR #128 booking expiration and PR #38 reminders",
@@ -94,25 +105,28 @@
         38
       ],
       "status": "audit_completed_with_caveats",
-      "current_state": "Joint technical audit re-verified live PR heads and CI. PR #128 approved with caveats: workflow_dispatch should be restricted to main and tests should assert RPC eligibility/state/idempotency/concurrency. PR #38 approved: route/auth/service-role, reminders-only scope, RPC idempotency/row locking, test and audit validated. Both remain Draft/Open; no merges, scheduler activation, secrets, deploys or production changes.",
-      "next_action": "Before merging #128, add main-ref restriction to workflow_dispatch and stronger DB assertions for expire_stale_bookings (eligible/noneligible states, repeat idempotency, concurrent calls). Then merge #128 before #38 only after user approval. PR #38 can remain staged until user approves merge and reminder scheduler setup.",
+      "active_assignment": "Fix the two #128 caveats only: main-ref restriction for workflow_dispatch and stronger DB tests for eligibility, ineligible states, idempotency and concurrency. Re-run tests and CI on the new SHA. Do not merge or enable scheduler.",
+      "current_state": "Joint audit: #128 approved with caveats; #38 approved. #128 workflow_dispatch lacks main-ref restriction and DB tests need stronger assertions. #38 cron auth/service-role scope/idempotency/tests/audit validated.",
+      "next_action": "Fix #128 caveats, verify exact SHA and CI. Keep #38 unchanged unless regression found. No merge or scheduler setup.",
       "last_verified": {
         "branch": "fix/booking-expiration-scheduler; feat/26-notification-scheduler",
         "head_sha": "PR #128: 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38: e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "Verified exact SHA: #128 CI run 266 success; #38 CI run 276 success. Quality jobs completed success.",
-        "notes": "Both PRs Draft/Open, mergeable, 0 behind main. #128 1 ahead; #38 6 ahead. Deploy previews previously reported Ready but were not reverified in this check. Review verdicts: #128 approved with caveats; #38 approved."
+        "ci": "Exact SHA CI: #128 run 266 success; #38 run 276 success. Re-run after any change.",
+        "notes": "Both Draft/Open, mergeable, 0 behind main at last check. #128 1 ahead; #38 6 ahead. Previews not reverified."
       },
       "updates": [
         {
           "timestamp": "2026-11-27T14:24:00-03:00",
-          "task": "Reverify joint technical audit PR #128 and PR #38 under coordination protocol",
+          "task": "Joint technical audit #128 and #38",
           "status": "completed_with_caveats",
-          "result": "Live heads/base and CI reverified. #128 CI 266 success at 9258b596; workflow has default-off gate but manual dispatch lacks main-ref restriction; DB tests don't prove batch expiration eligibility/idempotency/concurrency sufficiently. #38 CI 276 success at e8ee5e3; cron route secure/fail-closed, reminders only, SQL row locking and idempotency, test/audit passed.",
-          "head_sha": "PR #128 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
-          "tests": "Exact SHA CI green: #128 Run 266, #38 Run 276; quality job success. CI assertions reviewed; noted test coverage gap for expiration RPC.",
-          "blockers": "#128 dispatch should require refs/heads/main and needs stronger RPC tests before enabling. No PR merged or scheduler configured.",
-          "next_action": "Restrict #128 workflow dispatch to main and add assertions for eligible/ineligible booking expiration, idempotency and concurrent RPC behavior; then user approval for merge, with #128 before #38."
+          "result": "#128 CI 266 green but dispatch lacks main-ref restriction and RPC tests lack sufficient eligibility/idempotency/concurrency assertions. #38 CI 276 green; route auth, service-role, row locking and idempotency validated.",
+          "head_sha": "#128 9258b5962f6c5545ce53aa6e408fd179769e10b9; #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
+          "tests": "Exact SHA CI green for both; coverage gap noted in #128.",
+          "blockers": [
+            "#128 needs main-only dispatch restriction and stronger DB tests."
+          ],
+          "next_action": "Fix #128 caveats; #128 before #38 for future integration, only after user approval."
         }
       ]
     },
@@ -122,26 +136,27 @@
         130
       ],
       "status": "code_and_docs_review_complete_external_functional_test_pending",
-      "current_state": "Revisão final do código e documentação operacional da PR #130 concluída no SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. Fluxo requestPasswordResetAction → /auth/confirm → /redefinir-senha, token_hash/type=recovery, template RedirectTo/TokenHash, allowlist preview estrita, instruções de NEXT_PUBLIC_SITE_URL e metadados de build conferidos. Checklist reforçado para reprovar preview que termina em produção e detectar caracteres invisíveis no Site URL. CI #277 passou integralmente neste SHA. Teste funcional externo continua pendente.",
-      "next_action": "Aguardar autorização para teste funcional controlado de recuperação em produção e Deploy Preview, usando conta de teste; confirmar que o preview retorna ao próprio hostname. Não enviar e-mail, acessar/alterar serviços externos ou fazer deploy sem autorização explícita.",
+      "active_assignment": "Reverify live PR #130 HEAD and CI, then write a concise functional-test runbook for production and Deploy Preview using a controlled test account. Do not send emails or alter external systems.",
+      "current_state": "Code/docs review complete at SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. Recovery flow, token_hash/type, RedirectTo/TokenHash template contract, strict preview origin, env/build docs and failure if preview redirects to production were reviewed. CI #277 passed on that SHA. Functional external test pending.",
+      "next_action": "Reverify live SHA/CI and provide exact controlled test procedure. External functional test only after explicit authorization.",
       "last_verified": {
         "branch": "fix/auth-recovery-preview-origin",
         "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-        "ci": "CI #277 concluída com success neste SHA; quality job passou changelog, audit, lint, typecheck, npm test, test:db e build.",
-        "notes": "PR #130 aberta, Draft, não merged. Nenhum teste funcional externo executado nesta tarefa. Estado compartilhado registra Site URL Supabase atualizado e verificado por Management API e NEXT_PUBLIC_SITE_URL Netlify confirmado pelo usuário; não revalidado por este agente. PR #127 e demais agentes não foram alterados."
+        "ci": "CI #277 success at this SHA; changelog, audit, lint, typecheck, npm test, test:db and build passed.",
+        "notes": "PR #130 open/Draft. No functional external test performed. Supabase auth settings updated/read back; Netlify URL confirmed by user."
       },
       "updates": [
         {
           "timestamp": "2026-11-27T14:25:00-03:00",
-          "task": "Revisão final PR #130 e protocolo de coordenação",
+          "task": "Final PR #130 code/docs review",
           "status": "code_docs_review_complete_ci_green_external_test_pending",
-          "result": "Ajustes documentais em AUTH-RECOVERY-PREVIEW-ORIGIN.md e IDENTITY.md; fluxo de recuperação e allowlist revisados. CI #277 success no SHA registrado.",
+          "result": "Recovery flow and preview-origin docs reviewed; CI #277 green at SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9.",
           "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-          "tests": "CI #277: check:changelog, audit, lint, typecheck, npm test, test:db e build — todos success.",
+          "tests": "CI #277: changelog, audit, lint, typecheck, npm test, test:db and build all success.",
           "blockers": [
-            "Teste funcional externo de produção e Deploy Preview ainda não executado; requer autorização/conta de teste."
+            "Functional test in production and Deploy Preview pending; requires controlled account and explicit authorization."
           ],
-          "next_action": "Executar teste funcional controlado apenas após autorização explícita; preview que termina em produção deve reprovar."
+          "next_action": "Reverify current PR SHA/CI and produce controlled test runbook; no external changes."
         }
       ]
     },
@@ -151,8 +166,9 @@
         39
       ],
       "status": "awaiting_agent_execution",
+      "active_assignment": "Recheck main and feat/24-provider-agenda, safely apply/port the agenda patch without overwriting remote work, then run tests and verify CI/preview at exact resulting SHA. If push unavailable, give minimal Codespaces steps.",
       "current_state": "Update the real feature branch safely, then validate the exact resulting SHA.",
-      "next_action": "Recheck main and PR branch against historical references, validate/apply patch without overwriting remote work, then run tests and wait for CI and preview on the new SHA.",
+      "next_action": "Recheck main and PR branch, validate/apply patch, update real branch safely, then test and verify CI/preview.",
       "last_verified": {
         "branch": "feat/24-provider-agenda",
         "head_sha": "6f44b506da887ecc90486c80e6b9789578b23837",
@@ -160,7 +176,7 @@
         "patch": "patches/pr-39/pr-39-agenda.patch",
         "patch_sha256": "eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb",
         "previous_local_tree": "3f8890e1a097069b2a3cc224c8b88dcdead3b101",
-        "notes": "All values are historical references and must be rechecked. PR was previously Draft; do not merge or close."
+        "notes": "Historical values only; recheck. PR previously Draft. Do not merge/close."
       },
       "updates": []
     }
