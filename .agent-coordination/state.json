@@ -83,9 +83,19 @@
           "tests": "privileges-check 43/0 antes + 43/0 depois; test:db db-check 69/0 social-foundation 47/0 identity 32/0 discovery 40/0; unit tests 155/155; typecheck 0; lint 0; audit 0/0; build aprovado; check:changelog aprovado",
           "blockers": [],
           "next_action": "Aguardando revisão final e merge da PR #131. Não realizar merge."
+        },
+        {
+          "timestamp": "2026-11-27T18:00:00-03:00",
+          "task": "Auditoria Issue #29 — Calendar / calendar_connections",
+          "status": "audit_completed_pending_implementation",
+          "result": "calendar_connections não existe em nenhuma migration na branch main (69d0217). Não há tabela, RLS, privilégios, funções CRUD ou script de verificação. Referências encontradas: docs/ESCOPO-E-ARQUITETURA.md (linha 34: 'tokens protegidos, calendário e estado da sincronização'), docs/ROADMAP-MARCOU-SOCIAL.md (linha 299: #29 sob 'Integrações posteriores'). Contrato esperado (referência dos 6 arquivos do PR #131 na branch fix/booking-multiple-services-pr123): anon=[], authenticated=[], service_role=[ALL]; RLS habilitada; sem acesso direto de API roles.",
+          "head_sha": "69d02173653384e082476e7879ee9f33672dec72",
+          "tests": "Nenhum teste executado — tabela não existe. Testes necessários: migration com RLS, privilégios anon/authenticated sem acesso, service_role com ALL, RLS impede acesso cross-user, privilege-check inclui calendar_connections na MATRIX.",
+          "blockers": ["Tabela calendar_connections não existe — requer nova migration sem aplicação no Supabase remoto."],
+          "next_action": "Implementar migration calendar_connections com RLS, grants restritos a service_role, atualizar scripts/privileges-check.mjs e docs/handoffs/privilegios-tabelas.md, executar test:db e validações padrão."
         }
       ],
-      "updated_at": "2026-11-27T17:13:00-03:00"
+      "updated_at": "2026-11-27T18:00:00-03:00"
     },
     "agent_2_pr_128_and_38": {
       "scope": "PR #128 booking expiration and PR #38 reminders",
