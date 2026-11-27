@@ -106,14 +106,14 @@
       ],
       "status": "in_progress",
       "active_assignment": "Fix the two #128 caveats only: main-ref restriction for workflow_dispatch and stronger DB tests for eligibility, ineligible states, idempotency and concurrency. Re-run tests and CI on the new SHA. Do not merge or enable scheduler.",
-      "current_state": "Confirmed assignment from coordination state: fix only PR #128's dispatch branch restriction and stronger expire_stale_bookings DB assertions. Current branch SHA 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38 remains out of scope.",
-      "next_action": "Add workflow condition restricting manual dispatch to refs/heads/main. Implement integration DB test cases for eligible/ineligible expiration, repeat invocation/idempotency, and concurrency; run relevant tests and CI. No merge or activation.",
+      "current_state": "Implemented both assigned caveat fixes in PR #128 branch. Workflow job now gates manual dispatch to refs/heads/main in addition to the opt-in variable. DB integration test now creates eligible pending_payment/pending_review, future pending, confirmed/cancelled with past expires, verifies count/status/events, repeat run idempotency, and concurrent RPC calls on one fixture. Changes pushed; test/CI validation pending.",
+      "next_action": "Run local database integration suite and review workflow/test diffs for syntax and fixture integrity; then await CI on exact branch SHA.",
       "last_verified": {
         "branch": "fix/booking-expiration-scheduler",
-        "head_sha": "9258b5962f6c5545ce53aa6e408fd179769e10b9",
+        "head_sha": "c93bc2d652f6b473877dd3ff600f5dc2f37fc06d",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "Previous CI run #266 green on this SHA; rerun after edits.",
-        "notes": "PR #128 open Draft; PR #38 untouched. Coordination state read from blob 2d0ce256067e28e9487fd46ad2dda8a0f486c335."
+        "ci": "CI validation pending for this new SHA.",
+        "notes": "Only #128 files touched. #38 untouched."
       },
       "updates": [
         {
@@ -137,6 +137,16 @@
           "tests": "Existing CI #266 green on baseline SHA.",
           "blockers": [],
           "next_action": "Implement and validate fixes. #38 stays untouched."
+        },
+        {
+          "timestamp": "2026-11-27T14:47:00-03:00",
+          "task": "Implement PR #128 audit caveats",
+          "status": "implemented_validation_pending",
+          "result": "Workflow_dispatch is now restricted to refs/heads/main with the opt-in gate. DB integration fixtures/assertions cover eligible and ineligible states, event count, repeat RPC idempotency and concurrent RPC execution.",
+          "head_sha": "c93bc2d652f6b473877dd3ff600f5dc2f37fc06d",
+          "tests": "Validation pending; existing baseline CI was #266.",
+          "blockers": [],
+          "next_action": "Run DB check and review, then wait for CI on current SHA."
         }
       ]
     },
