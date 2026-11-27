@@ -1453,7 +1453,7 @@
         "fix/auth-recovery-preview-origin",
         "fix/auth-recovery-redirect-production"
       ],
-      "status": "blocked_execution_environment",
+      "status": "in_progress",
       "active_assignment": "Integrar #127 (pronta, limpa) e depois reconstruir/integrar #130 sobre a main resultante. Testes com mocks; sem e-mail real.",
       "tasks": [
         {
@@ -1485,8 +1485,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Runbook das seções 0 e 9 relido na main. PR #127 revalidada: HEAD cc212db05cfc14ee70dd05e353a66484b7cef2c8, 9 commits à frente e 16 atrás da main atual; workflow success existente é de SHA antigo. Tentativa de obter checkout para atualizar/rodar suíte falhou por DNS/rede indisponível no ambiente. Nenhum merge ou alteração de código realizado.",
-      "next_action": "Obter checkout executável (Codespaces/local clone ou ambiente com acesso GitHub), mesclar main em arena/18c3a3fa-marcou sem force-push, executar checklist completo no novo SHA e só então mergear #127. Depois reconstruir #130.",
+      "current_state": "W2-A2-T1 concluída: #127 foi atualizada com main 4badea4 sem conflitos, suíte local completa passou no SHA f8977caf67c3bf0435683eed2ae7a9172ae8d047; GitHub confirmou quality success, Redirect rules/Header rules success, Pages changed neutral, PR limpa sem reviews bloqueantes. Squash merge realizado; SHA do merge 82af7506e2f514345a07b15b6f6e23dcd412ab01. Reconferir main antes de reconstruir #130.",
+      "next_action": "Reconferir main pós-#127; reconstruir #130 sobre a main atual, mantendo apenas alterações de recuperação de senha e testes com mocks. Não executar e-mail real nem alterar Supabase/Netlify.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1499,6 +1499,17 @@
             "Ambiente sem conectividade DNS para obter checkout; sem execução local da suíte completa no SHA atualizado."
           ],
           "next_action": "Disponibilizar checkout executável com acesso ao GitHub; atualizar branch com main sem force-push, rodar check:changelog, lint, typecheck, audit, test, test:db e build; conferir checks Netlify e reviews."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "W2-A2-T1 — atualizar, validar e integrar PR #127",
+          "status": "done",
+          "result": "Branch atualizada por merge sem force-push; diff limpo; sete comandos locais passaram no SHA f8977caf67c3bf0435683eed2ae7a9172ae8d047. GitHub: PR aberta/Ready/mergeable, compare 10 ahead/0 behind, quality success no SHA exato, Redirect rules e Header rules success, Pages changed neutral, sem reviews ou threads bloqueantes. Squash merge concluído.",
+          "head_sha": "f8977caf67c3bf0435683eed2ae7a9172ae8d047",
+          "merge_sha": "82af7506e2f514345a07b15b6f6e23dcd412ab01",
+          "tests": "check:changelog, lint, typecheck, audit, test, test:db e build — todos PASSOU localmente; CI quality success no SHA exato; Netlify Redirect/Header success; Pages changed neutral.",
+          "blockers": [],
+          "next_action": "Reconferir main pós-merge e reconstruir #130 sobre ela."
         }
       ]
     },
