@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Sistema tipográfico inicial (Issue `#27`): Manrope Variable para interface e Lora para títulos, fontes auto-hospedadas via Fontsource, tokens tipográficos, subconjuntos Latin/Latin Extended e licenças SIL OFL 1.1 em `LICENSES/`. Compactação incremental de espaçamentos na landing, autenticação e painel, mantendo alvos de toque de 44px. Nenhuma rota, regra de negócio ou migration alterada. Revisão visual final desktop/mobile continua pendente.
+
 - Motor de reservas com múltiplos serviços do mesmo estabelecimento (Issue `#21`, PR `#139`): tabela `booking_services`, RPCs agregadas, seleção múltipla na página pública, compatibilidade com reservas de um serviço e migration `20261125120000_booking_multiple_services.sql`.
 - Matriz de privilégios com grants mínimos para `notifications` e `booking_services` (`20261125130000_table_privileges_matrix.sql`).
 - Consolidação documental “plataforma única, perfil público interno”:
