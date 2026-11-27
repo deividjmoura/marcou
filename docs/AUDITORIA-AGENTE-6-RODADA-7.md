@@ -107,7 +107,11 @@ Entrega conforme `docs/FECHAMENTO-AGENTES.md` (seções 0 e 9) e a entrada `agen
 
 ### 7.2 Estado das PRs abertas (GitHub, agora)
 
-Abertas: #136 (draft), #133, #131, #130 (draft), #127, #124, #68 (draft), #67 (draft), #41 (draft). **Fechadas desde a auditoria anterior:** #46, #2 (agente 5), #41 segue aberta; #32 (agente 3). Todas as abertas com `mergeable=CONFLICTING` exceto #127, #136, #67, em que `MERGEABLE`. Nenhum merge de rodada 7 além de #137/#138 até este momento. A #41 é a única que ainda aparece aberta e atribuída ao Agente 4 como "superada" sem fechamento.
+Abertas (9): #136 (draft, MERGEABLE), #133 (CONFLICTING), #131 (CONFLICTING), #130 (draft, CONFLICTING), #127 (MERGEABLE), #124 (CONFLICTING), #68 (draft, CONFLICTING), #67 (draft, MERGEABLE), #41 (draft, CONFLICTING).
+
+Fechadas desde a auditoria anterior: #46 e #2 (agente 5), #32 (agente 3, substituída pela #138).
+
+Merges da rodada 7 até agora: somente #137 e #138 (ambas de documentação/plataforma, sem tocar em reservas ou autenticação). Nenhum merge dos Agentes 1, 2 ou 4 ainda.
 
 ### 7.3 Alegações dos agentes r7 verificadas
 
