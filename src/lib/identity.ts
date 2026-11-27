@@ -1,6 +1,5 @@
 const DEFAULT_NEXT_PATH = "/inicio";
 const LOCAL_ORIGIN = "https://marcou.invalid";
-const LOCAL_APP_ORIGIN = "http://localhost:3000";
 const PRODUCTION_ORIGIN = "https://marcoou.netlify.app";
 const NETLIFY_PREVIEW_HOST = /^deploy-preview-\d+--marcoou\.netlify\.app$/;
 
