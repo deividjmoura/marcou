@@ -441,10 +441,10 @@
       "pull_requests": [
         133
       ],
-      "status": "pr133_revalidation_complete_ready_for_review",
+      "status": "pr133_revalidated_unchanged_ready_for_review",
       "active_assignment": "PR #133 documental aberta em arena/f074e752-marcou (HEAD d469ce876a3819a5293ca17c75a4e1447fb1293a) contra main 69d02173653384e082476e7879ee9f33672dec72. Auditoria concluída; decisão de URL canônica /p/[slug] formalizada. Não fazer merge sem revisão do responsável.",
-      "current_state": "Revalidação da PR #133 concluída conforme dispatch: main permanece em 69d02173653384e082476e7879ee9f33672dec72 (nenhum avanço, PR up-to-date, mergeable CLEAN); head exato d469ce876a3819a5293ca17c75a4e1447fb1293a; CI run 46047571459 success nesse SHA; Netlify deploy-preview-133 pass ('Pages changed' skipping é esperado em PR documental). Diff 100% documental (7 arquivos: docs/ + CHANGELOG.md), sem código de runtime, rotas ou migrations. /p/[slug] confirmada como única rota pública de provider (sem middleware). Consistência verificada: ADR §2/§3.3/§10, contrato §1.1/§2.3, roadmap §6.5, prompt de agentes e ESCOPO declaram canônica /p/{slug} coerentemente; alternativas /{slug}, /@{slug} e /profissional/{slug} aparecem apenas como rejeitadas/adiadas. check:changelog e git diff --check ok. Nenhuma inconsistência documental encontrada: nenhum commit adicional foi necessário na branch da PR.",
-      "next_action": "PR #133 pronta para revisão/merge pelo responsável (CI verde no SHA exato). Pendência mantida: acréscimos de critérios de aceite nos corpos das issues #86/#89/#99/#83 dependem de aprovação explícita do responsável. Não fazer merge sem autorização.",
+      "current_state": "Revalidação reexecutada no ciclo atual do dispatch com resultado idêntico: main permanece em 69d02173653384e082476e7879ee9f33672dec72; PR #133 OPEN/não-Draft/MERGEABLE CLEAN no head exato d469ce876a3819a5293ca17c75a4e1447fb1293a; CI run 46047571459 success nesse SHA; Netlify deploy-preview-133 pass ('Pages changed' skipping esperado em PR documental); Header/Redirect rules pass. Diff segue 100% documental (7 arquivos: docs/ + CHANGELOG.md), sem drift desde a última validação (head e base inalterados); canônica /p/{slug} confirmada no ADR (§2/§3.3/§10), contrato (§1.1/§2.3), roadmap §6.5, prompt e ESCOPO. Nenhuma inconsistência: nenhum commit adicional na branch da PR.",
+      "next_action": "PR #133 permanece pronta para revisão/merge pelo responsável. Pendência mantida: acréscimos de critérios de aceite nas issues #86/#89/#99/#83 dependem de aprovação explícita. Não fazer merge sem autorização.",
       "last_verified": {
         "branch": "arena/f074e752-marcou",
         "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
@@ -452,24 +452,11 @@
         "main_sha_at_revalidation": "69d02173653384e082476e7879ee9f33672dec72",
         "pull_request": 133,
         "pr_state": "open; draft=false; mergeable=MERGEABLE (mergeStateStatus CLEAN)",
-        "ci": "CI run 46047571459 completed success no headSha exato d469ce876a3819a5293ca17c75a4e1447fb1293a; Netlify deploy-preview-133 pass (https://deploy-preview-133--marcoou.netlify.app); 'Pages changed' skipping (esperado, PR documental); Header/Redirect rules pass.",
-        "tests": "Revalidação documental: check:changelog (--base origin/main) ok; git diff --check ok; grep de consistência da URL canônica em 5 documentos + CHANGELOG ok; confirmação de rota única src/app/p/[slug] e ausência de middleware.",
-        "notes": "Nenhum commit novo na branch da PR nesta revalidação (nada a corrigir). Nenhuma issue editada; nenhum runtime alterado; sem merge."
+        "ci": "CI run 46047571459 completed success no headSha exato d469ce876a3819a5293ca17c75a4e1447fb1293a (único run da branch); Netlify deploy-preview-133 pass (https://deploy-preview-133--marcoou.netlify.app); Header/Redirect rules pass; 'Pages changed' skipping esperado (PR documental).",
+        "tests": "check:changelog (--base origin/main) ok; git diff --check ok; diff idêntico aos 7 arquivos já validados; confirmação das asserções de URL canônica nos documentos alterados.",
+        "notes": "Nenhum commit novo na branch da PR nesta rodada (nada a corrigir). Nenhuma issue editada; nenhum runtime alterado; sem merge."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T15:40:00-03:00",
-          "task": "Agente 5 — revisão e consolidação da arquitetura social",
-          "status": "documentation_pr_open_pending_owner_review",
-          "result": "Auditoria completa; decisão formalizada: perfil público é rota interna canônica /p/[slug]; /{slug} rejeitada, /@{slug} adiada como alias, /profissional/{slug} adiada. PR #133 aberta (documental), sem merge.",
-          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
-          "tests": "git diff --check ok; node scripts/changelog-check.mjs --base origin/main ok; mudança exclusivamente documental (sem testes de runtime); CI da PR a acompanhar.",
-          "blockers": [
-            "Aprovação do responsável para merge da PR #133.",
-            "Edição dos corpos das issues #86/#89/#99/#83 pendente de aprovação para não sobrescrever trabalho de outros agentes."
-          ],
-          "next_action": "Aguardar revisão da PR #133; depois aplicar critérios de aceite nas issues aprovadas."
-        },
         {
           "timestamp": "2026-11-27T15:50:00-03:00",
           "task": "Registro de CI da PR #133",
@@ -495,6 +482,19 @@
             "Edição dos corpos das issues #86/#89/#99/#83 permanece bloqueada por falta de aprovação explícita."
           ],
           "next_action": "Aguardar revisão/aprovação e merge da PR #133 pelo responsável; depois aplicar critérios de aceite nas issues aprovadas."
+        },
+        {
+          "timestamp": "2026-11-27T18:44:52-03:00",
+          "task": "Dispatch reexecutado: revalidação da PR #133 (mesma atribuição)",
+          "status": "pr133_revalidated_unchanged_ready_for_review",
+          "result": "Resultado idêntico ao ciclo anterior, agora reconfirmado ao vivo: main inalterada, PR OPEN/não-Draft/MERGEABLE CLEAN no head d469ce8; CI 46047571459 success e Preview pass nesse SHA; diff documental sem drift; nenhuma inconsistência documental; nenhum commit adicional necessário.",
+          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
+          "tests": "check:changelog ok; git diff --check ok; gh pr checks (quality pass, preview pass) no SHA exato.",
+          "blockers": [
+            "Merge da PR #133 depende de revisão/aprovação do responsável.",
+            "Edição dos corpos das issues #86/#89/#99/#83 permanece bloqueada por falta de aprovação explícita."
+          ],
+          "next_action": "Aguardar revisão/aprovação e merge da PR #133 pelo responsável."
         }
       ]
     }
