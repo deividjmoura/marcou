@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from "@/lib/env";
 import { getOwnedProvider, requireUser } from "@/server/bookings";
+import { NextResponse } from "next/server";
 import { isCalendarFeatureEnabled } from "@/server/calendar/crypto";
 import { calendarNoticeRedirect, calendarSiteOrigin } from "@/server/calendar/http";
 import { calendarRedirectUri } from "@/server/calendar/oauth";
@@ -11,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const origin = calendarSiteOrigin() ?? url.origin;
+  const origin = calendarSiteOrigin();
+  if (!origin) return NextResponse.json({ error: "calendar_origin_not_configured" }, { status: 503 });
   if (!isCalendarFeatureEnabled()) return calendarNoticeRedirect("disabled", origin, 302);
   if (!isSupabaseConfigured() || !isCalendarServerConfigured()) return calendarNoticeRedirect("configuration-error", origin, 302);
   if (url.searchParams.has("error")) return calendarNoticeRedirect("denied", origin, 302);
