@@ -44,12 +44,22 @@ describe("GET /api/cron reminder scheduler", () => {
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
 
-  it("fails closed when Supabase credentials are absent", async () => {
+  it("returns 503 when Supabase URL is absent", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    const response = await GET(request("Bearer " + secret));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "cron_not_configured" });
+    expectPrivateNoStore(response);
+    expect(mocks.createClient).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when service-role key is absent", async () => {
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
     const response = await GET(request(`Bearer ${secret}`));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: "cron_not_configured" });
     expectPrivateNoStore(response);
+    expect(mocks.createClient).not.toHaveBeenCalled();
   });
 
   it("runs reminders only and reports a safe count", async () => {
