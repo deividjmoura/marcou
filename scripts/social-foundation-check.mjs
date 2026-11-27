@@ -636,6 +636,32 @@ try {
     unsafeDefiners.join(", "),
   );
 
+  const bookingDefinerPaths = (
+    await db.query(`
+      select
+        count(*)::integer as total,
+        coalesce(
+          array_agg(p.proname order by p.proname) filter (
+            where not (
+              'search_path=pg_catalog, public' = any(coalesce(p.proconfig, '{}'::text[]))
+            )
+          ),
+          '{}'::text[]
+        ) as unsafe
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and p.prosecdef
+        and p.proname in ('booking_service_totals', 'get_provider_schedule', 'create_booking')
+    `
+    )
+  ).rows[0];
+  check(
+    "RPCs SECURITY DEFINER de multi-serviço usam search_path pg_catalog, public",
+    bookingDefinerPaths.total === 5 && bookingDefinerPaths.unsafe.length === 0,
+    `total=${bookingDefinerPaths.total}; unsafe=${bookingDefinerPaths.unsafe.join(", ")}`,
+  );
+
   await db.query(`
     delete from public.feature_flag_overrides where flag_key = 'social_profile';
     update public.feature_flags
