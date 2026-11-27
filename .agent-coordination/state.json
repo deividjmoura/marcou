@@ -27,25 +27,30 @@
     "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or marked unknown.",
     "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values.",
     "safety": [
-      "Nenhum merge, deploy, produção, configuração externa, migration remota ou alteração de secrets sem autorização explícita para a ação exata.",
-      "Não alterar PR #127, nem sua branch; somente leitura.",
-      "Não acessar nem modificar os seis arquivos staged locais relacionados ao Calendar.",
-      "Preservar todas as PRs/branches abertas e trabalhos ativos, exceto limpeza de branch comprovadamente integrada/superseded autorizada na tarefa do Agent3.",
-      "Não expandir escopo nem modificar a atribuição de outro agente."
+      "Autorização explícita do responsável nesta rodada (2026-11-27): Agents 1–5 podem atualizar suas PRs/branches, resolver conflitos, adicionar testes automatizados, marcar PRs Ready e fazer squash merge na main quando TODOS os critérios de merge do dispatch round 6 forem cumpridos. Não é necessário aguardar teste manual/real do responsável.",
+      "Teste manual/real pendente NÃO bloqueia merge se testes automatizados relevantes, CI obrigatório, build, typecheck, lint, audit, test:db e changelog estiverem verdes no SHA exato e não houver bloqueio de segurança/review/conflito.",
+      "Não ignorar testes falhando, não desabilitar checks, não alterar branch protection, não usar admin/bypass, não forçar merge, não esconder warnings relevantes ou falhas.",
+      "Não fazer deploy manual, não executar migrations no Supabase remoto, não alterar produção, Netlify, Supabase, Google Cloud, OAuth/SMTP/secrets ou contas reais. Merge de código que contém migrations é permitido após revisão e CI; aplicação remota permanece proibida.",
+      "Não enviar e-mails, notificações ou convites reais; não conectar contas Google reais. Testes com mocks/fixtures locais são permitidos.",
+      "Preservar os seis arquivos staged locais relacionados ao Calendar; nenhum agente pode ler, alterar, restaurar, mover ou apagar esses arquivos.",
+      "Não fechar issue de roadmap/futuro apenas para reduzir contagem. Fechar somente se critérios de aceite concluídos ou issue comprovadamente duplicada/substituída, sempre com referência à PR/issue substituta.",
+      "Após merge, apagar branch apenas quando GitHub confirmar merged e todos os commits exclusivos estiverem no merge; preservar branches com trabalho exclusivo, coordination/agents e sessões ativas.",
+      "Não force-push. Se branch divergir, rebase/merge main sem reescrever histórico remoto e rode CI novamente.",
+      "Não modificar atribuição/branch de outro agente. Cada agente escreve somente seu state_entry, com fetch do state.json mais recente e blob SHA atual antes de cada write."
     ],
-    "handoff": "Existem cinco agentes externos e um coordenador (Agent6, o assistente). Os agentes são identificados exclusivamente pelo número informado no prompt desta rodada. Cada um assume a tarefa integral do slot correspondente, independentemente de identidade anterior. Agent6 audita e consolida. Nesta rodada: Agent1 PR #124; Agent2 revisão somente leitura PR #127 (intocável); Agent3 limpeza conservadora de branches; Agent4 contrato de recuperação #127/#130 (sem teste externo); Agent5 prontidão Calendar #126/Issue #29 (sem tocar nos seis arquivos staged).",
+    "handoff": "Round 6 é uma rodada de conclusão: cinco agentes externos em paralelo e Agent6 como coordenador/auditor independente. Os números do prompt definem os slots. Cada agente deve corrigir lacunas, integrar sua área, fazer squash merge quando os critérios globais forem cumpridos e fechar somente issues realmente concluídas. Teste manual/real do responsável ficará para depois e não bloqueia merges com CI automatizado verde. Agent3 faz limpeza final de branches após os demais merges. Agent5 inventaria PRs restantes e faz triagem de issues sem duplicar os clusters. Agent6 audita SHAs/CI/merges e consolida.",
     "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update."
   },
   "dispatch": {
-    "round": "2026-11-27-round-5-followups",
+    "round": "2026-11-27-round-6-closeout-and-integration",
     "dispatched_at": "2026-11-27",
-    "instruction": "Nova rodada após consolidação das entregas anteriores. Existem cinco agentes externos e o coordenador Agent6. O número informado no prompt (Agent1..Agent5) define exclusivamente o slot; assuma a atribuição correspondente em dispatch.assignments, sem depender da identidade ou tarefa histórica anterior. Leia sua atribuição integral, confirme HEADs/refs remotos antes de agir e atualize somente o state_entry indicado. Registre início, marcos e conclusão com SHAs exatos, comandos/testes/CI reais, bloqueadores e próxima ação. Não duplique trabalho de outros slots. Respeite as restrições de cada atribuição e o protocolo geral: sem merge/deploy/produção/migrations remotas/alterações de serviços externos/secrets sem autorização explícita específica. PR #127 deve permanecer intacta; os seis arquivos staged locais do Calendar não podem ser acessados ou modificados. Agent6 coordena, audita independentemente e consolida os resultados.",
+    "instruction": "Rodada de conclusão autorizada pelo responsável. Leia state.json completo e assuma o slot correspondente ao número Agent1..Agent5. Confirme refs remotas e main atual antes de agir. Corrija gaps, adicione testes automatizados, atualize cada branch contra main, execute quality completa e faça squash merge na main quando TODOS os critérios de merge abaixo forem satisfeitos. Não aguarde teste real/manual: o responsável fará uma bateria ampla após a integração. Critérios obrigatórios: HEAD exato identificado; branch atualizada contra main sem conflito; mergeable; CI obrigatório verde no SHA exato incluindo changelog/lint/typecheck/unit/test:db/audit/build conforme projeto; sem falha de segurança/autorização; sem review thread bloqueante não resolvida; migration revisada e testada em CI; Preview/headers/redirect checks verdes quando aplicáveis. Checks neutros/skipped só são aceitos se documentados e comprovadamente não aplicáveis. Nunca bypass, force-push, desabilitar teste ou ocultar falha. Depois do merge, confirme merge SHA, issue linkage e branch status. Feche issues apenas com aceite concluído ou substituição inequívoca; roadmap não implementado permanece aberto e recebe status/next action. Sem deploy manual, produção, aplicação de migrations remotas, serviços externos, secrets, e-mails, notificações ou contas reais. Agent3 limpa branches comprovadamente merged ao final; Agent5 inventaria/triage as PRs restantes; Agent6 audita e consolida.",
     "assignments": {
-      "agent_1": "state_entry=agent_1_pr124_audit. Execute integralmente a auditoria final da PR #124 no branch/SHA correto, somente leitura.",
-      "agent_2": "state_entry=agent_2_pr127_security_review. Faça revisão de segurança somente leitura da PR #127; mantenha branch e PR absolutamente intactas.",
-      "agent_3": "state_entry=agent_3_repo_cleanup. Faça inventário e limpeza conservadora de branches/refs comprovadamente obsoletas, respeitando todos os itens protegidos.",
-      "agent_4": "state_entry=agent_4_recovery_validation. Valide o contrato de recuperação #127/#130 e entregue roteiro de teste controlado; não envie e-mail nem altere serviços externos.",
-      "agent_5": "state_entry=agent_5_calendar_readiness. Revalide prontidão/dependências da PR #126 e Issue #29; preserve os seis arquivos staged locais."
+      "agent_1": "state_entry=agent_1_completion_booking. FECHAR cluster de reservas e valores: PRs #124, #131 e #68. Confirme HEAD/base/CI de cada uma; revise diffs completos; resolva conflitos e atualize branches para main atual sem force-push. #124: parser BRL, preço/sinal, ações por papel e autorização no banco. #131: multi-serviços, RPCs/migrations, privilégios e compatibilidade legada. #68: confirmação e .ics devem mostrar corretamente múltiplos serviços, duração/preço e reservas antigas; corrigir lacunas de UX/testes identificadas. Sequência sugerida: #124 e #131 conforme dependências reais; depois rebasear #68 sobre a main resultante. Acrescente testes automatizados para lacunas reproduzíveis. Rode quality completa (audit, changelog, lint, typecheck, unit, test:db, build) no HEAD final. Você está autorizado a marcar ready e fazer squash merge na main quando todos os critérios globais do round 6 forem cumpridos. Feche issues vinculadas somente se critérios de aceite realmente concluídos; atualize documentação/CHANGELOG. Não execute migrations no Supabase remoto, não faça deploy manual nem teste real.",
+      "agent_2": "state_entry=agent_2_completion_auth. FECHAR cluster de autenticação/recuperação: PRs #127 e #130, Issues #70 e #23 quando aplicável. A restrição anterior de manter #127 intocada foi substituída pela autorização expressa do responsável nesta rodada: você pode corrigir, atualizar e fazer merge. Integre #127 primeiro se dependência confirmada; rebaseie/reconstrua #130 sobre a main resultante. Corrija lacunas reproduzíveis de trusted origin, callback, code/PKCE, token_hash/type, recovery route, loops/open redirect, cache/no-store e vazamento. Inclua os testes com mocks que faltam (o registro anterior cita 3 casos e patch pr130-recovery-tests.patch; se patch não estiver acessível, recrie os testes equivalentes). Não envie e-mails nem faça teste com conta real; teste manual de recuperação não é requisito para merge. Rode quality completa no HEAD final e faça squash merge quando os critérios globais forem atendidos. Feche issues somente se implementações/aceites estiverem realmente completos. Não altere Supabase/Netlify, secrets ou produção.",
+      "agent_3": "state_entry=agent_3_completion_ops. FECHAR cluster operacional de reservas: PRs #134, #128 e #38; Issues #25 e #26 conforme critérios. Primeiro confirme se #134 é independente e integre-a se os checks completos passarem. Para #128, resolver sobreposição com #38 em scripts/db-check.mjs e CHANGELOG.md, reforçar o gate para que expiração não possa apontar a produção por engano e manter BOOKING_EXPIRATION_ENABLED desligado por padrão. Para #38, corrigir/definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade; documentar scheduler externo necessário, sem ativá-lo. Atualize cada branch sobre main atual e rode CI completa após reconciliação. Você está autorizado a fazer squash merge quando os critérios globais forem atendidos, mesmo sem teste manual/real. Depois que os demais agentes terminarem seus merges, faça inventário final de branches: apague somente branches de PRs comprovadamente merged e branches sem commits exclusivos úteis; não apague branches de PR aberta, sessões ativas, coordination/agents, nem os seis arquivos staged locais do Calendar. Feche issues só com aceite cumprido ou substituição inequívoca; demais ficam abertas com status/next action claro. Não dispare notificações, não ative cron, não faça deploy nem altere serviços/secrets externos.",
+      "agent_4": "state_entry=agent_4_completion_calendar. FECHAR integração Calendar: PR #126 e Issue #29. Decisão de produto para esta rodada: V1 é unidirecional Marcou -> Google Calendar; eventos do Google não bloqueiam nem alteram a disponibilidade/reserva no Marcou. Reconfirme HEAD da PR versus branch real; escolha uma única ponta canônica, incorpore #131/main atual e resolva conflitos com cuidado, sem cherry-pick da arquitetura antiga #123. Preserve absolutamente os seis arquivos staged locais de Calendar: não os leia, modifique, restaure, mova ou sobrescreva. Feche lacunas P1 com testes: callback fail-closed sem request.url.origin, timeout/fencing/lease e corrida worker-disconnect, revogação externa retryável/rastreável, validação estrita de scopes e idempotência. Avalie PKCE/rotação de refresh token e chave, implemente se compatível e cubra com testes; se houver bloqueio real, documente como residual e não esconda. Server-only e least privilege obrigatórios. Não aplique migrations remotas nem conecte conta Google real. Rode quality completa no SHA final. Você está autorizado a fazer squash merge quando CI e critérios globais estiverem verdes, sem exigir teste real/manual. Atualize Issue #29 com escopo V1 e feche quando os critérios do V1 estiverem atendidos; registre claramente o que fica para V2.",
+      "agent_5": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos."
     },
     "agent_model": "Cinco agentes externos numerados Agent1–Agent5; Agent6 é o coordenador/auditor independente."
   },
@@ -781,6 +786,82 @@
         "calendar_branch_head_sha": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
         "main_sha": "69d02173653384e082476e7879ee9f33672dec72"
       }
+    },
+    "agent_1_completion_booking": {
+      "scope": "Closeout booking/money",
+      "pull_requests": [
+        124,
+        131,
+        68
+      ],
+      "status": "assigned_round_6",
+      "active_assignment": "state_entry=agent_1_completion_booking. FECHAR cluster de reservas e valores: PRs #124, #131 e #68. Confirme HEAD/base/CI de cada uma; revise diffs completos; resolva conflitos e atualize branches para main atual sem force-push. #124: parser BRL, preço/sinal, ações por papel e autorização no banco. #131: multi-serviços, RPCs/migrations, privilégios e compatibilidade legada. #68: confirmação e .ics devem mostrar corretamente múltiplos serviços, duração/preço e reservas antigas; corrigir lacunas de UX/testes identificadas. Sequência sugerida: #124 e #131 conforme dependências reais; depois rebasear #68 sobre a main resultante. Acrescente testes automatizados para lacunas reproduzíveis. Rode quality completa (audit, changelog, lint, typecheck, unit, test:db, build) no HEAD final. Você está autorizado a marcar ready e fazer squash merge na main quando todos os critérios globais do round 6 forem cumpridos. Feche issues vinculadas somente se critérios de aceite realmente concluídos; atualize documentação/CHANGELOG. Não execute migrations no Supabase remoto, não faça deploy manual nem teste real.",
+      "current_state": "Atribuição round 6 registrada; aguardando execução.",
+      "next_action": "Confirmar SHAs, corrigir gaps, atualizar main, rodar CI e merge seguro.",
+      "updates": []
+    },
+    "agent_2_completion_auth": {
+      "scope": "Closeout auth/recovery",
+      "pull_requests": [
+        127,
+        130
+      ],
+      "issues": [
+        70,
+        23
+      ],
+      "status": "assigned_round_6",
+      "active_assignment": "state_entry=agent_2_completion_auth. FECHAR cluster de autenticação/recuperação: PRs #127 e #130, Issues #70 e #23 quando aplicável. A restrição anterior de manter #127 intocada foi substituída pela autorização expressa do responsável nesta rodada: você pode corrigir, atualizar e fazer merge. Integre #127 primeiro se dependência confirmada; rebaseie/reconstrua #130 sobre a main resultante. Corrija lacunas reproduzíveis de trusted origin, callback, code/PKCE, token_hash/type, recovery route, loops/open redirect, cache/no-store e vazamento. Inclua os testes com mocks que faltam (o registro anterior cita 3 casos e patch pr130-recovery-tests.patch; se patch não estiver acessível, recrie os testes equivalentes). Não envie e-mails nem faça teste com conta real; teste manual de recuperação não é requisito para merge. Rode quality completa no HEAD final e faça squash merge quando os critérios globais forem atendidos. Feche issues somente se implementações/aceites estiverem realmente completos. Não altere Supabase/Netlify, secrets ou produção.",
+      "current_state": "Atribuição round 6 registrada; autorização explícita permite alterar e mergear #127/#130.",
+      "next_action": "Integrar auth/recovery com testes automatizados e CI verde.",
+      "updates": []
+    },
+    "agent_3_completion_ops": {
+      "scope": "Closeout reminders/expiration/test wiring and branch cleanup",
+      "pull_requests": [
+        134,
+        128,
+        38
+      ],
+      "issues": [
+        25,
+        26
+      ],
+      "status": "assigned_round_6",
+      "active_assignment": "state_entry=agent_3_completion_ops. FECHAR cluster operacional de reservas: PRs #134, #128 e #38; Issues #25 e #26 conforme critérios. Primeiro confirme se #134 é independente e integre-a se os checks completos passarem. Para #128, resolver sobreposição com #38 em scripts/db-check.mjs e CHANGELOG.md, reforçar o gate para que expiração não possa apontar a produção por engano e manter BOOKING_EXPIRATION_ENABLED desligado por padrão. Para #38, corrigir/definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade; documentar scheduler externo necessário, sem ativá-lo. Atualize cada branch sobre main atual e rode CI completa após reconciliação. Você está autorizado a fazer squash merge quando os critérios globais forem atendidos, mesmo sem teste manual/real. Depois que os demais agentes terminarem seus merges, faça inventário final de branches: apague somente branches de PRs comprovadamente merged e branches sem commits exclusivos úteis; não apague branches de PR aberta, sessões ativas, coordination/agents, nem os seis arquivos staged locais do Calendar. Feche issues só com aceite cumprido ou substituição inequívoca; demais ficam abertas com status/next action claro. Não dispare notificações, não ative cron, não faça deploy nem altere serviços/secrets externos.",
+      "current_state": "Atribuição round 6 registrada; limpeza de branches somente após merges dos demais.",
+      "next_action": "Integrar #134/#128/#38, manter schedulers desativados e limpar refs merged no fim.",
+      "updates": []
+    },
+    "agent_4_completion_calendar": {
+      "scope": "Closeout Google Calendar V1",
+      "pull_requests": [
+        126
+      ],
+      "issues": [
+        29
+      ],
+      "status": "assigned_round_6",
+      "active_assignment": "state_entry=agent_4_completion_calendar. FECHAR integração Calendar: PR #126 e Issue #29. Decisão de produto para esta rodada: V1 é unidirecional Marcou -> Google Calendar; eventos do Google não bloqueiam nem alteram a disponibilidade/reserva no Marcou. Reconfirme HEAD da PR versus branch real; escolha uma única ponta canônica, incorpore #131/main atual e resolva conflitos com cuidado, sem cherry-pick da arquitetura antiga #123. Preserve absolutamente os seis arquivos staged locais de Calendar: não os leia, modifique, restaure, mova ou sobrescreva. Feche lacunas P1 com testes: callback fail-closed sem request.url.origin, timeout/fencing/lease e corrida worker-disconnect, revogação externa retryável/rastreável, validação estrita de scopes e idempotência. Avalie PKCE/rotação de refresh token e chave, implemente se compatível e cubra com testes; se houver bloqueio real, documente como residual e não esconda. Server-only e least privilege obrigatórios. Não aplique migrations remotas nem conecte conta Google real. Rode quality completa no SHA final. Você está autorizado a fazer squash merge quando CI e critérios globais estiverem verdes, sem exigir teste real/manual. Atualize Issue #29 com escopo V1 e feche quando os critérios do V1 estiverem atendidos; registre claramente o que fica para V2.",
+      "current_state": "Atribuição round 6 registrada; V1 definida como sincronização unidirecional Marcou -> Google.",
+      "next_action": "Resolver branch divergente, gaps de worker/OAuth, testes automatizados e merge seguro.",
+      "updates": []
+    },
+    "agent_5_completion_remaining": {
+      "scope": "Remaining PR/issue closeout and backlog triage",
+      "pull_requests": [
+        39,
+        133,
+        71
+      ],
+      "issues": [
+        125
+      ],
+      "status": "assigned_round_6",
+      "active_assignment": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos.",
+      "current_state": "Atribuição round 6 registrada; inventariar PRs restantes sem sobrepor os outros slots.",
+      "next_action": "Integrar PRs prontas, classificar demais PRs e triar issues abertas sem fechar roadmap incompleto.",
+      "updates": []
     }
   }
 }
