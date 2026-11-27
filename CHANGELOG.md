@@ -30,6 +30,14 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 - Matriz canônica de requisitos de produto e sequência de dependências das
   Issues `#84`, `#91` e `#93` registrada em `docs/ROADMAP-MARCOU-SOCIAL.md`,
   preservando a arquitetura da Issue `#72`.
+- Consolidação documental “plataforma única, perfil público interno”:
+  `docs/REVISAO-ARQUITETURA-SOCIAL.md` com auditoria, decisão de URL canônica
+  `/p/[slug]` para o perfil público (alternativas `/{slug}`, `/@{slug}` e
+  `/profissional/{slug}` rejeitadas/adiadas) e matriz de compatibilidade;
+  ADR (`docs/DECISAO-ARQUITETURA-MARCOU-SOCIAL.md`), contrato de domínio,
+  roadmap e prompt de agentes atualizados com os princípios de plataforma
+  única, perfil como rota interna e visitante sem conta para conteúdo público.
+  Nenhuma rota, migration ou configuração foi alterada.
 
 ### Alterado
 
