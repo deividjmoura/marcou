@@ -182,7 +182,23 @@
           "W2-A6-T3: acompanhar a fila de merges (127, 124, 136, 130, 68, 67) e verificar cada merge de forma independente; se o Agent 2 continuar bloqueado, assumir a #127.",
           "W2-A6-T4: ao final, relatório no state.json + pergunta sobre GitHub Release (sem tag/Release sem autorização)."
         ]
-      }
+      },
+      "cleanup_log": [
+        {
+          "when": "2026-11-27",
+          "by": "coordenador (a pedido do responsável)",
+          "criterio": "PR MERGED e tip remoto igual ao headRefOid, sem PR aberta",
+          "removidas": [
+            "agent5/133-docs-main-reconciled (#140)",
+            "arena/18c3a3fa-marcou (#127)",
+            "arena/fdad472c-marcou (#138)",
+            "docs/runbook-r7-autonomia (#137)",
+            "fix/139-multi-services-final (#142)",
+            "fix/calendar-callback-fail-closed-worker-fencing (#141)"
+          ],
+          "nota_agent_6": "Estas 6 já foram apagadas; não repita. W2-A6-T2 segue valendo para as demais (PRs fechadas sem merge e branches sem PR): só com prova de superação/integração. Observação: #127 já consta como MERGED. Branch nova fix/124-money-role-r7 (sem PR) é trabalho ativo do Agent 1: preservar."
+        }
+      ]
     }
   },
   "shared_project_state": {
