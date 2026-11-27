@@ -138,10 +138,10 @@
         128,
         38
       ],
-      "status": "validation_passed_final_review_complete",
-      "active_assignment": "PR #128: HEAD remoto 246f95df33013d495b1cda36675a04c2761637e8 e CI #279 está verde. Confirme os detalhes do run e que o sucesso corresponde exatamente ao HEAD; revise workflow_dispatch restrito a refs/heads/main e assertions DB de elegibilidade, não elegibilidade, idempotência e concorrência. Entregue relatório final de prontidão. Não faça merge, não habilite scheduler e mantenha #38 intacta.",
-      "current_state": "PR #128 foi revisada: HEAD remoto 246f95df33013d495b1cda36675a04c2761637e8; CI #279 concluído success exatamente nesse SHA. Steps quality: changelog, lint, typecheck, npm test, test:db e build todos success. Revisado dispatch restrito main, gate BOOKING_EXPIRATION_ENABLED, testes DB elegibilidade/ineligibilidade, evento único, retry/idempotência e duas invocações concorrentes. PR permanece Draft/open/mergeable. #38 intacta.",
-      "next_action": "Aguardar autorização explícita para merge; não remover Draft, mergear, habilitar scheduler nem tocar PR #38.",
+      "status": "integrated_cluster_review_in_progress",
+      "active_assignment": "state_entry=agent_2_pr_128_and_38. PRs #38 e #128 — revisão integrada final do cluster de lembretes e expiração. Reconfirme HEADs remotos atuais (últimos observados: #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd; #128 246f95df33013d495b1cda36675a04c2761637e8), compare workflows/código compartilhado com main atual. Verifique timezone, janelas de envio, idempotência, retries, concorrência, elegibilidade, gates/segredos, dispatch manual e risco de scheduler duplicado. Confirme CI/test:db nos SHAs exatos. Entregue decisão sobre coexistência, ordem de merge e o que deve permanecer desabilitado até autorização. Somente leitura: não alterar workflows/PRs, não habilitar scheduler, não disparar notificações e não mergear.",
+      "current_state": "Assumindo a atribuição agent_2 da rodada 2026-11-27-round-4-reassigned. Revisão integrada somente leitura das PRs #38 e #128; revalidando HEADs, workflows, código compartilhado, timezone, janelas, idempotência, retries, concorrência, elegibilidade, gates/segredos, dispatch manual, CI/test:db e risco de scheduler duplicado. Nenhuma alteração em PR/workflow/scheduler.",
+      "next_action": "Conferir PRs #38/#128, workflows, código e CI nos SHAs exatos; emitir decisão de coexistência, sequência de merge e controles que devem permanecer desabilitados. Não alterar PRs/workflows nem habilitar scheduler.",
       "last_verified": {
         "branch": "fix/booking-expiration-scheduler",
         "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
@@ -150,18 +150,6 @@
         "notes": "PR #128 aberta, Draft, mergeable=true, 4 commits, 4 arquivos alterados. Revisão final aprovada. Testes DB confirmados via CI, não executados localmente (sem checkout). PR #38 status open/Draft/mergeable, sem alteração."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T14:53:00-03:00",
-          "task": "Checkpoint implementation and validation status for PR #128",
-          "status": "validation_pending",
-          "result": "Fixes pushed, remote diff verified, branch compare shows 4 ahead and 0 behind. CI run #279 (quality) in progress for current SHA. Local tests not run due missing repository checkout. #38 remains unchanged.",
-          "head_sha": "246f95df33013d495b1cda36675a04c2761637e8",
-          "tests": "Await CI #279 exact SHA.",
-          "blockers": [
-            "CI run #279 not complete."
-          ],
-          "next_action": "Check run #279 result and DB integration test."
-        },
         {
           "timestamp": "2026-11-27T18:00:00-03:00",
           "task": "Revalidação ao vivo PR #128",
@@ -181,6 +169,16 @@
           "tests": "CI #279: check:changelog, lint, typecheck, npm test, test:db, build = success. Não rodado localmente; CI executou test:db.",
           "blockers": [],
           "next_action": "Aguardar autorização de merge; não merge/Draft/scheduler."
+        },
+        {
+          "timestamp": "2026-11-27T16:09:00-03:00",
+          "task": "Início da revisão integrada final PR #38 + PR #128 (round-4-reassigned, agent_2)",
+          "status": "integrated_cluster_review_in_progress",
+          "result": "Atribuição agent_2 assumida conforme dispatch.assignments.agent_2, independentemente do slot histórico. Escopo estritamente somente leitura; nenhuma alteração em PRs, workflows, scheduler ou notificações.",
+          "head_sha": null,
+          "tests": "Ainda não executados; revalidação remota em andamento.",
+          "blockers": [],
+          "next_action": "Revalidar HEADs, base/main, workflows e CI/test:db nos SHAs exatos e concluir parecer de coexistência/sequência."
         }
       ]
     },
