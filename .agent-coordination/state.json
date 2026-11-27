@@ -27,6 +27,7 @@
     "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or marked unknown.",
     "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values.",
     "safety": [
+      "AUTORIZAÇÃO ATUALIZADA DO RESPONSÁVEL (2026-11-27, rodada 7): autonomia TOTAL de merge para Agents 1–6. Ao ficar verde o checklist do runbook no SHA exato, faça squash merge sem pedir confirmação e sem esperar teste real em produção (o responsável testa em produção DEPOIS da rodada). Isso inclui a #133 (documental; deixe resumo na PR). Substitui toda restrição anterior de OWNER_DECISION para merges. Continuam proibidos: ações no ambiente real (Supabase remoto, Netlify, Google Cloud, OAuth/SMTP, secrets, e-mails/notificações reais, deploy manual, ativar schedulers), tag/Release sem autorização explícita, force-push e bypass de checks. Instruções detalhadas por agente: docs/FECHAMENTO-AGENTES.md seções 0 e 9 (main).",
       "RODADA 7 (2026-11-27): o responsável pediu o fechamento das pontas abertas (branches, PRs e issues) e a execução é dos Agents 1–6. Valem integralmente as regras de segurança abaixo e os critérios globais de merge. Merge só quando o checklist do runbook estiver 100% verde no SHA exato; itens OWNER_DECISION nunca são mergeados sem aprovação explícita do responsável. A autorização textual da rodada 6 (Agents 1–5) fica substituída por esta.",
       "Autorização explícita do responsável nesta rodada (2026-11-27): Agents 1–5 podem atualizar suas PRs/branches, resolver conflitos, adicionar testes automatizados, marcar PRs Ready e fazer squash merge na main quando TODOS os critérios de merge do dispatch round 6 forem cumpridos. Não é necessário aguardar teste manual/real do responsável.",
       "Teste manual/real pendente NÃO bloqueia merge se testes automatizados relevantes, CI obrigatório, build, typecheck, lint, audit, test:db e changelog estiverem verdes no SHA exato e não houver bloqueio de segurança/review/conflito.",
@@ -90,7 +91,7 @@
     "dispatched_at": "2026-11-27",
     "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
-    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios.",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir.",
     "execution_order": [
       "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
@@ -110,7 +111,7 @@
       32
     ],
     "owner_decision_items": {
-      "133": "revisão do responsável antes de qualquer merge",
+      "133": "merge AUTORIZADO se CI verde (2026-11-27); deixar resumo na PR para leitura posterior do responsável",
       "130/70": "validação real da recuperação de senha e conferência do Supabase Auth; rotação das credenciais OAuth/SMTP expostas",
       "29": "conexão real com Google e variáveis de produção",
       "schedulers": "ativar BOOKING_EXPIRATION_ENABLED, lembretes e worker do Calendar",
