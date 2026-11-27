@@ -155,6 +155,12 @@ try {
     requiredColumns.filter((column) => !columns.includes(column)).join(", "),
   );
 
+  const outboxLease = await db.query(
+    `select column_name from information_schema.columns
+     where table_schema = 'public' and table_name = 'calendar_sync_outbox' and column_name = 'lease_token'`,
+  );
+  check("outbox tem lease_token para fencing", outboxLease.rowCount === 1);
+
   const statusCheck = await db.query(
     `select pg_get_constraintdef(oid) as def from pg_constraint
      where conrelid = 'public.calendar_connections'::regclass and contype = 'c'
@@ -414,7 +420,36 @@ try {
     [staleJob.id],
   );
   claimed = await claim();
-  check("processing vencido com tentativas restantes é reivindicado de novo", claimed.some((job) => job.id === staleJob.id && job.attempts === 3));
+  const firstLease = claimed.find((job) => job.id === staleJob.id)?.lease_token;
+  check(
+    "processing vencido com tentativas restantes é reivindicado com lease",
+    Boolean(firstLease) && claimed.some((job) => job.id === staleJob.id && job.attempts === 3),
+  );
+  await db.query(
+    `update public.calendar_sync_outbox
+       set processing_started_at = now() - interval '11 minutes'
+     where id = $1`,
+    [staleJob.id],
+  );
+  const reclaimed = await claim();
+  const secondLease = reclaimed.find((job) => job.id === staleJob.id)?.lease_token;
+  check("reclaim substitui o lease token", Boolean(secondLease) && secondLease !== firstLease);
+  const staleAck = await db.query(
+    `update public.calendar_sync_outbox
+        set status = 'succeeded', processing_started_at = null, lease_token = null, completed_at = now()
+      where id = $1 and status = 'processing' and lease_token = $2
+      returning id`,
+    [staleJob.id, firstLease],
+  );
+  check("worker antigo não consegue confirmar job após reclaim", staleAck.rowCount === 0);
+  const currentAck = await db.query(
+    `update public.calendar_sync_outbox
+        set status = 'succeeded', processing_started_at = null, lease_token = null, completed_at = now()
+      where id = $1 and status = 'processing' and lease_token = $2
+      returning id`,
+    [staleJob.id, secondLease],
+  );
+  check("worker com lease atual consegue confirmar job", currentAck.rowCount === 1);
   await expectError(
     "status fora do conjunto é recusado",
     () => db.query(`update public.calendar_sync_outbox set status='gone' where id=$1`, [staleJob.id]),
