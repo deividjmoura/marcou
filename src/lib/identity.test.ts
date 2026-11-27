@@ -4,6 +4,7 @@ import {
   loginRedirectUrl,
   normalizePhone,
   oauthErrorMessage,
+  PKCE_VERIFIER_MISSING_MESSAGE,
   passwordLoginErrorMessage,
   safeLoginErrorMessage,
   stripFormatCharacters,
@@ -14,6 +15,11 @@ import {
 } from "./identity";
 
 describe("identity helpers", () => {
+  it("exports a safe message for missing PKCE verifier", () => {
+    expect(PKCE_VERIFIER_MISSING_MESSAGE).toBe(
+      "Abra o link no mesmo navegador em que solicitou a recuperação.",
+    );
+  });
   afterEach(() => vi.unstubAllEnvs());
 
   it("uses a configured public origin and never reflects an untrusted host", () => {
