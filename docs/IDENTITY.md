@@ -70,7 +70,7 @@ Defina, por site/ambiente, as variáveis públicas já usadas pela aplicação:
 
 | Variável | Valor |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | Origem HTTPS pública deste ambiente, sem caminho (por exemplo `https://<site-oficial>`). Para desenvolvimento local: `http://localhost:3000`. |
+| `NEXT_PUBLIC_SITE_URL` | Origem canônica de produção `https://marcoou.netlify.app`; para desenvolvimento local, `http://localhost:3000`. Não configurar uma origem própria por Deploy Preview: o preview é identificado pelos metadados de build da Netlify. |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase correspondente. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publishable/anon pública do projeto; nunca use service-role no navegador. |
 
