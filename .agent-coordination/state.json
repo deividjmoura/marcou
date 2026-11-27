@@ -1619,7 +1619,7 @@
           "status": "completed",
           "result": "PR #141 squash-merged na main: cd6065ad6a46187510bde58e51f474d0ff66a4c0. CI success e Netlify deploy-preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1. Issue #29 fechada automaticamente por Fixes #29; comentário adicionado com decisão unidirecional Marcou→Google, evidências de PR #135/#141 e OWNER_DECISION para OAuth real, secrets, redirect URI e scheduler. Nenhuma configuração/secret/deploy/migration remota alterada.",
           "head_sha": "PR #141 head:979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; merge SHA/main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
-          "tests": "GitHub Actions CI success; Netlify deploy-preview success; calendar-check executado como parte de npm run test:db no SHA do PR.",
+          "tests": "GitHub Actions CI success no SHA 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Netlify check-runs no mesmo SHA: Redirect rules success, Header rules success, Pages changed neutral (aceito). calendar-check executado por npm run test:db.",
           "blockers": [
             "A4-T1 (#136) aguarda a migration final da matriz da PR #131 (Agent1)."
           ],
