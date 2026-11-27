@@ -58,6 +58,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
+- Redirects de recuperação de senha agora usam origem de deployment confiável: produção canônica e Deploy Preview Netlify validado por `CONTEXT`/`DEPLOY_PRIME_URL`, ignorando `Host`/origem da requisição. Adicionados testes de produção, preview válido, domínio não autorizado e manipulação de origem, além de documentação do contrato do template Reset Password.
+
 - Proteção contra condições de corrida no provisionamento de `profiles`:
   inserção inicial com `ON CONFLICT (id) DO NOTHING` (`ignoreDuplicates: true`)
   e backfill de `display_name` condicionado por guarda CAS (`IS NULL` / valor
