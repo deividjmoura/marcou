@@ -563,4 +563,18 @@ describe("email and OAuth identity actions", () => {
       },
     );
   });
+
+  it("builds password recovery redirects from the validated Netlify preview context", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("CONTEXT", "deploy-preview");
+    vi.stubEnv("DEPLOY_PRIME_URL", "https://deploy-preview-42--marcoou.netlify.app");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
+
+    await requestPasswordResetAction({}, form({ email: "ana@example.com" }));
+
+    expect(mocks.resetPasswordForEmail).toHaveBeenCalledWith("ana@example.com", {
+      redirectTo:
+        "https://deploy-preview-42--marcoou.netlify.app/auth/confirm?next=%2Fredefinir-senha",
+    });
+  });
 });
