@@ -166,29 +166,17 @@
       "pull_requests": [
         130
       ],
-      "status": "runbook_complete_followup_review_pending",
-      "active_assignment": "PR #130: HEAD remoto 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, CI #277 verde e runbook funcional já entregue. Faça revisão documental/técnica da PR #71 em relação à solução atual #127/#130 e diga se está realmente obsoleta/substituída, quais trechos ainda têm valor e se pode ser encerrada. Não altere #71 nem #127; não envie e-mails, não teste contas reais e não altere serviços externos.",
-      "current_state": "Live PR #130 reverified open/Draft/not merged at HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9. CI #277 success on exact SHA (quality job: changelog, audit, lint, typecheck, npm test, test:db, build); Netlify Deploy Preview check success at https://deploy-preview-130--marcoou.netlify.app. No formal reviews. Reviewed recovery Server Action and /auth/confirm contract; runbook provided with exact production/preview destination criteria and preview-to-production failure rule. No functional email test performed.",
-      "next_action": "Revisar se PR #71 foi totalmente substituída por #127/#130 e recomendar manter/encerrar, sem alterar PRs.",
+      "status": "pr71_review_complete_keep_pending_until_owner_decision",
+      "active_assignment": "Revisão documental/técnica da PR #71 versus #127/#130 concluída. PR #71 é runbook-only e funcionalmente substituída, mas manter aberta por ora porque o comentário mais recente do responsável a classificou KEEP_PENDING. Não alterar #71/#127.",
+      "current_state": "PR #130 revalidada aberta/Draft/mergeable no HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9; CI run 46040285407 success nesse SHA. Revisão comparativa: #71 (8daa15651acbe74c98e1150b0f1cdcd71af89a60) contém apenas docs/ISSUE-70-RECUPERACAO-SENHA-PRODUCAO.md, sem código; descreve callback legado /auth/callback?flow=recovery e template {{ .ConfirmationURL }}. #127 (cc212db05cfc14ee70dd05e353a66484b7cef2c8) implementa fallback seguro code/token_hash, proxy sem loop, callback PKCE e testes; CI runs 46014586526 e 46001938452 success. #130 documenta fluxo atual /auth/confirm com RedirectTo + token_hash/type=recovery, origem confiável por deployment e runbook operacional. Conteúdo operacional da #71 está obsoleto, mas diagnóstico histórico e cuidados de segurança ainda têm valor. Comentário mais recente do responsável na #71 classificou KEEP_PENDING em 2026-11-27; não encerrar sem decisão explícita.",
+      "next_action": "Aguardar decisão do responsável sobre manter #71 até integração/validação de #127/#130 ou encerrá-la como substituída. Não alterar #71 nem #127. Continuar sem enviar e-mails, testar contas reais ou alterar serviços externos; teste funcional #130 permanece pendente de autorização.",
       "last_verified": {
         "branch": "fix/auth-recovery-preview-origin",
         "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-        "ci": "CI #277 (run 46040285407) success on exact SHA; quality job completed all steps: check:changelog, audit, lint, typecheck, npm test, test:db, build. Netlify Deploy Preview status success at https://deploy-preview-130--marcoou.netlify.app.",
-        "notes": "PR #130 open, Draft, not merged; mergeable=true; no formal reviews. No external functional test, emails, settings changes or deploys performed. Recovery handler verifies token_hash with type=recovery and redirects to /redefinir-senha on trusted origin."
+        "ci": "CI run 46040285407 completed success on exact #130 HEAD. #71 HEAD 8daa15651acbe74c98e1150b0f1cdcd71af89a60 has CI run 45052811370 success; #127 HEAD cc212db05cfc14ee70dd05e353a66484b7cef2c8 has CI runs 46014586526 and 46001938452 success.",
+        "notes": "Live PR states: #130 open/Draft/mergeable; #71 open/Draft/mergeable; #127 open/not Draft/mergeable. #71 has one documentation file only. Latest owner comment on #71 says KEEP_PENDING. No PR modified, no email sent, no external system changed."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T14:25:00-03:00",
-          "task": "Final PR #130 code/docs review",
-          "status": "code_docs_review_complete_ci_green_external_test_pending",
-          "result": "Recovery flow and preview-origin docs reviewed; CI #277 green at SHA 852f1dcdc29a034c3fc3983f304a0fef7a09aca9.",
-          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
-          "tests": "CI #277: changelog, audit, lint, typecheck, npm test, test:db and build all success.",
-          "blockers": [
-            "Functional test in production and Deploy Preview pending; requires controlled account and explicit authorization."
-          ],
-          "next_action": "Reverify current PR SHA/CI and produce controlled test runbook; no external changes."
-        },
         {
           "timestamp": "2026-11-27T09:45:00-03:00",
           "task": "Reverify PR #130 and deliver controlled functional-test runbook",
@@ -214,6 +202,19 @@
             "Rotação de credenciais expostas permanece follow-up externo separado."
           ],
           "next_action": "Revisar PR #71 versus #127/#130 e reportar recomendação; não encerrar PR."
+        },
+        {
+          "timestamp": "2026-11-27T09:32:00-03:00",
+          "task": "Revisão documental/técnica da PR #71 em relação às soluções #127/#130",
+          "status": "review_complete_keep_pending_until_owner_decision",
+          "result": "#71 é runbook-only e tecnicamente superada: descreve /auth/callback?flow=recovery e {{ .ConfirmationURL }}; #127 implementa fallback code/token_hash e callback PKCE; #130 contém contrato atual /auth/confirm + RedirectTo/token_hash/type=recovery e runbook de origem confiável. Diagnóstico histórico e cuidados de segurança da #71 ainda são úteis. Recomendo manter aberta por enquanto porque comentário mais recente do responsável classificou KEEP_PENDING; pode ser encerrada como substituída após integração/validação ou decisão explícita.",
+          "head_sha": "#130 852f1dcdc29a034c3fc3983f304a0fef7a09aca9; #71 8daa15651acbe74c98e1150b0f1cdcd71af89a60; #127 cc212db05cfc14ee70dd05e353a66484b7cef2c8",
+          "tests": "CI #130 run 46040285407 success; CI #71 run 45052811370 success; CI #127 runs 46014586526 e 46001938452 success. Revisão de diff/documentação somente leitura; nenhum teste funcional ou e-mail executado.",
+          "blockers": [
+            "Decisão do responsável sobre o comentário KEEP_PENDING da PR #71.",
+            "Teste funcional de recuperação em produção/preview da #130 segue pendente de autorização explícita e conta controlada."
+          ],
+          "next_action": "Aguardar decisão do responsável; não alterar #71/#127, não enviar e-mails nem alterar serviços externos."
         }
       ]
     },
