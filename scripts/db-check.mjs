@@ -547,7 +547,6 @@ console.log("\n[isolamento multi-tenant]");
 
 console.log("\n[expiração em lote]");
 {
-  const fixtures = [];
   const createExpirationFixture = async ({ status, expiresAt, startsAt }) => {
     const row = (
       await db.query(
@@ -563,7 +562,6 @@ console.log("\n[expiração em lote]");
         [providerA, customers[0], serviceA1, startsAt, status, expiresAt],
       )
     ).rows[0];
-    fixtures.push(row);
     return row;
   };
 
