@@ -440,10 +440,10 @@
       "pull_requests": [
         133
       ],
-      "status": "pr133_revalidated_unchanged_ready_for_review",
+      "status": "awaiting_assignment_pr133_ready_for_review",
       "active_assignment": "PR #133 documental aberta em arena/f074e752-marcou (HEAD d469ce876a3819a5293ca17c75a4e1447fb1293a) contra main 69d02173653384e082476e7879ee9f33672dec72. Auditoria concluída; decisão de URL canônica /p/[slug] formalizada. Não fazer merge sem revisão do responsável.",
-      "current_state": "Revalidação reexecutada no ciclo atual do dispatch com resultado idêntico: main permanece em 69d02173653384e082476e7879ee9f33672dec72; PR #133 OPEN/não-Draft/MERGEABLE CLEAN no head exato d469ce876a3819a5293ca17c75a4e1447fb1293a; CI run 46047571459 success nesse SHA; Netlify deploy-preview-133 pass ('Pages changed' skipping esperado em PR documental); Header/Redirect rules pass. Diff segue 100% documental (7 arquivos: docs/ + CHANGELOG.md), sem drift desde a última validação (head e base inalterados); canônica /p/{slug} confirmada no ADR (§2/§3.3/§10), contrato (§1.1/§2.3), roadmap §6.5, prompt e ESCOPO. Nenhuma inconsistência: nenhum commit adicional na branch da PR.",
-      "next_action": "PR #133 permanece pronta para revisão/merge pelo responsável. Pendência mantida: acréscimos de critérios de aceite nas issues #86/#89/#99/#83 dependem de aprovação explícita. Não fazer merge sem autorização.",
+      "current_state": "Sem atribuição no dispatch round 4 (chave agent_5_arquitetura_social ausente de dispatch.assignments; nada definido para executar). Entrega anterior permanece válida e reconfirmada ao vivo neste ciclo: PR #133 (documental, 7 arquivos docs/+CHANGELOG) OPEN/não-Draft/MERGEABLE CLEAN no head exato d469ce876a3819a5293ca17c75a4e1447fb1293a, base 69d02173653384e082476e7879ee9f33672dec72, main inalterada; CI run 46047571459 success nesse SHA; Netlify deploy-preview-133 pass. Nenhuma issue editada, nenhum runtime alterado, sem merge.",
+      "next_action": "Aguardar nova atribuição do coordenador. Se designado: pendências candidatas são aplicar acréscimos de critérios de aceite nos corpos das issues #86/#89/#99/#83 (requer aprovação explícita do responsável) e acompanhar revisão/merge da PR #133. Sem autorização: nenhum merge, deploy, migration remota ou edição de issues.",
       "last_verified": {
         "branch": "arena/f074e752-marcou",
         "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
@@ -452,23 +452,10 @@
         "pull_request": 133,
         "pr_state": "open; draft=false; mergeable=MERGEABLE (mergeStateStatus CLEAN)",
         "ci": "CI run 46047571459 completed success no headSha exato d469ce876a3819a5293ca17c75a4e1447fb1293a (único run da branch); Netlify deploy-preview-133 pass (https://deploy-preview-133--marcoou.netlify.app); Header/Redirect rules pass; 'Pages changed' skipping esperado (PR documental).",
-        "tests": "check:changelog (--base origin/main) ok; git diff --check ok; diff idêntico aos 7 arquivos já validados; confirmação das asserções de URL canônica nos documentos alterados.",
-        "notes": "Nenhum commit novo na branch da PR nesta rodada (nada a corrigir). Nenhuma issue editada; nenhum runtime alterado; sem merge."
+        "tests": "Verificação de vitalidade desta rodada: gh pr view + gh pr checks + fetch de main; nenhum commit novo na branch; check:changelog e git diff --check ok na última passada (18:44).",
+        "notes": "Dispatch round 4 não inclui atribuição para esta chave; nenhuma tarefa executada nesta rodada além da verificação de vitalidade."
       },
       "updates": [
-        {
-          "timestamp": "2026-11-27T15:50:00-03:00",
-          "task": "Registro de CI da PR #133",
-          "status": "documentation_pr_open_ci_green_pending_owner_review",
-          "result": "Job quality (run 46047571459) success no SHA exato da PR; Netlify deploy-preview pass. PR segue aberta aguardando revisão; sem merge.",
-          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
-          "tests": "CI run 46047571459 success (inclui check:changelog, lint, typecheck, test, build); deploy-preview-133 pass.",
-          "blockers": [
-            "Aprovação do responsável para merge da PR #133.",
-            "Edição dos corpos das issues #86/#89/#99/#83 pendente de aprovação."
-          ],
-          "next_action": "Aguardar revisão da PR #133; depois aplicar critérios de aceite nas issues aprovadas."
-        },
         {
           "timestamp": "2026-11-27T18:33:22-03:00",
           "task": "Dispatch agent_5_arquitetura_social: revalidar PR #133 contra main e o próprio diff",
@@ -494,6 +481,19 @@
             "Edição dos corpos das issues #86/#89/#99/#83 permanece bloqueada por falta de aprovação explícita."
           ],
           "next_action": "Aguardar revisão/aprovação e merge da PR #133 pelo responsável."
+        },
+        {
+          "timestamp": "2026-11-27T19:10:43-03:00",
+          "task": "Ciclo de dispatch: round 4 sem atribuição para esta chave",
+          "status": "awaiting_assignment_pr133_ready_for_review",
+          "result": "dispatch.assignments do round 4 não contém agent_5_arquitetura_social; nenhuma tarefa definida. Nada executado de outros agentes. Vitalidade reconfirmada: PR #133 OPEN/CLEAN/CI verde (run 46047571459) no head d469ce8, main inalterada em 69d0217. Aguardando nova designação.",
+          "head_sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
+          "tests": "Somente verificação de vitalidade (gh pr view/checks, fetch main). Nenhum teste adicional aplicável — nenhuma tarefa atribuída.",
+          "blockers": [
+            "Sem atribuição ativa neste round; trabalho anterior (PR #133) aguarda revisão/merge do responsável.",
+            "Edição dos corpos das issues #86/#89/#99/#83 permanece condicionada a aprovação explícita."
+          ],
+          "next_action": "Aguardar nova atribuição do coordenador; manter PR #133 como entrega pronta para revisão."
         }
       ]
     }
