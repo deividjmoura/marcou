@@ -81,16 +81,28 @@
         128,
         38
       ],
-      "status": "awaiting_agent_execution",
-      "current_state": "Joint final review requested, with separate verdicts per PR.",
-      "next_action": "Verify expiration/idempotency/scheduler default-off for #128; verify cron auth, service-role scope, env failures, duplicate-send protection and audit for #38. Confirm current SHAs and CI.",
+      "status": "audit_completed_with_caveats",
+      "current_state": "Joint technical audit re-verified live PR heads and CI. PR #128 approved with caveats: workflow_dispatch should be restricted to main and tests should assert RPC eligibility/state/idempotency/concurrency. PR #38 approved: route/auth/service-role, reminders-only scope, RPC idempotency/row locking, test and audit validated. Both remain Draft/Open; no merges, scheduler activation, secrets, deploys or production changes.",
+      "next_action": "Before merging #128, add main-ref restriction to workflow_dispatch and stronger DB assertions for expire_stale_bookings (eligible/noneligible states, repeat idempotency, concurrent calls). Then merge #128 before #38 only after user approval. PR #38 can remain staged until user approves merge and reminder scheduler setup.",
       "last_verified": {
-        "branch": null,
-        "head_sha": null,
-        "ci": "previous context said green for #128; #38 had a prior audit failure in cron route and was assigned a fix. Re-verify current state.",
-        "notes": "Recommended integration order: #128 before #38. Do not merge or enable schedulers."
+        "branch": "fix/booking-expiration-scheduler; feat/26-notification-scheduler",
+        "head_sha": "PR #128: 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38: e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
+        "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
+        "ci": "Verified exact SHA: #128 CI run 266 success; #38 CI run 276 success. Quality jobs completed success.",
+        "notes": "Both PRs Draft/Open, mergeable, 0 behind main. #128 1 ahead; #38 6 ahead. Deploy previews previously reported Ready but were not reverified in this check. Review verdicts: #128 approved with caveats; #38 approved."
       },
-      "updates": []
+      "updates": [
+        {
+          "timestamp": "2026-11-27T14:24:00-03:00",
+          "task": "Reverify joint technical audit PR #128 and PR #38 under coordination protocol",
+          "status": "completed_with_caveats",
+          "result": "Live heads/base and CI reverified. #128 CI 266 success at 9258b596; workflow has default-off gate but manual dispatch lacks main-ref restriction; DB tests don't prove batch expiration eligibility/idempotency/concurrency sufficiently. #38 CI 276 success at e8ee5e3; cron route secure/fail-closed, reminders only, SQL row locking and idempotency, test/audit passed.",
+          "head_sha": "PR #128 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38 e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
+          "tests": "Exact SHA CI green: #128 Run 266, #38 Run 276; quality job success. CI assertions reviewed; noted test coverage gap for expiration RPC.",
+          "blockers": "#128 dispatch should require refs/heads/main and needs stronger RPC tests before enabling. No PR merged or scheduler configured.",
+          "next_action": "Restrict #128 workflow dispatch to main and add assertions for eligible/ineligible booking expiration, idempotency and concurrent RPC behavior; then user approval for merge, with #128 before #38."
+        }
+      ]
     },
     "agent_3_pr_130": {
       "scope": "PR #130 password recovery code/documentation review",
