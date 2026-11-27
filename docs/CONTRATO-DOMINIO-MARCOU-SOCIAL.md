@@ -26,7 +26,7 @@ Este contrato fixa fronteiras, invariantes e formatos conceituais para as próxi
 |---|---|
 | **Conta / ator** | Identidade Supabase (`auth.users.id`) que inicia uma operação. Uma conta pode agir em diferentes capacidades, mas cada comando valida sua autorização no servidor. |
 | **Perfil de conta** | Dados de uma pessoa em `profiles`; são privados por padrão. Não é sinônimo da página profissional pública. |
-| **Perfil profissional / provider** | Página e negócio de um profissional, identificado por `providerId`; hoje `providers.owner_id` liga um provider a uma conta. |
+| **Perfil profissional / provider** | Página e negócio de um profissional, identificado por `providerId`; hoje `providers.owner_id` liga um provider a uma conta. A página pública desse perfil é uma **rota interna da aplicação**, canonicamente `/p/{slug}` — não é um site, subdomínio ou aplicação independente (decisão em [REVISAO-ARQUITETURA-SOCIAL.md](REVISAO-ARQUITETURA-SOCIAL.md)). |
 | **Serviço** | Oferta de um provider. O serviço ativo é a origem atual de preço, duração, sinal e intervalo usados pelo motor. |
 | **Publicação / conteúdo** | Perfil, serviço, post, mídia ou avaliação que pode passar por rascunho, moderação e projeção pública. Estar armazenado não significa estar publicado. |
 | **Projeção pública** | Resposta montada com campos explicitamente permitidos para visitante. Não é `SELECT *` de uma tabela com RLS por linha. |
@@ -96,7 +96,8 @@ RLS atual protege **linhas**, não garante por si só uma projeção pública se
 - não adicionar telefone, endereço ou conteúdo privado a uma linha/tabela legível publicamente esperando que RLS por linha o esconda;
 - `providers.display_name`, `slug`, `description` e dados de catálogo precisam ser tratados como públicos quando o provider está publicado; texto livre não deve conter PII. As migrations atuais não validam semanticamente que uma descrição omita telefone/endereço, portanto não afirmar que esse filtro já existe;
 - `get_provider_schedule` é uma consulta de disponibilidade: pode retornar intervalos ocupados sem `bookingId`, cliente ou serviço identificável. Não é um feed de eventos. A RPC omite `availability_exceptions.note`, mas a tabela tem leitura pública por linha para providers publicados; enquanto não houver projeção/controle de coluna, trate `note` como público e nunca grave PII ali;
-- a rotina de moderação deve retirar imediatamente da projeção itens não publicados, restritos, removidos ou de contas suspensas, inclusive em cache.
+- a rotina de moderação deve retirar imediatamente da projeção itens não publicados, restritos, removidos ou de contas suspensas, inclusive em cache;
+- a URL pública do perfil é rota interna **canônica `/p/{slug}`**, servida pela mesma aplicação que o restante da plataforma; nunca existe site, subdomínio, hospedagem ou aplicação independente por profissional. As alternativas `/{slug}`, `/@{slug}` e `/profissional/{slug}` foram avaliadas na [revisão de 27/11/2026](REVISAO-ARQUITETURA-SOCIAL.md) e permanecem rejeitadas ou adiadas; qualquer alias futuro deve reescrever internamente para a rota canônica, sem criar segunda URL canônica.
 
 ## 3. Entidades conceituais e relações
 
