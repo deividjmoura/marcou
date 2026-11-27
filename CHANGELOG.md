@@ -115,7 +115,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
-- Google Calendar (#29): callback OAuth falha fechado com `503` quando `NEXT_PUBLIC_SITE_URL` está ausente/inválida, sem aceitar a origem da própria requisição como fallback. Worker da outbox usa `lease_token` rotativo por claim e exige o token atual para confirmar/reagendar/encerrar jobs, impedindo ack tardio de worker cujo lease foi retomado. Migration `20261127235900_calendar_worker_fencing.sql`; harness `calendar-check.mjs` passa a integrar `npm run test:db`.
+- Google Calendar (#29): callback OAuth falha fechado com `503` quando `NEXT_PUBLIC_SITE_URL` está ausente/inválida, sem aceitar a origem da própria requisição como fallback. Worker da outbox usa `lease_token` rotativo por claim e exige o token atual para confirmar/reagendar/encerrar jobs, impedindo ack tardio de worker cujo lease foi retomado. Migration `20261128000000_calendar_worker_fencing.sql`; harness `calendar-check.mjs` passa a integrar `npm run test:db`.
 
 - Hardening dos privilégios de tabela herdados do Supabase (Issue `#125`):
   migration `20261125140000_harden_public_table_privileges.sql` remove
