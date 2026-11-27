@@ -7,8 +7,17 @@
 | PR | #39 `[PROVIDER-ADMIN] Melhorar agenda com filtros e busca` (draft, `CONFLICTING`) |
 | Branch de destino | `feat/24-provider-agenda` @ `6f44b50` (base `db0fd8d`, 16/11) |
 | `main` usada como referência | `69d0217` (merge da PR #40, após #129) |
-| Commit de referência desta resolução | `d21ce89` (árvore única sobre `69d0217`) |
-| Patch | `patches/pr-39/pr-39-agenda.patch` — 36.241 bytes, 1.001 linhas, SHA-256 `eaba825b…b41adb` |
+| Commit de referência desta resolução | árvore `3f8890e1a097069b2a3cc224c8b88dcdead3b101` sobre `69d0217` (commit descartável de validação `7a2775b1bc5eb170c85f876ab320601ea9ce1651`) |
+| Patch | `patches/pr-39/pr-39-agenda.patch` — 36.241 bytes, 1.001 linhas, SHA-256 `eaba825b67e1841be0ac89318cf611f9e6949a60256e61c057002e5f5bb41adb` |
+| HEAD real da PR #39 | `6f44b506da887ecc90486c80e6b9789578b23837` (inalterado, base de 16/11) |
+| `main` no momento da validação | `69d02173653384e082476e7879ee9f33672dec72` |
+
+> **Identificação da resolução:** o SHA abreviado `d21ce89` citado no relatório
+> anterior pertencia a um clone descartável em `/tmp`, removido pelo reset do
+> ambiente — não é possível exibir os 40 caracteres sem reconstruir o commit.
+> O identificador canônico e verificável é o **patch** (SHA-256 acima) aplicado
+> sobre `69d0217`, cujo resultado tem a **árvore** `3f8890e1a097069b2a3cc224c8b88dcdead3b101`.
+> Um SHA de commit só passa a existir na PR quando o push for feito na branch real.
 
 **A PR #39 continua aberta e bloqueada por uma limitação do ambiente**: esta
 sessão só pode fazer commit/push na branch `arena/9c0da280-marcou`. A resolução
@@ -90,22 +99,37 @@ Resolução aplicada (preservando os dois lados, nada removido):
 | `npm run check:changelog -- --base origin/main` | ok (5 arquivos relevantes) |
 | `git apply --check` em clone limpo de `69d0217` | ok |
 
-## Como finalizar a PR #39
+## Como finalizar a PR #39 (Codespaces, 6 comandos)
 
 ```bash
-git fetch origin main
-git switch -c feat/24-provider-agenda-resolvida origin/main
-git apply --3way patches/pr-39/pr-39-agenda.patch
-git add -A
-git commit -m "feat(provider-admin): agenda do prestador com filtros e busca (#24)"
-git push --force-with-lease origin HEAD:feat/24-provider-agenda
+git fetch origin
+git switch -C feat/24-provider-agenda origin/main
+git show origin/arena/9c0da280-marcou:patches/pr-39/pr-39-agenda.patch | git apply --3way
+git add -A && git commit -m "feat(provider-admin): agenda do prestador com filtros e busca (#24)"
+git push --force-with-lease origin feat/24-provider-agenda
+git rev-parse HEAD   # novo HEAD da PR: use este SHA no CI, não o da branch arena
 ```
 
-O `--force-with-lease` é necessário porque a branch atual tem base de 16/11 e
-será substituída por um histórico linear sobre a `main` atual. Depois disso a PR
-#39 fica `MERGEABLE`; o squash merge só deve ocorrer com os checks do CI verdes
-**no novo SHA** — que este ambiente não pode produzir, porque o push precisa
-partir da branch da PR.
+`--force-with-lease` aborta com erro se a branch remota avançou depois do
+`fetch`, então nenhum trabalho posterior é sobrescrito. Depois do push:
+
+```bash
+npm install && npm run lint && npm run typecheck && npm test && npm run test:db && npm run audit && npm run build
+```
+
+A PR #39 fica `MERGEABLE`; o squash merge só deve ocorrer com CI verde **no SHA
+novo** e com a PR fora do estado Draft.
+
+## Estado do CI e do Deploy Preview
+
+- **CI da PR #39:** última execução `quality` = success, iniciada em
+  **2026-11-16T00:14:50Z**, isto é, no HEAD antigo `6f44b50`. Não existe CI em
+  nenhum SHA de resolução — o push ainda não ocorreu.
+- **Deploy Preview:** o único status de deployment no HEAD da PR é
+  `Vercel` = success (`vercel.com/deividjmouras-projects/marcou/CUxmQNSrASMEkZjAJtQW2KRAVGPD`),
+  também de 16/11. Não há status de Deploy Preview da Netlify nesse SHA.
+- Depois do push, o CI precisa rodar de novo e o preview precisa ser conferido
+  **no novo SHA**.
 
 ## Pendências que dependem de ação externa
 
