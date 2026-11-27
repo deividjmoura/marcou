@@ -27,6 +27,7 @@
     "truthfulness": "Separate verified facts, user-reported facts and assumptions. Unknown values must be null or marked unknown.",
     "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values.",
     "safety": [
+      "RODADA 7 (2026-11-27): o responsável pediu o fechamento das pontas abertas (branches, PRs e issues) e a execução é dos Agents 1–6. Valem integralmente as regras de segurança abaixo e os critérios globais de merge. Merge só quando o checklist do runbook estiver 100% verde no SHA exato; itens OWNER_DECISION nunca são mergeados sem aprovação explícita do responsável. A autorização textual da rodada 6 (Agents 1–5) fica substituída por esta.",
       "Autorização explícita do responsável nesta rodada (2026-11-27): Agents 1–5 podem atualizar suas PRs/branches, resolver conflitos, adicionar testes automatizados, marcar PRs Ready e fazer squash merge na main quando TODOS os critérios de merge do dispatch round 6 forem cumpridos. Não é necessário aguardar teste manual/real do responsável.",
       "Teste manual/real pendente NÃO bloqueia merge se testes automatizados relevantes, CI obrigatório, build, typecheck, lint, audit, test:db e changelog estiverem verdes no SHA exato e não houver bloqueio de segurança/review/conflito.",
       "Não ignorar testes falhando, não desabilitar checks, não alterar branch protection, não usar admin/bypass, não forçar merge, não esconder warnings relevantes ou falhas.",
@@ -39,20 +40,94 @@
       "Não modificar atribuição/branch de outro agente. Cada agente escreve somente seu state_entry, com fetch do state.json mais recente e blob SHA atual antes de cada write."
     ],
     "handoff": "Round 6 é uma rodada de conclusão: cinco agentes externos em paralelo e Agent6 como coordenador/auditor independente. Os números do prompt definem os slots. Cada agente deve corrigir lacunas, integrar sua área, fazer squash merge quando os critérios globais forem cumpridos e fechar somente issues realmente concluídas. Teste manual/real do responsável ficará para depois e não bloqueia merges com CI automatizado verde. Agent3 faz limpeza final de branches após os demais merges. Agent5 inventaria PRs restantes e faz triagem de issues sem duplicar os clusters. Agent6 audita SHAs/CI/merges e consolida.",
-    "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update."
+    "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update.",
+    "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
+    "commit_conventions": {
+      "format": "Conventional Commits 1.0: <tipo>(<escopo>): <resumo imperativo, minúsculo, até 72 caracteres>",
+      "types": [
+        "feat",
+        "fix",
+        "docs",
+        "test",
+        "refactor",
+        "perf",
+        "ci",
+        "build",
+        "chore",
+        "revert"
+      ],
+      "scopes": [
+        "booking",
+        "auth",
+        "calendar",
+        "db",
+        "security",
+        "provider-admin",
+        "public",
+        "customer",
+        "design",
+        "coordination"
+      ],
+      "footers": "Refs #N por padrão; Closes #N somente com aceite 100% cumprido; mudança incompatível usa ! e BREAKING CHANGE:",
+      "squash_title": "Título do squash merge também em Conventional Commits, com número da PR ao final."
+    },
+    "merge_checklist": [
+      "HEAD exato (SHA completo) e branch atualizada com a main atual, sem conflito e sem force-push",
+      "PR mergeable e fora de rascunho",
+      "CI quality verde no SHA exato: check:changelog, lint, typecheck, audit, test, test:db, build",
+      "Netlify Redirect rules e Header rules verdes; Pages changed neutral aceito",
+      "Sem falha de segurança/autorização e sem thread de review bloqueante",
+      "Migration nova com versão maior que a última da main (hoje 20261127000000), coberta por test:db; migration aplicada nunca é editada",
+      "Teste de regressão para cada bug corrigido",
+      "CHANGELOG.md atualizado em [Unreleased] (Adicionado, Alterado, Corrigido, Segurança, Removido, Depreciado)",
+      "Squash merge com expected_head_sha; depois registrar SHA do merge, vínculo com issues e status da branch"
+    ],
+    "merge_serialization": "Um merge por vez. Antes de mergear releia a main; depois de mergear registre o SHA na sua entrada para os demais atualizarem suas branches (merge da main na branch, sem force-push).",
+    "handoff_round_7": "Rodada 7: seis agentes com escopos disjuntos (PRs, issues e branches). Agent6 audita e, ao final, limpa branches comprovadamente integradas e consolida. Releia state.json completo, assuma o slot do seu número e siga o runbook. Entradas de rodadas anteriores permanecem como histórico; onde divergirem do snapshot verificado de 2026-11-27, vale o snapshot (e a releitura do GitHub)."
   },
   "dispatch": {
-    "round": "2026-11-27-round-6-closeout-and-integration",
+    "round": "2026-11-27-round-7-closeout-all-open-ends",
     "dispatched_at": "2026-11-27",
-    "instruction": "Rodada de conclusão autorizada pelo responsável. Leia state.json completo e assuma o slot correspondente ao número Agent1..Agent5. Confirme refs remotas e main atual antes de agir. Corrija gaps, adicione testes automatizados, atualize cada branch contra main, execute quality completa e faça squash merge na main quando TODOS os critérios de merge abaixo forem satisfeitos. Não aguarde teste real/manual: o responsável fará uma bateria ampla após a integração. Critérios obrigatórios: HEAD exato identificado; branch atualizada contra main sem conflito; mergeable; CI obrigatório verde no SHA exato incluindo changelog/lint/typecheck/unit/test:db/audit/build conforme projeto; sem falha de segurança/autorização; sem review thread bloqueante não resolvida; migration revisada e testada em CI; Preview/headers/redirect checks verdes quando aplicáveis. Checks neutros/skipped só são aceitos se documentados e comprovadamente não aplicáveis. Nunca bypass, force-push, desabilitar teste ou ocultar falha. Depois do merge, confirme merge SHA, issue linkage e branch status. Feche issues apenas com aceite concluído ou substituição inequívoca; roadmap não implementado permanece aberto e recebe status/next action. Sem deploy manual, produção, aplicação de migrations remotas, serviços externos, secrets, e-mails, notificações ou contas reais. Agent3 limpa branches comprovadamente merged ao final; Agent5 inventaria/triage as PRs restantes; Agent6 audita e consolida.",
-    "assignments": {
-      "agent_1": "state_entry=agent_1_completion_booking. FECHAR cluster de reservas e valores: PRs #124, #131 e #68. Confirme HEAD/base/CI de cada uma; revise diffs completos; resolva conflitos e atualize branches para main atual sem force-push. #124: parser BRL, preço/sinal, ações por papel e autorização no banco. #131: multi-serviços, RPCs/migrations, privilégios e compatibilidade legada. #68: confirmação e .ics devem mostrar corretamente múltiplos serviços, duração/preço e reservas antigas; corrigir lacunas de UX/testes identificadas. Sequência sugerida: #124 e #131 conforme dependências reais; depois rebasear #68 sobre a main resultante. Acrescente testes automatizados para lacunas reproduzíveis. Rode quality completa (audit, changelog, lint, typecheck, unit, test:db, build) no HEAD final. Você está autorizado a marcar ready e fazer squash merge na main quando todos os critérios globais do round 6 forem cumpridos. Feche issues vinculadas somente se critérios de aceite realmente concluídos; atualize documentação/CHANGELOG. Não execute migrations no Supabase remoto, não faça deploy manual nem teste real.",
-      "agent_2": "state_entry=agent_2_completion_auth. FECHAR cluster de autenticação/recuperação: PRs #127 e #130, Issues #70 e #23 quando aplicável. A restrição anterior de manter #127 intocada foi substituída pela autorização expressa do responsável nesta rodada: você pode corrigir, atualizar e fazer merge. Integre #127 primeiro se dependência confirmada; rebaseie/reconstrua #130 sobre a main resultante. Corrija lacunas reproduzíveis de trusted origin, callback, code/PKCE, token_hash/type, recovery route, loops/open redirect, cache/no-store e vazamento. Inclua os testes com mocks que faltam (o registro anterior cita 3 casos e patch pr130-recovery-tests.patch; se patch não estiver acessível, recrie os testes equivalentes). Não envie e-mails nem faça teste com conta real; teste manual de recuperação não é requisito para merge. Rode quality completa no HEAD final e faça squash merge quando os critérios globais forem atendidos. Feche issues somente se implementações/aceites estiverem realmente completos. Não altere Supabase/Netlify, secrets ou produção.",
-      "agent_3": "state_entry=agent_3_completion_ops. FECHAR cluster operacional de reservas: PRs #134, #128 e #38; Issues #25 e #26 conforme critérios. Primeiro confirme se #134 é independente e integre-a se os checks completos passarem. Para #128, resolver sobreposição com #38 em scripts/db-check.mjs e CHANGELOG.md, reforçar o gate para que expiração não possa apontar a produção por engano e manter BOOKING_EXPIRATION_ENABLED desligado por padrão. Para #38, corrigir/definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade; documentar scheduler externo necessário, sem ativá-lo. Atualize cada branch sobre main atual e rode CI completa após reconciliação. Você está autorizado a fazer squash merge quando os critérios globais forem atendidos, mesmo sem teste manual/real. Depois que os demais agentes terminarem seus merges, faça inventário final de branches: apague somente branches de PRs comprovadamente merged e branches sem commits exclusivos úteis; não apague branches de PR aberta, sessões ativas, coordination/agents, nem os seis arquivos staged locais do Calendar. Feche issues só com aceite cumprido ou substituição inequívoca; demais ficam abertas com status/next action claro. Não dispare notificações, não ative cron, não faça deploy nem altere serviços/secrets externos.",
-      "agent_4": "state_entry=agent_4_completion_calendar. FECHAR integração Calendar: PR #126 e Issue #29. Decisão de produto para esta rodada: V1 é unidirecional Marcou -> Google Calendar; eventos do Google não bloqueiam nem alteram a disponibilidade/reserva no Marcou. Reconfirme HEAD da PR versus branch real; escolha uma única ponta canônica, incorpore #131/main atual e resolva conflitos com cuidado, sem cherry-pick da arquitetura antiga #123. Preserve absolutamente os seis arquivos staged locais de Calendar: não os leia, modifique, restaure, mova ou sobrescreva. Feche lacunas P1 com testes: callback fail-closed sem request.url.origin, timeout/fencing/lease e corrida worker-disconnect, revogação externa retryável/rastreável, validação estrita de scopes e idempotência. Avalie PKCE/rotação de refresh token e chave, implemente se compatível e cubra com testes; se houver bloqueio real, documente como residual e não esconda. Server-only e least privilege obrigatórios. Não aplique migrations remotas nem conecte conta Google real. Rode quality completa no SHA final. Você está autorizado a fazer squash merge quando CI e critérios globais estiverem verdes, sem exigir teste real/manual. Atualize Issue #29 com escopo V1 e feche quando os critérios do V1 estiverem atendidos; registre claramente o que fica para V2.",
-      "agent_5": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos."
+    "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
+    "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios.",
+    "execution_order": [
+      "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (decidir mecanismo #128/#38), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
+      "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
+      "Onda 2: #136, #124, #130 (após #127), #128 e depois #38",
+      "Onda 3: #68, #67, #32; triagem final de issues",
+      "Onda 4: A6-T2/T3/T4 (limpeza, roadmap, relatório e pergunta de release)"
+    ],
+    "recommended_merge_queue": [
+      127,
+      131,
+      136,
+      124,
+      128,
+      38,
+      130,
+      68,
+      67,
+      32
+    ],
+    "owner_decision_items": {
+      "133": "revisão do responsável antes de qualquer merge",
+      "130/70": "validação real da recuperação de senha e conferência do Supabase Auth; rotação das credenciais OAuth/SMTP expostas",
+      "29": "conexão real com Google e variáveis de produção",
+      "schedulers": "ativar BOOKING_EXPIRATION_ENABLED, lembretes e worker do Calendar",
+      "30/20": "provisionar Supabase, cron, ambientes e deploy",
+      "roadmap 72–112": "priorizar ou manter como backlog",
+      "release": "publicar ou não uma GitHub Release"
     },
-    "agent_model": "Cinco agentes externos numerados Agent1–Agent5; Agent6 é o coordenador/auditor independente."
+    "assignments": {
+      "agent_1": "state_entry=agent_1_r7_booking",
+      "agent_2": "state_entry=agent_2_r7_auth",
+      "agent_3": "state_entry=agent_3_r7_ops_schedulers",
+      "agent_4": "state_entry=agent_4_r7_security_calendar",
+      "agent_5": "state_entry=agent_5_r7_product_backlog",
+      "agent_6": "state_entry=agent_6_r7_coordinator"
+    },
+    "agent_model": "Seis agentes numerados Agent1–Agent6; Agent6 é coordenador/auditor independente e faz a limpeza final de branches."
   },
   "shared_project_state": {
     "netlify": {
@@ -77,6 +152,240 @@
       "recovery_template_contract": "Uses {{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery",
       "pending": "Controlled functional recovery test remains pending; no email sent/tested reported.",
       "security_note": "Previously pasted configuration contained OAuth/SMTP credential material. Rotate exposed credentials at providers and update secrets securely. Never copy credential values into this file, logs, prompts or chat."
+    },
+    "github_snapshot_2026_11_27": {
+      "verified_by": "coordenador via API do GitHub; velho assim que a main mudar: reconfirme antes de agir",
+      "main_sha": "6f6f4cd30fecf902f97e64348052adef02f9ab16 (depois do runbook: f1983b108121c8c69a2becc86e2860c4e07a901e)",
+      "counts": {
+        "open_prs": 14,
+        "open_issues_excluding_prs": 64,
+        "remote_branches": 32
+      },
+      "already_merged_do_not_redo": [
+        "#134 harness de concorrência no test:db",
+        "#135 Calendar #29 + hardening #125 (substitui a #126, fechada)",
+        "#39 agenda do prestador",
+        "#129 lock de transição",
+        "#117 grants SECURITY DEFINER"
+      ],
+      "migrations_on_main_latest": [
+        "20261125140000_harden_public_table_privileges.sql",
+        "20261125153000_google_calendar_sync.sql",
+        "20261127000000_booking_transition_concurrency_lock.sql"
+      ],
+      "open_prs": [
+        {
+          "pr": 136,
+          "head": "70fdc37",
+          "draft": true,
+          "mergeable": true,
+          "ahead": 2,
+          "behind": 0,
+          "ci": "quality FAILED (test:db: migration 20261125130000 ausente, vive na #131)",
+          "owner": "agent_4"
+        },
+        {
+          "pr": 133,
+          "head": "d469ce8",
+          "draft": false,
+          "mergeable": false,
+          "ahead": 1,
+          "behind": 3,
+          "ci": "success",
+          "owner": "agent_5",
+          "note": "OWNER_DECISION"
+        },
+        {
+          "pr": 131,
+          "head": "955f9a8",
+          "draft": false,
+          "mergeable": false,
+          "ahead": 2,
+          "behind": 3,
+          "ci": "success (mas não cobre a regressão do redirect)",
+          "owner": "agent_1",
+          "note": "P0 bloqueia #136/#124/#68"
+        },
+        {
+          "pr": 130,
+          "head": "852f1dc",
+          "draft": true,
+          "mergeable": false,
+          "ahead": 29,
+          "behind": 3,
+          "ci": "success",
+          "owner": "agent_2"
+        },
+        {
+          "pr": 128,
+          "head": "488f9a9",
+          "draft": true,
+          "mergeable": true,
+          "ahead": 6,
+          "behind": 2,
+          "ci": "success",
+          "owner": "agent_3"
+        },
+        {
+          "pr": 127,
+          "head": "cc212db",
+          "draft": false,
+          "mergeable": true,
+          "ahead": 9,
+          "behind": 10,
+          "ci": "success",
+          "owner": "agent_2"
+        },
+        {
+          "pr": 124,
+          "head": "f320fe8",
+          "draft": false,
+          "mergeable": false,
+          "ahead": 17,
+          "behind": 10,
+          "ci": "success",
+          "owner": "agent_1"
+        },
+        {
+          "pr": 68,
+          "head": "a18a0d7",
+          "draft": true,
+          "mergeable": false,
+          "ahead": 8,
+          "behind": 34,
+          "ci": "success",
+          "owner": "agent_1"
+        },
+        {
+          "pr": 67,
+          "head": "b35653c",
+          "draft": true,
+          "mergeable": true,
+          "ahead": 3,
+          "behind": 34,
+          "ci": "success",
+          "owner": "agent_5"
+        },
+        {
+          "pr": 46,
+          "head": "2372687",
+          "draft": false,
+          "mergeable": false,
+          "ahead": 1,
+          "behind": 95,
+          "ci": "success",
+          "owner": "agent_5",
+          "note": "provável superada"
+        },
+        {
+          "pr": 41,
+          "head": "17423a8",
+          "draft": true,
+          "mergeable": false,
+          "ahead": 4,
+          "behind": 104,
+          "ci": "success (Vercel antigo)",
+          "owner": "agent_4",
+          "note": "provável superada"
+        },
+        {
+          "pr": 38,
+          "head": "e8ee5e3",
+          "draft": true,
+          "mergeable": true,
+          "ahead": 6,
+          "behind": 3,
+          "ci": "success",
+          "owner": "agent_3"
+        },
+        {
+          "pr": 32,
+          "head": "5b63265",
+          "draft": false,
+          "mergeable": false,
+          "ahead": 10,
+          "behind": 132,
+          "ci": "success (Vercel antigo)",
+          "owner": "agent_3"
+        },
+        {
+          "pr": 2,
+          "head": "7643bbb",
+          "draft": true,
+          "mergeable": true,
+          "ahead": 5,
+          "behind": 157,
+          "ci": "sem checks",
+          "owner": "agent_5",
+          "note": "base feat/pagina-publica-agendamento; provável superada"
+        }
+      ],
+      "branches_without_open_pr": {
+        "calendar (agent_4 audita)": [
+          "feat/29-google-calendar-sync",
+          "fix/29-oauth-state-atomic",
+          "arena/29-calendar-integration",
+          "arena/9c0da280-marcou"
+        ],
+        "booking/ops (agents 1 e 3 comparam; agent_6 apaga)": [
+          "arena/3b7c9d2f-marcou",
+          "arena/6f3a9b1f-marcou",
+          "fix/booking-transition-concurrency-incremental",
+          "feat/21-booking-multiple-services",
+          "cc212db"
+        ],
+        "PR fechada/mergeada (agent_6 apaga após verificar)": [
+          "feat/24-provider-agenda",
+          "fix/booking-transition-test-wiring",
+          "fix/auth-recovery-redirect-production",
+          "feat/customer-account-area",
+          "feat/pagina-publica-agendamento",
+          "arena/9e68c2bb-marcou",
+          "arena/4017109f-marcou"
+        ]
+      },
+      "issues_open_by_group": {
+        "agent_1": [
+          21,
+          22,
+          50,
+          8
+        ],
+        "agent_2": [
+          70,
+          23
+        ],
+        "agent_3": [
+          25,
+          26,
+          13,
+          20,
+          30,
+          31
+        ],
+        "agent_4": [
+          125,
+          29
+        ],
+        "agent_5": [
+          24,
+          27,
+          43,
+          47,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          121,
+          132,
+          19,
+          28
+        ],
+        "agent_6_roadmap": "épicos #72–#79 e filhas #83–#86, #88–#112 (social, descoberta, confiança, LGPD, operação, beta); nenhuma será fechada sem entrega"
+      },
+      "round6_corrections": "Entradas da rodada 6 dos Agents 1–4 ficaram sem progresso registrado (assigned_round_6) e partem de premissas velhas: Agent4 mirava a #126 (fechada; Calendar já na main via #135), Agent3 mirava a #134 (já mergeada). Agent5 integrou #39 e fechou #71. Vale este snapshot."
     }
   },
   "agents": {
@@ -927,6 +1236,398 @@
           "next_action": "Re-audit as soon as agent reports arrive; independently validate all merges and closures."
         }
       ]
+    },
+    "agent_1_r7_booking": {
+      "scope": "Reservas: multi-serviços, valores/sinal e confirmação (.ics)",
+      "pull_requests": [
+        131,
+        124,
+        68
+      ],
+      "issues": [
+        21,
+        22,
+        50,
+        8
+      ],
+      "branches": [
+        "fix/booking-multiple-services-pr123",
+        "arena/30a92c52-marcou",
+        "feat/booking-flow-confirmation-success",
+        "feat/21-booking-multiple-services"
+      ],
+      "status": "assigned_round_7",
+      "active_assignment": "P0 da rodada: destravar a #131. Depois #124 e #68. Releia o snapshot em shared_project_state.github_snapshot_2026_11_27 e confirme HEAD/CI no GitHub antes de agir.",
+      "tasks": [
+        {
+          "id": "A1-T1",
+          "target": "PR #131 (HEAD 955f9a8, conflito, 3 atrás)",
+          "action": "Atualizar com a main atual sem force-push e resolver conflitos (17 arquivos). Corrigir regressão: em src/app/p/[slug]/actions.ts o redirect para /reserva/<id> voltou para dentro do try/catch de bookSlotAction (NEXT_REDIRECT vira erro genérico); mover só o redirect para depois do catch. Recriar o teste de regressão (o commit 9641742 citado no comentário de 19:55 estava só local e não existe no remoto). Implementar seleção de vários serviços no BookingWidget (hoje usa serviceId único), com compatibilidade para reservas de um serviço. Migration de matriz de privilégios (20261125130000_table_privileges_matrix.sql): a main já tem 20261125140000_harden_public_table_privileges.sql e a última é 20261127000000; evite versão fora de ordem: renumere para versão maior que a última da main se ainda não aplicada, atualize a referência em scripts/privileges-check.mjs de forma consistente e registre a decisão no state.json para o Agent 4 (a #136 depende disso).",
+          "done_when": "#131 mergeada com CI verde no SHA exato e teste do redirect passando; SHA do merge e nome final da migration registrados na entrada."
+        },
+        {
+          "id": "A1-T2",
+          "target": "PR #124 (HEAD f320fe8, conflito, 10 atrás)",
+          "action": "Após a #131, atualizar com a main e resolver conflitos (src/app/p/[slug]/* e módulos de dinheiro tendem a colidir). Adicionar os testes sugeridos na revisão de 2026-11-25: '12.5' → 1250, '1.234,5' → 123450 e '12.34' como 12 reais e 34 centavos (não milhar); decidir e documentar se sinal 0 é permitido; validar autorização por papel no banco, não só na UI.",
+          "done_when": "#124 mergeada com CI verde; decisão do sinal documentada no PR/CHANGELOG."
+        },
+        {
+          "id": "A1-T3",
+          "target": "PR #68 (HEAD a18a0d7, rascunho, 34 atrás)",
+          "action": "Após #124/#131, atualizar sobre a main. Confirmação e arquivo .ics devem mostrar múltiplos serviços, duração e preço combinados e continuar corretos para reservas antigas de um serviço. Testes automatizados para esses três casos. Tirar de rascunho só com CI verde.",
+          "done_when": "#68 mergeada, ou com bloqueio documentado em blockers."
+        },
+        {
+          "id": "A1-T4",
+          "target": "Issues #21, #22, #50, #8",
+          "action": "Verificar o aceite contra a main (relacionadas já integradas: #40, #49, #51, #37, #4). Fechar com evidência (links de PR/teste) o que estiver cumprido. #21 só fecha após #131 integrada e UI multi-serviço funcionando. Demais: um comentário com status e próxima ação.",
+          "done_when": "Cada issue fechada com evidência ou aberta com status/próxima ação."
+        },
+        {
+          "id": "A1-T5",
+          "target": "Branch feat/21-booking-multiple-services (2 à frente, 1 migration)",
+          "action": "Comparar a migration exclusiva com o que a #131 entrega. Se redundante, registrar 'sem trabalho exclusivo' para o Agent 6 apagar.",
+          "done_when": "Disposição registrada."
+        }
+      ],
+      "dependencies": {
+        "blocks": [
+          "A4-T1 (#136)",
+          "A1-T2",
+          "A1-T3"
+        ],
+        "blocked_by": []
+      },
+      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
+      "next_action": "Atualizar #131 com a main, corrigir o redirect e o widget multi-serviço, integrar.",
+      "updates": []
+    },
+    "agent_2_r7_auth": {
+      "scope": "Autenticação e recuperação de senha",
+      "pull_requests": [
+        127,
+        130
+      ],
+      "issues": [
+        70,
+        23
+      ],
+      "branches": [
+        "arena/18c3a3fa-marcou",
+        "fix/auth-recovery-preview-origin",
+        "fix/auth-recovery-redirect-production"
+      ],
+      "status": "assigned_round_7",
+      "active_assignment": "Integrar #127 (pronta, limpa) e depois reconstruir/integrar #130 sobre a main resultante. Testes com mocks; sem e-mail real.",
+      "tasks": [
+        {
+          "id": "A2-T1",
+          "target": "PR #127 (HEAD cc212db, limpa, 10 atrás, CI verde)",
+          "action": "Atualizar com a main (merge, sem force-push), reexecutar a suíte completa no novo SHA, revisar o diff (orphan code/token_hash no fluxo de recuperação: sem open redirect, sem loop, sem vazamento) e mergear.",
+          "done_when": "#127 mergeada com SHA registrado."
+        },
+        {
+          "id": "A2-T2",
+          "target": "PR #130 (HEAD 852f1dc, rascunho, conflito, 29 à frente, 11 arquivos)",
+          "action": "Após #127, atualizar sobre a main. Se o histórico estiver poluído por commits de handoff, abrir branch nova a partir da main só com as mudanças pretendidas e fechar a #130 com referência. Cobrir com testes (mocks) trusted origin/deploy origin, callback, code/PKCE, token_hash+type, rota de recuperação, open redirect, no-store e vazamento; recriar os testes do patch pr130-recovery-tests.patch se o arquivo não estiver acessível. Remover o rascunho só com CI verde no SHA exato.",
+          "done_when": "#130 (ou sua substituta) mergeada; pendência de validação real documentada na PR."
+        },
+        {
+          "id": "A2-T3",
+          "target": "Issue #70",
+          "action": "Comentar o que foi entregue (links) e o que depende do responsável: conferir URL/template/SMTP do Supabase e executar um teste real de recuperação. Manter aberta até o responsável confirmar em produção.",
+          "done_when": "Comentário de status publicado; issue permanece aberta aguardando o responsável."
+        },
+        {
+          "id": "A2-T4",
+          "target": "Issue #23",
+          "action": "Checklist de aceite contra a main: cadastro, confirmação por e-mail (PKCE), login, Google OAuth, perfil do cliente, recuperação. Fechar com evidência se completo; senão listar o que falta.",
+          "done_when": "Fechada com evidência ou aberta com lacunas explícitas."
+        }
+      ],
+      "dependencies": {
+        "blocks": [],
+        "blocked_by": []
+      },
+      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
+      "next_action": "Atualizar a #127 com a main, rodar a suíte e mergear.",
+      "updates": []
+    },
+    "agent_3_r7_ops_schedulers": {
+      "scope": "Scheduler de expiração/lembretes e plataforma/ops",
+      "pull_requests": [
+        128,
+        38,
+        32
+      ],
+      "issues": [
+        25,
+        26,
+        13,
+        20,
+        30,
+        31
+      ],
+      "branches": [
+        "fix/booking-expiration-scheduler",
+        "feat/26-notification-scheduler",
+        "feat/30-platform-hardening",
+        "arena/3b7c9d2f-marcou"
+      ],
+      "status": "assigned_round_7",
+      "active_assignment": "Definir UM mecanismo canônico de expiração/lembretes, integrar #128 e #38 em sequência e triar a #32. Nenhum scheduler é ativado.",
+      "tasks": [
+        {
+          "id": "A3-T1",
+          "target": "PR #128 (HEAD 488f9a9, rascunho, limpa, 2 atrás) e PR #38 (HEAD e8ee5e3, rascunho, limpa, 3 atrás)",
+          "action": "Comparar os dois mecanismos e a branch arena/3b7c9d2f-marcou (endpoint /api/bookings/expire) para evitar duplicação. Resolver a sobreposição em scripts/db-check.mjs e CHANGELOG.md. Manter BOOKING_EXPIRATION_ENABLED desligado por padrão e impedir que a expiração aponte para produção por engano (gate). Em #38, definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade. Documentar o scheduler externo necessário, sem ativá-lo. Integrar em sequência (um merge, atualizar o outro, CI de novo).",
+          "done_when": "#128 e #38 mergeadas (ou uma delas fechada como duplicada, com justificativa) e documento de operação do scheduler atualizado."
+        },
+        {
+          "id": "A3-T2",
+          "target": "PR #32 (HEAD 5b63265, pronta, conflito, 132 atrás, 6 arquivos)",
+          "action": "Inventariar o que ainda não está na main (CI com audit, docs/QUALITY-AUDIT.md e o inventário já existem). Se houver valor exclusivo, reconstruir como PR pequena sobre a main; se não houver, fechar como superada citando as PRs/commits que cobrem.",
+          "done_when": "#32 mergeada ou fechada com evidência."
+        },
+        {
+          "id": "A3-T3",
+          "target": "Issues #25, #26, #13",
+          "action": "Conferir aceite contra a main (#35 doc de ciclo de vida, #129 lock de transição, #134 harness, #128/#38). Fechar com evidência ou comentar status e próxima ação. #13 (preferências/canais) provavelmente segue aberta.",
+          "done_when": "Cada issue resolvida ou com próxima ação."
+        },
+        {
+          "id": "A3-T4",
+          "target": "Issues #20, #30, #31",
+          "action": "Status por comentário. #30 e #20 dependem de provisionamento real (Supabase, cron, ambientes, deploy): marcar como OWNER_DECISION e listar o que o responsável precisa fazer. #31 (auditoria transversal E2E/a11y): manter aberta com o que já existe em docs/QUALITY-AUDIT.md.",
+          "done_when": "Comentários publicados; nenhuma issue fechada artificialmente."
+        }
+      ],
+      "dependencies": {
+        "blocks": [],
+        "blocked_by": []
+      },
+      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
+      "next_action": "Comparar #128, #38 e arena/3b7c9d2f-marcou e escolher o mecanismo canônico.",
+      "updates": []
+    },
+    "agent_4_r7_security_calendar": {
+      "scope": "Privilégios/segurança de banco e fechamento do Calendar (V1 já na main)",
+      "pull_requests": [
+        136,
+        41
+      ],
+      "issues": [
+        125,
+        29
+      ],
+      "branches": [
+        "fix/125-privileges-check-ci",
+        "fix/security-definer-execute-grants",
+        "feat/29-google-calendar-sync",
+        "fix/29-oauth-state-atomic",
+        "arena/29-calendar-integration",
+        "arena/9c0da280-marcou",
+        "arena/9e68c2bb-marcou",
+        "arena/4017109f-marcou"
+      ],
+      "status": "assigned_round_7",
+      "active_assignment": "Ligar o privileges-check ao CI (#136) depois que o Agent 1 resolver a migration da #131; fechar #41 com evidência; auditar o Calendar já mergeado e as branches antigas dele. Correção de rota da rodada 6: a #126 está FECHADA e o Calendar entrou na main pela #135; não refaça a #126.",
+      "tasks": [
+        {
+          "id": "A4-T1",
+          "target": "PR #136 (HEAD 70fdc37, rascunho, 0 atrás, quality falhou)",
+          "action": "Falha atual: test:db não acha 20261125130000_table_privileges_matrix.sql, que só existe na #131. Aguardar a decisão/merge do Agent 1 sobre essa migration (acompanhe o state.json) e então alinhar privileges-check.mjs às migrations realmente presentes na main (hardening 20261125140000 + a da #131). Não desabilitar o check nem relaxar a matriz. Atualizar branch sem force-push, rodar suíte completa, tirar de rascunho e mergear.",
+          "done_when": "#136 mergeada com test:db executando privileges-check; Issue #125 comentada com evidência e fechada se o aceite estiver cumprido."
+        },
+        {
+          "id": "A4-T2",
+          "target": "PR #41 (HEAD 17423a8, rascunho, conflito, 104 atrás)",
+          "action": "Comparar com a main: migrations 20261123133000_harden_security_definer_grants.sql (#117), docs/SECURITY-DEFINER-GRANTS.md e o hardening da #135. Se não houver trabalho exclusivo, fechar como superada citando as PRs; se houver, portar só o delta em PR pequena sobre a main.",
+          "done_when": "#41 fechada com evidência ou delta integrado."
+        },
+        {
+          "id": "A4-T3",
+          "target": "Issue #29 e código do Calendar na main (via #135)",
+          "action": "Checar o aceite do V1 (decisão da rodada 6: unidirecional Marcou → Google; eventos do Google não bloqueiam disponibilidade). Verificar no código da main: callback fail-closed sem request.url.origin, state OAuth atômico, validação estrita de scopes, lease/fencing do worker, revogação externa retryável, idempotência, tokens só no servidor. Lacuna real vira PR pequena com teste; o que for V2 fica registrado. Garantir que o worker segue inerte sem configuração. Fechar #29 só com o V1 comprovado; conexão real com Google e variáveis de produção são do responsável (OWNER_DECISION).",
+          "done_when": "#29 fechada com escopo V1 comprovado ou comentada com lacunas e próxima ação."
+        },
+        {
+          "id": "A4-T4",
+          "target": "Branches antigas do Calendar",
+          "action": "Para feat/29-google-calendar-sync, fix/29-oauth-state-atomic (tem scripts/calendar-state-check.mjs e teste de callback), arena/29-calendar-integration, arena/9c0da280-marcou, arena/9e68c2bb-marcou e arena/4017109f-marcou: listar commits exclusivos e dizer se o conteúdo útil já está na main (squash da #135) ou é uma lacuna. Registrar disposição por branch (APAGAR, PRESERVAR ou PORTAR) para o Agent 6 executar a limpeza. Não ler nem tocar nos seis arquivos staged locais do Calendar.",
+          "done_when": "Tabela de disposição preenchida na sua entrada."
+        }
+      ],
+      "dependencies": {
+        "blocks": [],
+        "blocked_by": [
+          "A1-T1 (migration da #131)"
+        ]
+      },
+      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
+      "next_action": "Começar por A4-T3/A4-T2/A4-T4 (independentes) enquanto a #131 não é integrada.",
+      "updates": []
+    },
+    "agent_5_r7_product_backlog": {
+      "scope": "PRs de design/docs/legado e triagem de issues de produto",
+      "pull_requests": [
+        133,
+        67,
+        46,
+        2
+      ],
+      "issues": [
+        24,
+        27,
+        43,
+        47,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        121,
+        132,
+        19,
+        28
+      ],
+      "branches": [
+        "arena/f074e752-marcou",
+        "design/identidade-visual",
+        "arena/116298da-marcou",
+        "feat/calendario-mobile",
+        "feat/pagina-publica-agendamento",
+        "feat/customer-account-area"
+      ],
+      "status": "assigned_round_7",
+      "active_assignment": "Resolver #133 até a revisão do responsável, integrar #67 se válida, fechar #46 e #2 se superadas (com evidência) e triar as issues de produto.",
+      "tasks": [
+        {
+          "id": "A5-T1",
+          "target": "PR #133 (HEAD d469ce8, pronta, conflito, 3 atrás, 7 arquivos)",
+          "action": "Resolver conflitos com a main sem force-push e deixar a PR pronta para revisão do responsável com um resumo curto (o que muda, impacto, riscos). NÃO mergear sem aprovação explícita (OWNER_DECISION).",
+          "done_when": "PR sem conflito, CI verde, resumo publicado e pendência do responsável registrada."
+        },
+        {
+          "id": "A5-T2",
+          "target": "PR #67 (HEAD b35653c, rascunho, limpa, 34 atrás, 9 arquivos)",
+          "action": "Atualizar com a main; conferir tokens/tipografia contra docs/DESIGN-SYSTEM.md e a acessibilidade (contraste); CI verde; tirar de rascunho e mergear se o checklist for cumprido. Atualizar a Issue #27 com o que foi entregue e o que falta.",
+          "done_when": "#67 mergeada ou bloqueio documentado."
+        },
+        {
+          "id": "A5-T3",
+          "target": "PR #46 (HEAD 2372687, conflito, 95 atrás, 1 arquivo)",
+          "action": "Provável superada: limpeza de branches já registrada na main (#60). Confirmar e fechar com comentário citando a evidência.",
+          "done_when": "#46 fechada com justificativa."
+        },
+        {
+          "id": "A5-T4",
+          "target": "PR #2 (HEAD 7643bbb, rascunho, base feat/pagina-publica-agendamento, 157 atrás)",
+          "action": "Base é a branch da #1 (fechada). Confirmar que a etapa de calendário mobile já existe na main (#37, #49, #51) e fechar como superada; se houver delta útil, reconstruir PR pequena sobre a main.",
+          "done_when": "#2 fechada com evidência ou substituída."
+        },
+        {
+          "id": "A5-T5",
+          "target": "Issues #24, #27, #43, #47, #52–#57, #121, #132, #19, #28",
+          "action": "Classificar cada uma: DONE (fechar com evidência), PARTIAL, BACKLOG ou OWNER_DECISION. #24: #39 integrada, verificar o que falta. #47: #62 integrada, verificar o restante. #28 (pagamentos), #19 (WhatsApp), #121 (temas), #132 (demo do feed) são futuras: comentar status/dependências, não fechar. Um comentário por issue, sem abrir issues novas.",
+          "done_when": "Todas classificadas, com comentário de status/próxima ação ou fechadas com evidência."
+        }
+      ],
+      "dependencies": {
+        "blocks": [],
+        "blocked_by": []
+      },
+      "current_state": "Atribuição da rodada 7 registrada; nenhum trabalho iniciado.",
+      "next_action": "Fechar #46/#2 com evidência e resolver conflitos da #133.",
+      "updates": []
+    },
+    "agent_6_r7_coordinator": {
+      "scope": "Coordenação, auditoria independente, limpeza final de branches, roadmap e relatório",
+      "pull_requests": [],
+      "issues": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79
+      ],
+      "branches": [
+        "coordination/agents",
+        "cc212db",
+        "arena/6f3a9b1f-marcou",
+        "fix/booking-transition-concurrency-incremental",
+        "feat/24-provider-agenda",
+        "fix/booking-transition-test-wiring",
+        "fix/auth-recovery-redirect-production",
+        "feat/customer-account-area"
+      ],
+      "status": "assigned_round_7",
+      "active_assignment": "Não implementa as tarefas dos Agents 1–5. Audita cada alegação contra o GitHub (SHA exato, CI, merge SHA, issue, branch), mantém a ordem de merges, limpa branches comprovadamente integradas no fim e entrega o relatório final.",
+      "tasks": [
+        {
+          "id": "A6-T1",
+          "target": "Baseline e auditoria contínua",
+          "action": "Reconstruir o inventário de PRs/branches/issues pelos endpoints oficiais do GitHub e comparar com o snapshot. A cada entrega dos Agents 1–5, verificar HEAD, ancestralidade na main, check-runs do SHA exato, merge SHA e fechamento de issue. Escalar divergências em blockers.",
+          "done_when": "Cada merge/fechamento reportado tem verificação independente registrada."
+        },
+        {
+          "id": "A6-T2",
+          "target": "Limpeza de branches (somente no fim, após os merges)",
+          "action": "Apagar apenas branch cuja PR esteja merged e cujo conteúdo esteja na main (squash: PR merged + diff vazio nos arquivos da PR) ou que tenha disposição APAGAR registrada pelo agente dono. Candidatas de partida (verificar antes): feat/24-provider-agenda (#39 merged), fix/booking-transition-test-wiring (#134 merged), fix/booking-transition-concurrency-incremental (#129 merged), arena/6f3a9b1f-marcou (harness já na main), a branch avulsa chamada 'cc212db' (nome é um SHA; 10 à frente, parece cópia anterior de trabalho já integrado), fix/auth-recovery-redirect-production (#71 fechada), feat/customer-account-area e feat/pagina-publica-agendamento (PRs fechadas). Preservar: main, coordination/agents, branches de PR aberta, branches com trabalho exclusivo e sessões ativas.",
+          "done_when": "Tabela final branch → disposição → evidência."
+        },
+        {
+          "id": "A6-T3",
+          "target": "Roadmap Marcou Social (#72–#112)",
+          "action": "Um único comentário de status por épico (#72–#79) resumindo as issues filhas e o que já está integrado (#80, #81, #82, #87, #106 fechadas). Não fechar nem comentar nas filhas sem entrega. Marcar como OWNER_DECISION a priorização do roadmap.",
+          "done_when": "Épicos com status; zero fechamentos artificiais."
+        },
+        {
+          "id": "A6-T4",
+          "target": "Relatório final e release",
+          "action": "Escrever em updates o relatório: PRs mergeadas (com merge SHA), fechadas, ainda abertas e por quê; branches apagadas/preservadas; issues fechadas/abertas; pendências do responsável (runbook seção 7). Aplicar a regra do AGENTS.md: avaliar se a main justifica uma GitHub Release e, se sim, formular a pergunta obrigatória ao responsável; nunca criar tag ou release sem autorização.",
+          "done_when": "Relatório publicado e pergunta de release feita ou dispensada com motivo."
+        }
+      ],
+      "dependencies": {
+        "blocks": [],
+        "blocked_by": [
+          "Agents 1–5 (limpeza e relatório só ao final)"
+        ]
+      },
+      "current_state": "Atribuição da rodada 7 registrada; baseline do coordenador feito em 2026-11-27 (snapshot em shared_project_state).",
+      "next_action": "Acompanhar os merges na ordem do runbook e verificar cada um de forma independente.",
+      "updates": [
+        {
+          "timestamp": "2026-11-27",
+          "task": "Rodada 7: inventário e distribuição das atribuições",
+          "status": "round7_dispatched",
+          "result": "Inventário feito via API do GitHub: 14 PRs abertas, 32 branches, 64 issues abertas. Constatado que o Calendar entrou na main pela #135 (#126 fechada), #134/#39 mergeadas, e que a #131 tem conflito e regressão de redirect. Atribuições dos Agents 1–6 e runbook publicados.",
+          "head_sha": "main=6f6f4cd30fecf902f97e64348052adef02f9ab16 (runbook em f1983b108121c8c69a2becc86e2860c4e07a901e)",
+          "tests": "não aplicável (apenas inventário/documentação)",
+          "blockers": "nenhum",
+          "next_action": "Verificar as entregas dos Agents 1–5 contra o GitHub."
+        }
+      ]
     }
-  }
+  },
+  "dispatch_history": [
+    {
+      "round": "2026-11-27-round-6-closeout-and-integration",
+      "dispatched_at": "2026-11-27",
+      "instruction": "Rodada de conclusão autorizada pelo responsável. Leia state.json completo e assuma o slot correspondente ao número Agent1..Agent5. Confirme refs remotas e main atual antes de agir. Corrija gaps, adicione testes automatizados, atualize cada branch contra main, execute quality completa e faça squash merge na main quando TODOS os critérios de merge abaixo forem satisfeitos. Não aguarde teste real/manual: o responsável fará uma bateria ampla após a integração. Critérios obrigatórios: HEAD exato identificado; branch atualizada contra main sem conflito; mergeable; CI obrigatório verde no SHA exato incluindo changelog/lint/typecheck/unit/test:db/audit/build conforme projeto; sem falha de segurança/autorização; sem review thread bloqueante não resolvida; migration revisada e testada em CI; Preview/headers/redirect checks verdes quando aplicáveis. Checks neutros/skipped só são aceitos se documentados e comprovadamente não aplicáveis. Nunca bypass, force-push, desabilitar teste ou ocultar falha. Depois do merge, confirme merge SHA, issue linkage e branch status. Feche issues apenas com aceite concluído ou substituição inequívoca; roadmap não implementado permanece aberto e recebe status/next action. Sem deploy manual, produção, aplicação de migrations remotas, serviços externos, secrets, e-mails, notificações ou contas reais. Agent3 limpa branches comprovadamente merged ao final; Agent5 inventaria/triage as PRs restantes; Agent6 audita e consolida.",
+      "assignments": {
+        "agent_1": "state_entry=agent_1_completion_booking. FECHAR cluster de reservas e valores: PRs #124, #131 e #68. Confirme HEAD/base/CI de cada uma; revise diffs completos; resolva conflitos e atualize branches para main atual sem force-push. #124: parser BRL, preço/sinal, ações por papel e autorização no banco. #131: multi-serviços, RPCs/migrations, privilégios e compatibilidade legada. #68: confirmação e .ics devem mostrar corretamente múltiplos serviços, duração/preço e reservas antigas; corrigir lacunas de UX/testes identificadas. Sequência sugerida: #124 e #131 conforme dependências reais; depois rebasear #68 sobre a main resultante. Acrescente testes automatizados para lacunas reproduzíveis. Rode quality completa (audit, changelog, lint, typecheck, unit, test:db, build) no HEAD final. Você está autorizado a marcar ready e fazer squash merge na main quando todos os critérios globais do round 6 forem cumpridos. Feche issues vinculadas somente se critérios de aceite realmente concluídos; atualize documentação/CHANGELOG. Não execute migrations no Supabase remoto, não faça deploy manual nem teste real.",
+        "agent_2": "state_entry=agent_2_completion_auth. FECHAR cluster de autenticação/recuperação: PRs #127 e #130, Issues #70 e #23 quando aplicável. A restrição anterior de manter #127 intocada foi substituída pela autorização expressa do responsável nesta rodada: você pode corrigir, atualizar e fazer merge. Integre #127 primeiro se dependência confirmada; rebaseie/reconstrua #130 sobre a main resultante. Corrija lacunas reproduzíveis de trusted origin, callback, code/PKCE, token_hash/type, recovery route, loops/open redirect, cache/no-store e vazamento. Inclua os testes com mocks que faltam (o registro anterior cita 3 casos e patch pr130-recovery-tests.patch; se patch não estiver acessível, recrie os testes equivalentes). Não envie e-mails nem faça teste com conta real; teste manual de recuperação não é requisito para merge. Rode quality completa no HEAD final e faça squash merge quando os critérios globais forem atendidos. Feche issues somente se implementações/aceites estiverem realmente completos. Não altere Supabase/Netlify, secrets ou produção.",
+        "agent_3": "state_entry=agent_3_completion_ops. FECHAR cluster operacional de reservas: PRs #134, #128 e #38; Issues #25 e #26 conforme critérios. Primeiro confirme se #134 é independente e integre-a se os checks completos passarem. Para #128, resolver sobreposição com #38 em scripts/db-check.mjs e CHANGELOG.md, reforçar o gate para que expiração não possa apontar a produção por engano e manter BOOKING_EXPIRATION_ENABLED desligado por padrão. Para #38, corrigir/definir idempotência diária considerando timezone do prestador, retries, janela e elegibilidade; documentar scheduler externo necessário, sem ativá-lo. Atualize cada branch sobre main atual e rode CI completa após reconciliação. Você está autorizado a fazer squash merge quando os critérios globais forem atendidos, mesmo sem teste manual/real. Depois que os demais agentes terminarem seus merges, faça inventário final de branches: apague somente branches de PRs comprovadamente merged e branches sem commits exclusivos úteis; não apague branches de PR aberta, sessões ativas, coordination/agents, nem os seis arquivos staged locais do Calendar. Feche issues só com aceite cumprido ou substituição inequívoca; demais ficam abertas com status/next action claro. Não dispare notificações, não ative cron, não faça deploy nem altere serviços/secrets externos.",
+        "agent_4": "state_entry=agent_4_completion_calendar. FECHAR integração Calendar: PR #126 e Issue #29. Decisão de produto para esta rodada: V1 é unidirecional Marcou -> Google Calendar; eventos do Google não bloqueiam nem alteram a disponibilidade/reserva no Marcou. Reconfirme HEAD da PR versus branch real; escolha uma única ponta canônica, incorpore #131/main atual e resolva conflitos com cuidado, sem cherry-pick da arquitetura antiga #123. Preserve absolutamente os seis arquivos staged locais de Calendar: não os leia, modifique, restaure, mova ou sobrescreva. Feche lacunas P1 com testes: callback fail-closed sem request.url.origin, timeout/fencing/lease e corrida worker-disconnect, revogação externa retryável/rastreável, validação estrita de scopes e idempotência. Avalie PKCE/rotação de refresh token e chave, implemente se compatível e cubra com testes; se houver bloqueio real, documente como residual e não esconda. Server-only e least privilege obrigatórios. Não aplique migrations remotas nem conecte conta Google real. Rode quality completa no SHA final. Você está autorizado a fazer squash merge quando CI e critérios globais estiverem verdes, sem exigir teste real/manual. Atualize Issue #29 com escopo V1 e feche quando os critérios do V1 estiverem atendidos; registre claramente o que fica para V2.",
+        "agent_5": "state_entry=agent_5_completion_remaining. FECHAR o restante do backlog ativo de PRs/issues sem sobrepor os clusters atribuídos: priorize PRs #39, #133 e #71 e inventarie todas as outras PRs abertas atuais. Para cada PR não atribuída a Agents 1-4, classifique MERGE (pronta + CI verde), FIX (gap concreto e corrigível), CLOSE (duplicada/superseded/sem trabalho exclusivo) ou HOLD (dependência/decisão externa). Corrija e integre #39/#133/#71 se apropriado, incluindo refresh contra main e CI completa. Audite a Issue #125 (privilégios padrão do Supabase) e confirme se já existe implementação/PR; não duplicar trabalho que pertença a #124/#131 ou migration já integrada. Faça inventário de todas as issues abertas: feche apenas as vinculadas a entregas concluídas ou substituídas inequivocamente; para issues futuras/roadmap não implementadas, não feche artificialmente, mas marque como deferred/backlog e deixe dependência/next action clara. Não abra novas issues salvo bug real sem issue equivalente. Está autorizado a marcar ready e fazer squash merge das PRs sob sua responsabilidade quando critérios globais forem atendidos. Não fazer deploy nem aplicar migrations remotas/alterar serviços externos."
+      },
+      "agent_model": "Cinco agentes externos numerados Agent1–Agent5; Agent6 é o coordenador/auditor independente."
+    }
+  ]
 }
