@@ -1658,7 +1658,7 @@
         "feat/pagina-publica-agendamento",
         "feat/customer-account-area"
       ],
-      "status": "blocked_pending_visual_review",
+      "status": "completed_with_blocker",
       "active_assignment": "Resolver #133 até a revisão do responsável, integrar #67 se válida, fechar #46 e #2 se superadas (com evidência) e triar as issues de produto.",
       "tasks": [
         {
@@ -1696,19 +1696,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #140 mergeada por squash; main verificada no SHA cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b. PRs #133 (substituída), #46 e #2 fechadas com evidência. Triagem issues #19,#28,#43,#47,#52-57,#121,#132 registrada por comentário; #24 tem triagem parcial já registrada por agente anterior, #27 comentada. PR #67 permanece draft/pending por 40 commits behind, changelog ausente sob regra atual e revisão visual humana indisponível.",
-      "next_action": "PR #140 concluída. Para #67, rebase/reconciliação segura sobre main, changelog, CI e inspeção visual desktop/mobile são necessários; não mergear até checklist verde e revisão visual.",
+      "current_state": "Escopo Agent5 concluído: #140 mergeada; #133/#46/#2 fechadas; issues de produto classificadas e comentadas. Única pendência deliberada é PR #67, mantida Draft por falta de inspeção visual e necessidade de reconciliação/changelog/CI atuais.",
+      "next_action": "A PR #67 só pode avançar após branch reconciliada com main, changelog atualizado, CI completo no SHA exato e revisão visual desktop/mobile; então remover Draft e merge se checklist estiver verde.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Triage/encerramento de PRs legadas #46 e #2 e comentários de status em issues de produto",
-          "status": "completed",
-          "result": "#46 fechada como superada pela PR #60 e registro atual em AGENT_TASK_MARCOU.md. #2 fechada como protótipo superado pelo fluxo real #37/#49/#51. Comentários de status/próxima ação adicionados às issues #19,#28,#43,#47,#52-57,#121,#132.",
-          "head_sha": "main 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170",
-          "tests": "Verificadas PRs/commits e docs main; sem teste executável por triagem.",
-          "blockers": [],
-          "next_action": "Reconciliar #133 sobre main atual e rodar CI."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "Reconciliação e substituição da PR #133",
@@ -1732,6 +1722,18 @@
             "PR #67 requer reconciliação com main, changelog e inspeção visual humana desktop/mobile; sem acesso ao preview em navegador nesta sessão."
           ],
           "next_action": "Concluir escopo com #67 pendente até revisão visual/CI atualizado."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Fechamento da atuação Agent5 na rodada 7",
+          "status": "completed_with_blocker",
+          "result": "Entrega concluída. #140 merged; #133/#46/#2 closed com evidências; issues de produto foram classificadas em comentários. #67 fica KEEP_PENDING/draft com blocker visual e base/changelog a atualizar.",
+          "head_sha": "main verificada: cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b",
+          "tests": "CI/Netlify da #140 verdes; nenhuma validação visual humana executada.",
+          "blockers": [
+            "#67: inspeção visual desktop/mobile indisponível nesta sessão; branch 40 commits atrás e sem CHANGELOG no diff original."
+          ],
+          "next_action": "Aguardar/reabrir #67 quando puder realizar inspeção visual e atualizar a PR sobre main."
         }
       ]
     },
