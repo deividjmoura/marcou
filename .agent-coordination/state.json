@@ -104,16 +104,16 @@
         128,
         38
       ],
-      "status": "audit_completed_with_caveats",
+      "status": "in_progress",
       "active_assignment": "Fix the two #128 caveats only: main-ref restriction for workflow_dispatch and stronger DB tests for eligibility, ineligible states, idempotency and concurrency. Re-run tests and CI on the new SHA. Do not merge or enable scheduler.",
-      "current_state": "Joint audit: #128 approved with caveats; #38 approved. #128 workflow_dispatch lacks main-ref restriction and DB tests need stronger assertions. #38 cron auth/service-role scope/idempotency/tests/audit validated.",
-      "next_action": "Fix #128 caveats, verify exact SHA and CI. Keep #38 unchanged unless regression found. No merge or scheduler setup.",
+      "current_state": "Confirmed assignment from coordination state: fix only PR #128's dispatch branch restriction and stronger expire_stale_bookings DB assertions. Current branch SHA 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38 remains out of scope.",
+      "next_action": "Add workflow condition restricting manual dispatch to refs/heads/main. Implement integration DB test cases for eligible/ineligible expiration, repeat invocation/idempotency, and concurrency; run relevant tests and CI. No merge or activation.",
       "last_verified": {
-        "branch": "fix/booking-expiration-scheduler; feat/26-notification-scheduler",
-        "head_sha": "PR #128: 9258b5962f6c5545ce53aa6e408fd179769e10b9; PR #38: e8ee5e3daa5dca2bd317a951c4d42bb93933d2bd",
+        "branch": "fix/booking-expiration-scheduler",
+        "head_sha": "9258b5962f6c5545ce53aa6e408fd179769e10b9",
         "base_sha": "69d02173653384e082476e7879ee9f33672dec72",
-        "ci": "Exact SHA CI: #128 run 266 success; #38 run 276 success. Re-run after any change.",
-        "notes": "Both Draft/Open, mergeable, 0 behind main at last check. #128 1 ahead; #38 6 ahead. Previews not reverified."
+        "ci": "Previous CI run #266 green on this SHA; rerun after edits.",
+        "notes": "PR #128 open Draft; PR #38 untouched. Coordination state read from blob 2d0ce256067e28e9487fd46ad2dda8a0f486c335."
       },
       "updates": [
         {
@@ -127,6 +127,16 @@
             "#128 needs main-only dispatch restriction and stronger DB tests."
           ],
           "next_action": "Fix #128 caveats; #128 before #38 for future integration, only after user approval."
+        },
+        {
+          "timestamp": "2026-11-27T14:40:00-03:00",
+          "task": "Start assigned PR #128 caveat fixes per coordination state",
+          "status": "in_progress",
+          "result": "Read latest shared state; confirmed scope only #128. Starting on dispatch branch guard and batch expiration integration tests.",
+          "head_sha": "9258b5962f6c5545ce53aa6e408fd179769e10b9",
+          "tests": "Existing CI #266 green on baseline SHA.",
+          "blockers": [],
+          "next_action": "Implement and validate fixes. #38 stays untouched."
         }
       ]
     },
