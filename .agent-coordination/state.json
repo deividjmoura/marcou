@@ -401,18 +401,6 @@
       },
       "updates": [
         {
-          "timestamp": "2026-11-27T18:20:28.341Z",
-          "task": "Corrigir gate de changelog identificado na primeira CI da PR #134",
-          "status": "ci_retry_pending",
-          "result": "Run 46048607429 concluiu failure em check:changelog, não em teste de código; lint/typecheck/npm test/test:db/build foram skipped. Adicionei entrada em CHANGELOG.md para o wiring do harness. Novo commit 1ee63754a08adb68e15f05b73b86861ba4fd68ef; branch 2 ahead/0 behind. PR permanece Draft e sem merge.",
-          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
-          "tests": "Primeira CI: npm install success; check:changelog falhou; demais steps skipped. Reteste automático aguardado.",
-          "blockers": [
-            "Aguardar nova CI no HEAD atualizado e validar test:db."
-          ],
-          "next_action": "Conferir CI no novo HEAD e logs de todos os steps."
-        },
-        {
           "timestamp": "2026-11-27T18:20:50.129Z",
           "task": "Acompanhar reinício da CI após correção do changelog",
           "status": "ci_running",
@@ -433,6 +421,18 @@
           "tests": "install, check:changelog, lint, typecheck, npm test 150/150, test:db com booking-concurrency 25/25 e build: success.",
           "blockers": [],
           "next_action": "Aguardar revisão/autorização do responsável; sem merge."
+        },
+        {
+          "timestamp": "2026-11-27",
+          "task": "Verificação do dispatch round-3",
+          "status": "no_new_assignment",
+          "result": "Conferido dispatch.assignments no round 2026-11-27-round-3. O protocolo declara explicitamente que agentes 5 e 6 não recebem novas tarefas nesta rodada; agent6 não tem chave de atribuição. Nenhuma tarefa de outro agente executada. Validação anterior da PR #134 permanece registrada.",
+          "head_sha": "1ee63754a08adb68e15f05b73b86861ba4fd68ef",
+          "tests": "Nenhum teste executado nesta verificação de dispatch.",
+          "blockers": [
+            "Sem nova atribuição para agent6 nesta rodada."
+          ],
+          "next_action": "Aguardar nova atribuição; não alterar código/PR e manter a PR #134 aguardando revisão do responsável."
         }
       ]
     },
