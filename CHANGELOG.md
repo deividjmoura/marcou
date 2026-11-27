@@ -11,6 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Página `/reserva/[id]` com ações e rótulos por papel (cliente vs dono do estabelecimento); a autorização continua nas RPCs do banco (`transition_booking`).
 - Motor de reservas com múltiplos serviços do mesmo estabelecimento (Issue `#21`, PR `#139`): tabela `booking_services`, RPCs agregadas, seleção múltipla na página pública, compatibilidade com reservas de um serviço e migration `20261125120000_booking_multiple_services.sql`.
 - Matriz de privilégios com grants mínimos para `notifications` e `booking_services` (`20261125130000_table_privileges_matrix.sql`).
 - Consolidação documental “plataforma única, perfil público interno”:
@@ -81,6 +82,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
+- Preço e sinal de serviços no painel aceitam ponto como milhar e vírgula como decimal (`src/lib/money.ts`); exemplos: `12.5` → 1250 centavos, `1.234,5` → 123450, `12.34` → 1234 (não milhar).
+- Sinal (depósito) opcional no formulário do painel: campo vazio grava 0 (sem sinal), já permitido pelo schema e pelo banco.
 - Hardening do pipeline CI (`.github/workflows/ci.yml`, substituindo a parte
   exclusiva da PR `#32`): adiciona `concurrency` (cancela runs redundantes fora
   da `main`), `timeout-minutes: 20`, steps nomeados e remove a execução
