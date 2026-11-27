@@ -32,7 +32,7 @@ O trigger `calendar_connections_backfill_on_connect` roda na transição de `con
 Ficam de fora as reservas que já têm job `pending`, as já terminadas e as de outros prestadores. O limite é de 500 reservas por conexão, das mais próximas para as mais distantes. O worker trata esses jobs como qualquer outro: decide pelo estado atual, e uma reserva já sincronizada vira `PATCH`. Update `connected → connected` não reenfileira.
 
 ### Ordem e idempotência
-- O claim devolve **no máximo um job por reserva**: sempre o mais antigo não terminal (`pending`/`failed`/`processing`). Se esse job ainda está em `processing` (não vencido) ou em backoff, a reserva inteira espera — confirmação e cancelamento nunca correm juntos nem invertidos. `created_at` usa `clock_timestamp()`.
+- O claim devolve **no máximo um job por reserva**: sempre o mais antigo não terminal (`pending`/`failed`/`processing`). Cada claim gera um `lease_token` novo; concluir, reagendar ou encerrar um job exige o token exato da reivindicação atual, impedindo que um worker antigo confirme um job depois do timeout e do reclaim. Se esse job ainda está em `processing` (não vencido) ou em backoff, a reserva inteira espera — confirmação e cancelamento nunca correm juntos nem invertidos. `created_at` usa `clock_timestamp()`.
 - O worker relê o status atual da reserva (idempotência por estado): confirmada ⇒ evento presente; qualquer outro estado ⇒ evento ausente.
 - Insert com ID determinístico; `409` vira `PATCH`. `404/410` no `DELETE` contam como removido.
 
@@ -47,6 +47,7 @@ Ficam de fora as reservas que já têm job `pending`, as já terminadas e as de 
 OAuth independente do Supabase Auth; solicita somente `https://www.googleapis.com/auth/calendar.events`, `access_type=offline` e `prompt=consent`.
 
 - `/api/calendar/connect` aceita **só POST** com `Origin` igual a `NEXT_PUBLIC_SITE_URL` (sem a variável, falha fechada). Responde `303` para o Google.
+- `/api/calendar/callback` também exige `NEXT_PUBLIC_SITE_URL`; se ausente ou inválida, responde `503` sem usar `request.url`/Host como origem de redirect.
 - O state é aleatório (32 bytes), vale 10 min e só o hash SHA-256 é salvo, junto com o `user_id` de quem iniciou (`oauth_state_user_id`).
 - No callback, `consume_calendar_oauth_state` consome o state **antes** de trocar o code: `SELECT … FOR UPDATE` + anulação na mesma transação. Replay e callbacks simultâneos falham; state de outro usuário é recusado e queimado. Depois, confere se o usuário ainda é dono do prestador.
 - O escopo `calendar.events` precisa constar em `tokens.scope`; sem ele (ou sem refresh token), o token emitido é revogado e a conexão é recusada.
@@ -74,7 +75,7 @@ Funções (`SECURITY DEFINER`, `search_path = public`, sem EXECUTE para `public/
 | `consume_calendar_oauth_state(text, uuid)` | `service_role` |
 | `finalize_calendar_disconnect(uuid)` | `service_role` |
 
-As três tabelas estão na matriz de `scripts/privileges-check.mjs` (PR #123): ausentes na fase `before`, sem privilégio para `anon`/`authenticated` na `after`. `scripts/calendar-check.mjs` (em `npm run test:db`) aplica todas as migrations emulando os default privileges do Supabase e verifica privilégios, RLS, trigger, ordem/exclusividade do claim (inclusive 8 claims paralelos), `dead`, state OAuth e finalização.
+As três tabelas estão na matriz de `scripts/privileges-check.mjs` (PR #123): ausentes na fase `before`, sem privilégio para `anon`/`authenticated` na `after`. `scripts/calendar-check.mjs` (agora ligado a `npm run test:db`) aplica todas as migrations emulando os default privileges do Supabase e verifica privilégios, RLS, trigger, ordem/exclusividade do claim (inclusive 8 claims paralelos), `dead`, state OAuth e finalização.
 
 ## Scheduler
 A PR #38 propõe `GET /api/cron`, mas não está mesclada nem tem scheduler ativo. Esta entrega não cria cron concorrente. Depois de deploy, migration e secrets, configurar um job externo para `POST /api/calendar/worker` com `Authorization: Bearer <GOOGLE_CALENDAR_WORKER_SECRET>` (lote de 10 jobs + até 5 desconexões por chamada).
