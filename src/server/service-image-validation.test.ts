@@ -5,11 +5,14 @@ import {
 } from "./service-image-validation";
 
 function png(width = 20, height = 10): Uint8Array {
-  const bytes = new Uint8Array(24);
+  const bytes = new Uint8Array(45);
   bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  new DataView(bytes.buffer).setUint32(8, 13, false);
   bytes.set([0x49, 0x48, 0x44, 0x52], 12);
   new DataView(bytes.buffer).setUint32(16, width, false);
   new DataView(bytes.buffer).setUint32(20, height, false);
+  bytes.set([8, 6, 0, 0, 0], 24);
+  bytes.set([0x49, 0x45, 0x4e, 0x44], 37);
   return bytes;
 }
 
@@ -28,6 +31,8 @@ function webpVp8x(width = 20, height = 10): Uint8Array {
   bytes.set([...new TextEncoder().encode("RIFF")], 0);
   bytes.set([...new TextEncoder().encode("WEBP")], 8);
   bytes.set([...new TextEncoder().encode("VP8X")], 12);
+  new DataView(bytes.buffer).setUint32(4, 22, true);
+  new DataView(bytes.buffer).setUint32(16, 10, true);
   const write24 = (offset: number, value: number) => {
     bytes[offset] = (value - 1) & 0xff;
     bytes[offset + 1] = ((value - 1) >> 8) & 0xff;
