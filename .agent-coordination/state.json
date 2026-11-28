@@ -2482,7 +2482,7 @@
         "agent5/w2-design-system-main-current"
       ],
       "status": "in_progress",
-      "active_assignment": "W5-A5-T1 #121 implementada em PR #159; checklist visual T3 criado; CI/Netlify pendentes. T2 aguardando integração/revisão visual da #121 para separar migrações de tokens por tela. T4: branches temporárias comparadas com main, mas sem API de delete branch; branches divergem e têm commits ahead, preservadas.",
+      "active_assignment": "W5-A5-T1 #121 PR #159 Ready for Review; automated checks green. W5-A5-T3 checklist created. W5-A5-T2 blocked until owner visual review and #159 merge. W5-A5-T4 cannot delete branches (no API; divergent ahead work preserved).",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2519,21 +2519,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main confirmada 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (#158 merge). PR #159 sobre essa base, HEAD a5340226ee75c97a361ff622e32369dd5f320e9f, 14 ahead/0 behind, mergeable Draft. CI run 46142988730: install em andamento; changelog/lint/typecheck/audit haviam passado no SHA anterior; unit/domain, test:db e build pendentes/reexecutando após commit doc. Netlify preview success no SHA anterior, pendente no atualizado. Criado docs/REVISAO-VISUAL-DONO.md. Issue #121 atualizada, #27/#132/#19/#28 triadas por comentários. Revisão manual 390/1440, console, overflow e todos temas pendente do responsável.",
-      "next_action": "Aguardar CI/Netlify no SHA a5340226. Reconfirmar main. Se CI/checks verdes, retirar Draft e integrar somente após revisão visual manual do responsável; depois abrir PR pequena para restante da migração tokens #27 em home/auth/cliente (sem painel enquanto Agent1 atua). Branches temporárias divergem e API não permite deletar; não remover.",
+      "current_state": "PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f, base main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, 14 ahead/0 behind, mergeable, Ready for Review. CI Quality run 46142988730 success (changelog, lint, typecheck, audit, unit/domain, test:db, build); Netlify Deploy Preview success https://deploy-preview-159--marcoou.netlify.app. Checklist visual criado. Owner visual review 390/1440 all modes, console/overflow remains acceptance evidence. Issues #121/#27/#132/#19/#28 updated. Temporary branches diverged; no branch deletion tool.",
+      "next_action": "Owner inspect PR preview and docs/REVISAO-VISUAL-DONO.md; if accepted, merge PR #159 under autonomy, then implement remaining #27 screen token migrations in small PRs (home/auth/customer, no panel while Agent1 owns). Reconfirm main before merge. Branch cleanup unavailable.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W4-A5-T2 #27 merged; W4-A5-T2 #121 implementation",
-          "status": "in_progress",
-          "result": "#27 semantic tokens/catalogue PR #158 merged SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. Main now 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 after media PR #154. #121 implementation in PR #159 head 86f8b9f79b19b3e3e01e15afa119eed6f682b149, 13 ahead/0 behind; CI run 46142911252 in progress, preview pending.",
-          "head_sha": "86f8b9f79b19b3e3e01e15afa119eed6f682b149",
-          "tests": "CI in progress at install; Netlify statuses pending. No visual screenshots.",
-          "blockers": [
-            "CI/preview pending; visual 390/1440 three-theme inspection not performed."
-          ],
-          "next_action": "Wait checks and main recheck; reconcile if needed, then merge if checklist green."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W4-A5-T2 #121 — head update and owner review checklist",
@@ -2558,6 +2546,19 @@
             "Branch deletion capability absent; ahead branches retained."
           ],
           "next_action": "Poll CI; if green, seek owner visual check before merge; start W5-A5-T2 after #159."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W5-A5-T1 validation complete; PR #159 ready",
+          "status": "ready_for_owner_review",
+          "result": "PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f. CI run 46142988730 quality success all required jobs; Netlify preview success. Marked Ready for Review, but issue remains open pending visual owner acceptance. W5-A5-T3 checklist committed. Issue status comments posted #121/#27/#132/#19/#28.",
+          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
+          "tests": "check:changelog, lint, typecheck, audit, unit/domain, test:db, build success; Netlify deploy preview success.",
+          "blockers": [
+            "Owner manual visual inspection on 390/1440 and themes/screens not performed by agent.",
+            "Branch deletion capability unavailable; candidate branches diverge and retain ahead commits."
+          ],
+          "next_action": "Owner visual review; merge PR159 if acceptance is verified; proceed with #27 screen token PRs after."
         }
       ],
       "wave_2_tasks": [
@@ -2642,15 +2643,14 @@
       "wave_5_tasks": [
         {
           "id": "W5-A5-T1",
-          "status": "in_progress",
-          "result": "Implementação #121 na PR #159. Cookie light/dark/system, leitura SSR, beforeInteractive script, provider de system preference, seletor acessível e CSS semantic tokens. PR Draft. CI/Netlify pendentes no HEAD atualizado; revisão visual manual 390/1440 ainda do responsável.",
+          "status": "ready_for_owner_review",
+          "result": "PR #159 Ready for Review. HEAD a5340226ee75c97a361ff622e32369dd5f320e9f; CI quality success run 46142988730 (all required steps green), Netlify Preview success. Issue #121 still open awaiting manual visual acceptance.",
           "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
-          "tests": "CI 46142988730 em andamento; Netlify preview pending. Contraste automated tests included; no screenshots/console review.",
+          "tests": "CI Quality success; Netlify Deploy Preview success; automated contrast/theme contract tests passed. Visual manual checks 390/1440 remain pending owner.",
           "blockers": [
-            "CI and Deploy Preview must pass on exact HEAD.",
-            "Owner visual verification across screens and themes required before issue closure."
+            "Owner visual review across screens and themes; check overflow/console and evidence."
           ],
-          "next_action": "Poll CI; verify exact SHA and main; after green ask owner to inspect preview before closing."
+          "next_action": "Owner review; merge if acceptance evidence confirms visual/responsive behavior."
         },
         {
           "id": "W5-A5-T2",
