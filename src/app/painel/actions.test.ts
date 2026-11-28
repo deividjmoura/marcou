@@ -5,6 +5,10 @@ import { saveServiceAction } from "./actions";
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/env", () => ({ isSupabaseConfigured: vi.fn(() => true) }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("@/server/service-images", () => ({
+  uploadServiceImage: vi.fn(async () => ({ cleanupWarning: false })),
+  removeServiceImage: vi.fn(async () => ({ cleanupWarning: false })),
+}));
 vi.mock("@/server/feature-flags", () => ({
   isSocialFeatureEnabled: vi.fn(async () => false),
 }));
@@ -113,6 +117,16 @@ describe("saveServiceAction: preço e sinal em reais", () => {
     const result = await saveServiceAction({}, serviceForm("50", "-5"));
 
     expect(result.error).toMatch(/Informe o sinal em reais/);
+    expect(mockedCreateService).not.toHaveBeenCalled();
+  });
+
+  it("rejeita SVG antes de salvar o serviço", async () => {
+    const form = serviceForm("50", "0");
+    form.set("image", new File(["<svg/>"], "imagem.svg", { type: "image/svg+xml" }));
+
+    const result = await saveServiceAction({}, form);
+
+    expect(result.error).toMatch(/JPEG, PNG ou WebP/);
     expect(mockedCreateService).not.toHaveBeenCalled();
   });
 
