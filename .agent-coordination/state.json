@@ -1635,7 +1635,8 @@
       "pull_requests": [
         38,
         32,
-        138
+        138,
+        151
       ],
       "issues": [
         25,
@@ -1651,7 +1652,7 @@
         "feat/30-platform-hardening",
         "arena/3b7c9d2f-marcou"
       ],
-      "status": "completed_round_7",
+      "status": "completed_round_7_wave_2",
       "active_assignment": "Definir UM mecanismo canônico de expiração/lembretes, integrar #128 e #38 em sequência e triar a #32. Nenhum scheduler é ativado.",
       "tasks": [
         {
@@ -1683,8 +1684,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "RODADA 7 concluída para Agente 3 (A3-T1..A3-T4). Confirmado na main que PR #128 (8a5e4e7f0b78f28439200ce74be5dc174748fb46) e PR #38 (5b4e8943de079703120cdac681347fde724252fc) já implementam o mecanismo canônico único de expiração (booking-expiration.yml staging-only, BOOKING_EXPIRATION_ENABLED desligado por padrão, recusa explícita do project ref de produção peornypgltuueubmsucm) e de lembretes (GET /api/cron -> create_booking_reminders(24) com FOR UPDATE SKIP LOCKED e idempotência diária no fuso do prestador bookings.timezone). PR #32 triada: valor exclusivo reconstruído e atualizado para Netlify+Supabase na PR #138 (branch arena/fdad472c-marcou, HEAD 39855f0b5f17a81852debfbe88bc464da026f2fa), mergeada via squash na main em 44ed540e614968783bedf9f445da55d715e6d72b com CI quality verde (run 46080925536) e Netlify checks verdes; PR #32 fechada como substituída com evidência (descartados AGENT_TASK_MARCOU.md truncado, docs/MOTION.md de #27 e typo no README). Issues: #25 confirmada CLOSED com evidências; comentários publicados mantendo ABERTAS #26, #30, #20 (OWNER_DECISION) e #13, #31 (PARTIAL/BACKLOG). Disposição de branches registrada para o Agent 6 (A6-T2): arena/3b7c9d2f-marcou -> APAGAR; feat/30-platform-hardening -> PRESERVAR_TEMPORARIAMENTE_OU_APAGAR_APOS_DECISAO_27 (contém docs/MOTION.md descartado por escopo de #27); fix/booking-expiration-scheduler e feat/26-notification-scheduler já apagadas; arena/fdad472c-marcou é a branch desta sessão ativa (apagar só após encerramento da sessão). Nenhum scheduler ativado, nenhuma migration remota executada, nenhum serviço/secret externo alterado.",
-      "next_action": "Concluído pelo Agente 3. Demais agentes devem atualizar suas branches sobre main >= 44ed540e614968783bedf9f445da55d715e6d72b (e 90b05aa da #137). Agent 6 audita PR #138 (merge 44ed540), fechamento da #32, comentários das issues #26/#13/#30/#20/#31 e executa a disposição de branches na Onda 4. Responsável decide/provisiona itens OWNER_DECISION de #30, #20 e #26.",
+      "current_state": "RODADA 7 — ONDA 1 (A3-T1..A3-T4, PR #138 -> 44ed540) E ONDA 2 (W2-A3-T1..W2-A3-T3, PR #151 -> 6042275) CONCLUÍDAS para Agent 3. W2-A3-T1: validado em código e em PostgreSQL real que expiração (#128) e lembretes (#38) continuam corretos com reservas multi-serviço (#142/#145); identificada e fechada lacuna de cobertura em scripts/db-check.mjs (que não aplicava 20261125120000/20261125130000/20261128000200), adicionando casts legados e 18 novas asserções multi-serviço (total 98/98 passaram). W2-A3-T2: criado docs/TESTE-REAL-PRODUCAO.md (Fases 0–7) com ordem das 19 migrations (incluindo tratamento da ordem fora de sequência da #142 e precedência obrigatória antes da 20261128000200 da #145, validada nos dois cenários em PostgreSQL embutido), variáveis de ambiente por fase, teste de recuperação de senha pós-#127, fluxo multi-serviço ponta a ponta pós-#142/#143/#146, ativação/desligamento seguro de cada scheduler e rollback por camada; docs/PLATFORM.md e README.md atualizados para 19 migrations e 7 harnesses de test:db. PR #151 (head 343b40bde982c732f3ce3a47bde9e306e1a7ceeb) mergeada via squash na main em 60422754b7654a65957c676be04b3fe3022a57f1 com CI quality PR (run 46086689510) SUCCESS, Netlify checks SUCCESS e CI pós-merge na main (check-run 140798270189) SUCCESS. W2-A3-T3: issues #26, #13, #30, #20 e #31 confirmadas abertas com Escopo refinado atual e comentadas com evidências da PR #151 (#26, #30, #20, #31; #13 já atual). Nenhuma migration aplicada em remoto, nenhum secret/serviço alterado e nenhum scheduler ativado.",
+      "next_action": "Onda 2 concluída pelo Agent 3. Demais agentes devem atualizar sobre main >= 60422754b7654a65957c676be04b3fe3022a57f1. Agent 6 audita PR #151 (merge 6042275, CI PR 46086689510, CI main 140798270189) e pode limpar arena/fdad472c-marcou após o encerramento da sessão (PR #151 MERGED, tip == headRefOid 343b40b). Responsável executa as Fases 0–7 de docs/TESTE-REAL-PRODUCAO.md quando autorizar.",
       "updates": [
         {
           "timestamp": "2026-11-27T23:13:46Z",
@@ -1699,6 +1700,18 @@
             "Testes E2E com Playwright, Core Web Vitals/Lighthouse e a11y assistida dependem de ambiente staging (#30/#31)."
           ],
           "next_action": "Agent 6 audita PR #138 (44ed540), PR #32 fechada, issues #25/#26/#13/#30/#20/#31 e executa limpeza de branches na Onda 4."
+        },
+        {
+          "timestamp": "2026-11-28T00:16:30Z",
+          "task": "W2-A3-T1, W2-A3-T2, W2-A3-T3 — validação multi-serviço de expiração/lembretes, roteiro docs/TESTE-REAL-PRODUCAO.md e revisão das issues #26/#13/#30/#20/#31",
+          "status": "completed_wave_2",
+          "result": "PR #151 mergeada via squash em 60422754b7654a65957c676be04b3fe3022a57f1: (1) W2-A3-T1 — scripts/db-check.mjs atualizado para aplicar 20261125120000, 20261125130000 e 20261128000200 com 18 novas asserções de expiração periódica/inline e lembretes multi-serviço (incluindo virada de dia UTC por fuso do prestador independente do fuso da sessão, SKIP LOCKED e RLS/privilégios de booking_services; 98/98 passaram); (2) W2-A3-T2 — docs/TESTE-REAL-PRODUCAO.md criado cobrindo as 19 migrations (incluindo tratamento #142 + precedência antes de #145 validada em PostgreSQL embutido nos 2 cenários), env vars por fase, recovery pós-#127, multi-serviço pós-#142/#143/#146, ativação/desligamento seguro de cada scheduler e rollback; docs/PLATFORM.md e README.md alinhados; (3) W2-A3-T3 — issues #26, #30, #20 e #31 comentadas com evidência da PR #151 e #13 confirmada atual (todas mantidas abertas com próxima ação). Nenhum scheduler ativado e nenhuma migration aplicada remotamente.",
+          "head_sha": "PR #151 head=343b40bde982c732f3ce3a47bde9e306e1a7ceeb -> main squash=60422754b7654a65957c676be04b3fe3022a57f1",
+          "tests": "Local (SHA 343b40b): check:changelog ok, lint 0 errors, typecheck 0 errors, audit 0/0, vitest 39/39 (343/343), test:db 7/7 (db-check 98/0, social 51/0, identity 32/0, discovery 40/0, booking-concurrency 25/0, calendar 119/0, privileges-check ok), build ok; teste adicional de 19 migrations em ordem natural e ordem --include-all (ambos 0 leaks, 5 funções multi-serviço com search_path=pg_catalog, public). Remoto: PR #151 CI quality run 46086689510 SUCCESS, Netlify deploy-preview/header-rules/redirect-rules SUCCESS (pages-changed NEUTRAL), CI pós-merge main check-run 140798270189 SUCCESS.",
+          "blockers": [
+            "Execução real de docs/TESTE-REAL-PRODUCAO.md (migrations remotas, variáveis por contexto, rotação OAuth/SMTP, ativação de schedulers, teste real de recovery/Google/Calendar) depende do responsável (OWNER_DECISION)."
+          ],
+          "next_action": "Agent 6 audita PR #151 (merge 6042275) e conclui o relatório final da Rodada 7."
         }
       ],
       "last_verified": {
@@ -1736,7 +1749,7 @@
           "feat/26-notification-scheduler": "JA_APAGADA (PR #38 merged em 5b4e894)",
           "arena/3b7c9d2f-marcou": "APAGAR (HEAD 664cb5b77181abbaf04d2394a3d668415f1738b8: propõe endpoint duplicado POST /api/bookings/expire + src/lib/supabase/service.ts sem timingSafeEqual, sem server-only, sem no-store em erros e violando audit @supabase/ssr; superada pelo mecanismo canônico único da PR #128 em 8a5e4e7)",
           "feat/30-platform-hardening": "PRESERVAR_OU_APAGAR_APOS_DECISAO_27 (HEAD 5b63265662978df1e7e25808a5826435c97fab06: PR #32 fechada como substituída pela PR #138; única peça não portada foi docs/MOTION.md por ser escopo da Issue #27)",
-          "arena/fdad472c-marcou": "PRESERVAR_ENQUANTO_SESSAO_ATIVA (branch desta sessão Arena; PR #138 merged em 44ed540, tip == head 39855f0; pode ser apagada após encerramento da sessão)"
+          "arena/fdad472c-marcou": "APAGAR_APOS_ENCERRAMENTO_SESSAO (PR #138 merged em 44ed540 e PR #151 merged em 6042275; tip remoto == headRefOid 343b40bde982c732f3ce3a47bde9e306e1a7ceeb; sem PR aberta)"
         },
         "issues": {
           "13": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/13#issuecomment-7229959625)",
@@ -1745,8 +1758,56 @@
           "26": "OPEN (OWNER_DECISION — comentário atualizado: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7229959409)",
           "30": "OPEN (OWNER_DECISION — comentário: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7229959848)",
           "31": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7229960433)"
+        },
+        "wave_2": {
+          "main_before_merge_sha": "d1e0c2faf0f99124ba65ab08fe24252e1f79406a",
+          "pr_151": {
+            "branch": "arena/fdad472c-marcou",
+            "head_sha": "343b40bde982c732f3ce3a47bde9e306e1a7ceeb",
+            "merge_sha": "60422754b7654a65957c676be04b3fe3022a57f1",
+            "merged_at": "2026-11-28T00:14:39Z",
+            "ci_run_id": 46086689510,
+            "ci_job_id": 140797796787,
+            "ci_status": "SUCCESS",
+            "post_merge_main_check_run_id": 140798270189,
+            "post_merge_main_ci_status": "SUCCESS",
+            "netlify": {
+              "deploy_preview": "SUCCESS",
+              "header_rules": "SUCCESS",
+              "redirect_rules": "SUCCESS",
+              "pages_changed": "NEUTRAL"
+            },
+            "local_checks": {
+              "check_changelog": "ok (1 relevant file in origin/main...HEAD)",
+              "lint": "0 errors (4 pre-existing warnings)",
+              "typecheck": "0 errors",
+              "audit": "0 failures, 0 warnings",
+              "unit_tests": "39 files, 343/343 passed",
+              "test_db": "7/7 harnesses passed (db-check 98/0, social 51/0, identity 32/0, discovery 40/0, booking-concurrency 25/0, calendar 119/0, privileges-check ok)",
+              "migrations_order_check": "19 migrations verified in embedded-postgres for both natural order (#1..#19) and --include-all order (#1..#10, #13..#18 -> #11, #12, #19): 0 PUBLIC leaks, all 5 multi-service functions with search_path=pg_catalog, public",
+              "build": "next build succeeded"
+            }
+          },
+          "tasks": {
+            "W2-A3-T1": "COMPLETED (PR #151 / 6042275 — 18 novas asserções em scripts/db-check.mjs; nenhum defeito SQL/app encontrado)",
+            "W2-A3-T2": "COMPLETED (PR #151 / 6042275 — docs/TESTE-REAL-PRODUCAO.md + alinhamento docs/PLATFORM.md e README.md; docs only)",
+            "W2-A3-T3": "COMPLETED (issues #26/#13/#30/#20/#31 confirmadas atualizadas e abertas com próxima ação)"
+          },
+          "issues_wave_2": {
+            "26": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7230771025)",
+            "13": "OPEN (BACKLOG/OWNER_DECISION — Escopo refinado da coordenação confirmado atual; sem comentário redundante)",
+            "30": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7230771285)",
+            "20": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/20#issuecomment-7230771537)",
+            "31": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7230771759)"
+          }
         }
-      }
+      },
+      "wave_2_status": "completed",
+      "wave_2_completed_tasks": [
+        "W2-A3-T1",
+        "W2-A3-T2",
+        "W2-A3-T3"
+      ]
     },
     "agent_4_r7_security_calendar": {
       "scope": "Privilégios/segurança de banco e fechamento do Calendar (V1 já na main)",
