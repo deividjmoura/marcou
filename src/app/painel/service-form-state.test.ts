@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shouldCloseServiceModal } from "./service-form-state";
+import { serviceFormTarget, shouldCloseServiceModal } from "./service-form-state";
 
 describe("shouldCloseServiceModal", () => {
   it("closes after a successful create or update", () => {
@@ -16,5 +16,32 @@ describe("shouldCloseServiceModal", () => {
     expect(shouldCloseServiceModal({})).toBe(false);
     expect(shouldCloseServiceModal({ success: " ", })).toBe(false);
     expect(shouldCloseServiceModal({ success: "Salvo.", error: "Falha na imagem." })).toBe(false);
+  });
+});
+
+describe("serviceFormTarget", () => {
+  it("creates when there is no existing or partially saved service", () => {
+    expect(serviceFormTarget()).toEqual({ intent: "create", serviceId: null });
+  });
+
+  it("updates the selected service when editing", () => {
+    expect(serviceFormTarget("existing-id")).toEqual({
+      intent: "update",
+      serviceId: "existing-id",
+    });
+  });
+
+  it("retries a failed image upload against the service already created", () => {
+    expect(serviceFormTarget(null, "created-id")).toEqual({
+      intent: "update",
+      serviceId: "created-id",
+    });
+  });
+
+  it("prefers the explicitly selected service", () => {
+    expect(serviceFormTarget("selected-id", "partial-id")).toEqual({
+      intent: "update",
+      serviceId: "selected-id",
+    });
   });
 });
