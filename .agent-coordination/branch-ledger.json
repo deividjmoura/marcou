@@ -3,7 +3,7 @@
   "created": "2026-11-28",
   "main_at_inventory": "9e9373695ea2c259c28abc87cc1e0f4d90be8461",
   "purpose": "Registro único da limpeza de branches da wave 8 (dispatch.wave_8_limpeza_branches no state.json). Prova, arquivo morto e status por branch.",
-  "single_writer": "o agente executor da limpeza (hoje agent_3; muda se houver handoff no canal). Demais agentes avisam pelo canal.",
+  "single_writer": "agent_3 (executor das classes B/C). A classe A foi executada pelo coordenador em 2026-11-28T13:52:37Z.",
   "archive_ref": "refs/archive/<branch com '/' trocado por '__'>  (ex.: refs/archive/arena__3b7c9d2f-marcou). Não aparece na lista de branches e mantém os commits.",
   "restore": "git push origin refs/archive/<flat>:refs/heads/<branch>  |  API: POST /repos/deividjmoura/marcou/git/refs {ref:'refs/heads/<branch>', sha:'<sha>'}",
   "status_values": [
@@ -22,182 +22,260 @@
       "sha": "83fb66c3971fe33b066575cb23192088a1f78fc0",
       "class": "A",
       "reason": "PR #148 fechada 'Substituída pela #149'; cadeia #149→#150 mergeada (774d172); conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w2-design-system-current-main",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "agent5/w2-design-system-main-latest",
       "sha": "ab2d2861744a793259ec9cc62deddda9c559bead",
       "class": "A",
       "reason": "PR #149 fechada, substituída pela #150 mergeada (774d172); conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w2-design-system-main-latest",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "agent5/w2-design-system-reconciled",
       "sha": "d494c0e13b8ed4d30e8dd7cd0622b04bdc35fcd8",
       "class": "A",
       "reason": "PR #144 fechada, cadeia #148→#149→#150 mergeada; conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w2-design-system-reconciled",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "agent5/w4-27-reconcile-155",
       "sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
       "class": "A",
       "reason": "rascunho de reconciliação do #27 sem PR; #158 mergeada (b0b1aee); conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w4-27-reconcile-155",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "agent5/w4-27-semantic-tokens",
       "sha": "d77ca6f59701e448b502e2793366537e509b0bd4",
       "class": "A",
       "reason": "rascunho do #27 sem PR; #158 mergeada (b0b1aee); conteúdo 99% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w4-27-semantic-tokens",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "agent5/w4-design-system-reconciled",
       "sha": "fc92a8bdc2b10da40f8b719f735ebf606672d453",
       "class": "A",
       "reason": "rascunho de reconciliação sem PR; #150 mergeada; conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w4-design-system-reconciled",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "agent5/w4-reconciled-ecdff",
       "sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
       "class": "A",
       "reason": "rascunho de reconciliação sem PR; #150/#158 mergeadas; conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/agent5__w4-reconciled-ecdff",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/f074e752-marcou",
       "sha": "d469ce876a3819a5293ca17c75a4e1447fb1293a",
       "class": "A",
       "reason": "PR #133 fechada 'Substituída por #140' (mergeada cd30f00); conteúdo 100% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__f074e752-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/6f3a9b1f-marcou",
       "sha": "6db76085bc866498a587b6346fc443480107a11a",
       "class": "A",
       "reason": "harness FOR UPDATE já na main (#129, #134); único delta edita migration já aplicada (proibido); 98% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__6f3a9b1f-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "cc212db",
       "sha": "38aab51464c046831e4c73d73b150415d741db83",
       "class": "A",
       "reason": "branch avulsa (nome é um SHA); trabalho coberto por #127 (82af750) e #129 (fb85d4d); 99% na main",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/cc212db",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/30a92c52-marcou",
       "sha": "f320fe88313547cfd2ef6a4ac680456c68a7db44",
       "class": "A",
       "reason": "PR #124 fechada 'Substituída por fix/124-money-role-r7' = #143 mergeada (03eb70c); delta só CHANGELOG",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__30a92c52-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "feat/booking-flow-confirmation-success",
       "sha": "a18a0d73bf073a06b8a8b21ff89d01a07489769a",
       "class": "A",
       "reason": "PR #68 fechada 'Substituída por fix/68-confirmation-ics-r7' = #146 mergeada (13d67f6)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/feat__booking-flow-confirmation-success",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "design/identidade-visual",
       "sha": "b35653ce5efe929f4ed2aaf8a4c476610d5c11da",
       "class": "A",
       "reason": "PR #67 fechada, cadeia #144→…→#150 mergeada; delta só handoff antigo",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/design__identidade-visual",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "fix/booking-multiple-services-pr123",
       "sha": "955f9a8d40981096dedeee55b2c77964895f5bf9",
       "class": "A",
       "reason": "PR #131 fechada, cadeia #139→#142 mergeada (4badea4)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/fix__booking-multiple-services-pr123",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "fix/131-multi-services-r7",
       "sha": "58b16fd3e064a43f0c728b1f0599c96b75c8e7d6",
       "class": "A",
       "reason": "PR #139 fechada 'Substituída por fix/139-multi-services-final' = #142 mergeada (4badea4)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/fix__131-multi-services-r7",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "feat/30-platform-hardening",
       "sha": "5b63265662978df1e7e25808a5826435c97fab06",
       "class": "A",
       "reason": "PR #32 fechada 'Substituída pela #138' mergeada (44ed540)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/feat__30-platform-hardening",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "fix/security-definer-execute-grants",
       "sha": "17423a89137f355c8a6bee179483a8224cf5c1e8",
       "class": "A",
       "reason": "PR #41 fechada 'superada pela #117' (mergeada; migration 20261123133000 na main)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/fix__security-definer-execute-grants",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "fix/auth-recovery-redirect-production",
       "sha": "8daa15651acbe74c98e1150b0f1cdcd71af89a60",
       "class": "A",
       "reason": "PR #71 era só runbook, sem código; implementação em #127 (82af750) e na PR de recuperação em curso",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/fix__auth-recovery-redirect-production",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/116298da-marcou",
       "sha": "23726877107bfed7144eb6d9719df64371a62fb3",
       "class": "A",
       "reason": "PR #46 fechada 'superada pela #60' (mergeada)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__116298da-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "feat/calendario-mobile",
       "sha": "7643bbbd3e33971c43ec0edca07d3b1b263bbe3d",
       "class": "A",
       "reason": "PR #2 protótipo com dados demonstrativos; fluxo real em #37/#49/#51 mergeadas",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/feat__calendario-mobile",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "feat/pagina-publica-agendamento",
       "sha": "908767b437b03220f4fca123e6f5a45814e40c81",
       "class": "A",
       "reason": "PR #1 prévia demonstrativa; fluxo real em #22/#49/#51 mergeadas",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/feat__pagina-publica-agendamento",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/4017109f-marcou",
       "sha": "16f0166fc06e4ddcaac6b77664515b410f3c4d74",
       "class": "A",
       "reason": "PR #123 fechada 'CLOSE_SUPERSEDED', reimplementada (#142/#136); handoffs arquivados em docs/handoffs/archive (#152)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__4017109f-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/9e68c2bb-marcou",
       "sha": "8d73650dfc62508a22c3b4ed83d1019e493ca871",
       "class": "A",
       "reason": "PR #126 fechada 'Substituída por #135'; backfill do Calendar já em src/server/calendar/store.ts (#141); handoffs arquivados (#152)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__9e68c2bb-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "arena/3b7c9d2f-marcou",
       "sha": "664cb5b77181abbaf04d2394a3d668415f1738b8",
       "class": "A",
       "reason": "Agent 3 registrou APAGAR: endpoint duplicado /api/bookings/expire; mecanismo canônico = #128 + #38",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/arena__3b7c9d2f-marcou",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "fix/booking-transition-concurrency-incremental",
       "sha": "90cd050fa96b7bb5eb191ae43700c636f7b7db31",
       "class": "A",
       "reason": "variante que edita a migration 20261127000000 já aplicada via #129 (fb85d4d); proibido reaplicar",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/fix__booking-transition-concurrency-incremental",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "feat/21-booking-multiple-services",
       "sha": "49358e14122fe0f1d749e8dd351d110dff7aed77",
       "class": "A",
       "reason": "migration 202611150004 obsoleta; Issue #21 entregue por #142 (4badea4)",
-      "status": "planned"
+      "status": "archived_deleted",
+      "archive_ref": "refs/archive/feat__21-booking-multiple-services",
+      "executed_by": "coordinator (Claude), a pedido do responsável",
+      "executed_at": "2026-11-28T13:52:37Z"
     },
     {
       "branch": "fix/auth-recovery-preview-origin",
@@ -324,5 +402,21 @@
       "reason": "trabalho ativo do Agent 1; Agent 1 escolhe UMA branch canônica e a outra vira classe A",
       "status": "preserved"
     }
-  ]
+  ],
+  "repo_settings": {
+    "delete_branch_on_merge": true,
+    "ligado_em": "2026-11-28T13:52:37Z",
+    "por": "coordinator, a pedido do responsável",
+    "efeito": "a branch de uma PR mergeada é apagada automaticamente; PR fechada SEM merge continua exigindo exclusão manual (classes B/C)."
+  },
+  "resumo": {
+    "antes": 43,
+    "depois": 17,
+    "classe_A_apagadas": 26,
+    "restantes": {
+      "B": 6,
+      "C": 6,
+      "P": 5
+    }
+  }
 }
