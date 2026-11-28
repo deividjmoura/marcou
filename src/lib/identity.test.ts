@@ -28,25 +28,21 @@ describe("identity helpers", () => {
     expect(trustedAppOrigin("http://localhost:3100")).toBe("http://localhost:3100");
 
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example/path");
-    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
 
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://attacker.example");
     expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
   });
 
-  it("allows only the production Netlify host and numbered PR previews as request origins", () => {
+  it("pins production to the canonical origin and ignores request Host", () => {
+    vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcoou.netlify.app");
 
     expect(trustedAppOrigin("https://marcoou.netlify.app")).toBe(
       "https://marcoou.netlify.app",
     );
+    // Request origin is never reflected in production.
     expect(trustedAppOrigin("https://deploy-preview-127--marcoou.netlify.app")).toBe(
-      "https://deploy-preview-127--marcoou.netlify.app",
-    );
-    expect(trustedAppOrigin("https://deploy-preview-abc--marcoou.netlify.app")).toBe(
-      "https://marcoou.netlify.app",
-    );
-    expect(trustedAppOrigin("https://marcoou--attacker.netlify.app")).toBe(
       "https://marcoou.netlify.app",
     );
     expect(trustedAppOrigin("https://attacker.example")).toBe(
@@ -54,16 +50,13 @@ describe("identity helpers", () => {
     );
   });
 
-  it("remove caracteres de formato invisíveis da origem configurada", () => {
-    // U+2060 (WORD JOINER) no final do domínio, como observado em produção.
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\u2060");
-    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+  it("remove caracteres de formato invisíveis da origem configurada em dev", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000\u2060");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
 
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\u200B/path");
-    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
-
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://marcou.example\uFEFF");
-    expect(trustedAppOrigin("https://attacker.example")).toBe("https://marcou.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000\u200B");
+    expect(trustedAppOrigin("https://attacker.example")).toBe("http://localhost:3000");
   });
 
   it("stripFormatCharacters remove caracteres de formato invisíveis", () => {
