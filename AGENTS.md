@@ -2,6 +2,10 @@
 
 Estas instruções se aplicam a agentes de IA e colaboradores que trabalhem neste repositório.
 
+## Padrão de escopo e de entrega
+
+Antes de iniciar qualquer issue, leia `docs/PADRAO-DE-ESCOPO.md` (Definition of Ready/Done, guardrails de segurança e priorização). Se a issue tiver um comentário "Escopo refinado", ele prevalece sobre o corpo original. Para issues sem esse comentário, publique um antes de implementar.
+
 ## Releases do GitHub: sempre consultar o responsável
 
 Ao concluir uma tarefa, antes de encerrar o trabalho, o agente deve avaliar se o estado atual da `main` justifica uma nova GitHub Release.
