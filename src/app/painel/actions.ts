@@ -19,7 +19,7 @@ import {
 } from "@/domain/discovery/discovery";
 import { isSocialFeatureEnabled } from "@/server/feature-flags";
 import { uploadServiceImage, removeServiceImage } from "@/server/service-images";
-import { inspectServiceImage } from "@/server/service-image-validation";
+import { inspectServiceImage, SERVICE_IMAGE_MAX_BYTES } from "@/server/service-image-validation";
 import {
   BookingOperationError,
   getOwnedProvider,
@@ -139,6 +139,9 @@ export async function saveServiceAction(
   const imageFile = imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
   const removeImage = formData.get("removeImage") === "true";
 
+  if (imageFile && imageFile.size > SERVICE_IMAGE_MAX_BYTES) {
+    return { error: "A imagem deve ter no máximo 5 MB." };
+  }
   if (imageFile) {
     try {
       inspectServiceImage(new Uint8Array(await imageFile.arrayBuffer()), imageFile.type);
