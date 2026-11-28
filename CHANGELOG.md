@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Tema claro/escuro/automático (Issue #121): cookie `marcou-theme`, resolução de `prefers-color-scheme` antes da hidratação, seletor global acessível e cores de estados/telas migradas para tokens semânticos.
+
 - Contrato de tokens semânticos claro/escuro e catálogo inicial de componentes (Issue #27), com aliases para superfície, texto, borda, destaque, feedback, controles e foco. Tema escuro apenas preparado por atributo; seletor/persistência e cobertura visual permanecem na #121.
 
 - Endpoint de saúde `GET /api/health` (`src/app/api/health/route.ts`, `src/server/health.ts`, Issue `#20`): modo mínimo responde HTTP `200` com `{ status, version, commit }` e `Cache-Control: private, no-store` sem consultar segredos nem expor configuração; modo profundo (`?deep=1`) exige `Authorization: Bearer <HEALTH_CHECK_SECRET>` comparado em tempo constante (`timingSafeEqual`, fail-closed) e verifica conectividade de banco via `@supabase/ssr` somente-leitura sem vazar detalhes internos.
