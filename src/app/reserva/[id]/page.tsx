@@ -8,6 +8,7 @@ import {
   requireUser,
 } from "@/server/bookings";
 import { ReservationActions } from "./reservation-actions";
+import { resolveReservationRole } from "./reservation-role";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
@@ -38,7 +39,9 @@ export default async function ReservaPage({
   const isCustomer = booking.customer_id === user.id;
   const isOwner = provider?.owner_id === user.id;
 
-  if (!isCustomer && !isOwner) notFound();
+  const role = resolveReservationRole({ isCustomer, isOwner });
+
+  if (!role) notFound();
 
   const unread = await countUnreadNotifications();
 
@@ -121,7 +124,11 @@ export default async function ReservaPage({
           </p>
         ) : null}
 
-        <ReservationActions bookingId={booking.id} status={booking.status} />
+        <ReservationActions
+          bookingId={booking.id}
+          status={booking.status}
+          role={role}
+        />
       </article>
     </main>
   );
