@@ -91,7 +91,7 @@
     "dispatched_at": "2026-11-27",
     "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
-    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*).",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*).",
     "execution_order": [
       "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
@@ -288,6 +288,47 @@
           "W3-A6-T2: auditar a issue #8 (matriz critério→evidência conforme o escopo refinado) e fechar com prova se tudo estiver comprovado; conferir as evidências de fechamento de #21, #22, #29 e #125.",
           "W3-A6-T3: limpeza das branches restantes só com prova (ver wave_2 W2-A6-T2). Preservar: main, coordination/agents, branches de PR aberta (#150, #130), fix/auth-recovery-preview-origin e qualquer trabalho do Agent 2. Esperar o aviso do Agent 4 antes de apagar arena/9e68c2bb-marcou e arena/4017109f-marcou. Branches de PRs fechadas sem merge (#124, #131, #139, #68, #67...) só com evidência de que o conteúdo foi superado.",
           "W3-A6-T4: relatório final parcial no state.json (SHAs, merges, issues, branches, pendências do responsável) e a pergunta sobre GitHub Release. Pode ser atualizado quando #150/#130 e o roteiro de produção forem concluídos."
+        ]
+      }
+    },
+    "wave_4": {
+      "opened_at": "2026-11-27 (noite), segunda verificação do coordenador",
+      "main_verificada": "994cf1c4efe65754ebb70042b448259344a2cc7c (CI quality success). Reconfirme antes de agir.",
+      "verificado": [
+        "Mergeadas e presentes na main: #151 (schedulers multi-serviço + docs/TESTE-REAL-PRODUCAO.md, 525 linhas, fases 0–7), #152 (handoffs arquivados em docs/handoffs/archive), #153 (atalhos WhatsApp, fecha #57).",
+        "Revisão do coordenador da RPC booking_counterparty_phone (migration 20261128000300): deriva o usuário de auth.uid(), search_path fixo, revoga de PUBLIC/anon/authenticated e concede só a authenticated; retorna NULL para terceiros. Aprovada no desenho. Falta confirmar que existe teste de banco de isolamento (terceiro não obtém telefone) — ver W4-A4-T2.",
+        "#154 (imagens de serviço, Agent 4): limpa e com CI/Netlify verdes no HEAD 96f1490c no momento da verificação.",
+        "Branches apagadas pelo coordenador por prova (PR mergeada, tip igual ao head): agent4/w3-archive-calendar-handoffs, fix/57-whatsapp-shortcuts-r7, arena/fdad472c-marcou (recriada após a #138). Restam 28 branches, quase todas de PRs fechadas sem merge ou sem PR (decisão do Agent 6, com prova)."
+      ],
+      "bug_p0_encontrado": {
+        "onde": "src/lib/whatsapp.ts, normalizePhoneToE164Digits (main, #153)",
+        "problema": "A heurística 'evita NANP' rejeita (retorna null) todo número de 11 dígitos cujo DDD começa com 1 e o segundo dígito é 2–9. Isso invalida celulares válidos dos DDDs 12 a 19 (Campinas 19, Santos 13, S. J. dos Campos 12, Ribeirão Preto 16, Sorocaba 15 etc.): a ação de WhatsApp some para esses usuários. O teste atual só cobre DDD 11. Verificado executando a lógica com (19) 91234-5678, (13) 99123-4567, (12) 98123-4567 e (16) 99123-4567: todos retornam null.",
+        "correcao_esperada": "Remover a heurística por prefixo. Tratar como internacional apenas quando houver '+' explícito com código diferente de 55. Sem '+', assumir Brasil. Opcional: validar o DDD contra a lista de DDDs brasileiros válidos. Teste de regressão cobrindo DDDs 11 a 19 e demais (ex.: 21, 31, 41, 51, 61, 71, 81, 85, 91), com e sem máscara, com e sem DDI e fixo de 10 dígitos."
+      },
+      "desbloqueio_150": "A exigência de captura headless era uma condição dos agentes, não uma regra do responsável, e o ambiente do Agent 5 não tem navegador. DECISÃO: a #150 PODE ser mergeada com CI quality, Netlify Redirect/Header verdes e Pages neutral, DESDE QUE a PR liste na descrição a inspeção visual desktop/mobile como PENDÊNCIA DO RESPONSÁVEL (Netlify Deploy Preview da própria PR) e registre o que foi verificado por teste (contraste, tokens, sem erro de build). O responsável confere visualmente no preview e na validação em produção. Se o Agent 5 conseguir a captura por outro meio, anexar.",
+      "tasks": {
+        "agent_1": [
+          "W4-A1-T1 (P0, primeiro): corrigir o bug de DDD 12–19 em src/lib/whatsapp.ts conforme 'correcao_esperada', com teste de regressão. PR pequena, CHANGELOG em Corrigido.",
+          "W4-A1-T2: após a #150 mergeada (ou rebase sobre ela): #56 -> #55 -> #54 -> #43 (uma PR por issue, conforme os escopos refinados)."
+        ],
+        "agent_3": [
+          "W4-A3-T1: continuar W3-A3-T3: /api/health (#20), depois #13 (preferências) e #26 (ADR de e-mail + EmailSender noop).",
+          "W4-A3-T2: ler docs/TESTE-REAL-PRODUCAO.md à luz do que mudou (migrations 20261128000200/300/400, WhatsApp, imagens) e atualizá-lo se algo da ordem/variáveis ficou desatualizado. Depois #31 (ADR E2E)."
+        ],
+        "agent_4": [
+          "W4-A4-T1: mergear a #154 se o checklist estiver verde no SHA exato; depois #53 (foto do profissional) reutilizando o padrão de mídia.",
+          "W4-A4-T2: confirmar/adicionar teste de banco de isolamento para booking_counterparty_phone: prestador dono vê o telefone do cliente da reserva; cliente da reserva vê o do dono; terceiro, anônimo e prestador de outro negócio recebem NULL.",
+          "W4-A4-T3: revisar de segurança a PR do Agent 1 para o bug de DDD (sem relaxar privacidade) e as PRs de #47 quando surgirem."
+        ],
+        "agent_5": [
+          "W4-A5-T1: concluir a #150 pela regra 'desbloqueio_150' acima; ao mergear, AVISAR no state.json (destrava o Agent 1); apagar suas branches duplicadas agent5/w2-design-system-current-main, -main-latest, -reconciled e design/identidade-visual (todas superadas pela #150) após o merge, com evidência.",
+          "W4-A5-T2: #27 tokens claro/escuro e catálogo; depois #121 (temas)."
+        ],
+        "agent_6": [
+          "W4-A6-T1 (você ainda não começou; comece agora): auditoria independente de #127, #136, #137, #138, #140, #141, #142, #143, #145, #146, #147, #151, #152, #153: SHA do merge, CI no SHA, vínculo com issues, conteúdo na main. Confirmar que o bug de DDD do WhatsApp foi corrigido quando a PR sair.",
+          "W4-A6-T2: auditar e fechar a #8 com matriz critério→evidência; conferir as evidências de fechamento de #21, #22, #29, #57 e #125.",
+          "W4-A6-T3: limpeza das branches restantes só com prova de superação/integração (arenas e branches de PRs fechadas sem merge). Preservar main, coordination/agents, branches de PR aberta (#150, #154, #130, e a PR do bug do WhatsApp) e tudo do Agent 2.",
+          "W4-A6-T4: relatório final parcial + pergunta sobre GitHub Release; atualizar quando as PRs abertas terminarem."
         ]
       }
     }
