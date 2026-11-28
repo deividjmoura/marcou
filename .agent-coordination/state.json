@@ -2201,21 +2201,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W2-A5-T2 concluída: #121 e #27 atualizadas, PR de design #67 foi substituída por #149 (reconstruída duas vezes para seguir main concorrente; base atual 539035b29e9a8971279215607eba8f80ec369757, 9 commits ahead/0 behind, head ab2d2861744a793259ec9cc62deddda9c559bead). CI quality run 46086141759 está em andamento (install completado, changelog verde, lint em execução). #149 Draft/mergeable; Netlify Preview ainda não reportou status. Inspeção headless 1440/390 não disponível (browser sem navegação/captura). W2-A5-T3 concluída: 59/59 issues abertas têm comentário status/próxima ação; #125 já fechada por outro agente e recebeu comentário de acompanhamento.",
+      "current_state": "W2-A5-T2 concluída: #121 e #27 atualizadas, PR de design #67 foi substituída por #149 (reconstruída duas vezes para seguir main concorrente; base atual 539035b29e9a8971279215607eba8f80ec369757, 9 commits ahead/0 behind, head ab2d2861744a793259ec9cc62deddda9c559bead). CI quality run 46086141759 está em andamento: install, changelog, lint, typecheck, audit e unit/domain verdes; test:db em execução. Netlify Deploy Preview #149 verde. Inspeção headless 1440/390 não disponível (browser sem navegação/captura). W2-A5-T3 concluída: 59/59 issues abertas têm comentário status/próxima ação; #125 já fechada por outro agente e recebeu comentário de acompanhamento.",
       "next_action": "Aguardar CI completo e Preview #149. Se ambos verdes, checklist técnico fica atendido, mas não mergear enquanto inspeção headless 1440/390 (overflow/console/screenshots) não puder ser comprovada. Se a main avançar novamente, atualizar branch antes de merge.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Fechamento da atuação Agent5 na rodada 7",
-          "status": "completed_with_blocker",
-          "result": "Entrega concluída. #140 merged; #133/#46/#2 closed com evidências; issues de produto foram classificadas em comentários. #67 fica KEEP_PENDING/draft com blocker visual e base/changelog a atualizar.",
-          "head_sha": "main verificada: cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b",
-          "tests": "CI/Netlify da #140 verdes; nenhuma validação visual humana executada.",
-          "blockers": [
-            "#67: inspeção visual desktop/mobile indisponível nesta sessão; branch 40 commits atrás e sem CHANGELOG no diff original."
-          ],
-          "next_action": "Aguardar/reabrir #67 quando puder realizar inspeção visual e atualizar a PR sobre main."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "Wave 2 W2-A5 — confirmação inicial de main, runbook e PR #67",
@@ -2238,6 +2226,18 @@
             "CI quality run 46086141759 ainda em andamento; preview pending."
           ],
           "next_action": "Aguardar checks e inspeção visual; atualizar branch se main avançar."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "Atualização CI e Netlify da PR #149",
+          "status": "in_progress",
+          "result": "Netlify deploy-preview #149 success (https://deploy-preview-149--marcoou.netlify.app). CI quality run 46086141759: install, check:changelog, lint, typecheck, audit e unit/domain tests success; test:db in_progress, build pending. SHA head ab2d2861744a793259ec9cc62deddda9c559bead.",
+          "head_sha": "ab2d2861744a793259ec9cc62deddda9c559bead",
+          "tests": "CI parcial verde; DB/build pendentes. Preview Netlify success.",
+          "blockers": [
+            "Inspeção visual headless desktop/mobile não disponível na sessão."
+          ],
+          "next_action": "Aguardar test:db/build; PR permanece Draft até evidência visual."
         }
       ],
       "wave_2_tasks": [
