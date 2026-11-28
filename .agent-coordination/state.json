@@ -2044,22 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #154 merged em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #160 (#53) merged por squash em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; issue #53 CLOSED. CI pré-merge run 46143785917 SUCCESS no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160 e CI pós-merge run 46143945775 SUCCESS no merge SHA 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; Netlify Redirect/Header SUCCESS e Pages changed NEUTRAL. Migration de avatar é 20261128000600_provider_avatar_storage.sql, após notification_preferences 00500. W5-A4-T3: PR #161/#13 auditada; comentário 7239072822 registra grants/RLS corretos e lacuna não bloqueante de teste explícito de grants da função is_notification_enabled. PR #162/#26 auditada; comentário/review 6097747847 registra bloqueios: colisão migration 00600 com avatar, Noop marcado como sent, ausência de EmailQueueStore persistente/operadores SQL de claim/lease/transições, ausência de vínculo recipient_id↔booking e cobertura incompleta de ACL para reprocess_dead. PR #162 permanece aberta e mergeable=false; não aprovar/mergear. Issue #47 permanece aberta e sem PR no snapshot. W5-A4-T4: privileges-check matriz inclui notification_preferences e email_delivery_queue; social-foundation-check explicitamente cobre booking_counterparty_phone; #154/#53 não criam tabela/função pública. #52 continua OWNER_ACTION para teste real do Supabase Storage.",
+      "current_state": "PR #154 merged em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #160 (#53) merged por squash em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; issue #53 CLOSED. CI pré-merge run 46143785917 SUCCESS no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160 e CI pós-merge run 46143945775 SUCCESS no merge SHA 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; Netlify Redirect/Header SUCCESS e Pages changed NEUTRAL. Migration de avatar é 20261128000600_provider_avatar_storage.sql, após notification_preferences 00500. W5-A4-T3: PR #161/#13 auditada; comentário 7239072822 registra grants/RLS corretos e lacuna não bloqueante de teste explícito de grants da função is_notification_enabled. PR #162/#26 auditada; comentário/review 6097747847 registra bloqueios: colisão migration 00600 com avatar, Noop marcado como sent, ausência de EmailQueueStore persistente/operadores SQL de claim/lease/transições, ausência de vínculo recipient_id↔booking e cobertura incompleta de ACL para reprocess_dead. PR #162 permanece aberta e mergeable=false; não aprovar/mergear. Issue #47 permanece aberta e sem PR no snapshot. W5-A4-T4: main privileges-check matriz inclui notification_preferences; social-foundation-check explicitamente cobre booking_counterparty_phone; #154/#53 não criam tabela/função pública. PR #162 adiciona email_delivery_queue apenas na sua branch (não está na main) e a auditoria apontou que as duas RPCs ainda não têm grant matrix explícita. #52 continua OWNER_ACTION para teste real do Supabase Storage.",
       "next_action": "Aguardar PR do Agent2 para #47 e revisar suas migrations/tabelas/funções. Acompanhar correções da PR #162 (migration version, semântica noop, adapter durável, validação de destinatário e ACL tests) antes de qualquer aprovação. Acompanhar resposta à lacuna de grant-test em #161. Manter #52 aberta para teste real do Storage pelo responsável. Não alterar Supabase remoto, secrets, cron, scheduler ou deploy.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T12:20:00Z",
-          "task": "W5-A4-T2 #53 merge concluído; W5-A4-T3 revisão #13; W5-A4-T4 matriz",
-          "status": "merged_post_ci_running",
-          "result": "PR #160 (#53) squash merged em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1. Antes do merge: HEAD 3117377bd6264538734a39d14c91eed7c6cf2160, main base e4307a7f86a10bb72759f10f5736823afd68f4d3, quality SUCCESS, Netlify Redirect/Header SUCCESS, Pages changed NEUTRAL, mergeable true, zero review threads. Migration avatar renumerada para 20261128000600 após #161/#13 ocupar 00500. PR #161 revisada e comentário 7239072822 registra resultado sem falha de autorização e lacuna não bloqueante de teste explícito de grants da função is_notification_enabled. #47 ainda sem PR; Agent2 bloqueado. #52 OWNER_ACTION.",
-          "head_sha": "96f8ed9b52137d8c7ef1a028009e77a7941ff7a1",
-          "tests": "Pré-merge CI quality run 46143785917 SUCCESS com test:db e build; Netlify Redirect/Header SUCCESS, Pages changed NEUTRAL. Pós-merge CI run 46143945775 em andamento.",
-          "blockers": [
-            "Aguardar CI pós-merge antes de fechar #53.",
-            "Revisão #47 depende da PR do Agent2.",
-            "Validação real do Supabase Storage #52 depende do responsável."
-          ]
-        },
         {
           "timestamp": "2026-11-28T12:25:00Z",
           "task": "W5-A4-T2 #53 concluída; W4 encerrada",
@@ -2083,6 +2070,18 @@
             "W5-A4-T3 #47 depende da PR do Agent2.",
             "PR #162 (#26) tem bloqueios de segurança/semântica e colisão de migration; não mergear até correção.",
             "Validação real do Supabase Storage #52 depende do responsável."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T12:23:00Z",
+          "task": "Correção de escopo da matriz e revisão da PR #162",
+          "status": "review_comment_posted_blocked",
+          "result": "Corrigido o registro: email_delivery_queue ainda não está na main; a matriz da PR #162 adiciona a tabela somente na branch. Review COMMENT 6097747847 publicado em PR #162 com cinco bloqueios: colisão migration 00600, Noop marca sent, ausência de store persistente/claim/lease/transições SQL, ausência de validação recipient↔booking e ACL test incompleto para reprocess_dead.",
+          "head_sha": "3b677e593ae0ab95329564175d918592f589710f",
+          "tests": "PR #162 reporta quality/test:db/build verdes no SHA 3b677e, mas branch ainda não reconciliada com main pós-PR #160; mergeable=false. Review solicitado antes de qualquer merge.",
+          "blockers": [
+            "Não mergear #162 até corrigir version prefix e semântica/integração da fila.",
+            "#47 ainda sem PR."
           ]
         }
       ],
