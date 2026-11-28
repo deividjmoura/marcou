@@ -9,6 +9,7 @@ import path from "node:path";
 import { readdir, readFile, rm } from "node:fs/promises";
 import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
+import { bootstrapStorageHarness } from "./storage-harness.mjs";
 
 const { Client } = pg;
 const PORT = 55434;
@@ -123,6 +124,7 @@ try {
         select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
       $$;
   `);
+  await bootstrapStorageHarness(db);
 
   const migrationDirectory = path.join(process.cwd(), "supabase", "migrations");
   const migrationNames = (await readdir(migrationDirectory))

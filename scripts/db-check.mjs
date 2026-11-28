@@ -11,6 +11,7 @@ import { readFile } from "node:fs/promises";
 import { rm } from "node:fs/promises";
 import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
+import { bootstrapStorageHarness } from "./storage-harness.mjs";
 
 const { Client } = pg;
 const PORT = 55432;
@@ -110,6 +111,7 @@ await db.query(`
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
     $$;
 `);
+await bootstrapStorageHarness(db);
 
 const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
@@ -123,6 +125,8 @@ const migrations = [
   "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
   "supabase/migrations/20261127000100_reminder_concurrency_lock.sql",
   "supabase/migrations/20261128000200_booking_definer_search_path.sql",
+  "supabase/migrations/20261128000300_booking_counterparty_phone.sql",
+  "supabase/migrations/20261128000400_service_images_storage.sql",
   "supabase/migrations/20261128000500_notification_preferences.sql",
 ];
 
@@ -1908,6 +1912,99 @@ console.log("\n[segurança e RLS]");
     .then(() => true)
     .catch(() => false);
   check("prestador A não cria serviço em B", crossTenantService === false);
+
+  console.log("\n[storage de imagens de serviços]");
+  const imageBucket = (
+    await db.query(
+      `select public, file_size_limit, allowed_mime_types
+         from storage.buckets where id = 'service-images'`,
+    )
+  ).rows[0];
+  check(
+    "bucket service-images é público para leitura, limita 5 MiB e MIME permitidos",
+    imageBucket?.public === true &&
+      Number(imageBucket.file_size_limit) === 5 * 1024 * 1024 &&
+      ["image/jpeg", "image/png", "image/webp"].every((mime) =>
+        imageBucket.allowed_mime_types.includes(mime),
+      ),
+  );
+  const imagePolicies = (
+    await db.query(
+      `select polname from pg_policy where polrelid = 'storage.objects'::regclass`,
+    )
+  ).rows.map((row) => row.polname);
+  check(
+    "storage.objects possui leitura pública e políticas de escrita do dono",
+    ["service_images_public_read", "service_images_owner_insert", "service_images_owner_update", "service_images_owner_delete"]
+      .every((name) => imagePolicies.includes(name)),
+    imagePolicies.join(", "),
+  );
+
+  const anonStorageClient = await asRole("anon");
+  const ownServiceImagePath = `providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`;
+  const imagePathProbe = (
+    await ownerAClient.query(
+      `select auth.uid()::text as uid,
+              storage.foldername($1) as folders,
+              current_user as db_role,
+              storage.filename($1) as filename,
+              (storage.foldername($1))[2] ~* '^[0-9a-f-]{36}$' as provider_uuid_valid,
+              (storage.foldername($1))[4] ~* '^[0-9a-f-]{36}$' as service_uuid_valid,
+              storage.filename($1) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$' as filename_valid,
+              exists (
+                select 1 from public.providers p
+                join public.services s on s.provider_id = p.id
+                where p.id::text = (storage.foldername($1))[2]
+                  and s.id::text = (storage.foldername($1))[4]
+                  and p.owner_id = (select auth.uid())
+              ) as owns_service`,
+      [ownServiceImagePath],
+    )
+  ).rows[0];
+  check("Storage RLS usa o papel authenticated", imagePathProbe.db_role === "authenticated");
+  check("Storage RLS aceita UUIDs de prestador e serviço", imagePathProbe.provider_uuid_valid && imagePathProbe.service_uuid_valid);
+  check("Storage RLS resolve auth.uid() do dono", imagePathProbe.uid === ownerA);
+  check("Storage RLS decompõe o caminho do serviço", JSON.stringify(imagePathProbe.folders) === JSON.stringify(["providers", providerA, "services", serviceA1]), JSON.stringify(imagePathProbe));
+  check("Storage RLS confirma o vínculo dono/serviço", imagePathProbe.owns_service === true, JSON.stringify(imagePathProbe));
+  check("Storage RLS valida UUID e extensão do nome", imagePathProbe.filename_valid === true, JSON.stringify(imagePathProbe));
+
+  const ownImageInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1) returning id`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono envia imagem no prefixo do próprio serviço", ownImageInsert);
+
+  const foreignServiceImagePath = `providers/${providerB}/services/${serviceB1}/${uuid()}.jpg`;
+  const foreignImageInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [foreignServiceImagePath],
+  ).then(() => true).catch(() => false);
+  check("prestador A não envia imagem para serviço de B", !foreignImageInsert);
+
+  const anonymousImageInsert = await anonStorageClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [`providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`],
+  ).then(() => true).catch(() => false);
+  check("anon não envia imagem mesmo com caminho válido", !anonymousImageInsert);
+
+  const publicImageRead = await anonStorageClient.query(
+    `select name from storage.objects where bucket_id = 'service-images' and name = $1`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("imagem do bucket público pode ser lida anonimamente", publicImageRead);
+
+  const foreignImageDelete = await ownerBClient.query(
+    `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length > 0).catch(() => true);
+  check("prestador B não remove imagem de A", !foreignImageDelete);
+
+  const ownerImageDelete = await ownerAClient.query(
+    `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono remove imagem do próprio serviço", ownerImageDelete);
+  await anonStorageClient.end();
 
   // 5. Notificações: sem insert/delete direto para autenticados e RLS por destinatário.
   const notificationPolicies = (

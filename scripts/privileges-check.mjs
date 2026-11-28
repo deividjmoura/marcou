@@ -31,6 +31,7 @@ import path from "node:path";
 import { readdir, readFile, rm } from "node:fs/promises";
 import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
+import { bootstrapStorageHarness } from "./storage-harness.mjs";
 
 const { Client } = pg;
 const MULTI_MIGRATION = "20261125120000_booking_multiple_services.sql";
@@ -39,6 +40,7 @@ const HARDEN_MIGRATION = "20261125140000_harden_public_table_privileges.sql";
 const CALENDAR_MIGRATION = "20261125153000_google_calendar_sync.sql";
 const CALENDAR_FENCING_MIGRATION = "20261128000000_calendar_worker_fencing.sql";
 const CALENDAR_REVOCATION_MIGRATION = "20261128000100_calendar_disconnect_revocation_retry.sql";
+const MEDIA_MIGRATION = "20261128000400_service_images_storage.sql";
 /** Tabelas criadas pela migration do Calendar: só existem na fase after. */
 const CALENDAR_OBJECTS = ["calendar_connections", "calendar_sync_outbox", "booking_calendar_events"];
 /** Tabelas anteriores à convenção `revoke all … grant …`, endurecidas pela #125. */
@@ -52,7 +54,7 @@ const LEGACY_OBJECTS = [
   "booking_events",
   "notifications",
 ];
-const EXCLUDED_BEFORE = [SECURITY_MIGRATION, HARDEN_MIGRATION, CALENDAR_MIGRATION, CALENDAR_FENCING_MIGRATION, CALENDAR_REVOCATION_MIGRATION];
+const EXCLUDED_BEFORE = [SECURITY_MIGRATION, HARDEN_MIGRATION, CALENDAR_MIGRATION, CALENDAR_FENCING_MIGRATION, CALENDAR_REVOCATION_MIGRATION, MEDIA_MIGRATION];
 const PRIVILEGE_LETTER = {
   SELECT: "S",
   INSERT: "I",
@@ -262,6 +264,7 @@ async function runPhase(phase) {
       alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
       alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
     `);
+    await bootstrapStorageHarness(db);
 
     const migrationDirectory = path.join(process.cwd(), "supabase", "migrations");
     let names = (await readdir(migrationDirectory))
@@ -272,11 +275,12 @@ async function runPhase(phase) {
     }
     reportStructural(
       phase,
-      "ordem: matriz (#123) < hardening (#125) < Calendar (#29)",
+      "ordem: matriz (#123) < hardening (#125) < Calendar (#29) < Storage de mídia",
       names.indexOf(SECURITY_MIGRATION) < names.indexOf(HARDEN_MIGRATION) &&
         names.indexOf(HARDEN_MIGRATION) < names.indexOf(CALENDAR_MIGRATION) &&
         names.indexOf(CALENDAR_MIGRATION) < names.indexOf(CALENDAR_FENCING_MIGRATION) &&
-        names.indexOf(CALENDAR_FENCING_MIGRATION) < names.indexOf(CALENDAR_REVOCATION_MIGRATION),
+        names.indexOf(CALENDAR_FENCING_MIGRATION) < names.indexOf(CALENDAR_REVOCATION_MIGRATION) &&
+        names.indexOf(CALENDAR_REVOCATION_MIGRATION) < names.indexOf(MEDIA_MIGRATION),
     );
     reportStructural(
       phase,
