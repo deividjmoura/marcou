@@ -84,6 +84,409 @@ create policy "service_images_owner_delete"
   using (
     bucket_id = 'service-images'
     and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  )
+  with check (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(name))[3] = 'services'
+    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
+create policy "service_images_owner_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'service-images'
+    and (storage.foldername(name))[1] = 'providers'
+    and exists (
+      select 1
+      from public.providers p
+      join public.services s on s.provider_id = p.id
+      where p.id::text = (storage.foldername(name))[2]
+        and s.id::text = (storage.foldername(name))[4]
+        and p.owner_id = (select auth.uid())
+    )
+  );
+
     and exists (
       select 1
       from public.providers p
