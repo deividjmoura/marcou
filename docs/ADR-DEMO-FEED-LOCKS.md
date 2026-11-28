@@ -1,6 +1,6 @@
 # ADR: travas de segurança para demo do feed em Deploy Preview (Issue #132)
 
-- **Status:** Desenho aprovado tecnicamente; implementação bloqueada até o feed social funcional (#90–#95) e autorização/configuração do responsável.
+- **Status:** Proposta técnica; implementação bloqueada até o feed social funcional (#90–#95) e autorização/configuração do responsável.
 - **Data:** 2026-11-28
 - **Escopo:** definir isolamento da demonstração com dados fictícios. Esta ADR não cria rota, fixture, variável ou configuração na Netlify.
 
