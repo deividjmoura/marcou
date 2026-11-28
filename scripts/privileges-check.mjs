@@ -198,7 +198,7 @@ async function observedPrivileges(db, object, role) {
 }
 
 async function runPhase(phase) {
-  const port = phase === "before" ? 55435 : 55436;
+  const port = phase === "before" ? 55438 : 55439;
   const password = `marcou-privileges-${phase}`;
   const database = `marcou_privileges_${phase}`;
   const databaseDir = path.join(os.tmpdir(), `marcou-privileges-${phase}-pg-data`);
