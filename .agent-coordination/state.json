@@ -38,7 +38,8 @@
       "Não fechar issue de roadmap/futuro apenas para reduzir contagem. Fechar somente se critérios de aceite concluídos ou issue comprovadamente duplicada/substituída, sempre com referência à PR/issue substituta.",
       "Após merge, apagar branch apenas quando GitHub confirmar merged e todos os commits exclusivos estiverem no merge; preservar branches com trabalho exclusivo, coordination/agents e sessões ativas.",
       "Não force-push. Se branch divergir, rebase/merge main sem reescrever histórico remoto e rode CI novamente.",
-      "Não modificar atribuição/branch de outro agente. Cada agente escreve somente seu state_entry, com fetch do state.json mais recente e blob SHA atual antes de cada write."
+      "Não modificar atribuição/branch de outro agente. Cada agente escreve somente seu state_entry, com fetch do state.json mais recente e blob SHA atual antes de cada write.",
+      "AUTORIA: siga docs/PADRAO-DE-ESCOPO.md seção 8 (trailers Co-authored-by verdadeiros: Claude em trabalho assistido por IA; o responsável apenas quando participou de fato; repetir os trailers no corpo do squash). Nunca adicionar coautor que não colaborou."
     ],
     "handoff": "Round 6 é uma rodada de conclusão: cinco agentes externos em paralelo e Agent6 como coordenador/auditor independente. Os números do prompt definem os slots. Cada agente deve corrigir lacunas, integrar sua área, fazer squash merge quando os critérios globais forem cumpridos e fechar somente issues realmente concluídas. Teste manual/real do responsável ficará para depois e não bloqueia merges com CI automatizado verde. Agent3 faz limpeza final de branches após os demais merges. Agent5 inventaria PRs restantes e faz triagem de issues sem duplicar os clusters. Agent6 audita SHAs/CI/merges e consolida.",
     "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update.",
