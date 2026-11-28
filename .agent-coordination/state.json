@@ -3113,8 +3113,8 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "Main reconfirmada em 56e17078271a537c48c19e49b11f151b108ec1bf (#170 integrado). PR #171 foi fechada como substituída após a main avançar durante a execução; sua CI antiga passou integralmente no SHA 3993ac0. Reaplicada a mesma entrega em branch limpa agent2/w6-56-service-modal-main-sync, criada diretamente da main atual; compare 5 ahead/0 behind. PR substituta #176 aberta como Draft, HEAD 3c5a4631f192797bcbcaf6a0b98d096b9681611c, mergeable=true na última consulta. CI run 46147904815 em andamento; Netlify ainda sem status publicado. Inspeção headless de interação continua pendente.",
-      "next_action": "Aguardar CI e Netlify da PR #176 no SHA exato. Reconfirmar main/PR/CI antes de qualquer merge. Executar inspeção headless para foco inicial/restauração, Esc, backdrop, cancelar, criar/editar, validação e falha de salvamento em 390/1440; manter Draft até haver evidência. Depois do merge #56, iniciar #55 e então #54, cada uma em PR separada.",
+      "current_state": "W6-A2-T1 #56 implementada na branch agent2/w6-56-service-modal-current-main. PR #178 OPEN/Draft, HEAD 2bb365145da6f81638e47447a37682adb10cabc6, base SHA ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80, mergeable=true. CI run 46148244545 success no SHA exato (check:changelog, lint, typecheck, audit, unit/domain, test:db, build). Netlify Deploy Preview ainda sem status consultável. A main avançou de 747d5e para ea66e depois da criação da branch (1 commit atrás, docs/ADR-E2E/CHANGELOG/README; sem conflito reportado). PR #171 e #176 fechadas como substituídas, sem merge. Implementação inclui dialog nativo, imagem da #154, validação inline, preservação de inputs/arquivo em erros e retry de upload que atualiza o serviço parcialmente salvo para evitar duplicação. Inspeção headless pendente.",
+      "next_action": "Aguardar status Netlify do SHA 2bb3651. Fazer inspeção headless real do preview para foco, Esc, backdrop, cancelamento, create/edit, validação/erro em 390/1440. Antes de merge, reconfirmar main, atualizar branch para 0 behind sem force-push e reexecutar CI/Netlify no SHA final. Manter Draft até evidência DOM/headless. Após #56 mergeada, iniciar #55 e depois #54.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -3137,6 +3137,18 @@
           "tests": "PR #171 SHA 3993ac0: CI 46147641363 success e Netlify preview success. PR #176 SHA 3c5a463: CI em andamento, Netlify ainda pendente.",
           "blockers": [
             "Inspeção em navegador headless ainda pendente."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — PR #178 e validação",
+          "status": "in_progress",
+          "result": "PR #178 aberta como substituta na branch agent2/w6-56-service-modal-current-main. CI 46148244545 success no HEAD 2bb3651, incluindo check:changelog, lint, typecheck, audit, testes unitários, test:db e build. Netlify ainda sem status consultável. Main avançou para ea66e (1 commit atrás na branch; mudanças documentais/E2E, sem conflito reportado). PR #171 e #176 fechadas como supersedidas, sem merge. Inspeção headless permanece pendente.",
+          "head_sha": "2bb365145da6f81638e47447a37682adb10cabc6",
+          "tests": "CI quality run 46148244545 success no SHA 2bb3651. Netlify ainda pendente/não publicado. Testes locais não executados nesta sessão.",
+          "blockers": [
+            "Inspeção em navegador headless pendente.",
+            "Branch está 1 commit atrás da main ea66e; sincronizar sem force-push antes do merge e reexecutar checks."
           ]
         }
       ],
