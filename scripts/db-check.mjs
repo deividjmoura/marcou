@@ -1946,6 +1946,7 @@ console.log("\n[segurança e RLS]");
       `select auth.uid()::text as uid,
               storage.foldername($1) as folders,
               storage.filename($1) as filename,
+              storage.filename($1) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$' as filename_valid,
               exists (
                 select 1 from public.providers p
                 join public.services s on s.provider_id = p.id
@@ -1959,7 +1960,7 @@ console.log("\n[segurança e RLS]");
   check("Storage RLS resolve auth.uid() do dono", imagePathProbe.uid === ownerA);
   check("Storage RLS decompõe o caminho do serviço", JSON.stringify(imagePathProbe.folders) === JSON.stringify(["providers", providerA, "services", serviceA1]), JSON.stringify(imagePathProbe));
   check("Storage RLS confirma o vínculo dono/serviço", imagePathProbe.owns_service === true, JSON.stringify(imagePathProbe));
-  check("Storage RLS valida UUID e extensão do nome", /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.(jpg|png|webp)$/.test(imagePathProbe.filename), JSON.stringify(imagePathProbe));
+  check("Storage RLS valida UUID e extensão do nome", imagePathProbe.filename_valid === true, JSON.stringify(imagePathProbe));
 
   const ownImageInsert = await ownerAClient.query(
     `insert into storage.objects (bucket_id, name) values ('service-images', $1) returning id`,
