@@ -235,6 +235,21 @@ try {
       roles: { anon: false, authenticated: false, service_role: true },
     },
     {
+      label: "helper de totais multi-serviço não é executável por papéis de API",
+      signature: "public.booking_service_totals(uuid,uuid[])",
+      roles: { anon: false, authenticated: false, service_role: false },
+    },
+    {
+      label: "agenda multi-serviço permanece pública",
+      signature: "public.get_provider_schedule(text,uuid[],date,timestamptz,timestamptz)",
+      roles: { anon: true, authenticated: true },
+    },
+    {
+      label: "criação multi-serviço exige autenticação",
+      signature: "public.create_booking(text,uuid[],timestamptz,text,text,text)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
       label: "criação de reserva exige autenticação",
       signature: "public.create_booking(text,uuid,timestamptz,text,text,text)",
       roles: { anon: false, authenticated: true },
