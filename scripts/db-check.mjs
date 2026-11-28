@@ -2005,6 +2005,15 @@ console.log("\n[segurança e RLS]");
   ).then((result) => result.rows.length === 1).catch(() => false);
   check("dono remove imagem do próprio serviço", ownerImageDelete);
 
+  const avatarColumn = (
+    await db.query(
+      `select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = 'providers'
+          and column_name = 'avatar_path'`,
+    )
+  ).rows.length === 1;
+  check("providers possui coluna avatar_path", avatarColumn);
+
   console.log("\n[storage de avatar do profissional]");
   const avatarPolicies = (
     await db.query(
@@ -2024,6 +2033,12 @@ console.log("\n[segurança e RLS]");
     [ownAvatarPath],
   ).then((result) => result.rows.length === 1).catch(() => false);
   check("dono envia avatar no próprio prefixo", ownAvatarInsert);
+
+  const invalidAvatarInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [`providers/${providerA}/avatar/not-a-uuid.svg`],
+  ).then(() => true).catch(() => false);
+  check("Storage rejeita extensão/formato de caminho de avatar inválido", !invalidAvatarInsert);
 
   const foreignAvatarPath = `providers/${providerB}/avatar/${uuid()}.jpg`;
   const foreignAvatarInsert = await ownerAClient.query(
