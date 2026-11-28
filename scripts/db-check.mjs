@@ -118,8 +118,11 @@ const migrations = [
   "supabase/migrations/202611160001_provider_description.sql",
   "supabase/migrations/20261116035000_fix_booking_idempotency_authorization.sql",
   "supabase/migrations/202611230001_legal_documents_and_acceptances.sql",
+  "supabase/migrations/20261125120000_booking_multiple_services.sql",
+  "supabase/migrations/20261125130000_table_privileges_matrix.sql",
   "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
   "supabase/migrations/20261127000100_reminder_concurrency_lock.sql",
+  "supabase/migrations/20261128000200_booking_definer_search_path.sql",
 ];
 
 for (const file of migrations) {
@@ -250,7 +253,7 @@ console.log("\n[agenda pública]");
 {
   const anon = await asRole("anon");
   const result = await anon.query(
-    `select public.get_provider_schedule('prov-a', $1, '2026-12-01', $2, $3) as schedule`,
+    `select public.get_provider_schedule('prov-a', $1::uuid, '2026-12-01'::date, $2::timestamptz, $3::timestamptz) as schedule`,
     [serviceA1, "2026-12-01T00:00:00Z", "2026-12-02T00:00:00Z"],
   );
   const schedule = result.rows[0].schedule;
@@ -266,7 +269,7 @@ console.log("\n[agenda pública]");
     "agenda não expõe prestador não publicado",
     (
       await anon.query(
-        `select public.get_provider_schedule('prov-b-hidden', $1, '2026-12-01', $2, $3) as schedule`,
+        `select public.get_provider_schedule('prov-b-hidden', $1::uuid, '2026-12-01'::date, $2::timestamptz, $3::timestamptz) as schedule`,
         [serviceA1, "2026-12-01T00:00:00Z", "2026-12-02T00:00:00Z"],
       )
     ).rows[0].schedule === null,
@@ -1249,6 +1252,548 @@ console.log("\n[documentos legais e aceite versionado]");
   );
 }
 
+console.log("\n[schedulers multi-serviço: expiração e lembretes]");
+{
+  const ownerMS = uuid();
+  const customerMS1 = uuid();
+  const customerMS2 = uuid();
+  for (const id of [ownerMS, customerMS1, customerMS2]) {
+    await db.query("insert into auth.users (id) values ($1)", [id]);
+  }
+
+  const providerMS = (
+    await db.query(
+      `insert into public.providers (owner_id, slug, display_name, timezone, is_published, booking_hold_minutes)
+       values ($1, 'multi-sched', 'Barbearia Multi', 'America/Sao_Paulo', true, 30)
+       returning id`,
+      [ownerMS],
+    )
+  ).rows[0].id;
+
+  // 2 serviços com duração, preço, sinal e buffer distintos:
+  // combinação [Corte, Barba] => 90 min, R$ 125,00, sinal R$ 30,00, buffer 10 min (último serviço), ocupado 100 min.
+  const svcCorte = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents, deposit_cents, buffer_minutes)
+       values ($1, 'Corte', 60, 8000, 2000, 15) returning id`,
+      [providerMS],
+    )
+  ).rows[0].id;
+  const svcBarba = (
+    await db.query(
+      `insert into public.services (provider_id, name, duration_minutes, price_cents, deposit_cents, buffer_minutes)
+       values ($1, 'Barba', 30, 4500, 1000, 10) returning id`,
+      [providerMS],
+    )
+  ).rows[0].id;
+
+  // Expediente amplo todos os dias (08:00-23:55 BRT) para cobrir tanto slots
+  // futuros fixos quanto horários próximos da virada de dia UTC (21:30/22:00 BRT).
+  await db.query(
+    `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+     select $1, day, '08:00', '23:55' from generate_series(0, 6) as day`,
+    [providerMS],
+  );
+
+  const ownerMSClient = await asRole("authenticated", ownerMS);
+  const customerMS1Client = await asRole("authenticated", customerMS1);
+  const customerMS2Client = await asRole("authenticated", customerMS2);
+  const anonMS = await asRole("anon");
+  const serviceRoleMS = await asRole("service_role");
+  const serviceRoleMS2 = await asRole("service_role");
+
+  async function createMultiBooking(client, serviceIds, startsAt, key, name = "Cliente Multi") {
+    const result = await client.query(
+      `select * from public.create_booking($1, $2::uuid[], $3::timestamptz, $4, '11988887777', $5)`,
+      ["multi-sched", serviceIds, startsAt, name, key],
+    );
+    return result.rows[0];
+  }
+
+  // Datas futuras fixas (2026-12-10 e 2026-12-11) para testes de expiração.
+  // 09:00 BRT = 12:00Z; 10:00 BRT = 13:00Z (início do 2º serviço); 11:00 BRT = 14:00Z; 14:00 BRT = 17:00Z; 17:00 BRT = 20:00Z.
+  const MS_EXP_PAY = "2026-12-10T12:00:00.000Z";
+  const MS_EXP_PAY_SECOND_SVC = "2026-12-10T13:00:00.000Z";
+  const MS_EXP_REV = "2026-12-10T15:00:00.000Z";
+  const MS_LIVE_HOLD = "2026-12-10T18:00:00.000Z";
+  const MS_CONFIRMED_FUTURE = "2026-12-10T21:00:00.000Z";
+
+  const multiExpPay = await createMultiBooking(
+    customerMS1Client,
+    [svcCorte, svcBarba],
+    MS_EXP_PAY,
+    `ms-exp-pay-${uuid()}`,
+    "Cliente Multi Pagamento",
+  );
+  check(
+    "reserva multi-serviço agrega duração, preço, sinal, buffer do último e snapshot",
+    multiExpPay.duration_minutes_snapshot === 90 &&
+      multiExpPay.price_cents_snapshot === 12500 &&
+      multiExpPay.deposit_cents_snapshot === 3000 &&
+      multiExpPay.buffer_minutes_snapshot === 10 &&
+      multiExpPay.service_name_snapshot === "Corte + Barba" &&
+      new Date(multiExpPay.ends_at).getTime() - new Date(multiExpPay.starts_at).getTime() === 90 * 60_000 &&
+      new Date(multiExpPay.occupied_until).getTime() - new Date(multiExpPay.starts_at).getTime() === 100 * 60_000,
+    JSON.stringify({
+      duration: multiExpPay.duration_minutes_snapshot,
+      price: multiExpPay.price_cents_snapshot,
+      deposit: multiExpPay.deposit_cents_snapshot,
+      buffer: multiExpPay.buffer_minutes_snapshot,
+      name: multiExpPay.service_name_snapshot,
+    }),
+  );
+
+  const multiExpRev = await createMultiBooking(
+    customerMS1Client,
+    [svcCorte, svcBarba],
+    MS_EXP_REV,
+    `ms-exp-rev-${uuid()}`,
+    "Cliente Multi Análise",
+  );
+  await customerMS1Client.query(
+    `select * from public.transition_booking($1, 'proof_received', $2)`,
+    [multiExpRev.id, `ms-proof-${uuid()}`],
+  );
+
+  const multiLiveHold = await createMultiBooking(
+    customerMS1Client,
+    [svcCorte, svcBarba],
+    MS_LIVE_HOLD,
+    `ms-live-hold-${uuid()}`,
+    "Cliente Multi Ativo",
+  );
+
+  const multiConfirmedFuture = await createMultiBooking(
+    customerMS1Client,
+    [svcCorte, svcBarba],
+    MS_CONFIRMED_FUTURE,
+    `ms-confirmed-future-${uuid()}`,
+    "Cliente Multi Confirmado",
+  );
+  await customerMS1Client.query(
+    `select * from public.transition_booking($1, 'proof_received', $2)`,
+    [multiConfirmedFuture.id, `ms-proof-cf-${uuid()}`],
+  );
+  await ownerMSClient.query(
+    `select * from public.transition_booking($1, 'payment_approved', $2)`,
+    [multiConfirmedFuture.id, `ms-approve-cf-${uuid()}`],
+  );
+
+  // Antes da expiração, o intervalo total [09:00, 10:40) aparece ocupado na agenda pública.
+  const scheduleBeforeExpire = (
+    await anonMS.query(
+      `select public.get_provider_schedule(
+         'multi-sched', $1::uuid[], '2026-12-10'::date,
+         '2026-12-10T03:00:00Z'::timestamptz, '2026-12-11T03:00:00Z'::timestamptz
+       ) as data`,
+      [[svcCorte, svcBarba]],
+    )
+  ).rows[0].data;
+  check(
+    "agenda multi-serviço bloqueia o intervalo combinado antes da expiração",
+    scheduleBeforeExpire.busy.some(
+      (b) =>
+        new Date(b.startsAt).toISOString() === MS_EXP_PAY &&
+        new Date(b.occupiedUntil).toISOString() === "2026-12-10T13:40:00.000Z",
+    ),
+    JSON.stringify(scheduleBeforeExpire.busy),
+  );
+
+  // Vence somente multiExpPay (pending_payment) e multiExpRev (pending_review).
+  await db.query(
+    `update public.bookings set expires_at = now() - interval '2 minutes' where id in ($1, $2)`,
+    [multiExpPay.id, multiExpRev.id],
+  );
+
+  const expiredMultiCount = Number(
+    (await serviceRoleMS.query(`select public.expire_stale_bookings() as total`)).rows[0].total,
+  );
+  check(
+    "expire_stale_bookings expira reservas multi-serviço vencidas (pending_payment e pending_review)",
+    expiredMultiCount === 2,
+    `obteve ${expiredMultiCount}`,
+  );
+
+  const statusesAfterExpire = (
+    await db.query(
+      `select id, status, duration_minutes_snapshot, price_cents_snapshot, deposit_cents_snapshot, service_name_snapshot
+         from public.bookings
+        where id in ($1, $2, $3, $4)`,
+      [multiExpPay.id, multiExpRev.id, multiLiveHold.id, multiConfirmedFuture.id],
+    )
+  ).rows;
+  const statusMap = Object.fromEntries(statusesAfterExpire.map((r) => [r.id, r]));
+  check(
+    "expiração preserva hold vigente e confirmada, e mantém snapshots agregados nas expiradas",
+    statusMap[multiExpPay.id].status === "expired" &&
+      statusMap[multiExpRev.id].status === "expired" &&
+      statusMap[multiLiveHold.id].status === "pending_payment" &&
+      statusMap[multiConfirmedFuture.id].status === "confirmed" &&
+      statusMap[multiExpPay.id].duration_minutes_snapshot === 90 &&
+      statusMap[multiExpPay.id].price_cents_snapshot === 12500 &&
+      statusMap[multiExpPay.id].deposit_cents_snapshot === 3000 &&
+      statusMap[multiExpPay.id].service_name_snapshot === "Corte + Barba",
+  );
+
+  const preservedItems = (
+    await db.query(
+      `select position, service_name_snapshot, duration_minutes_snapshot, price_cents_snapshot
+         from public.booking_services
+        where booking_id = $1
+        order by position`,
+      [multiExpPay.id],
+    )
+  ).rows;
+  check(
+    "expiração preserva itens em booking_services da reserva multi-serviço",
+    preservedItems.length === 2 &&
+      preservedItems[0].service_name_snapshot === "Corte" &&
+      preservedItems[1].service_name_snapshot === "Barba",
+    JSON.stringify(preservedItems),
+  );
+
+  const expiredNotifsMulti = (
+    await db.query(
+      `select recipient_id, body from public.notifications
+        where booking_id = $1 and kind = 'booking_expired'`,
+      [multiExpPay.id],
+    )
+  ).rows;
+  check(
+    "expiração multi-serviço notifica cliente e prestador com snapshot agregado",
+    expiredNotifsMulti.length === 2 &&
+      expiredNotifsMulti.every((row) => row.body.includes("Corte + Barba")),
+    JSON.stringify(expiredNotifsMulti),
+  );
+
+  const expiredSecondRun = Number(
+    (await serviceRoleMS.query(`select public.expire_stale_bookings() as total`)).rows[0].total,
+  );
+  check(
+    "expire_stale_bookings é idempotente após expirar multi-serviços",
+    expiredSecondRun === 0,
+    `obteve ${expiredSecondRun}`,
+  );
+
+  // Todo o intervalo combinado [09:00, 10:40) foi liberado, inclusive a faixa do 2º serviço (10:00 BRT).
+  const scheduleAfterExpire = (
+    await anonMS.query(
+      `select public.get_provider_schedule(
+         'multi-sched', $1::uuid[], '2026-12-10'::date,
+         '2026-12-10T03:00:00Z'::timestamptz, '2026-12-11T03:00:00Z'::timestamptz
+       ) as data`,
+      [[svcCorte, svcBarba]],
+    )
+  ).rows[0].data;
+  check(
+    "expiração remove intervalo multi-serviço de busy na agenda pública",
+    !scheduleAfterExpire.busy.some(
+      (b) => new Date(b.startsAt).toISOString() === MS_EXP_PAY,
+    ),
+  );
+
+  const rebookedSecondServiceBand = await createMultiBooking(
+    customerMS2Client,
+    [svcBarba],
+    MS_EXP_PAY_SECOND_SVC,
+    `ms-rebook-second-${uuid()}`,
+    "Cliente Faixa 2º Serviço",
+  );
+  check(
+    "faixa do 2º serviço da reserva multi-serviço expirada aceita nova reserva",
+    rebookedSecondServiceBand.status === "pending_payment",
+  );
+
+  // Expiração inline em create_booking(text, uuid[], ...) colidindo apenas na faixa do 2º serviço.
+  const MS_INLINE_START = "2026-12-11T12:00:00.000Z"; // 09:00-10:40 BRT
+  const MS_INLINE_COLLIDE_SECOND = "2026-12-11T13:15:00.000Z"; // 10:15 BRT (dentro do 2º serviço)
+  const inlineStale = await createMultiBooking(
+    customerMS1Client,
+    [svcCorte, svcBarba],
+    MS_INLINE_START,
+    `ms-inline-stale-${uuid()}`,
+    "Cliente Inline Vencido",
+  );
+  await db.query(
+    `update public.bookings set expires_at = now() - interval '2 minutes' where id = $1`,
+    [inlineStale.id],
+  );
+  const inlineWinner = await createMultiBooking(
+    customerMS2Client,
+    [svcCorte, svcBarba],
+    MS_INLINE_COLLIDE_SECOND,
+    `ms-inline-winner-${uuid()}`,
+    "Cliente Inline Novo",
+  );
+  const inlineStaleAfter = (
+    await db.query(`select status from public.bookings where id = $1`, [inlineStale.id])
+  ).rows[0].status;
+  const inlineExpiredEvents = Number(
+    (
+      await db.query(
+        `select count(*)::int as total from public.booking_events
+          where booking_id = $1 and event_type = 'booking.expired'`,
+        [inlineStale.id],
+      )
+    ).rows[0].total,
+  );
+  check(
+    "create_booking multi-serviço expira inline conflito vencido na faixa do 2º serviço",
+    inlineWinner.status === "pending_payment" &&
+      inlineStaleAfter === "expired" &&
+      inlineExpiredEvents === 1,
+    `winner=${inlineWinner.status}, stale=${inlineStaleAfter}, events=${inlineExpiredEvents}`,
+  );
+
+  // --- Lembretes (create_booking_reminders) com reservas multi-serviço e virada de dia UTC ---
+  // Escolhe sempre um horário futuro dentro das próximas 24h em que a data UTC é
+  // 1 dia posterior à data local em America/Sao_Paulo (00:30Z = 21:30 BRT ou 01:00Z = 22:00 BRT).
+  const rolloverSlot = (
+    await db.query(`
+      with base as (
+        select
+          (date_trunc('day', now() at time zone 'UTC') + interval '30 minutes') at time zone 'UTC' as t_0030,
+          (date_trunc('day', now() at time zone 'UTC') + interval '1 hour') at time zone 'UTC' as t_0100,
+          (date_trunc('day', now() at time zone 'UTC') + interval '1 day 30 minutes') at time zone 'UTC' as t_next_0030
+      ),
+      chosen as (
+        select case
+          when t_0030 > now() + interval '5 minutes' then t_0030
+          when t_0100 > now() + interval '5 minutes' then t_0100
+          else t_next_0030
+        end as starts_at
+        from base
+      )
+      select
+        starts_at,
+        to_char(starts_at at time zone 'America/Sao_Paulo', 'YYYYMMDD') as local_ymd,
+        to_char(starts_at at time zone 'UTC', 'YYYYMMDD') as utc_ymd,
+        to_char(starts_at at time zone 'America/Sao_Paulo', 'HH24:MI') as local_hm
+      from chosen
+    `)
+  ).rows[0];
+  check(
+    "horário de teste multi-serviço cruza a virada de dia UTC vs America/Sao_Paulo",
+    rolloverSlot.local_ymd !== rolloverSlot.utc_ymd,
+    `local=${rolloverSlot.local_ymd}, utc=${rolloverSlot.utc_ymd}`,
+  );
+
+  const multiReminderConfirmed = await createMultiBooking(
+    customerMS1Client,
+    [svcCorte, svcBarba],
+    rolloverSlot.starts_at,
+    `ms-rem-confirmed-${uuid()}`,
+    "Cliente Multi Lembrete",
+  );
+  await customerMS1Client.query(
+    `select * from public.transition_booking($1, 'proof_received', $2)`,
+    [multiReminderConfirmed.id, `ms-rem-proof-${uuid()}`],
+  );
+  await ownerMSClient.query(
+    `select * from public.transition_booking($1, 'payment_approved', $2)`,
+    [multiReminderConfirmed.id, `ms-rem-approve-${uuid()}`],
+  );
+
+  // Cria também uma reserva multi-serviço confirmada e depois cancelada na mesma janela
+  // (em outro horário livre dentro das próximas 24h) para garantir exclusão de canceladas.
+  const cancelledSlot = (
+    await db.query(`
+      select to_char((($1::timestamptz) - interval '3 hours') at time zone 'America/Sao_Paulo', 'HH24:MI') as hm,
+             (($1::timestamptz) - interval '3 hours') as candidate,
+             (now() + interval '2 hours') as fallback
+    `, [rolloverSlot.starts_at])
+  ).rows[0];
+  const cancelledStartsAt =
+    new Date(cancelledSlot.candidate).getTime() > Date.now() + 10 * 60_000
+      ? cancelledSlot.candidate
+      : (
+          await db.query(
+            `select ((date_trunc('hour', now() at time zone 'America/Sao_Paulo') + interval '2 hours') at time zone 'America/Sao_Paulo') as ts`,
+          )
+        ).rows[0].ts;
+  // Usa uma hora garantidamente dentro de 08:00-20:00 BRT caso o fallback caia na madrugada,
+  // ajustando diretamente para evitar conflito com multiReminderConfirmed.
+  const multiReminderCancelled = await createMultiBooking(
+    customerMS2Client,
+    [svcCorte, svcBarba],
+    "2026-12-12T12:00:00.000Z",
+    `ms-rem-cancelled-${uuid()}`,
+    "Cliente Multi Cancelado",
+  );
+  await customerMS2Client.query(
+    `select * from public.transition_booking($1, 'proof_received', $2)`,
+    [multiReminderCancelled.id, `ms-rem-c-proof-${uuid()}`],
+  );
+  await ownerMSClient.query(
+    `select * from public.transition_booking($1, 'payment_approved', $2)`,
+    [multiReminderCancelled.id, `ms-rem-c-approve-${uuid()}`],
+  );
+  await customerMS2Client.query(
+    `select * from public.transition_booking($1, 'cancel', $2)`,
+    [multiReminderCancelled.id, `ms-rem-c-cancel-${uuid()}`],
+  );
+  await db.query(
+    `update public.bookings
+        set starts_at = $2::timestamptz,
+            ends_at = $2::timestamptz + interval '90 minutes',
+            occupied_until = $2::timestamptz + interval '100 minutes'
+      where id = $1`,
+    [multiReminderCancelled.id, cancelledStartsAt],
+  );
+
+  // Executa create_booking_reminders(24) com a sessão em UTC.
+  await serviceRoleMS.query(`set time zone 'UTC'`);
+  const reminderCountUtc = Number(
+    (await serviceRoleMS.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+  );
+  check(
+    "create_booking_reminders(24) gera 1 único lembrete para reserva multi-serviço na janela",
+    reminderCountUtc === 1,
+    `obteve ${reminderCountUtc}`,
+  );
+
+  const multiReminderEvents = (
+    await db.query(
+      `select external_event_id from public.booking_events
+        where booking_id = $1 and event_type = 'booking.reminder'`,
+      [multiReminderConfirmed.id],
+    )
+  ).rows;
+  const expectedMultiReminderKey = `reminder-${multiReminderConfirmed.id}-${rolloverSlot.local_ymd}`;
+  check(
+    "chave do lembrete multi-serviço usa data local do prestador (não data UTC)",
+    multiReminderEvents.length === 1 &&
+      multiReminderEvents[0].external_event_id === expectedMultiReminderKey,
+    `obteve ${JSON.stringify(multiReminderEvents)}, esperado ${expectedMultiReminderKey}`,
+  );
+
+  const multiReminderNotifs = (
+    await db.query(
+      `select recipient_id, body from public.notifications
+        where booking_id = $1 and kind = 'booking_reminder'`,
+      [multiReminderConfirmed.id],
+    )
+  ).rows;
+  check(
+    "lembrete multi-serviço cria 1 par de notificações com snapshot agregado e hora local",
+    multiReminderNotifs.length === 2 &&
+      multiReminderNotifs.every(
+        (n) =>
+          n.body.includes("Corte + Barba") &&
+          n.body.includes(rolloverSlot.local_hm),
+      ),
+    JSON.stringify(multiReminderNotifs),
+  );
+
+  // Reexecuções em fusos de sessão distintos (Asia/Tokyo e America/Sao_Paulo) não duplicam.
+  await serviceRoleMS.query(`set time zone 'Asia/Tokyo'`);
+  const reminderCountTokyo = Number(
+    (await serviceRoleMS.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+  );
+  await serviceRoleMS.query(`set time zone 'America/Sao_Paulo'`);
+  const reminderCountSp = Number(
+    (await serviceRoleMS.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+  );
+  check(
+    "idempotência diária do lembrete multi-serviço independe do fuso da sessão",
+    reminderCountTokyo === 0 && reminderCountSp === 0,
+    `tokyo=${reminderCountTokyo}, sp=${reminderCountSp}`,
+  );
+
+  // Exclusão de cancelada, expirada e confirmada fora da janela (> 24h).
+  const excludedMultiReminders = Number(
+    (
+      await db.query(
+        `select count(*)::int as total from public.booking_events
+          where booking_id in ($1, $2, $3, $4) and event_type = 'booking.reminder'`,
+        [
+          multiReminderCancelled.id,
+          multiExpPay.id,
+          multiLiveHold.id,
+          multiConfirmedFuture.id,
+        ],
+      )
+    ).rows[0].total,
+  );
+  check(
+    "reservas multi-serviço canceladas, expiradas, pendentes ou fora da janela não recebem lembrete",
+    excludedMultiReminders === 0,
+    `obteve ${excludedMultiReminders}`,
+  );
+
+  // Concorrência (FOR UPDATE SKIP LOCKED) em nova reserva multi-serviço elegível.
+  const multiConcurrentReminder = await createMultiBooking(
+    customerMS2Client,
+    [svcCorte, svcBarba],
+    "2026-12-13T12:00:00.000Z",
+    `ms-rem-concurrent-${uuid()}`,
+    "Cliente Multi Concorrente",
+  );
+  await customerMS2Client.query(
+    `select * from public.transition_booking($1, 'proof_received', $2)`,
+    [multiConcurrentReminder.id, `ms-rem-cc-proof-${uuid()}`],
+  );
+  await ownerMSClient.query(
+    `select * from public.transition_booking($1, 'payment_approved', $2)`,
+    [multiConcurrentReminder.id, `ms-rem-cc-approve-${uuid()}`],
+  );
+  await db.query(
+    `update public.bookings
+        set starts_at = case
+              when ($2::timestamptz - interval '3 hours') > now() + interval '10 minutes'
+                then $2::timestamptz - interval '3 hours'
+              else $2::timestamptz + interval '3 hours'
+            end,
+            ends_at = (case
+              when ($2::timestamptz - interval '3 hours') > now() + interval '10 minutes'
+                then $2::timestamptz - interval '3 hours'
+              else $2::timestamptz + interval '3 hours'
+            end) + interval '90 minutes',
+            occupied_until = (case
+              when ($2::timestamptz - interval '3 hours') > now() + interval '10 minutes'
+                then $2::timestamptz - interval '3 hours'
+              else $2::timestamptz + interval '3 hours'
+            end) + interval '100 minutes'
+      where id = $1`,
+    [multiConcurrentReminder.id, rolloverSlot.starts_at],
+  );
+  const concurrentMultiRuns = await Promise.all([
+    serviceRoleMS.query(`select public.create_booking_reminders(24) as total`),
+    serviceRoleMS2.query(`select public.create_booking_reminders(24) as total`),
+  ]);
+  const concurrentMultiSum = concurrentMultiRuns.reduce(
+    (acc, r) => acc + Number(r.rows[0].total),
+    0,
+  );
+  const concurrentMultiEvents = Number(
+    (
+      await db.query(
+        `select count(*)::int as total from public.booking_events
+          where booking_id = $1 and event_type = 'booking.reminder'`,
+        [multiConcurrentReminder.id],
+      )
+    ).rows[0].total,
+  );
+  check(
+    "execução concorrente de create_booking_reminders não duplica lembrete multi-serviço",
+    concurrentMultiSum === 1 && concurrentMultiEvents === 1,
+    `sum=${concurrentMultiSum}, events=${concurrentMultiEvents}`,
+  );
+
+  await expectError(
+    "janela de lembrete acima de 168h é rejeitada",
+    () => serviceRoleMS.query(`select public.create_booking_reminders(169)`),
+    "invalid_reminder_window",
+  );
+
+  await ownerMSClient.end();
+  await customerMS1Client.end();
+  await customerMS2Client.end();
+  await anonMS.end();
+  await serviceRoleMS.end();
+  await serviceRoleMS2.end();
+}
+
 console.log("\n[segurança e RLS]");
 {
   // 1. Toda tabela de negócio precisa ter RLS habilitada.
@@ -1296,6 +1841,7 @@ console.log("\n[segurança e RLS]");
     "availability_rules",
     "availability_exceptions",
     "bookings",
+    "booking_services",
     "booking_events",
     "notifications",
     "legal_documents",
@@ -1303,6 +1849,7 @@ console.log("\n[segurança e RLS]");
   ];
   const rpcOnlyTables = [
     "bookings",
+    "booking_services",
     "booking_events",
     "notifications",
     "legal_documents",
