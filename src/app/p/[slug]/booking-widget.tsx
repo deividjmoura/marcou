@@ -14,6 +14,7 @@ export interface WidgetService {
   id: string;
   name: string;
   description: string | null;
+  imageUrl?: string | null;
   durationMinutes: number;
   priceCents: number;
   bufferMinutes: number;
@@ -206,8 +207,12 @@ export function BookingWidget({
                       setShowStickyContinue(false);
                     }}
                   >
-                    <span className="booking-service-image" aria-hidden="true">
-                      <span>✦</span>
+                    <span className="booking-service-image">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={`${item.name} — imagem do serviço`} loading="lazy" />
+                      ) : (
+                        <span aria-hidden="true">✦</span>
+                      )}
                     </span>
                     <span className="booking-service-content">
                       <strong>{item.name}</strong>

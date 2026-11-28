@@ -18,6 +18,7 @@ import path from "node:path";
 import { readdir, readFile, rm } from "node:fs/promises";
 import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
+import { bootstrapStorageHarness } from "./storage-harness.mjs";
 
 const { Client } = pg;
 const PORT = 55437;
@@ -95,6 +96,7 @@ try {
     grant usage on schema public to anon, authenticated, service_role;
     grant usage on schema auth to anon, authenticated, service_role;
   `);
+  await bootstrapStorageHarness(db);
 
   const migrationDirectory = path.join(process.cwd(), "supabase", "migrations");
   const migrationNames = (await readdir(migrationDirectory)).filter((name) => name.endsWith(".sql")).sort();
