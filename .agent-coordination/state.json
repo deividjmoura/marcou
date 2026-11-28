@@ -3103,7 +3103,7 @@
     "agent_2_r7_booking": {
       "scope": "Reservas e painel do prestador (#56, #55, #54 e apoio em #43)",
       "role_swap_from": "agent_2_r7_auth",
-      "status": "in_progress",
+      "status": "blocked_owner_validation",
       "handoff": {
         "do_antecessor_na_area": "Agent 1 (agent_1_r7_booking): mergeou #142/#143 (multi-serviço, parser BRL, ações por papel), #146 (confirmação e .ics multi-serviço), #153 (atalhos WhatsApp) e #155 (correção P0 de DDD 12–19). Documentou a questão da ordem das migrations da #142 em docs/BOOKING-OPS.md. A fila do painel (#56 → #55 → #54 → #43) estava parada por uma dependência da #150, que já foi mergeada. Agora não há bloqueio.",
         "contexto_tecnico": "Painel em src/app/painel (painel-client.tsx concentra o formulário de serviços). A #154 já está na main e adicionou o campo de imagem do serviço: o modal da #56 DEVE incluí-lo. Regras de preço/duração/disponibilidade ficam no servidor e no banco, não na interface. O Vitest roda em ambiente node, sem DOM: extraia a lógica do formulário para funções puras testáveis e registre a inspeção visual como pendência do responsável.",
@@ -3113,8 +3113,8 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "W6-A2-T1 #56 implementada na branch agent2/w6-56-service-modal-current-main. PR #178 OPEN/Draft, HEAD 2bb365145da6f81638e47447a37682adb10cabc6, base SHA ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80, mergeable=true. CI run 46148244545 success no SHA exato (check:changelog, lint, typecheck, audit, unit/domain, test:db, build). Netlify Deploy Preview ainda sem status consultável. A main avançou de 747d5e para ea66e depois da criação da branch (1 commit atrás, docs/ADR-E2E/CHANGELOG/README; sem conflito reportado). PR #171 e #176 fechadas como substituídas, sem merge. Implementação inclui dialog nativo, imagem da #154, validação inline, preservação de inputs/arquivo em erros e retry de upload que atualiza o serviço parcialmente salvo para evitar duplicação. Inspeção headless pendente.",
-      "next_action": "Aguardar status Netlify do SHA 2bb3651. Fazer inspeção headless real do preview para foco, Esc, backdrop, cancelamento, create/edit, validação/erro em 390/1440. Antes de merge, reconfirmar main, atualizar branch para 0 behind sem force-push e reexecutar CI/Netlify no SHA final. Manter Draft até evidência DOM/headless. Após #56 mergeada, iniciar #55 e depois #54.",
+      "current_state": "PR #178 aberta/Draft, HEAD 2bb365145da6f81638e47447a37682adb10cabc6. CI run 46148244545 success no SHA exato (check:changelog, lint, typecheck, audit, unit/domain, test:db e build). Netlify Deploy Preview success: https://deploy-preview-178--marcoou.netlify.app. Main atual ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80; branch 1 commit atrás, sem conflito reportado e PR mergeable=true. Inspeção em navegador headless ainda não realizada; PR permanece Draft. PR #171 e #176 fechadas como substituídas, sem merge.",
+      "next_action": "Responsável precisa executar/fornecer a inspeção headless do Deploy Preview #178 para foco inicial e restauração, Esc, backdrop, cancelar, criar/editar, validação e erro de salvamento em 390/1440. Depois reconfirmar main; sincronizar branch para 0 behind sem force-push e reexecutar CI/Netlify no SHA final. Marcar Ready e mergear somente com checklist completo. Após #56 integrada, seguir #55 e #54 em PRs separadas.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -3148,6 +3148,18 @@
           "tests": "CI quality run 46148244545 success no SHA 2bb3651. Netlify ainda pendente/não publicado. Testes locais não executados nesta sessão.",
           "blockers": [
             "Inspeção em navegador headless pendente.",
+            "Branch está 1 commit atrás da main ea66e; sincronizar sem force-push antes do merge e reexecutar checks."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — CI e Deploy Preview aprovados",
+          "status": "blocked_owner_validation",
+          "result": "PR #178 HEAD 2bb3651: CI run 46148244545 success em todos os passos (check:changelog, lint, typecheck, audit, unit/domain, test:db, build). Netlify Deploy Preview success em https://deploy-preview-178--marcoou.netlify.app. PR permanece Draft porque falta evidência de inspeção headless dos comportamentos de DOM exigidos pelo escopo refinado. Main atual ea66e; branch 1 commit atrás, mergeable=true, sem conflito reportado. Não mergeada.",
+          "head_sha": "2bb365145da6f81638e47447a37682adb10cabc6",
+          "tests": "CI quality run 46148244545 success; Netlify deploy-preview success. Inspeção headless não executada.",
+          "blockers": [
+            "Inspeção em navegador headless pendente para os critérios de DOM (390/1440).",
             "Branch está 1 commit atrás da main ea66e; sincronizar sem force-push antes do merge e reexecutar checks."
           ]
         }
