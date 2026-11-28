@@ -180,3 +180,33 @@ Falhas esperadas (aplicação deve mapear mensagens):
 4. Se `pending_review` deve ter hold diferente de `pending_payment` (hoje o mesmo `expires_at`).
 
 Até lá, o sistema permanece correto com o hold único e cancelamento autorizado sem multa automatizada.
+
+## Ordem das migrations de multi-serviço e privilégios (#142)
+
+A PR `#142` introduziu, na `main`, as migrations:
+
+1. `20261125120000_booking_multiple_services.sql` — tabela `booking_services`, RPCs agregadas
+2. `20261125130000_table_privileges_matrix.sql` — grants mínimos em `notifications` / `booking_services`
+
+Elas têm timestamps **anteriores** a migrations já presentes na `main` no momento do merge (`20261125140000_harden_public_table_privileges.sql`, `20261125153000_google_calendar_sync.sql`, `20261127000000`+ e `20261128000000`+).
+
+### Por que não renumerar
+
+O checklist pedia versão maior que a última da `main`, mas:
+
+- as migrations da `#142` **nunca foram aplicadas** em ambiente remoto de produção;
+- o harness `test:db` aplica o diretório inteiro em ordem lexicográfica e passou no SHA mergeado;
+- **migration já mergeada não deve ser editada** (runbook §5).
+
+### Como aplicar
+
+| Ambiente | Procedimento |
+|----------|--------------|
+| Banco **novo** / CI embutido | `supabase/migrations` em ordem de nome: multi-serviço e matriz rodam **antes** do harden e do Calendar. Correto e testado. |
+| Banco que **já aplicou** `20261125140000`+ sem as duas da `#142` | **Não** reordenar arquivos. Avaliar migration corretiva **nova** (versão `> 20261128000100`) só se algum objeto ou grant estiver faltando naquele ambiente. Em geral a matriz e o multi-serviço são aditivos e podem ser aplicados manualmente na ordem original se o histórico local permitir. |
+| Produção remota | Continua bloqueada: nenhuma migration é aplicada sem autorização explícita do responsável. |
+
+### Decisão registrada (Agente 1 · onda 2)
+
+Não há migration corretiva nesta onda: o CI e bancos novos estão coerentes. Se um ambiente real já tiver aplicado o harden/Calendar sem a matriz/multi-serviço, o Agent 4/`#136` ou o responsável devem propor uma migration **nova** (não editar as existentes) após inspecionar o estado real do banco.
+

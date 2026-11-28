@@ -11,7 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
-- Página `/reserva/[id]` com ações e rótulos por papel (cliente vs dono do estabelecimento); a autorização continua nas RPCs do banco (`transition_booking`).
+- Página de confirmação `/reserva/[id]` com feedback visual por status, download `.ics` (duração e preço totais no evento) e rótulos compatíveis com reservas multi-serviço e de um serviço (PR `#68` / onda 2).
 - Motor de reservas com múltiplos serviços do mesmo estabelecimento (Issue `#21`, PR `#139`): tabela `booking_services`, RPCs agregadas, seleção múltipla na página pública, compatibilidade com reservas de um serviço e migration `20261125120000_booking_multiple_services.sql`.
 - Matriz de privilégios com grants mínimos para `notifications` e `booking_services` (`20261125130000_table_privileges_matrix.sql`).
 - Consolidação documental “plataforma única, perfil público interno”:
@@ -82,8 +82,6 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
-- Preço e sinal de serviços no painel aceitam ponto como milhar e vírgula como decimal (`src/lib/money.ts`); exemplos: `12.5` → 1250 centavos, `1.234,5` → 123450, `12.34` → 1234 (não milhar).
-- Sinal (depósito) opcional no formulário do painel: campo vazio grava 0 (sem sinal), já permitido pelo schema e pelo banco.
 - Hardening do pipeline CI (`.github/workflows/ci.yml`, substituindo a parte
   exclusiva da PR `#32`): adiciona `concurrency` (cancela runs redundantes fora
   da `main`), `timeout-minutes: 20`, steps nomeados e remove a execução
@@ -147,7 +145,9 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
-- Endurece o `search_path` das cinco sobrecargas/helpers `SECURITY DEFINER` do motor de reservas multi-serviço para `pg_catalog, public`, com migration forward-only `20261128000200_booking_definer_search_path.sql` e regressão em `social-foundation-check.mjs`.
+- Endurece o `search_path` das cinco sobrecargas/helpers `SECURITY DEFINER` do motor de reservas multi-serviço para `pg_catalog, public`, com migration forward-only `20261128000200_booking_definer_search_path.sql` e regressões de `search_path` e grants mínimos em `social-foundation-check.mjs`.
+
+- O harness `scripts/privileges-check.mjs` passa a integrar `npm run test:db`, validando a matriz completa de privilégios com defaults do Supabase emulados, incluindo as tabelas novas de reservas multi-serviço. Usa portas próprias (55438/55439) para não colidir com os demais PostgreSQL embutidos da suíte.
 
 - Google Calendar (#29): callback OAuth falha fechado com `503` quando `NEXT_PUBLIC_SITE_URL` está ausente/inválida, sem aceitar a origem da própria requisição como fallback. Worker da outbox usa `lease_token` rotativo por claim e exige o token atual para confirmar/reagendar/encerrar jobs, impedindo ack tardio de worker cujo lease foi retomado. Migration `20261128000000_calendar_worker_fencing.sql`; harness `calendar-check.mjs` passa a integrar `npm run test:db`. Revogação externa do refresh token permanece pendente no banco até confirmação do Google; falhas transitórias são repetidas pelo worker, com `complete_calendar_disconnect` removendo a conexão só após sucesso. Funções Calendar recebem `search_path = pg_catalog, public` na migration `20261128000100_calendar_disconnect_revocation_retry.sql`.
 
