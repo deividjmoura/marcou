@@ -2013,6 +2013,14 @@ console.log("\n[segurança e RLS]");
     )
   ).rows.length === 1;
   check("providers possui coluna avatar_path", avatarColumn);
+  const avatarConstraint = (
+    await db.query(
+      `select 1 from pg_constraint
+        where conrelid = 'public.providers'::regclass
+          and conname = 'providers_avatar_path_format'`,
+    )
+  ).rows.length === 1;
+  check("providers valida formato de avatar_path", avatarConstraint);
 
   console.log("\n[storage de avatar do profissional]");
   const avatarPolicies = (
@@ -2063,6 +2071,20 @@ console.log("\n[segurança e RLS]");
     `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
     [ownAvatarPath],
   ).then((result) => result.rows.length > 0).catch(() => true);
+  const foreignAvatarUpdate = await ownerBClient.query(
+    `update storage.objects set name = name
+      where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length > 0).catch(() => true);
+  check("prestador B não altera avatar de A", !foreignAvatarUpdate);
+
+  const ownerAvatarUpdate = await ownerAClient.query(
+    `update storage.objects set name = name
+      where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono altera avatar do próprio perfil", ownerAvatarUpdate);
+
   check("prestador B não remove avatar de A", !foreignAvatarDelete);
 
   const ownerAvatarDelete = await ownerAClient.query(
