@@ -1912,19 +1912,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W3-A4-T1 concluída: PR #152 mergeada em 5538a441d0023926919f165c833629079f98e442; handoffs arquivados, Agent6 pode limpar as arenas após conferir main. W3-A4-T2: PR #154 aberta, HEAD 6e5c1c68c430edc1e3051d325e1ee55bbdf18292, base main 994cf1c4efe65754ebb70042b448259344a2cc7c (#153). Migration de imagens está em 20261128000400, após a migration 00300 da #153. CI quality run 46088652865 em andamento. Runs anteriores: a477 falhou no typecheck por fixture sem bufferMinutes; 5f49 passou typecheck/unit/audit mas falhou em test:db por terminador $$ perdido no auth.uid do harness; fixtures e delimitador corrigidos, migration reescrita limpa (104 linhas).",
-      "next_action": "Acompanhar run 46088652865 e checks Netlify no HEAD 6e5c1c68c430edc1e3051d325e1ee55bbdf18292. Corrigir falhas. Merge #154 somente com quality completo e Redirect/Header verdes, Pages neutral/green, sem review bloqueante. #52 permanece aberta até validação real de Storage pelo responsável. Depois iniciar #53 com nova leitura do Escopo refinado e PADRAO-DE-ESCOPO.md.",
+      "current_state": "W3-A4-T1 concluída: PR #152 mergeada em 5538a441d0023926919f165c833629079f98e442. W3-A4-T2: PR #154 pronta tecnicamente, HEAD 96f1490cccfb3daeb59a9dd37a50a1c9b459ef45; quality success (run 46089503494), Redirect/Header success, Pages changed neutral, Netlify Preview ready. RLS harness passou após qualificar storage.objects.name nas subconsultas; CI completo verde. Merge bloqueado pela regra wave_3.regra_de_conflito: #150 ainda draft e alteração em painel-client.tsx deve esperar #150 ou rebasear sobre ela. #154 aguarda #150; #52 permanece aberta até teste real Storage pelo responsável.",
+      "next_action": "Aguardar Agent5 concluir e mergear #150 conforme W3-A5-T1. Depois rebasear/reconciliar branch agent4/w3-service-media sobre a nova main (preservar tokens e CSS da #150), reexecutar CI completo e mergear #154 só com checks verdes. Não iniciar #53 antes do merge da #154. Depois reler Escopo refinado #53 e PADRAO-DE-ESCOPO.md.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W3-A4-T1: arquivar handoffs das arenas",
-          "status": "completed",
-          "result": "PR #152 squash-mergeada. Arquivados handoff #21 idêntico nas duas branches (uma cópia) e as duas variantes históricas de privilegios-tabelas.md, com README de proveniência/aviso histórico. Agent6 pode remover as duas arenas após confirmar os arquivos na main.",
-          "head_sha": "PR #152:6ada5597318f3c6eadb79423eec3cd5325e0582a; merge/main:5538a441d0023926919f165c833629079f98e442",
-          "tests": "CI quality success no HEAD exato; Netlify Redirect/Header success; Pages changed neutral. Pós-merge quality queued na última consulta.",
-          "blockers": [],
-          "next_action": "Executar #52; depois #53."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W3-A4-T2: PR #154 para imagem de serviços",
@@ -1945,6 +1935,17 @@
           "tests": "CI 46088652865 em andamento no SHA atual.",
           "blockers": [
             "Aguardar CI completo no SHA atual."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W3-A4-T2: CI verde; aguardar dependência #150",
+          "status": "ci_green_waiting_for_150",
+          "result": "No HEAD 96f1490cccfb3daeb59a9dd37a50a1c9b459ef45, CI quality run 46089503494 passou integralmente: changelog, lint, typecheck, audit, unit/domain (370), DB integration (incluindo Storage RLS), build. Netlify Redirect/Header success, Pages changed neutral, Deploy Preview ready. Corrigida resolução ambígua de `name` na subquery da policy qualificando `storage.objects.name`; todos os asserts de owner/path passaram.",
+          "head_sha": "96f1490cccfb3daeb59a9dd37a50a1c9b459ef45",
+          "tests": "quality success; Redirect/Header success; Pages neutral; Preview ready.",
+          "blockers": [
+            "#150 continua draft e a regra wave_3.regra_de_conflito exige esperar/rebasear painel-client.tsx sobre #150. Não mergear #154 até #150 estar integrada."
           ]
         }
       ],
@@ -2236,14 +2237,15 @@
           {
             "id": "W3-A4-T2",
             "target": "Issue #52: imagem opcional de serviço e padrão reutilizável de Storage/mídia.",
-            "status": "in_progress_ci",
+            "status": "ci_green_waiting_for_150",
             "result": "PR #154 aberta (não mergeada). Migration 20261128000400_service_images_storage.sql; bucket público service-images; políticas owner-scoped; validação JPEG/PNG/WebP por magic bytes, 5 MiB, 4096 px/16 MP; upload/substituição/remoção; cards públicos alt/fallback; painel; docs/changelog. Reconciliada com #153 preservando booking_counterparty_phone e usando timestamp posterior. Teste real Supabase Storage permanece pendente e não foi alegado.",
-            "head_sha": "6e5c1c68c430edc1e3051d325e1ee55bbdf18292",
+            "head_sha": "96f1490cccfb3daeb59a9dd37a50a1c9b459ef45",
             "pr": 154,
             "base_sha": "994cf1c4efe65754ebb70042b448259344a2cc7c",
-            "tests": "CI quality run 46088652865 in_progress; Netlify checks em progresso. Falhas anteriores corrigidas: bufferMinutes ausente no fixture de renderização (typecheck) e terminador $$ de auth.uid perdido no db-check (test:db). A migration foi reescrita para 104 linhas sem duplicações.",
+            "tests": "CI quality success no run 46089503494 (check:changelog, lint, typecheck, audit, 370 unit/domain tests, db-check/Storage RLS e build); Netlify Redirect success, Header success, Pages changed neutral; status Deploy Preview success e comentário ready. Harness continua explicitamente limitado a metadados/RLS; Storage real não testado.",
             "blockers": [
-              "Aguardar quality e Redirect/Header; Pages changed pode ser neutral/green."
+              "Coordenação wave_3.regra_de_conflito: #150 (Agent5) ainda open/draft; #154 altera src/app/painel/painel-client.tsx e precisa aguardar o merge da #150 ou rebasear sobre ela. Não mergear agora.",
+              "Issue #52 fica aberta até o responsável validar upload/persistência/renderização com Supabase Storage real."
             ]
           },
           {
