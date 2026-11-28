@@ -159,15 +159,12 @@ try {
       [ownerB],
     )
   ).rows[0].id;
-  const providerD = (
-    await db.query(
-      `insert into public.providers (
-         owner_id, slug, display_name, timezone, is_published
-       ) values ($1, 'social-prov-d', 'Social D', 'America/Sao_Paulo', true)
-       returning id`,
-      [ownerD],
-    )
-  ).rows[0].id;
+  await db.query(
+    `insert into public.providers (
+       owner_id, slug, display_name, timezone, is_published
+     ) values ($1, 'social-prov-d', 'Social D', 'America/Sao_Paulo', true)`,
+    [ownerD],
+  );
   const serviceA = (
     await db.query(
       `insert into public.services (
