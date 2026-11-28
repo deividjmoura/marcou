@@ -91,7 +91,7 @@
     "dispatched_at": "2026-11-27",
     "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
-    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*).",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*). WAVE 5: leia dispatch.identities e dispatch.wave_5 (tasks W5-*); wave_5 substitui as tarefas pendentes das ondas anteriores.",
     "execution_order": [
       "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
@@ -329,6 +329,87 @@
           "W4-A6-T2: auditar e fechar a #8 com matriz critério→evidência; conferir as evidências de fechamento de #21, #22, #29, #57 e #125.",
           "W4-A6-T3: limpeza das branches restantes só com prova de superação/integração (arenas e branches de PRs fechadas sem merge). Preservar main, coordination/agents, branches de PR aberta (#150, #154, #130, e a PR do bug do WhatsApp) e tudo do Agent 2.",
           "W4-A6-T4: relatório final parcial + pergunta sobre GitHub Release; atualizar quando as PRs abertas terminarem."
+        ]
+      }
+    },
+    "identities": {
+      "aviso": "O ambiente do responsável caiu e os agentes perderam o contexto. A identidade de cada agente é reatribuída pelo responsável no prompt inicial. Cada agente escreve SOMENTE na própria entrada do state.json.",
+      "agent_1": {
+        "funcao": "Reservas e painel do prestador",
+        "entrada": "agent_1_r7_booking"
+      },
+      "agent_2": {
+        "funcao": "Autenticação e conta do usuário",
+        "entrada": "agent_2_r7_auth"
+      },
+      "agent_3": {
+        "funcao": "Operações, notificações e qualidade",
+        "entrada": "agent_3_r7_ops_schedulers"
+      },
+      "agent_4": {
+        "funcao": "Segurança, banco, mídia e Calendar",
+        "entrada": "agent_4_r7_security_calendar"
+      },
+      "agent_5": {
+        "funcao": "Design e backlog de produto",
+        "entrada": "agent_5_r7_product_backlog"
+      },
+      "agent_6": {
+        "funcao": "Auditor independente, limpeza de branches e relatório (não implementa)",
+        "entrada": "agent_6_r7_coordinator"
+      }
+    },
+    "wave_5": {
+      "opened_at": "2026-11-28, terceira verificação do coordenador (substitui as tarefas pendentes das ondas 3 e 4)",
+      "main_verificada": "b0b1aeea... (HEAD 'feat(design): semantic theme tokens and component catalogue', #158), CI quality success. Reconfirme antes de agir.",
+      "verificado": [
+        "Mergeadas na main desde a última rodada: #150 (tipografia/espaçamento), #155 (bug P0 de DDD 12–19 do WhatsApp corrigido), #156 (teste de isolamento do telefone da contraparte), #157 (/api/health + política de cache, #20), #158 (tokens semânticos + catálogo de componentes, #27).",
+        "Abertas: #154 (imagens de serviço; CI em andamento no momento da verificação, Agent 4 reconciliando) e #130 (auth; Draft, 29 commits à frente, 21 atrás, com conflito).",
+        "#130, diferença líquida contra a base: 11 arquivos, +325/−15 (identity.ts, next.config.ts, testes, docs, .env.example e uma linha em .github/workflows/ci.yml). O histórico tem muitos commits de ajuste de docs; o squash o achata. Pontos de atenção: (a) confirmar se a mudança em ci.yml ainda é necessária ou já existe na main; (b) enxugar docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md (145 linhas) para checklist objetivo; (c) as alterações locais de teste do Codespace do responsável (proxy.test.ts) podem não estar no HEAD remoto: verificar git status/stash/reflog antes de qualquer reset.",
+        "Branches apagadas pelo coordenador por prova (PR mergeada com tip=head): agent4/w4-counterparty-phone-isolation, agent5/w2-design-system-main-current, agent5/w4-27-rebased-main, arena/fdad472c-marcou, fix/whatsapp-ddd-12-19-r7. Restam 35 branches (muitas são rebases temporárias do Agent 5 e arenas antigas)."
+      ],
+      "regras_de_conflito": [
+        "src/app/painel/painel-client.tsx: Agent 1 (modal #56 etc.) e Agent 5 (tokens/tema) alteram o mesmo arquivo. Agent 1 tem a prioridade nesse arquivo; Agent 5 aplica tokens/tema no painel só depois de cada PR do Agent 1 mergeada (ou rebaseia).",
+        "#56 deve integrar o campo de imagem da #154 (Agent 4): Agent 1 começa pelo que não toca o formulário de serviço e rebaseia sobre a #154 assim que ela for mergeada.",
+        "Migrations novas: versão maior que a última da main no momento do merge (confira antes; #154 reserva 20261128000400)."
+      ],
+      "tasks": {
+        "agent_1": [
+          "W5-A1-T1: #56 modal de serviço (criar/editar), integrando o campo de imagem da #154 após o merge dela. Uma PR.",
+          "W5-A1-T2: #55 remover o campo de intervalo da UI, com a decisão registrada em docs/MOTOR-RESERVAS.md e testes de não regressão.",
+          "W5-A1-T3: #54 edição por seção, URL pública com copiar e QR Code.",
+          "W5-A1-T4: #43 onboarding (CTA na home, checklist de primeiros passos com dados reais, slug).",
+          "W5-A1-T5: #24 transformar em checklist de acompanhamento (auditoria do painel) e abrir issues filhas para as lacunas."
+        ],
+        "agent_2": [
+          "W5-A2-T1 (primeiro, junto do responsável): #130. Antes de tudo, recuperar o trabalho local do Codespace (git status, git stash list, git reflog) para não perdê-lo. Sincronizar com a main (merge, sem force-push), resolver conflitos, rodar a suíte completa, validar a mudança de ci.yml (remover se já coberta pela main), enxugar o doc de 145 linhas, marcar Ready e mergear se verde.",
+          "W5-A2-T2: #70/#23: comentar a evidência final após o merge e conferir que a Fase 3 de docs/TESTE-REAL-PRODUCAO.md reflete o comportamento final da #130 (avisar o Agent 3 se precisar mudar o doc).",
+          "W5-A2-T3: #47 parte 1: edição de dados pessoais em /minha-conta (nome e telefone), conforme o escopo refinado. Parte 2 (exclusão de conta): primeiro uma nota de desenho em docs/ e esperar a decisão do responsável sobre retenção antes de criar migration; Agent 4 revisa a segurança."
+        ],
+        "agent_3": [
+          "W5-A3-T1: #13 em PRs separadas: matriz evento×canal em docs/NOTIFICACOES.md; tabela notification_preferences com RLS; aplicação das preferências nos pontos de emissão, incluindo lembretes; UI em /minha-conta e no painel.",
+          "W5-A3-T2: #26 ADR de provedor de e-mail, interface EmailSender com implementação noop e fila idempotente com retry/dead. Nada é enviado de verdade.",
+          "W5-A3-T3 (depois que #154 e #130 estiverem mergeadas): atualizar docs/TESTE-REAL-PRODUCAO.md para as migrations novas (20261128000300, 20261128000400 e seguintes), /api/health, WhatsApp, imagens e o comportamento final da recuperação de senha; atualizar o checklist de ações do responsável em #20 e #30 (rótulo owner-action).",
+          "W5-A3-T4: #31 ADR do backend de teste E2E e plano das 3 jornadas smoke."
+        ],
+        "agent_4": [
+          "W5-A4-T1: concluir e mergear a #154 (CI/Netlify verdes no SHA exato; reconfirmar main imediatamente antes). Fechar #52 com evidência após o merge.",
+          "W5-A4-T2: #53 foto do profissional, reutilizando o padrão de mídia da #154.",
+          "W5-A4-T3: revisão de segurança, com comentário na PR, das migrations de #13 (Agent 3), #47 (Agent 2) e de tudo que criar tabela/função nova: RLS, search_path, grants, matriz do privileges-check.",
+          "W5-A4-T4: confirmar que a matriz de privilégios cobre as tabelas/funções criadas desde a #142 (inclui as da #154 e da #153)."
+        ],
+        "agent_5": [
+          "W5-A5-T1: #121 temas claro/escuro sobre os tokens da #158 (existe a branch agent5/w4-121-theme-system): cookie de tema, seletor acessível, sem flash, contraste AA nos dois temas por teste.",
+          "W5-A5-T2: #27 restante: aplicar tokens/tema por tela em PRs pequenas (home, autenticação, área do cliente; painel só após as PRs do Agent 1), foco visível e prefers-reduced-motion.",
+          "W5-A5-T3: criar docs/REVISAO-VISUAL-DONO.md: roteiro curto para o responsável conferir visualmente (telas, viewports 390/1440, estados, tema claro/escuro, o que observar), cobrindo #150, #158 e #121.",
+          "W5-A5-T4: apagar suas branches temporárias após provar que estão superadas (agent5/w2-design-system-current-main, -main-latest, -reconciled, design/identidade-visual, agent5/w4-27-reconcile-155, w4-27-semantic-tokens, w4-design-system-reconciled, w4-reconciled-ecdff), preservando a de #121 em andamento. Registrar a prova. O Agent 6 confere."
+        ],
+        "agent_6": [
+          "W5-A6-T1 (você nunca iniciou; comece agora): auditar de forma independente todos os merges da rodada 7: #127, #136, #137, #138, #140, #141, #142, #143, #145, #146, #147, #150, #151, #152, #153, #155, #156, #157, #158 (e #154 quando mergear). Para cada: SHA do merge, CI no SHA, vínculo com issue, conteúdo na main. Registrar divergências.",
+          "W5-A6-T2: auditar a issue #8 (matriz critério→evidência) e fechar com prova; conferir e fechar com evidência as issues #57 (a #153/#155 já estão na main) e #52 (após a #154); conferir evidências de #21, #22, #29, #125.",
+          "W5-A6-T3: validar docs/TESTE-REAL-PRODUCAO.md contra o repositório (ordem real das migrations, nomes de variáveis, flags, comandos); divergências vão para a entrada do Agent 3. Só leitura.",
+          "W5-A6-T4: limpeza das branches restantes só com prova de superação/integração (arenas antigas e branches de PRs fechadas). Preservar main, coordination/agents, branches de PR aberta (#154, #130), agent5/w4-121-theme-system e trabalho ativo de qualquer agente. Branches do Agent 5: ele limpa as dele, você confere.",
+          "W5-A6-T5: relatório final parcial no state.json (SHAs, PRs, issues, branches, pendências do responsável) e a pergunta sobre GitHub Release (nada de tag/Release sem autorização explícita). Atualizar quando #154 e #130 fecharem."
         ]
       }
     }
