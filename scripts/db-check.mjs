@@ -1911,7 +1911,7 @@ console.log("\n[segurança e RLS]");
     .catch(() => false);
   check("prestador A não cria serviço em B", crossTenantService === false);
 
-  console.log("\\n[storage de imagens de serviços]");
+  console.log("\n[storage de imagens de serviços]");
   const anonStorageClient = await asRole("anon");
   const ownServiceImagePath = `providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`;
   const ownImageInsert = await ownerAClient.query(
