@@ -103,11 +103,32 @@ As migrations estão em `supabase/migrations/`:
 14. `20261125153000_google_calendar_sync.sql` — conexão OAuth cifrada, outbox
     transacional, vínculo de eventos e worker de sincronização unidirecional.
     Detalhes em `docs/CALENDAR-INTEGRATION.md`.
-15. `20261128000000_calendar_worker_fencing.sql` — lease token por claim e
+15. `20261127000000_booking_transition_concurrency_lock.sql` — lock de
+    concorrência em `transition_booking`.
+16. `20261127000100_reminder_concurrency_lock.sql` — `FOR UPDATE SKIP LOCKED` e
+    idempotência por fuso em `create_booking_reminders`.
+17. `20261128000000_calendar_worker_fencing.sql` — lease token por claim e
     fencing para impedir ack tardio de worker após reclaim.
-16. `20261128000100_calendar_disconnect_revocation_retry.sql` — preserva o
+18. `20261128000100_calendar_disconnect_revocation_retry.sql` — preserva o
     refresh token até a revogação no Google ser confirmada e endurece o
     `search_path` das funções Calendar.
+19. `20261128000200_booking_definer_search_path.sql` — fixa
+    `search_path = pg_catalog, public` nas 5 funções `SECURITY DEFINER` de
+    reservas multi-serviço.
+20. `20261128000300_booking_counterparty_phone.sql` — RPC restrita aos
+    participantes da reserva para atalhos de contato via WhatsApp.
+21. `20261128000400_service_images_storage.sql` — coluna `services.image_path`,
+    bucket público `service-images` e políticas de Storage. Detalhes em
+    `docs/MIDIA-SERVICOS.md`.
+22. `20261128000500_notification_preferences.sql` — preferências de notificação
+    por usuário (`notification_preferences`), RLS e respeito a eventos
+    obrigatórios em triggers/lembretes. Detalhes em `docs/NOTIFICACOES.md`.
+23. `20261128000600_provider_avatar_storage.sql` — coluna
+    `providers.avatar_path` e políticas de avatar no bucket `service-images`.
+    Detalhes em `docs/MIDIA-SERVICOS.md`.
+24. `20261128000700_email_delivery_queue.sql` — fila idempotente server-only
+    para entregas de e-mail transacional (sem PII/corpo; desligada por padrão).
+    Detalhes em `docs/ADR-EMAIL-PROVEDOR.md`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura
