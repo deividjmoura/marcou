@@ -3024,8 +3024,8 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "Main reconfirmada em 5a08e0ae262cd62a7540f1d37845e5e4fd05cf78. Branch nova agent2/w6-56-service-modal criada diretamente da main; 5 commits exclusivos, 0 atrás. PR #171 aberta como Draft, HEAD 3993ac028845b1cb8acc1f72b2c428af3ee4ef98, mergeable=true na última consulta; CI run 46147641363 ainda queued. Implementação inclui <dialog> nativo, imagem da #154, submit direto da Server Action para preservar valores/arquivo em erro, helper puro shouldCloseServiceModal com testes, CSS responsivo e CHANGELOG. Não foram executados testes locais nem inspeção headless nesta sessão. Branch antiga agent1/w5-56-service-modal: 3 commits exclusivos/7 atrás, sem PR; contém helper parcial e CHANGELOG placeholder, não reutilizada. PR #159 (Agent 5) também altera src/app/globals.css e está 7 commits atrás da main; coordenar sequência/reconciliação antes de merge para evitar conflito.",
-      "next_action": "Aguardar CI quality e Netlify da PR #171 no SHA exato; corrigir falhas se houver. Registrar inspeção em navegador headless (foco, Esc, backdrop, cancelamento, create/edit, erros, 390/1440). Reconfirmar main/PR/CI; coordenar sobreposição de globals.css com #159. Após merge da #56, iniciar #55 e depois #54, cada uma em PR separada.",
+      "current_state": "Main reconfirmada em 56e17078271a537c48c19e49b11f151b108ec1bf (#170 integrado). PR #171 foi fechada como substituída após a main avançar durante a execução; sua CI antiga passou integralmente no SHA 3993ac0. Reaplicada a mesma entrega em branch limpa agent2/w6-56-service-modal-main-sync, criada diretamente da main atual; compare 5 ahead/0 behind. PR substituta #176 aberta como Draft, HEAD 3c5a4631f192797bcbcaf6a0b98d096b9681611c, mergeable=true na última consulta. CI run 46147904815 em andamento; Netlify ainda sem status publicado. Inspeção headless de interação continua pendente.",
+      "next_action": "Aguardar CI e Netlify da PR #176 no SHA exato. Reconfirmar main/PR/CI antes de qualquer merge. Executar inspeção headless para foco inicial/restauração, Esc, backdrop, cancelar, criar/editar, validação e falha de salvamento em 390/1440; manter Draft até haver evidência. Depois do merge #56, iniciar #55 e então #54, cada uma em PR separada.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -3037,6 +3037,17 @@
           "blockers": [
             "Inspeção em navegador headless ainda pendente.",
             "PR #159 altera src/app/globals.css e está 7 commits atrás da main; reconciliar antes do merge da #171."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — reconciliar main e substituir PR #171",
+          "status": "in_progress",
+          "result": "Main avançou para 56e1707 (#170) enquanto a PR #171 estava em validação. Para cumprir branch atualizada sem force-push, a PR #171 foi fechada como supersedida e a implementação foi reaplicada em branch limpa baseada na main atual. PR #176 aberta como substituta, compare 5 ahead/0 behind; CI 46147904815 em andamento. CI da #171 havia passado, mas não é evidência para o SHA novo. Headless ainda pendente.",
+          "head_sha": "3c5a4631f192797bcbcaf6a0b98d096b9681611c",
+          "tests": "PR #171 SHA 3993ac0: CI 46147641363 success e Netlify preview success. PR #176 SHA 3c5a463: CI em andamento, Netlify ainda pendente.",
+          "blockers": [
+            "Inspeção em navegador headless ainda pendente."
           ]
         }
       ],
