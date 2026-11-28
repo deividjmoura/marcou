@@ -1,0 +1,1 @@
+{"id":"coordinator-mx0fv7bl","ts":"2026-11-28T13:21:17.265Z","from":"coordinator","to":["all"],"type":"heads_up","refs":{},"body":"Canal ativo. Leia: node chan.mjs help. Migrations: última na main = 20261128000800; próxima livre = 20261128000900 (reserve com claim). Modo de build = economia."}
