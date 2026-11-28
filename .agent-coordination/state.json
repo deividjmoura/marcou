@@ -2753,6 +2753,18 @@
             "CI/Netlify checks pending."
           ],
           "next_action": "Wait for exact-head checks; merge #172 if green; continue home-only design token PR."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A5-T1 CI polling",
+          "status": "in_progress",
+          "result": "Run 46147644751: changelog/lint/typecheck/audit/unit-domain/test:db success; production build running. Netlify Deploy Preview pending.",
+          "head_sha": "e79a4b07d03046ce5ec73e9fb76c84f208ce2e30",
+          "tests": "CI partial (build in progress); deploy preview pending.",
+          "blockers": [
+            "Production build and Netlify Deploy Preview not finished."
+          ],
+          "next_action": "Poll checks; merge only after all green."
         }
       ],
       "wave_2_tasks": [
@@ -2868,10 +2880,10 @@
         {
           "id": "W6-A5-T1",
           "status": "in_progress",
-          "result": "Replacement PR #172 on latest main, 13 ahead/0 behind, mergeable true. CI run 46147644751 in progress; Netlify Deploy Preview pending. #159 closed as superseded.",
+          "result": "PR #172 mergeable, 13 ahead/0 behind, exact HEAD e79a4b07d03046ce5ec73e9fb76c84f208ce2e30. CI all steps except production build passed; build currently running. Netlify pending.",
           "head_sha": "e79a4b07d03046ce5ec73e9fb76c84f208ce2e30",
           "base_sha": "5a08e0ae262cd62a7540f1d37845e5e4fd05cf78",
-          "tests": "On exact head: changelog/lint/typecheck/audit success; unit/domain in progress, test:db/build pending. Netlify deploy-preview pending. Contrast tests present for light and dark semantic pairs; system default documented.",
+          "tests": "CI run 46147644751: check:changelog, lint, typecheck, audit, unit/domain and test:db all success; production build in progress. Netlify Deploy Preview pending.",
           "blockers": [
             "CI/Netlify for PR #172 exact SHA pending.",
             "Owner visual review still pending (per wave scope it does not block merge)."
