@@ -40,12 +40,14 @@ Google Cloud ou secrets foi executada nesta entrega.
 
 ### Migrations versionadas
 
-As migrations ficam em `supabase/migrations/` (19 arquivos em 2026-11-27, de
+As migrations ficam em `supabase/migrations/` (24 arquivos em 2026-11-28, de
 `202611150001_initial_schema.sql` até
-`20261128000200_booking_definer_search_path.sql`). Para a sequência
+`20261128000700_email_delivery_queue.sql`). Para a sequência
 completa de aplicação — incluindo o tratamento das migrations fora de ordem da
-PR `#142` (`20261125120000` e `20261125130000`) —, variáveis por fase, ativação
-segura de schedulers e rollback, consulte `docs/TESTE-REAL-PRODUCAO.md`.
+PR `#142` (`20261125120000` e `20261125130000`) e a precedência do bucket
+`service-images` (`20261128000400` antes de `20261128000600`) —, variáveis por
+fase, ativação segura de schedulers e rollback, consulte
+`docs/TESTE-REAL-PRODUCAO.md`.
 
 **Estado remoto:** não revalidado aqui (sem acesso direto ao painel/CLI remoto).
 Consulte `AGENT_TASK_MARCOU.md` e confirme no projeto Supabase antes de aplicar

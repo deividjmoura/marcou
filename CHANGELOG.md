@@ -118,6 +118,16 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
+- Roteiro operacional de produção `docs/TESTE-REAL-PRODUCAO.md` (junto com os
+  inventários de `docs/PLATFORM.md` e `README.md`) atualizado para a `main` com
+  24 migrations (`202611150001_initial_schema.sql` até
+  `20261128000700_email_delivery_queue.sql`): inclui precedência do bucket
+  `service-images` (`20261128000400` antes de `20261128000600`), verificação de
+  `GET /api/health` (`?deep=1`) e política `Cache-Control`/`Vary` (`#20`),
+  atalhos WhatsApp/DDD (`#57`), preferências de notificação no app e lembretes
+  (`#13`), validação obrigatória de upload real no Supabase Storage para
+  imagens de serviços e avatar (`#53`/`#57`), confirmação do canal de e-mail
+  desligado por padrão (`#26`) e cuidados de rollback para Storage/banco.
 - Hardening do pipeline CI (`.github/workflows/ci.yml`, substituindo a parte
   exclusiva da PR `#32`): adiciona `concurrency` (cancela runs redundantes fora
   da `main`), `timeout-minutes: 20`, steps nomeados e remove a execução
