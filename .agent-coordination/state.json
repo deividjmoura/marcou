@@ -3,7 +3,7 @@
   "repository": "deividjmoura/marcou",
   "coordination_branch": "coordination/agents",
   "coordination_file": ".agent-coordination/state.json",
-  "updated_at": "2026-11-28",
+  "updated_at": "2026-11-28T13:11:20Z",
   "purpose": "Shared compact handoff and dispatch state for parallel agents. Source of truth for ownership, latest outcomes, SHAs, blockers and next actions.",
   "protocol": {
     "read_before_work": true,
@@ -1902,7 +1902,8 @@
         161,
         162,
         163,
-        164
+        164,
+        177
       ],
       "issues": [
         25,
@@ -1910,7 +1911,12 @@
         13,
         20,
         30,
-        31
+        31,
+        24,
+        43,
+        167,
+        168,
+        169
       ],
       "branches": [
         "fix/booking-expiration-scheduler",
@@ -1918,8 +1924,8 @@
         "feat/30-platform-hardening",
         "arena/3b7c9d2f-marcou"
       ],
-      "status": "completed_round_7_wave_4",
-      "active_assignment": "Onda 4 concluída (W4-A3-T1: #20/#13/#26; W4-A3-T2: runbook produção 24 migrations + ADR E2E #31). Nenhum scheduler/e-mail ativado e nenhuma alteração remota executada.",
+      "status": "in_progress_round_7_wave_6_blocked_on_56",
+      "active_assignment": "Onda 6: W6-A3-T2 (#24 auditoria + filhas #167/#168/#169) e W6-A3-T3 (PR #177 preparação E2E Fase 2 + runbook 25 migrations) CONCLUÍDAS. W6-A3-T1 (#43 onboarding) aguarda merge da #56 (Agent 2, PR #178) para rebase limpo sobre src/app/painel/painel-client.tsx.",
       "tasks": [
         {
           "id": "A3-T1",
@@ -1948,10 +1954,12 @@
       ],
       "dependencies": {
         "blocks": [],
-        "blocked_by": []
+        "blocked_by": [
+          "W6-A3-T1 (#43 onboarding) aguarda merge da #56 (PR #178 do Agent 2) pela regra_de_conflito em src/app/painel/painel-client.tsx e modo economia da Netlify."
+        ]
       },
-      "current_state": "RODADA 7 — ONDAS 1, 2 E 4 CONCLUÍDAS para Agent 3. Na Onda 4 foram entregues e mergeadas 5 PRs em sequência limpa sobre a main (todas com 7/7 gates locais, CI quality PR PASS, Netlify deploy-preview PASS e CI pós-merge na main PASS): (1) PR #157 (#20 -> main 03a412f): GET /api/health (liveness + ?deep=1 com timingSafeEqual via HEALTH_CHECK_SECRET) e política centralizada de Cache-Control/Vary; (2) PR #161 (#13 -> main e4307a7): migration 20261128000500_notification_preferences.sql com RLS/constraints, respeito em triggers/lembretes e UI em /minha-conta e /painel; (3) PR #162 (#26 -> main 4c3794b): docs/ADR-EMAIL-PROVEDOR.md (aguarda OWNER_DECISION), NoopEmailSender desligado por padrão, renderizador pt-BR sem PII de terceiros, migration 20261128000700_email_delivery_queue.sql (server-only com RLS) e processador de fila idempotente; (4) PR #163 (W4-A3-T2 item 1 -> main 3262c03): docs/TESTE-REAL-PRODUCAO.md, docs/PLATFORM.md e README.md atualizados para 24 migrations (compatibilidade natural e --include-all verificada em PostgreSQL embutido), /api/health, WhatsApp/DDD, preferências, Storage real obrigatório (service-images) e e-mail desligado; (5) PR #164 (#31 Fase 1 -> main 8255fd5): docs/ADR-E2E.md (Supabase local em container no CI vs staging dedicado como OWNER_DECISION + plano detalhado das 3 jornadas Smoke E2E contra build local) e medições reais atualizadas em docs/QUALITY-AUDIT.md. Issues #20, #13, #26, #30 e #31 comentadas com evidência e mantidas abertas para decisões/ações do responsável.",
-      "next_action": "Onda 4 concluída pelo Agent 3 sobre main 8255fd5941b2b0e3867e1942dcba552cc2592f36. Aguarda OWNER_DECISION nas issues #30/#20 (staging/produção, migrations remotas, env vars, schedulers), #26 (provedor/domínio de e-mail em docs/ADR-EMAIL-PROVEDOR.md) e #31 (backend E2E em docs/ADR-E2E.md para iniciar Fase 2 Playwright). Branch arena/fdad472c-marcou sincronizada com origin/main (8255fd5) e pronta para limpeza após encerramento da sessão.",
+      "current_state": "RODADA 7 — ONDA 6 (PARCIAL: 2/3 tarefas concluídas, 1 aguardando dependência da regra de conflito). W6-A3-T2 CONCLUÍDA: auditoria completa de src/app/painel na main (5a08e0a), corpo da Issue #24 convertido em checklist guarda-chuva com status (existe/parcial/falta), evidências reais e donos; 3 novas issues filhas pequenas criadas no padrão de docs/PADRAO-DE-ESCOPO.md (#167 pausas/bloqueios parciais/exceções + RLS, #168 fuso horário do negócio no painel, #169 link /reserva/[id] + feedback na agenda + link condicional Calendar + RLS completo) vinculadas sem duplicar #56/#55/#54/#43; comentário de registro publicado em #24 (7239643482). W6-A3-T3 CONCLUÍDA: PR #177 (head e0eef05, squash main ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80 com Co-authored-by, CI PR 46148015117 PASS, Netlify PASS, CI pós-merge 46148148964 PASS) entregou sem novas dependências src/lib/e2e-smoke.ts + src/lib/e2e-smoke.test.ts (11 testes Vitest: trava fail-closed assertSafeE2EEnvironment contra peornypgltuueubmsucm e marcoou.netlify.app usando GET /api/health, pickDeterministicE2EDate em America/Sao_Paulo e buildSmokeFixture RFC 2606 .test validado nos schemas Zod reais), Seção 5 em docs/ADR-E2E.md (blueprints config.toml/CI/checklist pós-OWNER_DECISION), e atualizou docs/TESTE-REAL-PRODUCAO.md, docs/PLATFORM.md e README.md para 25 migrations (incluindo #25 20261128000800_email_queue_recipient_binding.sql da PR #170, validada em PostgreSQL embutido nas ordens natural e --include-all); comentário publicado em #31 (7239746541). W6-A3-T1 (#43) pronta para iniciar imediatamente após o merge da #56 (PR #178 do Agent 2), respeitando a regra_de_conflito e o modo economia da Netlify (seção 9).",
+      "next_action": "Aguardar o Agent 2 mergear a #56 (PR #178 atual) na main; assim que mergeada, fazer rebase sobre a nova main e implementar W6-A3-T1 (#43 onboarding: CTA na home, checklist de primeiros passos com dados reais e corrida de slug com teste de banco) em uma única PR respeitando o orçamento de build Netlify (modo economia).",
       "updates": [
         {
           "timestamp": "2026-11-27T23:13:46Z",
@@ -1992,6 +2000,20 @@
             "OWNER_DECISION #30/#20/#53/#57: execução manual de docs/TESTE-REAL-PRODUCAO.md (24 migrations em staging/produção, env vars, Supabase Storage real, schedulers e rate limiting)."
           ],
           "next_action": "Agent 6 audita as 5 PRs da Onda 4 (#157, #161, #162, #163, #164) sobre main 8255fd5 e coordena as decisões pendentes do responsável."
+        },
+        {
+          "timestamp": "2026-11-28T13:11:20Z",
+          "task": "W6-A3-T2 (#24 checklist + filhas #167/#168/#169) e W6-A3-T3 (PR #177 preparação E2E Fase 2 + runbook 25 migrations)",
+          "status": "completed_w6_t2_t3_waiting_56_for_t1",
+          "result": "W6-A3-T2: corpo da Issue #24 convertido em checklist de acompanhamento com auditoria factual por capacidade e 3 novas issues filhas criadas (#167, #168, #169) no padrão docs/PADRAO-DE-ESCOPO.md + comentário 7239643482. W6-A3-T3: PR #177 mergeada via squash em ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80 (com trailer Co-authored-by, 0 novas dependências) contendo src/lib/e2e-smoke.ts, src/lib/e2e-smoke.test.ts (11 testes), Seção 5 de docs/ADR-E2E.md e atualização de docs/TESTE-REAL-PRODUCAO.md/docs/PLATFORM.md/README.md para 25 migrations (incluindo #170). Comentário em #31 (7239746541). W6-A3-T1 (#43) retida até merge da #56 (PR #178 do Agent 2) conforme regra_de_conflito e modo economia Netlify.",
+          "head_sha": "PR #177 head=e0eef059df05f3fec387d4e92979714507524392 -> main squash=ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80",
+          "tests": "Local (SHA e0eef05 sobre 56e1707): check:changelog ok, lint 0 errors (8 warnings pré-existentes), typecheck 0 errors, audit 0/0, vitest 47/47 (450/450 passed incluindo 11 novos testes em src/lib/e2e-smoke.test.ts), test:db 7/7 harnesses aplicando 25 migrations, build ok; validação empírica das 25 migrations em PostgreSQL embutido nas ordens natural e --include-all (0 erros, 0 leaks SECURITY DEFINER, 6 tabelas com RLS, RPCs de e-mail exclusivas service_role). Remoto: PR #177 CI quality run 46148015117 (job 140988215130) SUCCESS, Netlify deploy-preview-177 SUCCESS, CI pós-merge main run 46148148964 (job 140988627287) SUCCESS.",
+          "blockers": [
+            "W6-A3-T1 (#43): bloqueada pela regra_de_conflito aguardando merge da #56 (PR #178 do Agent 2) em src/app/painel/painel-client.tsx.",
+            "OWNER_DECISION #31 (docs/ADR-E2E.md): backend E2E (Opção A local recomendada vs Opção B staging) e autorização de @playwright/test para iniciar a Fase 2.",
+            "OWNER_DECISION #26 (docs/ADR-EMAIL-PROVEDOR.md) e #30/#20 (staging/produção, 25 migrations remotas, Storage real e schedulers)."
+          ],
+          "next_action": "Monitorar merge da #56 (PR #178 do Agent 2) e então iniciar W6-A3-T1 (#43) sobre a main atualizada."
         }
       ],
       "last_verified": {
@@ -2165,6 +2187,65 @@
             "30": "OPEN (PARTIAL/OWNER_DECISION — runbook atualizado para 24 migrations na PR #163; execucao remota pendente do responsavel; comentario: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7239296943)",
             "31": "OPEN (PARTIAL/OWNER_DECISION — Fase 1 ADR E2E + plano 3 jornadas entregue na PR #164; aguarda escolha de backend E2E e Fases 2-5; comentario: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7239369363)"
           }
+        },
+        "wave_6": {
+          "updated_at": "2026-11-28T13:11:20Z",
+          "main_sha": "ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80",
+          "tasks": {
+            "W6-A3-T1": "BLOCKED_BY_DEPENDENCY (#43 aguarda merge da #56 / PR #178 do Agent 2 pela regra_de_conflito em src/app/painel/painel-client.tsx)",
+            "W6-A3-T2": "COMPLETED (#24 convertida em checklist guarda-chuva + 3 novas filhas #167, #168, #169 + comentário 7239643482)",
+            "W6-A3-T3": "COMPLETED (PR #177 -> main ea66e31: preparação E2E Fase 2 sem deps + runbook atualizado para 25 migrations incluindo #170)"
+          },
+          "issue_24_audit": {
+            "issue_url": "https://github.com/deividjmoura/marcou/issues/24",
+            "comment_url": "https://github.com/deividjmoura/marcou/issues/24#issuecomment-7239643482",
+            "new_child_issues": [
+              {
+                "number": 167,
+                "title": "[PROVIDER-ADMIN] Pausas, bloqueios parciais e gestão de exceções de disponibilidade",
+                "url": "https://github.com/deividjmoura/marcou/issues/167"
+              },
+              {
+                "number": 168,
+                "title": "[PROVIDER-ADMIN] Fuso horário configurável do negócio no painel",
+                "url": "https://github.com/deividjmoura/marcou/issues/168"
+              },
+              {
+                "number": 169,
+                "title": "[PROVIDER-ADMIN] Atalho para detalhe da reserva, feedback na agenda, link de integrações e RLS completo",
+                "url": "https://github.com/deividjmoura/marcou/issues/169"
+              }
+            ],
+            "existing_child_issues_linked": [
+              56,
+              55,
+              54,
+              43,
+              52,
+              53,
+              57,
+              13,
+              27,
+              121,
+              47,
+              31
+            ]
+          },
+          "pr_177": {
+            "issues": [
+              31,
+              30
+            ],
+            "head_sha": "e0eef059df05f3fec387d4e92979714507524392",
+            "merge_sha": "ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80",
+            "pr_ci_run_id": 46148015117,
+            "pr_ci_job_id": 140988215130,
+            "post_merge_ci_run_id": 46148148964,
+            "post_merge_ci_job_id": 140988627287,
+            "netlify": "SUCCESS",
+            "migrations_verified": 25,
+            "issue_31_comment_url": "https://github.com/deividjmoura/marcou/issues/31#issuecomment-7239746541"
+          }
         }
       },
       "wave_2_status": "completed",
@@ -2177,6 +2258,14 @@
       "wave_4_completed_tasks": [
         "W4-A3-T1",
         "W4-A3-T2"
+      ],
+      "wave_6_status": "partial_waiting_agent_2_pr_56",
+      "wave_6_completed_tasks": [
+        "W6-A3-T2",
+        "W6-A3-T3"
+      ],
+      "wave_6_pending_tasks": [
+        "W6-A3-T1"
       ]
     },
     "agent_4_r7_security_calendar": {
