@@ -81,3 +81,115 @@ export function trustedAppOrigin(requestOrigin?: string): string {
 
   return PRODUCTION_ORIGIN;
 }
+
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+
+/** Decode nested percent-encoding so encoded slashes and backslashes cannot
+ * turn into a network-path redirect after a later URL parse. */
+function decodeRepeatedly(value: string): string | null {
+  let decoded = value;
+
+  for (let attempt = 0; attempt <= value.length; attempt += 1) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return null;
+    }
+
+    if (next === decoded) return decoded.normalize("NFC");
+    decoded = next;
+  }
+
+  return null;
+}
+
+function hasUnsafePathShape(value: string): boolean {
+  if (
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\") ||
+    CONTROL_CHARACTERS.test(value)
+  ) {
+    return true;
+  }
+
+  try {
+    const normalized = new URL(value, LOCAL_ORIGIN);
+    if (normalized.origin !== LOCAL_ORIGIN || normalized.pathname.startsWith("//")) {
+      return true;
+    }
+  } catch {
+    return true;
+  }
+
+  return false;
+}
+
+export function safeNextPath(value: string | null | undefined): string {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > 4096 ||
+    hasUnsafePathShape(value)
+  ) {
+    return DEFAULT_NEXT_PATH;
+  }
+
+  const decoded = decodeRepeatedly(value);
+  if (!decoded || hasUnsafePathShape(decoded)) {
+    return DEFAULT_NEXT_PATH;
+  }
+
+  return decoded;
+}
+
+export function safeNextPathFromUrl(
+  searchParams: URLSearchParams,
+  key = "next",
+): string {
+  return safeNextPath(searchParams.get(key));
+}
+
+export function normalizePhone(value: string): string {
+  return value.replace(/\D+/g, "");
+}
+
+export function isValidPhone(value: string): boolean {
+  const digits = normalizePhone(value);
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+export const PKCE_VERIFIER_MISSING_MESSAGE =
+  "Abra o link no mesmo navegador em que solicitou a recuperação.";
+
+export function oauthErrorMessage(error?: string | null): string {
+  if (!error) return "Não foi possível concluir o login.";
+  if (error === "access_denied") return "Login cancelado.";
+  return "Não foi possível concluir o login.";
+}
+
+export function safeLoginErrorMessage(
+  message?: string | null,
+): string {
+  if (!message) return "Não foi possível entrar.";
+  return message;
+}
+
+export function loginRedirectUrl(
+  origin: string,
+  nextPath: string,
+): string {
+  const path = safeNextPath(nextPath);
+  return `${origin}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export function passwordLoginErrorMessage(code?: string | null): string {
+  if (code === "invalid_credentials") return "E-mail ou senha inválidos.";
+  return "Não foi possível entrar.";
+}
+
+export function signupErrorMessage(code?: string | null): string {
+  if (code === "user_already_exists") return "Já existe uma conta com este e-mail.";
+  return "Não foi possível criar a conta.";
+}
