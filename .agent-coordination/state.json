@@ -1906,7 +1906,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "Wave 3: W3-A4-T1 concluída (#152 mergeada; handoffs arquivados; Agent6 pode limpar as duas arenas após confirmar arquivos na main). W3-A4-T2 em execução: #52 primeiro; #53 somente após #52.",
+      "active_assignment": "Wave 4: W4-A4-T1 (#154 aguardando resolução da dependência #150; CI verde no HEAD 96f1490c), W4-A4-T2 (#156 adiciona teste DB de isolamento da RPC booking_counterparty_phone; CI em execução), W4-A4-T3 aguardando PR de correção DDD do Agent1 e PRs/escopo #47.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -1937,20 +1937,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W3-A4-T1 concluída: PR #152 mergeada em 5538a441d0023926919f165c833629079f98e442. W3-A4-T2: PR #154 pronta tecnicamente, HEAD 96f1490cccfb3daeb59a9dd37a50a1c9b459ef45; quality success (run 46089503494), Redirect/Header success, Pages changed neutral, Netlify Preview ready. RLS harness passou após qualificar storage.objects.name nas subconsultas; CI completo verde. Merge bloqueado pela regra wave_3.regra_de_conflito: #150 ainda draft e alteração em painel-client.tsx deve esperar #150 ou rebasear sobre ela. #154 aguarda #150; #52 permanece aberta até teste real Storage pelo responsável.",
-      "next_action": "Aguardar Agent5 concluir e mergear #150 conforme W3-A5-T1. Depois rebasear/reconciliar branch agent4/w3-service-media sobre a nova main (preservar tokens e CSS da #150), reexecutar CI completo e mergear #154 só com checks verdes. Não iniciar #53 antes do merge da #154. Depois reler Escopo refinado #53 e PADRAO-DE-ESCOPO.md.",
+      "current_state": "W4-A4-T1: #154 tecnicamente pronta, mas não integrada porque a regra de conflito da Wave3 exige #150 mergeada ou rebase seguro sobre ela; #150 continua Draft. W4-A4-T2: identificada ausência de teste DB para booking_counterparty_phone; PR #156 aberta com fixtures para dono, cliente, terceiro e dono de outro negócio, asserts de telefone/NULL e grants. HEAD 18c1d9c5af49c429a7279411fa65140f1789722d, CI quality run 46141506670 em andamento. Anônimo não tem EXECUTE (permission denied), mais restritivo que NULL, preservando grant mínimo aprovado. W4-A4-T3: nenhuma PR de bug DDD encontrada até agora; #47 aberta, sem PR própria.",
+      "next_action": "Aguardar CI run 46141506670 da #156; corrigir falhas e confirmar quality/Netlify checks no SHA exato. Mergear #156 apenas com checklist completo. Continuar aguardando #150 para reconciliar/mergear #154. Monitorar PR do Agent1 para DDD e PRs de exclusão de conta/#47; revisar segurança quando surgirem. Não iniciar #53 até #154 integrada e #52 validada pelo responsável no Storage real.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W3-A4-T2: PR #154 para imagem de serviços",
-          "status": "in_progress_ci",
-          "result": "PR #154 aberta em branch agent4/w3-service-media. Implementação inclui migration de bucket/RLS, validador server-side, fluxo upload/substituição/remoção, UI pública/painel, docs, changelog e harness de Storage emulado. Detectada colisão de timestamp com #153; migration renumerada para 20261128000400 e branch reconciliada com main 994cf1c4efe65754ebb70042b448259344a2cc7c.",
-          "head_sha": "a47755a3d1b25b8c81595b5a5bac161811231f96",
-          "tests": "CI quality queued run 46088183951; Pages changed in_progress. Não atribuir resultado até concluir no SHA exato.",
-          "blockers": [
-            "Aguardar checks e revisar possíveis falhas."
-          ]
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W3-A4-T2: corrigir falhas CI iniciais da #154",
@@ -1971,6 +1960,19 @@
           "tests": "quality success; Redirect/Header success; Pages neutral; Preview ready.",
           "blockers": [
             "#150 continua draft e a regra wave_3.regra_de_conflito exige esperar/rebasear painel-client.tsx sobre #150. Não mergear #154 até #150 estar integrada."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T08:50:00-03:00",
+          "task": "Wave 4 — início W4-A4-T1/T2/T3",
+          "status": "w4_t2_pr156_ci_running_w4_t1_blocked_150",
+          "result": "Releitura dispatch.wave_4 e reconfirmação remota: main 994cf1c4efe65754ebb70042b448259344a2cc7c; #154 open/non-draft/mergeable com quality success no HEAD 96f1490cccfb3daeb59a9dd37a50a1c9b459ef45, Redirect/Header success, Pages neutral e Preview ready; #150 open/Draft e #130 open/Draft. #52 e #53 Escopos refinados lidos; docs/PADRAO-DE-ESCOPO.md lido. #53 aguarda #52. Para W4-A4-T2, main não tinha teste DB de booking_counterparty_phone; criada PR #156 com teste de isolamento no social-foundation-check.mjs. PR #156 HEAD 18c1d9c5af49c429a7279411fa65140f1789722d, quality run 46141506670 in_progress. #47 segue aberta sem PR relacionada; nenhuma PR DDD do Agent1 localizada.",
+          "head_sha": "18c1d9c5af49c429a7279411fa65140f1789722d",
+          "tests": "#154 quality success; #156 quality in_progress. Nenhum teste remoto/produção; sem alterações externas.",
+          "blockers": [
+            "#154 espera #150 por regra de conflito wave_3.",
+            "#156 aguarda quality/Netlify no SHA exato.",
+            "W4-A4-T3 aguarda PRs do Agent1."
           ]
         }
       ],
@@ -2282,6 +2284,43 @@
             "tests": "Não iniciados.",
             "blockers": [
               "Depende da conclusão/merge da #52."
+            ]
+          }
+        ]
+      },
+      "wave_4": {
+        "tasks": [
+          {
+            "id": "W4-A4-T1",
+            "target": "#154 / Issue #52: mergear imagens de serviço se checklist verde; depois #53",
+            "status": "blocked_by_150",
+            "pr": 154,
+            "head_sha": "96f1490cccfb3daeb59a9dd37a50a1c9b459ef45",
+            "tests": "quality success run 46089503494; Redirect/Header success; Pages neutral; Deploy Preview ready; harness valida metadados/RLS apenas, sem Storage real.",
+            "blockers": [
+              "#150 continua Draft. Regra wave_3.regra_de_conflito: mudanças em painel-client.tsx aguardam #150 mergeada ou reconciliação segura sobre ela.",
+              "#52 requer teste real de upload/persistência/renderização pelo responsável; nenhum Supabase remoto foi alterado."
+            ]
+          },
+          {
+            "id": "W4-A4-T2",
+            "target": "Teste de isolamento DB da RPC booking_counterparty_phone: dono, cliente, terceiro, anônimo e dono de outro negócio",
+            "status": "in_progress_ci",
+            "pr": 156,
+            "branch": "agent4/w4-counterparty-phone-isolation",
+            "head_sha": "18c1d9c5af49c429a7279411fa65140f1789722d",
+            "tests": "PR #156 criada; quality run 46141506670 in_progress. Cobertura: dono recebe customer_phone; cliente recebe telefone do perfil do dono; terceiro e dono de outro negócio recebem NULL; anon recebe permission denied pois não tem EXECUTE (mais restritivo que NULL); grants assert authenticated=true, anon/service_role=false.",
+            "blockers": [
+              "Aguardar CI completo e checks Netlify no SHA exato."
+            ]
+          },
+          {
+            "id": "W4-A4-T3",
+            "target": "Revisar segurança da PR do Agent1 para correção DDD e PRs relacionadas à exclusão de conta/#47",
+            "status": "monitoring_no_pr",
+            "tests": "Busca GitHub de PRs relacionadas a #47 não retornou PR; #47 permanece aberta. Nenhuma PR do bug DDD encontrada no inventário aberto atual.",
+            "blockers": [
+              "Aguardar PR do Agent1 para bug DDD e eventual PR de exclusão de conta; revisar assim que surgirem."
             ]
           }
         ]
