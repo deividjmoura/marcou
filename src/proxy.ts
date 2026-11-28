@@ -4,9 +4,14 @@ import { updateSession } from "@/lib/supabase/proxy";
 import { markPrivateNoStore } from "@/lib/http";
 import { authFallbackRedirect } from "@/lib/auth-url";
 import { trustedAppOrigin } from "@/lib/identity";
+import {
+  applyCacheHeaders,
+  hasSupabaseAuthCookie,
+} from "@/lib/cache-policy";
 
 /**
- * Redirecionamento de segurança para códigos de autenticação órfãos.
+ * Redirecionamento de segurança para códigos de autenticação órfãos e política
+ * de cache por tipo de rota.
  *
  * Quando o Supabase substitui silenciosamente o `redirectTo` do link de
  * recuperação pelo Site URL, o `code` (ou `token_hash`) chega na landing
@@ -30,7 +35,11 @@ export async function proxy(request: NextRequest) {
       NextResponse.redirect(new URL(fallback, origin)),
     );
   }
-  return updateSession(request);
+  const response = await updateSession(request);
+  return applyCacheHeaders(response, request.nextUrl.pathname, {
+    hasSetCookie: response.headers.has("set-cookie"),
+    hasAuthCookie: hasSupabaseAuthCookie(request.cookies.getAll()),
+  });
 }
 
 export const config = {

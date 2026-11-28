@@ -89,6 +89,7 @@ autorização explícita do responsável.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | obrigatória | obrigatória | obrigatória | pública | `src/lib/env.ts`, clients Supabase | Chave publishable/anon; **não** é service-role |
 | `SUPABASE_SERVICE_ROLE_KEY` | opcional | se jobs/worker | se jobs/worker | **secreta (server-only)** | `src/app/api/cron/route.ts`, `src/server/calendar/admin.ts` | Nunca no browser nem em `NEXT_PUBLIC_*` |
 | `CRON_SECRET` | opcional | se lembretes | se lembretes | **secreta (server-only)** | `src/server/cron-auth.ts` (`GET /api/cron`) | Bearer token comparado em tempo constante; fail-closed se ausente |
+| `HEALTH_CHECK_SECRET` | opcional | opcional | opcional | **secreta (server-only)** | `src/server/health.ts` (`GET /api/health?deep=1`) | Bearer token em tempo constante para modo profundo (checagem de banco); modo mínimo `GET /api/health` não consulta segredos |
 | `AUTH_TIMING_LOG` | opcional | opcional | opcional | operacional (server-only) | `src/server/identity.ts` | `"1"` ativa logs de latência sem PII |
 | `GOOGLE_CALENDAR_ENABLED` | opcional (`false`) | opcional (`false`) | opcional (`false`) | feature flag (server-only) | `src/server/calendar/crypto.ts` | Somente `"true"` habilita UI/rotas; desligado por padrão |
 | `GOOGLE_CALENDAR_CLIENT_ID` | opcional | se Calendar ativo | se Calendar ativo | configuração (server-only) | `src/server/calendar/google.ts`, `oauth.ts` | OAuth Google Calendar; ver `docs/CALENDAR-INTEGRATION.md` |
@@ -183,9 +184,9 @@ configuração e autorização do responsável:
 
 ### Smoke tests pós-deploy
 
-- `/` e `/p/[slug]` de um prestador publicado carregam com HTTP 200.
-- Login e callback Auth (`/auth/callback`, `/auth/confirm`) funcionam com a
-  origem configurada (`NEXT_PUBLIC_SITE_URL` + allowlist do Supabase Auth).
+- `GET /api/health` responde HTTP `200` com `{ status: "ok", version, commit }` e `Cache-Control: private, no-store, max-age=0, must-revalidate` sem expor configuração; `GET /api/health?deep=1` sem token retorna HTTP `401`.
+- `/` e `/p/[slug]` de um prestador publicado carregam com HTTP `200` e política explícita de cache (`Vary: Cookie`, rebaixada para `private, no-store` quando há cookie de sessão).
+- Páginas autenticadas (`/painel`, `/minha-conta`, `/reserva/[id]`, `/notificacoes`, `/inicio`, `/perfil`, `/meus-agendamentos`) e callbacks Auth (`/auth/callback`, `/auth/confirm`) retornam `Cache-Control: private, no-store, max-age=0, must-revalidate`.
 - `GET /api/cron` sem token retorna HTTP `401` com `Cache-Control: private, no-store, max-age=0`.
 - Fluxo de reserva, transição e notificações em staging sem erro 5xx.
 
@@ -205,6 +206,8 @@ configuração e autorização do responsável:
 
 | Capacidade | Estado | Recomendação |
 | --- | --- | --- |
+| Health check HTTP | **`GET /api/health`** implementado (`src/app/api/health/route.ts`): modo mínimo sem segredos + `?deep=1` protegido por `HEALTH_CHECK_SECRET` | Apontar monitor de uptime externo para `GET /api/health` e alertas em caso de falha |
+| Política de cache HTTP | Implementada em `src/lib/cache-policy.ts`, `src/proxy.ts` e `next.config.ts` (`private, no-store` em rotas autenticadas/API e política explícita em rotas públicas com `Vary: Cookie`) | Conferir cabeçalhos efetivos no deploy publicado da Netlify |
 | Logs de aplicação | Netlify (logs de deploy e funções — não auditados remotamente) | Revisar retenção e alertas de erro 5xx |
 | Logs de banco | Supabase logs (não auditados remotamente) | Monitorar erros de RPC, locks e queries lentas |
 | Latência de Auth | Instrumentação server-side sem PII (`AUTH_TIMING_LOG=1`) | Habilitar sob demanda em diagnóstico |

@@ -11,6 +11,9 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Endpoint de saúde `GET /api/health` (`src/app/api/health/route.ts`, `src/server/health.ts`, Issue `#20`): modo mínimo responde HTTP `200` com `{ status, version, commit }` e `Cache-Control: private, no-store` sem consultar segredos nem expor configuração; modo profundo (`?deep=1`) exige `Authorization: Bearer <HEALTH_CHECK_SECRET>` comparado em tempo constante (`timingSafeEqual`, fail-closed) e verifica conectividade de banco via `@supabase/ssr` somente-leitura sem vazar detalhes internos.
+- Política centralizada e testada de cabeçalhos HTTP de cache (`src/lib/cache-policy.ts`, `src/proxy.ts` e `next.config.ts`, Issue `#20`): páginas autenticadas, callbacks de autenticação e rotas `/api/*` recebem `Cache-Control: private, no-store, max-age=0, must-revalidate` (com defesa em profundidade em `next.config.ts`); rotas públicas anônimas recebem política explícita com `Vary: Cookie` e rebaixamento automático para `private, no-store` na presença de cookies de sessão ou `Set-Cookie`.
+
 - Atalhos WhatsApp (`wa.me`) no detalhe da reserva e no painel do prestador, com normalização E.164 e RPC `booking_counterparty_phone` restrita a participantes (issue #57).
 - Roteiro operacional ordenado para teste real em produção pelo responsável em
   `docs/TESTE-REAL-PRODUCAO.md` (Issues `#30`, `#20`, `#26`, `#31`): sequência
