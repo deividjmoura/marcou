@@ -2159,7 +2159,8 @@
         "feat/calendario-mobile",
         "feat/pagina-publica-agendamento",
         "feat/customer-account-area",
-        "agent5/w2-design-system-main-latest"
+        "agent5/w2-design-system-main-latest",
+        "agent5/w2-design-system-main-current"
       ],
       "status": "completed_with_blocker",
       "active_assignment": "Wave 2 W2-A5-T1 (#67), W2-A5-T2 (#121/design), W2-A5-T3 (status comments em todas as issues abertas).",
@@ -2199,19 +2200,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W2-A5-T2 concluída: #121 e #27 atualizadas, PR de design #67 foi substituída por #149 (reconstruída duas vezes para seguir main concorrente; base atual 539035b29e9a8971279215607eba8f80ec369757, 9 commits ahead/0 behind, head ab2d2861744a793259ec9cc62deddda9c559bead). CI quality run 46086141759 está em andamento: install, changelog, lint, typecheck, audit e unit/domain verdes; test:db em execução. Netlify Deploy Preview #149 verde. Inspeção headless 1440/390 não disponível (browser sem navegação/captura). W2-A5-T3 concluída: 59/59 issues abertas têm comentário status/próxima ação; #125 já fechada por outro agente e recebeu comentário de acompanhamento.",
-      "next_action": "Aguardar CI completo e Preview #149. Se ambos verdes, checklist técnico fica atendido, mas não mergear enquanto inspeção headless 1440/390 (overflow/console/screenshots) não puder ser comprovada. Se a main avançar novamente, atualizar branch antes de merge.",
+      "current_state": "W2-A5-T1 reconciliada novamente após main avançar: PR #67/#144/#148/#149 fechadas como substituídas; PR canônica #150 Draft, branch agent5/w2-design-system-main-current, base main d1e0c2faf0f99124ba65ab08fe24252e1f79406a, head 8df0652d903c372fdfa766e3a163059d971c5fe5, 9 ahead/0 behind. CI run 46086360003 em andamento (install); Preview pending. T2 concluída (#121/#27 comentadas); T3 59/59 issues abertas comentadas.",
+      "next_action": "Aguardar CI completo e Netlify Preview #150. Não mergear enquanto revisão headless visual a 1440/390 não for comprovada; se main avançar novamente, reconciliação é necessária.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Wave 2 W2-A5 — confirmação inicial de main, runbook e PR #67",
-          "status": "in_progress",
-          "result": "main SHA 4badea4b8ba8ecfa95bfdfa526dad606c5a56691 confirmada (merge #142); #67 draft, head b35653c, compare main: 3 ahead/43 behind, mergeable; changelog não está no diff original. Browser conectado sem preview e sem controles de navegação; inspeção headless ainda não executada.",
-          "head_sha": "4badea4b8ba8ecfa95bfdfa526dad606c5a56691",
-          "tests": "Main commit foi consultado. #67 CI antigo não satisfaz SHA atual; será necessário workflow novo.",
-          "blockers": [],
-          "next_action": "Reconciliar #67 com main e validar CI."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "Wave 2 W2-A5 — design/docs/backlog",
@@ -2236,14 +2227,26 @@
             "Inspeção visual headless desktop/mobile não disponível na sessão."
           ],
           "next_action": "Aguardar test:db/build; PR permanece Draft até evidência visual."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "Reconciliação Wave2 #150 após main avançar",
+          "status": "in_progress",
+          "result": "Main avançou de 539035b para d1e0c2fa com migration de booking + changelog. #149 encerrada e #150 reconstruída sobre main atual (9 ahead/0 behind). CI run 46086360003 in_progress; Netlify pending. 59 open issues já triadas.",
+          "head_sha": "8df0652d903c372fdfa766e3a163059d971c5fe5",
+          "tests": "CI install in progress; checks restantes pending; preview pending.",
+          "blockers": [
+            "Inspeção headless visual 1440/390 não disponível nesta sessão."
+          ],
+          "next_action": "Aguardar CI/preview, não mergear sem visual."
         }
       ],
       "wave_2_tasks": [
         {
           "id": "W2-A5-T1",
-          "status": "completed_with_blocker",
-          "result": "PR #67 fechada; #144 e #148 (branches reconstruídas sobre main) fechadas como superadas. PR canônica #149, branch agent5/w2-design-system-main-latest, base main SHA 539035b29e9a8971279215607eba8f80ec369757, head ab2d2861744a793259ec9cc62deddda9c559bead, 9 ahead/0 behind. Fontes/tokens/CSS/docs/licenses/changelog/test reconciliados. CI run 46086141759 in_progress; Preview status ainda não apareceu. Visual headless 1440/390 bloqueado por limitações de browser desta sessão.",
-          "next_action": "Aguardar CI e Preview; inspeção visual exige browser headless controlável/captura."
+          "status": "in_progress",
+          "result": "PR canônica atual #150 sobre main SHA d1e0c2fa, 9 ahead/0 behind; CI run 46086360003 iniciou e Preview pending. #149 fechada por main ter avançado com migration/changelog. A visual inspection continua bloqueada por falta de browser screenshot/headless.",
+          "next_action": "Aguardar CI e preview; inspeção visual é bloqueio antes do merge."
         },
         {
           "id": "W2-A5-T2",
