@@ -1712,8 +1712,8 @@
         "fix/auth-recovery-preview-origin",
         "fix/auth-recovery-redirect-production"
       ],
-      "status": "in_progress",
-      "active_assignment": "Integrar #127 (pronta, limpa) e depois reconstruir/integrar #130 sobre a main resultante. Testes com mocks; sem e-mail real.",
+      "status": "blocked",
+      "active_assignment": "W5-A2-T1 (#130): retomar a reconstrução da recuperação de senha preservando primeiro o trabalho local do Codespace; depois W5-A2-T2 (#70/#23) e W5-A2-T3 (#47).",
       "tasks": [
         {
           "id": "A2-T1",
@@ -1744,21 +1744,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Wave 4 revisada: dispatch.wave_4 não atribui tarefas ao Agent 2. Pendências W2-A2-T2/T3/T4 seguem válidas. Main reconfirmada em 994cf1c4efe65754ebb70042b448259344a2cc7c. PR #130 continua Draft/open, remote HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, 29 ahead/21 behind, mergeable=false; CI #277 success refere-se somente a esse SHA antigo. O usuário reportou proxy.test.ts 3/3 após configurar metadados de preview localmente, mas essas alterações ainda não aparecem no HEAD remoto.",
-      "next_action": "Sincronizar a branch fix/auth-recovery-preview-origin com a main atual sem force-push, preservando as alterações locais de teste já feitas no Codespace; publicar o novo HEAD, executar quality completa e confirmar CI/Netlify no SHA exato. Depois marcar #130 Ready e integrar se o checklist estiver verde. Atualizar #70/#23 com evidência após integração; manter ambas abertas enquanto pendentes as validações reais e/ou lacunas de aceite.",
+      "current_state": "Wave 5 lida. Main reconfirmada em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (#154 integrada). PR #130 permanece Draft/open, HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, compare main...branch diverged 29 ahead/27 behind, mergeable=false. CI run #277 success e Netlify preview success apenas nesse HEAD antigo. O diff da PR ainda altera .github/workflows/ci.yml adicionando audit, mas a main atual já executa npm run audit. src/proxy.test.ts não está na branch remota (404); o state anterior registra que o responsável tinha alterações locais desse teste no Codespace. Ambiente desta sessão não contém checkout Git; git status, git stash list e git reflog falharam em / por ausência de .git. Nenhum reset/checkout ou escrita na branch/PR foi feito para proteger o trabalho local.",
+      "next_action": "Responsável deve disponibilizar/reconectar o Codespace original ou publicar/recuperar explicitamente o trabalho local de proxy.test.ts. Após verificar git status, git stash list e git reflog no Codespace, preservar os arquivos locais, sincronizar #130 com main sem force-push, remover a linha redundante de audit do workflow se apropriado, enxugar docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md, executar quality completa e Netlify no SHA exato; só então Ready/merge. Depois comentar #70/#23 e seguir para #47.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "A2-T1 — revalidação inicial da PR #127 e leitura do runbook",
-          "status": "blocked",
-          "result": "Runbook seções 0 e 9 confirmam autonomia de squash merge condicionada ao checklist integral. #127 está aberta, não draft, mergeable no estado reportado, mas branch divergiu: 9 commits ahead/16 behind; CI success consultado refere-se ao HEAD antigo. Clone local falhou: não foi possível resolver github.com (DNS/rede). Nenhum arquivo, branch ou PR foi alterado.",
-          "head_sha": "cc212db05cfc14ee70dd05e353a66484b7cef2c8",
-          "tests": "Não executados neste ambiente; CI existente é de SHA antigo e não conta para o checklist atual.",
-          "blockers": [
-            "Ambiente sem conectividade DNS para obter checkout; sem execução local da suíte completa no SHA atualizado."
-          ],
-          "next_action": "Disponibilizar checkout executável com acesso ao GitHub; atualizar branch com main sem force-push, rodar check:changelog, lint, typecheck, audit, test, test:db e build; conferir checks Netlify e reviews."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "W2-A2-T1 — atualizar, validar e integrar PR #127",
@@ -1783,6 +1771,44 @@
             "PR #130 permanece Draft e mergeable=false; checklist de quality/Netlify precisa ser revalidado no novo SHA."
           ],
           "next_action": "Sincronizar a branch local sem force-push, preservar os testes e alterações locais, publicar o novo HEAD e rodar quality completa; só então revisar e mergear."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W5-A2-T1 — recuperação do Codespace e reconfirmação remota da #130",
+          "status": "blocked",
+          "result": "Main reconfirmada em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #130 HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, 29 ahead/27 behind, mergeable=false, Draft. CI #277 success e Netlify deploy-preview success apenas no SHA antigo. Main já contém npm run audit no workflow, então a alteração de audit em #130 está redundante. src/proxy.test.ts não existe na branch remota. Ambiente local disponível está em / sem .git; status/stash/reflog não acessíveis. Nenhum reset, checkout ou alteração remota foi executado para proteger o trabalho local.",
+          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+          "tests": "CI run 46040285407 (#277) success no SHA antigo; Netlify deploy-preview success. Testes locais não executados.",
+          "blockers": [
+            "Checkout original do Codespace não está montado nesta sessão; alterações locais de proxy.test.ts precisam ser recuperadas antes de sincronização."
+          ],
+          "next_action": "Reabrir o Codespace original, verificar git status/stash/reflog e preservar o trabalho local; então sincronizar #130 com main sem force-push e rodar a suíte completa."
+        }
+      ],
+      "wave_5_tasks": [
+        {
+          "id": "W5-A2-T1",
+          "status": "blocked",
+          "result": "Auditoria remota feita; recuperação local obrigatória não foi possível nesta sessão, pois / não contém checkout Git. PR #130 permanece sem alterações. Main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591; HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9; 29 ahead/27 behind; mergeable=false. CI #277 success e Netlify preview success pertencem apenas ao HEAD antigo. A main já contém npm run audit no workflow, tornando redundante a adição isolada da PR. src/proxy.test.ts ausente na branch remota.",
+          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+          "tests": "CI run 46040285407 (#277): success no SHA antigo; status Netlify deploy-preview success no mesmo SHA. Nenhuma suíte local executada.",
+          "blockers": [
+            "Checkout original do Codespace indisponível; git status/stash/reflog não puderam ser executados no repositório original.",
+            "src/proxy.test.ts reportado anteriormente como alteração local não está no HEAD remoto; não pode ser reconstruído com segurança sem recuperar o arquivo/ambiente."
+          ],
+          "next_action": "Retomar no Codespace original e preservar o trabalho local antes de sincronizar ou criar qualquer branch."
+        },
+        {
+          "id": "W5-A2-T2",
+          "status": "pending_dependency",
+          "result": "Aguardar conclusão e merge de #130; #70 e #23 permanecem abertas com ações do responsável e itens de aceite a verificar.",
+          "next_action": "Após #130 integrada, atualizar comentários com evidências e pendências reais."
+        },
+        {
+          "id": "W5-A2-T3",
+          "status": "pending",
+          "result": "Ainda não iniciada; #47 precisa de escopo refinado e auditoria da implementação atual antes de editar perfil.",
+          "next_action": "Após #130 e confirmação do Codespace, ler escopo refinado da #47 e inspecionar perfil/telefone/ownership; exclusão de conta limitada a nota de desenho até decisão de retenção."
         }
       ]
     },
