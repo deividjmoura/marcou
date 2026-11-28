@@ -234,7 +234,12 @@ export function ServicesManager({
       ) : (
         <ul className="item-list">
           {services.map((service) => (
-            <li key={service.id} className="item-row">
+            <li key={service.id} className="item-row service-item-row">
+              {service.image_url ? (
+                <img className="service-image-thumb" src={service.image_url} alt={`${service.name} — imagem do serviço`} loading="lazy" />
+              ) : (
+                <span className="service-image-thumb service-image-placeholder" aria-hidden="true">✦</span>
+              )}
               <div>
                 <strong>{service.name}</strong>
                 <span className="muted small">
@@ -285,6 +290,20 @@ export function ServicesManager({
           <input type="hidden" name="intent" value={editing ? "update" : "create"} />
           {editing ? <input type="hidden" name="serviceId" value={editing.id} /> : null}
 
+          {editing?.image_url ? (
+            <img className="service-image-preview" src={editing.image_url} alt={`${editing.name} — imagem atual do serviço`} />
+          ) : null}
+          <label className="field">
+            <span>Imagem do serviço (JPEG, PNG ou WebP · até 5 MB)</span>
+            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" />
+            <span className="muted small">A imagem é opcional. Arquivos são validados novamente no servidor.</span>
+          </label>
+          {editing?.image_path ? (
+            <label className="checkbox">
+              <input type="checkbox" name="removeImage" value="true" />
+              <span>Remover imagem atual</span>
+            </label>
+          ) : null}
           <label className="field">
             <span>Nome</span>
             <input
