@@ -1927,15 +1927,6 @@ console.log("\n[segurança e RLS]");
         imageBucket.allowed_mime_types.includes(mime),
       ),
   );
-  const storagePolicyDefinitions = (
-    await db.query(
-      `select policyname, roles, cmd, qual, with_check
-         from pg_policies
-        where schemaname = 'storage' and tablename = 'objects'
-        order by policyname`,
-    )
-  ).rows;
-  console.log("Storage policies:", JSON.stringify(storagePolicyDefinitions));
   const imagePolicies = (
     await db.query(
       `select polname from pg_policy where polrelid = 'storage.objects'::regclass`,
@@ -1969,6 +1960,8 @@ console.log("\n[segurança e RLS]");
       [ownServiceImagePath],
     )
   ).rows[0];
+  check("Storage RLS usa o papel authenticated", imagePathProbe.db_role === "authenticated");
+  check("Storage RLS aceita UUIDs de prestador e serviço", imagePathProbe.provider_uuid_valid && imagePathProbe.service_uuid_valid);
   check("Storage RLS resolve auth.uid() do dono", imagePathProbe.uid === ownerA);
   check("Storage RLS decompõe o caminho do serviço", JSON.stringify(imagePathProbe.folders) === JSON.stringify(["providers", providerA, "services", serviceA1]), JSON.stringify(imagePathProbe));
   check("Storage RLS confirma o vínculo dono/serviço", imagePathProbe.owns_service === true, JSON.stringify(imagePathProbe));
