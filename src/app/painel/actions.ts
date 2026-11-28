@@ -18,6 +18,8 @@ import {
   type ServiceDiscoveryInput,
 } from "@/domain/discovery/discovery";
 import { isSocialFeatureEnabled } from "@/server/feature-flags";
+import { uploadServiceImage, removeServiceImage } from "@/server/service-images";
+import { inspectServiceImage } from "@/server/service-image-validation";
 import {
   BookingOperationError,
   getOwnedProvider,
@@ -133,6 +135,17 @@ export async function saveServiceAction(
 
   const intent = String(formData.get("intent") ?? "create");
   const serviceId = String(formData.get("serviceId") ?? "");
+  const imageValue = formData.get("image");
+  const imageFile = imageValue instanceof File && imageValue.size > 0 ? imageValue : null;
+  const removeImage = formData.get("removeImage") === "true";
+
+  if (imageFile) {
+    try {
+      inspectServiceImage(new Uint8Array(await imageFile.arrayBuffer()), imageFile.type);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Imagem inválida." };
+    }
+  }
 
   const priceCents = parseBrlToCents(formData.get("price"));
   if (Number.isNaN(priceCents)) {
@@ -172,16 +185,30 @@ export async function saveServiceAction(
       discovery = parsedDiscovery.data;
     }
 
+    let savedService;
     if (intent === "update") {
-      if (!serviceId) return { error: "Serviço não informado." };
-      await updateService(provider.id, serviceId, parsed.data, discovery);
+      if (!UUID_PATTERN.test(serviceId)) return { error: "Serviço não informado." };
+      savedService = await updateService(provider.id, serviceId, parsed.data, discovery);
     } else {
-      await createService(provider.id, parsed.data, discovery);
+      savedService = await createService(provider.id, parsed.data, discovery);
     }
+
+    let cleanupWarning = false;
+    if (imageFile) {
+      const mediaResult = await uploadServiceImage(provider.id, savedService.id, imageFile);
+      cleanupWarning = mediaResult.cleanupWarning;
+    } else if (removeImage && intent === "update") {
+      const mediaResult = await removeServiceImage(provider.id, savedService.id);
+      cleanupWarning = mediaResult.cleanupWarning;
+    }
+
     revalidatePath("/painel");
     revalidatePath(`/p/${provider.slug}`);
+    const baseSuccess = intent === "update" ? "Serviço atualizado." : "Serviço criado.";
     return {
-      success: intent === "update" ? "Serviço atualizado." : "Serviço criado.",
+      success: cleanupWarning
+        ? `${baseSuccess} A imagem anterior não pôde ser removida do Storage.`
+        : baseSuccess,
     };
   } catch (error) {
     return {
