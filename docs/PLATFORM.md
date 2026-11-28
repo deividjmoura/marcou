@@ -20,7 +20,7 @@ Google Cloud ou secrets foi executada nesta entrega.
 | Auth / DB | Supabase Auth (PKCE via `@supabase/ssr`) + PostgreSQL | `src/lib/supabase/*`, `supabase/migrations/` |
 | Hosting | Netlify (produção + Deploy Previews por PR) | `https://marcoou.netlify.app`; sem `netlify.toml` versionado (configuração no painel) |
 | Testes unitários / domínio | Vitest | `vitest.config.ts`, `src/**/*.test.ts` |
-| Testes de integração DB | `embedded-postgres` + `pg` | `scripts/db-check.mjs`, `social-foundation-check.mjs`, `identity-check.mjs`, `discovery-check.mjs`, `booking-concurrency.mjs` |
+| Testes de integração DB | `embedded-postgres` + `pg` | `scripts/db-check.mjs`, `social-foundation-check.mjs`, `identity-check.mjs`, `discovery-check.mjs`, `booking-concurrency.mjs`, `calendar-check.mjs`, `privileges-check.mjs` |
 | Auditoria estática | Node scripts | `scripts/quality-audit.mjs`, `scripts/changelog-check.mjs` |
 | CI e jobs | GitHub Actions | `.github/workflows/ci.yml`, `.github/workflows/booking-expiration.yml` |
 
@@ -36,13 +36,16 @@ Google Cloud ou secrets foi executada nesta entrega.
 | `typecheck` | `tsc --noEmit` |
 | `audit` | Auditoria estática de segredos, guardas de configuração Supabase e uso de `@supabase/ssr` |
 | `test` | Vitest (domínio, rotas, autenticação, contraste WCAG, Calendar) |
-| `test:db` | Integração em PostgreSQL embutido aplicando todas as migrations (`db-check`, `social-foundation-check`, `identity-check`, `discovery-check`, `booking-concurrency`) |
+| `test:db` | Integração em PostgreSQL embutido aplicando as migrations (`db-check`, `social-foundation-check`, `identity-check`, `discovery-check`, `booking-concurrency`, `calendar-check`, `privileges-check`) |
 
 ### Migrations versionadas
 
-As migrations ficam em `supabase/migrations/` (14 arquivos em 2026-11-27, de
+As migrations ficam em `supabase/migrations/` (19 arquivos em 2026-11-27, de
 `202611150001_initial_schema.sql` até
-`20261127000100_reminder_concurrency_lock.sql`).
+`20261128000200_booking_definer_search_path.sql`). Para a sequência
+completa de aplicação — incluindo o tratamento das migrations fora de ordem da
+PR `#142` (`20261125120000` e `20261125130000`) —, variáveis por fase, ativação
+segura de schedulers e rollback, consulte `docs/TESTE-REAL-PRODUCAO.md`.
 
 **Estado remoto:** não revalidado aqui (sem acesso direto ao painel/CLI remoto).
 Consulte `AGENT_TASK_MARCOU.md` e confirme no projeto Supabase antes de aplicar
