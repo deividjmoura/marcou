@@ -20,7 +20,7 @@ import {
   toggleServiceAction,
   type PainelActionState,
 } from "./actions";
-import { shouldCloseServiceModal } from "./service-form-state";
+import { serviceFormTarget, shouldCloseServiceModal } from "./service-form-state";
 import type {
   AvailabilityExceptionRow,
   AvailabilityRuleRow,
@@ -285,6 +285,8 @@ export function ServicesManager({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
   const categoryLabels = serviceCategoryLabels(categories);
+  const formTarget = serviceFormTarget(editing?.id ?? null, state.savedServiceId ?? null);
+  const isEditing = formTarget.intent === "update";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -421,9 +423,9 @@ export function ServicesManager({
           <div className="service-modal-shell">
             <header className="service-modal-header">
               <div>
-                <span className="eyebrow">{editing ? "EDITANDO SERVIÇO" : "NOVO SERVIÇO"}</span>
+                <span className="eyebrow">{isEditing ? "EDITANDO SERVIÇO" : "NOVO SERVIÇO"}</span>
                 <h3 id="service-modal-title">
-                  {editing ? "Editar serviço" : "Novo serviço"}
+                  {isEditing ? "Editar serviço" : "Novo serviço"}
                 </h3>
               </div>
               <button
@@ -440,13 +442,14 @@ export function ServicesManager({
             <div className="service-modal-body">
               <form
                 id="service-form"
+                noValidate
                 onSubmit={handleSubmit}
                 className="form-stack service-modal-form"
               >
                 <Alert state={state} />
 
-                <input type="hidden" name="intent" value={editing ? "update" : "create"} />
-                {editing ? <input type="hidden" name="serviceId" value={editing.id} /> : null}
+                <input type="hidden" name="intent" value={formTarget.intent} />
+                {formTarget.serviceId ? <input type="hidden" name="serviceId" value={formTarget.serviceId} /> : null}
 
                 {editing?.image_url ? (
                   <img className="service-image-preview" src={editing.image_url} alt={`${editing.name} — imagem atual do serviço`} />
@@ -604,7 +607,7 @@ export function ServicesManager({
                 className="btn"
                 disabled={pending}
               >
-                {pending ? "Salvando..." : editing ? "Salvar serviço" : "Adicionar serviço"}
+                {pending ? "Salvando..." : isEditing ? "Salvar serviço" : "Adicionar serviço"}
               </button>
             </footer>
           </div>
