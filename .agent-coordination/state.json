@@ -2700,22 +2700,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main SHA 5a08e0ae262cd62a7540f1d37845e5e4fd05cf78 reconfirmed. PR #159 merge failed 405 conflicts; closed as superseded. New PR #172 branch agent5/w6-121-theme-reconcile created from latest main, 13 ahead/0 behind, mergeable true after refresh. Theme implementation ported and main changelog/global CSS reconciled. HEAD e79a4b07d03046ce5ec73e9fb76c84f208ce2e30; CI and Netlify pending. Default system documented and parse test defaults to system; light contrast AA test and dark semantic AA test exist. Checklist docs included. Manual visual review remains owner task.",
-      "next_action": "Poll CI and Netlify for PR #172 exact SHA; if all green, merge under autonomy. Then open a small home-only PR for W6-A5-T3 after theme merge, avoiding auth files (Agent1) and panel (Agent2). Branch cleanup remains unavailable via tool.",
+      "current_state": "Wave 6: PR #159 closed superseded after merge API returned 405 conflict. Replacement #172 on branch agent5/w6-121-theme-reconcile, base main 5a08e0ae262cd62a7540f1d37845e5e4fd05cf78, head e79a4b07d03046ce5ec73e9fb76c84f208ce2e30, 13 ahead/0 behind, mergeable true. CI run 46147644751 in_progress (changelog/lint/typecheck/audit passed, unit/domain running, DB/build pending); Netlify preview pending. Checklist in PR. Theme default system documented and tested. Issue #121/#27 comments updated. T3 home migration awaits theme merge; auth/account and provider panel reserved for Agents 1/2. T4 branch cleanup blocked (no delete tool).",
+      "next_action": "Poll CI run 46147644751 and Netlify Deploy Preview at exact head. If both green, merge PR #172 (manual visual review does not block per wave6). Then implement home-only token migration PR after merge; do not modify auth/account or panel. Reassess remaining T3 ownership.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "Wave 5 — W5-A5-T1/T3 e triagem backlog",
-          "status": "in_progress",
-          "result": "PR #159 atualizada com checklist visual, HEAD a5340226ee75c97a361ff622e32369dd5f320e9f. CI run 46142988730 em progresso (install); Netlify Preview pending. #121/#27/#132/#19/#28 receberam comentários de status/next action. Branches temporárias divergentes preservadas porque não há ferramenta de deleção.",
-          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
-          "tests": "CI pending; Deploy Preview pending; revisão visual manual pendente do responsável.",
-          "blockers": [
-            "CI/Netlify exatos e revisão visual 390/1440.",
-            "Branch deletion capability absent; ahead branches retained."
-          ],
-          "next_action": "Poll CI; if green, seek owner visual check before merge; start W5-A5-T2 after #159."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W5-A5-T1 validation complete; PR #159 ready",
@@ -2754,6 +2741,18 @@
             "Visual review is maintainer responsibility; wave_6 says it does not block merge."
           ],
           "next_action": "Poll exact head checks; merge if green; start home-only token migration afterward."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A5 status after replacement PR checks",
+          "status": "in_progress",
+          "result": "PR #172 mergeable; exact head e79a4b07d03046ce5ec73e9fb76c84f208ce2e30. CI run 46147644751 in progress (first quality steps passed, unit/domain running); Netlify Deploy Preview pending. Closed #159 superseded. Issue comments posted #121/#27.",
+          "head_sha": "e79a4b07d03046ce5ec73e9fb76c84f208ce2e30",
+          "tests": "CI partial; Netlify pending.",
+          "blockers": [
+            "CI/Netlify checks pending."
+          ],
+          "next_action": "Wait for exact-head checks; merge #172 if green; continue home-only design token PR."
         }
       ],
       "wave_2_tasks": [
@@ -2869,15 +2868,15 @@
         {
           "id": "W6-A5-T1",
           "status": "in_progress",
-          "result": "Theme implementation rebuilt on main after original #159 merge failed with conflict. Old #159 closed superseded; replacement PR #172 opened from current main, compare 13 ahead/0 behind and mergeable true. CI/Netlify checks pending exact HEAD.",
+          "result": "Replacement PR #172 on latest main, 13 ahead/0 behind, mergeable true. CI run 46147644751 in progress; Netlify Deploy Preview pending. #159 closed as superseded.",
           "head_sha": "e79a4b07d03046ce5ec73e9fb76c84f208ce2e30",
           "base_sha": "5a08e0ae262cd62a7540f1d37845e5e4fd05cf78",
-          "tests": "Existing #159 CI green, but exact #172 run is not yet reported. Contrast tests include light AA pairs and dark semantic pairs; undefined preference defaults to system and docs state it.",
+          "tests": "On exact head: changelog/lint/typecheck/audit success; unit/domain in progress, test:db/build pending. Netlify deploy-preview pending. Contrast tests present for light and dark semantic pairs; system default documented.",
           "blockers": [
             "CI/Netlify for PR #172 exact SHA pending.",
             "Owner visual review still pending (per wave scope it does not block merge)."
           ],
-          "next_action": "Poll checks; merge PR #172 if all CI and Netlify checks green."
+          "next_action": "Merge PR #172 when CI and Netlify are green."
         },
         {
           "id": "W6-A5-T2",
