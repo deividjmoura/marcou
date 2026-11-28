@@ -3113,8 +3113,8 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "PR #178 (branch agent2/w6-56-service-modal-current-main) contém a implementação #56 e agora inclui happy-dom 21.0.4 como devDependency MIT, com testes DOM do modal (abrir/foco/restaurar, Esc, backdrop, editar, cancelar, preservar campos/arquivo em erro, sucesso e retry parcial sem duplicação). A escolha do ambiente DOM está justificada: pacote MIT, sem browser binário e sem @playwright/test/axe-core; happy-dom não simula a armadilha de foco nativa nem layout real, que permanecem delegados a HTMLDialogElement.showModal e revisão visual. Último HEAD 12e81cdf1e5578553847018b07054946a4b08b28; CI ainda não foi executado para este commit (branch atrás da main e PR mergeable=false). Main atual 551c56a5e7ef7b547fbe862e2e250c64e00967a0. PR #172 do Agent5 está OPEN/Ready com CI e Netlify verdes, mas base antiga e também mergeable=false; toca globals.css, portanto aguardar sua sincronização/merge antes de criar a branch final da #56 para evitar rebase repetido.",
-      "next_action": "Aguardar Agent5 sincronizar/mergear PR #172 (tema, sobreposição em globals.css) e a main estabilizar. Depois criar branch limpa da main atual, reaplicar os seis arquivos da #56, abrir PR final única, validar CI/Netlify no SHA exato e revisar o teste happy-dom. Manter Draft até os checks passarem. A alternativa headless não foi escolhida porque a inspeção real do fluxo de gravação em preview poderia escrever no Supabase remoto; os testes DOM usam Server Action mockada. Após #56 mergear, executar #55 e depois #54 em PRs separadas.",
+      "current_state": "PR #178 OPEN/Draft, HEAD 12e81cdf1e5578553847018b07054946a4b08b28, compare atual 10 ahead/2 behind em relação à main. Main atual 9e9373695ea2c259c28abc87cc1e0f4d90be8461. PR mergeable=false. O commit 12e81 adiciona happy-dom 21.0.4 MIT e testes DOM com Server Action mockada; Netlify Deploy Preview deste SHA está pending (deploy 6b0ad3c158869c11cfc03ea1); ainda não há CI run para este SHA. CI 46148244545 e preview 178 haviam passado no HEAD anterior 2bb3651, não são evidência para 12e81. PR #172 Agent5 segue OPEN/Ready, HEAD e79a4b0, base 5a08e0, 13 ahead/5 behind, mergeable=false; CI 46147644751 e Netlify preview 172 success. Ela toca globals.css, então aguardar a sincronização/integração da PR #172 e estabilização da main antes de criar a branch final da #56.",
+      "next_action": "Aguardar Agent5 sincronizar/mergear #172 e reconfirmar main/PR/CI. Depois criar branch limpa da main atual, reaplicar implementação e testes DOM, abrir PR final única, aguardar CI + Netlify no SHA exato. Revisar happy-dom: foco inicial/restauração, Esc/backdrop, cancelamento, create/edit, erros e retry parcial. Manter Draft até checks verdes. Após #56 mergear, seguir #55 e #54 em PRs separadas.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -3174,6 +3174,19 @@
             "PR #172 do Agent5 precisa ser sincronizada/mergeada; ela toca globals.css e a main está avançando.",
             "Novo HEAD 12e81cdf ainda precisa de CI.",
             "Branch atual está 2 commits atrás da main 551c56 e mergeable=false; criar branch final após PR #172 integrar."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — aguardar sincronização concorrente da main",
+          "status": "blocked_dependency",
+          "result": "PR #178 HEAD 12e81cdf inclui happy-dom@^21.0.4 e teste DOM mockado; CI ainda não executado para esse SHA e Netlify pending (deploy 6b0ad3c158869c11cfc03ea1). Main atual 9e937369, branch 10 ahead/2 behind, mergeable=false. PR #172 Agent5 continua aberta/Ready, HEAD e79a4b0, 13 ahead/5 behind, mergeable=false, embora CI 46147644751 e Netlify estejam verdes; compartilha globals.css. Não sincronizar a #56 até #172 e demais merges estabilizarem a main para evitar repetidas reconstruções.",
+          "head_sha": "12e81cdf1e5578553847018b07054946a4b08b28",
+          "tests": "HEAD anterior 2bb3651: CI 46148244545 success e Netlify preview 178 success. HEAD 12e81: Netlify pending e sem CI run até agora. happy-dom tests adicionados, ainda não executados.",
+          "blockers": [
+            "PR #172 do Agent5 está desatualizada em relação à main (5 atrás), mergeable=false, e toca globals.css; aguardar sincronização/merge.",
+            "Main continua avançando; branch #178 2 commits atrás, mergeable=false.",
+            "CI e Netlify no HEAD 12e81 ainda pendentes."
           ]
         }
       ],
