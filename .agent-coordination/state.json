@@ -1463,8 +1463,7 @@
     "agent_1_r7_booking": {
       "scope": "Reservas: multi-serviços, valores/sinal e confirmação (.ics)",
       "pull_requests": [
-        143,
-        146
+        153
       ],
       "issues": [
         21,
@@ -1478,8 +1477,8 @@
         "feat/booking-flow-confirmation-success",
         "feat/21-booking-multiple-services"
       ],
-      "status": "wave_2_complete",
-      "active_assignment": "W2 complete",
+      "status": "wave_3_waiting_150",
+      "active_assignment": "W3-A1-T2 (blocked on #150)",
       "tasks": [
         {
           "id": "A1-T1",
@@ -1520,9 +1519,19 @@
         ],
         "blocked_by": []
       },
-      "current_state": "Onda 2 Agent 1 concluída: #143, #146, #22 fechada. PRs #124/#68/#131/#139 superadas.",
-      "next_action": "Sem tarefa W2 pendente.",
+      "current_state": "W3-A1-T1 done (#57/#153). Bloqueado em #150 para W3-A1-T2.",
+      "next_action": "Aguardar #150 mergeada; então #56 modal de serviço.",
       "updates": [
+        {
+          "timestamp": "2026-11-28T00:22:43Z",
+          "task": "W3-A1-T1",
+          "status": "done",
+          "result": "PR #153 squash-merged 994cf1c. Utilitário E.164, RPC booking_counterparty_phone, atalhos no detalhe /reserva/[id] e painel (sem número em texto na lista). CI quality success no SHA 73f7e0f. #57 fechada via Closes.",
+          "head_sha": "994cf1c4efe65754ebb70042b448259344a2cc7c",
+          "tests": "CI quality success + Netlify rules no SHA 73f7e0f1fe79a4997d5e26f87bd505b12792d6f2",
+          "blockers": null,
+          "next_action": "W3-A1-T2 aguarda merge da #150 (design). Issues #56→#55→#54→#43 em sequência."
+        },
         {
           "timestamp": "2026-11-28T00:03:52Z",
           "task": "W2-A1-T4",
