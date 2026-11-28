@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/manrope";
+import "@fontsource/lora/400.css";
+import "@fontsource/lora/500.css";
+import "@fontsource/lora/600.css";
+import "@fontsource/lora/400-italic.css";
 import "./globals.css";
 import "../styles/design-tokens.css";
 
