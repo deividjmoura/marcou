@@ -1987,7 +1987,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "Wave 4: W4-A4-T1 #154 reconciliada sobre main atual após merge #150; CI novo em execução. W4-A4-T2 #156 mergeada. W4-A4-T3 auditoria de segurança da #155 concluída; aguardar eventuais PRs de #47.",
+      "active_assignment": "W4-A4-T1 #154 concluída (merge 7a9d2be5); W4-A4-T2 #156 concluída (merge 5a4b0695); W4-A4-T3 revisão #155 concluída, monitorar #47; iniciado W4-A4-T1 follow-up #53 em branch agent4/w4-provider-avatar.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2018,22 +2018,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main atual b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82 (#158 tokens semânticos mergeada). W4-A4-T1: #154 reconciliada três vezes sem force-push; último merge commit 82ef1729f940c03b1a796c51916c99bfe858dfe5 incorpora main b0b1aeef, preserva tokens semânticos #158, design #150, testes de telefone #156 e changelog #155/#157. Compare main...branch ahead 56/behind 0; PR mergeable=true. CI quality run 46142463946 em andamento; changelog/lint/typecheck/audit/unit já passaram, test:db em andamento, build pendente; Netlify checks iniciados. W4-A4-T2 #156 mergeada e issue #57 recebeu comentário #7238929309 com evidência: 57 passaram, 0 falharam; terceiro e outro prestador NULL; anon denied por grant mínimo. W4-A4-T3 #155 auditada sem relaxamento; #47 aberta sem PR relacionada.",
-      "next_action": "Aguardar CI run 46142463946 e Netlify Redirect/Header/Pages/Preview no HEAD 82ef1729f940c03b1a796c51916c99bfe858dfe5. Se tudo verde, reconfirmar main e PR #154 imediatamente antes do merge; squash merge com expected_head_sha. Depois reler Escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md antes de começar #53. #52 permanece aberta até teste real Storage pelo responsável; sem alterações externas.",
+      "current_state": "PR #154 foi squash-mergeada em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 sobre main b0b1aeef; CI quality run 46142463946 success no HEAD 82ef1729, Redirect/Header success, Pages neutral, Deploy Preview ready. Migration 20261128000400_service_images_storage.sql agora está na main. Issue #52 permanece aberta apenas para validação real de upload/persistência/renderização no Supabase Storage pelo responsável; nenhum ambiente remoto foi alterado. W4-A4-T2 #156 mergeada em 5a4b0695 e comentário de evidência publicado na #57. W4-A4-T3 #155 revisada, sem relaxar privacidade; #47 sem PR relacionada. W4-A4-T1 follow-up #53 iniciado em branch agent4/w4-provider-avatar baseada na main 7a9d2be5; escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md relidos.",
+      "next_action": "Implementar #53 reutilizando bucket service-images, inspectServiceImage e política owner-scoped, adicionando providers.avatar_path e prefixo providers/{provider_id}/avatar/{uuid}.{ext} em migration 20261128000500; action autenticada sem providerId do cliente, preview/fallback público e no painel; testes de validação, ownership, Storage RLS e fallback. CI/PR antes de merge; não aplicar migration remota. #52 manual Storage continua OWNER_DECISION.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:02:00-03:00",
-          "task": "Wave 4 — merge #156, revisão #155 e reconciliação #154 após #150",
-          "status": "w4_t2_merged_t3_reviewed_t1_ci_pending",
-          "result": "#150 squash-mergeada em 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. #156 squash-mergeada em 5a4b069596f7ac9e2575677dc97dfd85318ed2c8; quality run 46141582606 success no HEAD 761ea12e, Redirect/Header success, Pages neutral, Preview ready; logs DB: 57 checks passaram/0 falhas incluindo isolamento da RPC e grants. #155 revisada após merge: diff só em normalizador/testes/CHANGELOG, sem relaxar privacidade ou mexer na RPC; CI quality e Netlify verdes. #47 sem PR relacionada. #154 reconciliada sobre main 5a4b por merge commit e23e9e4f (first parent antigo head 96f1490c, second parent main), sem force-push; compare main...branch ahead 53/behind 0 e PR mergeable true. CI run 46142009138 e Netlify checks aguardando.",
-          "head_sha": "e23e9e4f88003ad39d30a0446be379f28f1bce60",
-          "tests": "#156 full quality/Netlify success; #155 full quality/Netlify success; #154 new quality/Netlify pending.",
-          "blockers": [
-            "Não mergear #154 até checks verdes no novo SHA e23e9e4f.",
-            "#52 exige validação real de Storage pelo responsável antes de fechar.",
-            "#53 depende do merge de #154."
-          ]
-        },
         {
           "timestamp": "2026-11-28T09:10:00-03:00",
           "task": "W4-A4-T1: corrigir CI de reconciliação e incorporar PR #157",
@@ -2054,6 +2041,17 @@
           "tests": "CI quality 46142463946 parcial verde; DB/build pendentes. PR #156 já mergeada e CI verde.",
           "blockers": [
             "Aguardar CI e Netlify no HEAD 82ef1729 antes de mergear #154."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T09:30:00-03:00",
+          "task": "W4-A4-T1 #154 concluída; iniciar Issue #53",
+          "status": "pr154_merged_w4_t1_followup_53_started",
+          "result": "PR #154 squash-mergeada em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. CI quality run 46142463946 success no HEAD 82ef1729; Redirect/Header success, Pages neutral, Preview ready. Main confirmada no merge SHA. Migration 20261128000400 está integrada. Issue #52 mantida aberta para validação real do Storage pelo responsável. Escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md relidos; branch agent4/w4-provider-avatar criada a partir da main.",
+          "head_sha": "7a9d2be52c9fa2dd66411c98e9f4effbf0238591",
+          "tests": "PR #154 CI/Netlify verdes; PR #156 mergeada e evidência na #57; #155 auditada.",
+          "blockers": [
+            "Teste real Supabase Storage de #52 é pendência OWNER; sem alteração remota."
           ]
         }
       ],
@@ -2374,14 +2372,15 @@
           {
             "id": "W4-A4-T1",
             "target": "#154 / Issue #52: mergear imagens de serviço se checklist verde; depois #53",
-            "status": "reconciled_after_158_waiting_ci",
+            "status": "completed_merged_pending_owner_storage_validation",
             "pr": 154,
             "head_sha": "82ef1729f940c03b1a796c51916c99bfe858dfe5",
             "base_sha": "b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82",
-            "tests": "Após #158 (tokens semânticos), reconciliada novamente sem force-push via merge commit 82ef1729; compare main...branch ahead 56/behind 0; PR mergeable true. CI run 46142463946: changelog/lint/typecheck/audit/unit success; test:db in_progress; build pending; Netlify checks iniciados.",
+            "tests": "PR #154 squash-mergeada; CI quality 46142463946 success (changelog, lint, typecheck, audit, unit, DB integration, build); Netlify Redirect/Header success, Pages neutral, Preview ready. Migration 20261128000400 na main. Harness valida RLS/metadata, não Storage real.",
             "blockers": [
-              "Aguardar quality completo e Redirect/Header success; Pages neutral/green; Preview success no SHA 82ef1729."
-            ]
+              "Issue #52 fica aberta até o responsável testar upload/persistência/renderização no Supabase Storage real. Nenhuma alteração remota feita."
+            ],
+            "merge_sha": "7a9d2be52c9fa2dd66411c98e9f4effbf0238591"
           },
           {
             "id": "W4-A4-T2",
@@ -2403,6 +2402,17 @@
             "tests": "PR #155 auditada após merge: diff limitado a src/lib/whatsapp.ts, src/lib/whatsapp.test.ts e CHANGELOG; normalização remove heurística NANP, assume BR sem +, aceita apenas +55 explícito, valida DDD Anatel; nenhuma mudança na RPC booking_counterparty_phone, autorização, payload/listagens ou superfície pública. Regressões cobrem DDDs 11–19 e outros DDDs. CI quality success no head ecdff merge commit, Netlify Redirect/Header success, Pages neutral. #47 aberta sem PR relacionada na busca/listagem.",
             "blockers": [
               "Aguardar eventual PR de exclusão de conta ou outra PR ligada à #47 para revisão."
+            ]
+          },
+          {
+            "id": "W4-A4-T1-followup-53",
+            "target": "Issue #53 — foto do próprio perfil profissional, reutilizando padrão de mídia #52",
+            "status": "in_progress",
+            "branch": "agent4/w4-provider-avatar",
+            "base_sha": "7a9d2be52c9fa2dd66411c98e9f4effbf0238591",
+            "scope": "Escopo refinado de 27/11 relido: preview antes de salvar, enviar/substituir/remover; mesma validação server-side da #52; caminho providers/{provider_id}/avatar/{uuid}.{ext}; política por dono; exibir publicamente e no painel com fallback/alt; testes de autorização e fallback. docs/PADRAO-DE-ESCOPO.md relido.",
+            "blockers": [
+              "Nenhuma; #52 está implementada/mergeada. Validação Storage real permanece pendente do responsável, mas não bloqueia implementação local de #53."
             ]
           }
         ]
