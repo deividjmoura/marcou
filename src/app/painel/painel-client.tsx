@@ -5,7 +5,7 @@ import { logoutAction } from "../(auth)/actions";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import type { ResolvedNotificationPreference } from "@/domain/notifications/preferences";
 
-import { useActionState, useEffect, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import {
   deleteExceptionAction,
   deleteRuleAction,
@@ -20,6 +20,7 @@ import {
   toggleServiceAction,
   type PainelActionState,
 } from "./actions";
+import { shouldCloseServiceModal } from "./service-form-state";
 import type {
   AvailabilityExceptionRow,
   AvailabilityRuleRow,
@@ -277,10 +278,52 @@ export function ServicesManager({
   discoveryEnabled: boolean;
   hasServiceAreas: boolean;
 }) {
-  const [state, action, pending] = useActionState(saveServiceAction, {});
+  const [state, setState] = useState<PainelActionState>({});
   const [editing, setEditing] = useState<Service | null>(null);
   const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
   const categoryLabels = serviceCategoryLabels(categories);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (open && !dialog.open) {
+      dialog.showModal();
+      dialog.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
+    } else if (!open && dialog.open) {
+      dialog.close();
+      openerRef.current?.focus();
+    }
+  }, [open]);
+
+  function closeModal() {
+    if (pending) return;
+    setOpen(false);
+    setEditing(null);
+    setState({});
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      try {
+        const result = await saveServiceAction({}, formData);
+        setState(result);
+        if (shouldCloseServiceModal(result)) {
+          setOpen(false);
+          setEditing(null);
+        }
+      } catch {
+        setState({ error: "Não foi possível salvar o serviço. Tente novamente." });
+      }
+    });
+  }
 
   return (
     <section className="card">
@@ -289,12 +332,16 @@ export function ServicesManager({
         <button
           type="button"
           className="btn btn-ghost"
-          onClick={() => {
+          aria-haspopup="dialog"
+          aria-controls="service-modal"
+          onClick={(event) => {
+            openerRef.current = event.currentTarget;
             setEditing(null);
-            setOpen((value) => !value);
+            setState({});
+            setOpen(true);
           }}
         >
-          {open && !editing ? "Fechar" : "Novo serviço"}
+          Novo serviço
         </button>
       </div>
 
@@ -333,8 +380,12 @@ export function ServicesManager({
                 <button
                   type="button"
                   className="btn btn-small"
-                  onClick={() => {
+                  aria-haspopup="dialog"
+                  aria-controls="service-modal"
+                  onClick={(event) => {
+                    openerRef.current = event.currentTarget;
                     setEditing(service);
+                    setState({});
                     setOpen(true);
                   }}
                 >
@@ -347,182 +398,218 @@ export function ServicesManager({
         </ul>
       )}
 
-      {open ? (
-        <form
-          key={editing?.id ?? "new"}
-          action={action}
-          className="form-stack nested-form"
-        >
-          <h3>{editing ? "Editar serviço" : "Novo serviço"}</h3>
-          <Alert state={state} />
+      <dialog
+        ref={dialogRef}
+        id="service-modal"
+        className="service-modal"
+        aria-labelledby="service-modal-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          closeModal();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) closeModal();
+        }}
+        onClose={() => {
+          if (open) {
+            setOpen(false);
+            setEditing(null);
+          }
+        }}
+      >
+        {open ? (
+          <div className="service-modal-shell">
+            <header className="service-modal-header">
+              <div>
+                <span className="eyebrow">{editing ? "EDITANDO SERVIÇO" : "NOVO SERVIÇO"}</span>
+                <h3 id="service-modal-title">
+                  {editing ? "Editar serviço" : "Novo serviço"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-small"
+                aria-label="Fechar modal de serviço"
+                disabled={pending}
+                onClick={closeModal}
+              >
+                Fechar
+              </button>
+            </header>
 
-          <input type="hidden" name="intent" value={editing ? "update" : "create"} />
-          {editing ? <input type="hidden" name="serviceId" value={editing.id} /> : null}
+            <div className="service-modal-body">
+              <form
+                id="service-form"
+                onSubmit={handleSubmit}
+                className="form-stack service-modal-form"
+              >
+                <Alert state={state} />
 
-          {editing?.image_url ? (
-            <img className="service-image-preview" src={editing.image_url} alt={`${editing.name} — imagem atual do serviço`} />
-          ) : null}
-          <label className="field">
-            <span>Imagem do serviço (JPEG, PNG ou WebP · até 5 MB)</span>
-            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" />
-            <span className="muted small">A imagem é opcional. Arquivos são validados novamente no servidor.</span>
-          </label>
-          {editing?.image_path ? (
-            <label className="checkbox">
-              <input type="checkbox" name="removeImage" value="true" />
-              <span>Remover imagem atual</span>
-            </label>
-          ) : null}
-          <label className="field">
-            <span>Nome</span>
-            <input
-              type="text"
-              name="name"
-              required
-              maxLength={120}
-              defaultValue={editing?.name ?? ""}
-            />
-          </label>
-          <label className="field">
-            <span>Descrição</span>
-            <textarea
-              name="description"
-              maxLength={500}
-              rows={2}
-              defaultValue={editing?.description ?? ""}
-            />
-          </label>
+                <input type="hidden" name="intent" value={editing ? "update" : "create"} />
+                {editing ? <input type="hidden" name="serviceId" value={editing.id} /> : null}
 
-          {discoveryEnabled ? (
-            <>
-              <label className="field">
-                <span>Categoria</span>
-                <select
-                  name="categoryId"
-                  required
-                  defaultValue={
-                    editing?.category_id ?? DEFAULT_SERVICE_CATEGORY_ID
-                  }
-                >
-                  {editing && !categoryLabels.has(editing.category_id) ? (
-                    <option value={editing.category_id}>
-                      Categoria anterior (fora do catálogo atual)
-                    </option>
-                  ) : null}
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {categoryLabels.get(category.id) ?? category.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="muted small">
-                  A categoria é moderada e permanece estável nas reservas já criadas.
-                </span>
-              </label>
-
-              <fieldset className="field discovery-modes">
-                <legend>Modalidades de atendimento</legend>
-                <div className="checkbox-grid">
-                  {DELIVERY_MODES.map((mode) => {
-                    const customerLocationUnavailable =
-                      mode === "customer_location" &&
-                      !hasServiceAreas &&
-                      !editing?.delivery_modes.includes("customer_location");
-                    return (
-                      <label className="checkbox" key={mode}>
-                        <input
-                          type="checkbox"
-                          name="deliveryModes"
-                          value={mode}
-                          defaultChecked={
-                            editing
-                              ? editing.delivery_modes.includes(mode)
-                              : mode === "provider_location"
-                          }
-                          disabled={customerLocationUnavailable}
-                        />
-                        <span>{DELIVERY_MODE_LABELS[mode]}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-                {!hasServiceAreas ? (
-                  <span className="muted small">
-                    Cadastre uma área em Atendimento para habilitar o local do cliente.
-                  </span>
+                {editing?.image_url ? (
+                  <img className="service-image-preview" src={editing.image_url} alt={`${editing.name} — imagem atual do serviço`} />
                 ) : null}
-              </fieldset>
-            </>
-          ) : null}
+                <label className="field">
+                  <span>Imagem do serviço (JPEG, PNG ou WebP · até 5 MB)</span>
+                  <input type="file" name="image" accept="image/jpeg,image/png,image/webp" />
+                  <span className="muted small">A imagem é opcional. Arquivos são validados novamente no servidor.</span>
+                </label>
+                {editing?.image_path ? (
+                  <label className="checkbox">
+                    <input type="checkbox" name="removeImage" value="true" />
+                    <span>Remover imagem atual</span>
+                  </label>
+                ) : null}
+                <label className="field">
+                  <span>Nome</span>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    maxLength={120}
+                    defaultValue={editing?.name ?? ""}
+                  />
+                </label>
+                <label className="field">
+                  <span>Descrição</span>
+                  <textarea
+                    name="description"
+                    maxLength={500}
+                    rows={2}
+                    defaultValue={editing?.description ?? ""}
+                  />
+                </label>
 
-          <div className="field-grid">
-            <label className="field">
-              <span>Duração (min)</span>
-              <input
-                type="number"
-                name="durationMinutes"
-                min={5}
-                max={1440}
-                required
-                defaultValue={editing?.duration_minutes ?? 60}
-              />
-            </label>
-            <label className="field">
-              <span>Intervalo (min)</span>
-              <input
-                type="number"
-                name="bufferMinutes"
-                min={0}
-                max={480}
-                required
-                defaultValue={editing?.buffer_minutes ?? 0}
-              />
-            </label>
-            <label className="field">
-              <span>Preço (R$)</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                name="price"
-                required
-                defaultValue={
-                  editing ? (editing.price_cents / 100).toFixed(2) : ""
-                }
-              />
-            </label>
-            <label className="field">
-              <span>Sinal (R$)</span>
-              <input
-                type="text"
-                inputMode="decimal"
-                name="deposit"
-                placeholder="Vazio = sem sinal"
-                defaultValue={
-                  editing ? (editing.deposit_cents / 100).toFixed(2) : "0.00"
-                }
-              />
-            </label>
-          </div>
+                {discoveryEnabled ? (
+                  <>
+                    <label className="field">
+                      <span>Categoria</span>
+                      <select
+                        name="categoryId"
+                        required
+                        defaultValue={editing?.category_id ?? DEFAULT_SERVICE_CATEGORY_ID}
+                      >
+                        {editing && !categoryLabels.has(editing.category_id) ? (
+                          <option value={editing.category_id}>
+                            Categoria anterior (fora do catálogo atual)
+                          </option>
+                        ) : null}
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {categoryLabels.get(category.id) ?? category.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="muted small">
+                        A categoria é moderada e permanece estável nas reservas já criadas.
+                      </span>
+                    </label>
 
-          <div>
-            <button type="submit" className="btn" disabled={pending}>
-              {pending ? "Salvando..." : editing ? "Salvar serviço" : "Adicionar serviço"}
-            </button>
-            {editing ? (
+                    <fieldset className="field discovery-modes">
+                      <legend>Modalidades de atendimento</legend>
+                      <div className="checkbox-grid">
+                        {DELIVERY_MODES.map((mode) => {
+                          const customerLocationUnavailable =
+                            mode === "customer_location" &&
+                            !hasServiceAreas &&
+                            !editing?.delivery_modes.includes("customer_location");
+                          return (
+                            <label className="checkbox" key={mode}>
+                              <input
+                                type="checkbox"
+                                name="deliveryModes"
+                                value={mode}
+                                defaultChecked={
+                                  editing
+                                    ? editing.delivery_modes.includes(mode)
+                                    : mode === "provider_location"
+                                }
+                                disabled={customerLocationUnavailable}
+                              />
+                              <span>{DELIVERY_MODE_LABELS[mode]}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {!hasServiceAreas ? (
+                        <span className="muted small">
+                          Cadastre uma área em Atendimento para habilitar o local do cliente.
+                        </span>
+                      ) : null}
+                    </fieldset>
+                  </>
+                ) : null}
+
+                <div className="field-grid">
+                  <label className="field">
+                    <span>Duração (min)</span>
+                    <input
+                      type="number"
+                      name="durationMinutes"
+                      min={5}
+                      max={1440}
+                      required
+                      defaultValue={editing?.duration_minutes ?? 60}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Intervalo (min)</span>
+                    <input
+                      type="number"
+                      name="bufferMinutes"
+                      min={0}
+                      max={480}
+                      required
+                      defaultValue={editing?.buffer_minutes ?? 0}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Preço (R$)</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      name="price"
+                      required
+                      defaultValue={editing ? (editing.price_cents / 100).toFixed(2) : ""}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Sinal (R$)</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      name="deposit"
+                      placeholder="Vazio = sem sinal"
+                      defaultValue={editing ? (editing.deposit_cents / 100).toFixed(2) : "0.00"}
+                    />
+                  </label>
+                </div>
+              </form>
+            </div>
+
+            <footer className="service-modal-footer">
               <button
                 type="button"
                 className="btn btn-ghost"
-                onClick={() => {
-                  setEditing(null);
-                  setOpen(false);
-                }}
+                disabled={pending}
+                onClick={closeModal}
               >
                 Cancelar
               </button>
-            ) : null}
+              <button
+                type="submit"
+                form="service-form"
+                className="btn"
+                disabled={pending}
+              >
+                {pending ? "Salvando..." : editing ? "Salvar serviço" : "Adicionar serviço"}
+              </button>
+            </footer>
           </div>
-        </form>
-      ) : null}
+        ) : null}
+      </dialog>
     </section>
   );
 }
