@@ -2013,7 +2013,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W4-A4-T1 #154 concluída (merge 7a9d2be5); W4-A4-T2 #156 concluída (merge 5a4b0695); W4-A4-T3 revisão #155 concluída, monitorar #47; iniciado W4-A4-T1 follow-up #53 em branch agent4/w4-provider-avatar.",
+      "active_assignment": "W5-A4-T2 #53 em andamento; W5-A4-T1 #154 já mergeada; aguardando PRs de #13 e #47 para revisão W5-A4-T3; W5-A4-T4 em auditoria.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2044,20 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #154 foi squash-mergeada em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 sobre main b0b1aeef; CI quality run 46142463946 success no HEAD 82ef1729, Redirect/Header success, Pages neutral, Deploy Preview ready. Migration 20261128000400_service_images_storage.sql agora está na main. Issue #52 permanece aberta apenas para validação real de upload/persistência/renderização no Supabase Storage pelo responsável; nenhum ambiente remoto foi alterado. W4-A4-T2 #156 mergeada em 5a4b0695 e comentário de evidência publicado na #57. W4-A4-T3 #155 revisada, sem relaxar privacidade; #47 sem PR relacionada. W4-A4-T1 follow-up #53 iniciado em branch agent4/w4-provider-avatar baseada na main 7a9d2be5; escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md relidos.",
-      "next_action": "Implementar #53 reutilizando bucket service-images, inspectServiceImage e política owner-scoped, adicionando providers.avatar_path e prefixo providers/{provider_id}/avatar/{uuid}.{ext} em migration 20261128000500; action autenticada sem providerId do cliente, preview/fallback público e no painel; testes de validação, ownership, Storage RLS e fallback. CI/PR antes de merge; não aplicar migration remota. #52 manual Storage continua OWNER_DECISION.",
+      "current_state": "Reconfirmado no GitHub: #154 está MERGED em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, migration 20261128000400 na main; #52 segue aberta apenas para teste real de Storage pelo responsável. Para #53, branch agent4/w4-provider-avatar está 4 commits à frente e 0 atrás da main (base 7a9d2be52c9fa2dd66411c98e9f4effbf0238591), HEAD f11f5654908d3701fec1fd350bbeb14a02948f1c. Já existem migration 20261128000500, helper server-side que reutiliza inspectServiceImage e componente ProviderAvatar com fallback/testes. Ainda não há integração do componente na página pública/painel, UI de preview/seleção, nem Server Actions que derivem o provider da sessão; os helpers recebem providerId como argumento e exigem chamada exclusivamente após ownedProviderOrError. Combined commit status não retornou checks para o HEAD; não foi encontrada execução de workflow para essa branch. Não criar claim de CI verde.",
+      "next_action": "Completar #53 sem aceitar providerId do cliente: Server Actions autenticadas derivam provider por requireUser/getOwnedProvider, validar File no servidor e ligar preview/upload/substituição/remoção no painel; exibir avatar_path via URL pública na página /p/[slug] e no painel, com fallback/alt. Adicionar testes de autorização, ações, preview e RLS/migration. Verificar privileges-check/test:db e CHANGELOG, rodar suíte completa/CI no SHA exato, abrir PR e mergear só com checklist verde. Em paralelo, auditar a cobertura da matriz para #153/#154 e revisar #13/#47 assim que as PRs forem abertas. Nenhuma alteração remota.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:10:00-03:00",
-          "task": "W4-A4-T1: corrigir CI de reconciliação e incorporar PR #157",
-          "status": "reconciled_waiting_ci",
-          "result": "CI 46142009138 no merge commit e23e9e4f falhou no test:db porque o trecho SQL auth.uid do social-foundation-check ficou com `as $`/`$;`. Identificado pelo log exato, corrigido com linhas explícitas `$$` em commit d1778302. CI 46142138260 passou integralmente (changelog/lint/typecheck/audit/unit/DB/build). Main avançou por PR #157 (health/cache) para 03a412f956f007010637c58a1ee5a245626fc8a0; mudança não sobrepõe código de mídia, mas altera CHANGELOG. Branch reconciliada novamente sem force-push via merge commit d2a427c83c86174c440b90055c0bb55f7c31147f; changelog preserva #150/#155/#156/#157 e bullet de imagens. Compare main...branch ahead 55/behind 0; PR #154 mergeable true. Novo quality run 46142289245 in_progress.",
-          "head_sha": "d2a427c83c86174c440b90055c0bb55f7c31147f",
-          "tests": "CI 46142138260 success no SHA d1778302; CI 46142289245 pendente no SHA d2a427c8.",
-          "blockers": [
-            "Aguardar quality e Netlify checks no SHA d2a427c8 antes do merge."
-          ]
-        },
         {
           "timestamp": "2026-11-28T09:20:00-03:00",
           "task": "W4-A4-T1: reconciliar #154 após PR #158; W4-A4-T2 evidência na #57",
@@ -2078,6 +2067,19 @@
           "tests": "PR #154 CI/Netlify verdes; PR #156 mergeada e evidência na #57; #155 auditada.",
           "blockers": [
             "Teste real Supabase Storage de #52 é pendência OWNER; sem alteração remota."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T09:04:00-03:00",
+          "task": "Retomada W5-A4: conferir #154 e iniciar #53",
+          "status": "in_progress",
+          "result": "#154 confirmada MERGED em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591; #52 permanece OWNER_ACTION para Storage real. #53 escopo refinado lido; branch agent4/w4-provider-avatar tem 4 commits ahead/0 behind, HEAD f11f5654908d3701fec1fd350bbeb14a02948f1c, migration 20261128000500, helper e componente inicial. Auditoria encontrou lacunas de integração: não há Server Actions/preview/upload no painel nem exibição no perfil público/painel; providerId precisa derivar da sessão. Não há checks CI reportados para o HEAD.",
+          "head_sha": "f11f5654908d3701fec1fd350bbeb14a02948f1c",
+          "tests": "Sem execução de testes/CI verificada nesta retomada; combined status vazio para HEAD. Não atribuir CI verde.",
+          "blockers": [
+            "Implementação #53 incompleta; falta integração autenticada, preview e testes.",
+            "PRs #13/#47 ainda não abertas no snapshot; W5-A4-T3 aguarda diffs.",
+            "Validação real de Storage #52 depende do responsável."
           ]
         }
       ],
