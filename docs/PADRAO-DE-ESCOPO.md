@@ -100,3 +100,22 @@ Registre a autoria de forma **verdadeira e transparente**:
 - **Nunca** adicione como coautor quem não colaborou, nem use o trailer como enfeite. Na dúvida, não inclua.
 - Ao mergear por *squash*, repita os trailers de coautoria no corpo da mensagem do squash (`commit_message`), para que não se percam.
 - Os trailers não alteram o escopo, a revisão nem o checklist da PR.
+
+## 9. Orçamento de build (Netlify, plano gratuito)
+
+O projeto usa o plano gratuito da Netlify, que tem limite mensal de minutos de build. Se o limite for ultrapassado, **todos os projetos da conta são suspensos até o dia 1º do mês seguinte**. Em 28/11/2026 a Netlify avisou que o uso chegou a 50% do limite do mês. Cada Deploy Preview de PR e cada merge na `main` consome minutos; branches com muitos commits e PRs refeitas multiplicam o gasto.
+
+**Regras para todos os agentes (valem sempre):**
+1. **Rode todos os gates localmente antes de dar push** (changelog, lint, typecheck, unit, `test:db`, build). Não use o push para "ver o que o CI acha".
+2. **Um push por rodada de correção.** Agrupe commits; não envie correções picadas que disparam um build cada.
+3. **Não abra PR duplicada** nem recrie PR que já existe; reaproveite a existente. Branches e PRs antigas substituídas devem ser fechadas, não mantidas em paralelo. Atualize a branch com a `main` só quando houver conflito ou for exigido.
+4. **Agrupe documentação.** Mudanças só de docs entram em uma PR por tarefa ou onda, não uma por parágrafo. Em `coordination/agents`, um commit por tarefa concluída, não por passo.
+5. **Serialize merges** e evite merges em rajada de mudanças triviais: cada merge na `main` gera um deploy de produção.
+6. Rascunho (*Draft*) **não** evita o build do Deploy Preview; não conte com isso para economizar.
+
+**Modo de operação (campo `dispatch.netlify_budget.state` no `state.json`):**
+- `normal`: regras acima.
+- `economia` (estado atual): somente PRs essenciais do backlog vigente, sem PRs de polimento nem de docs isoladas; priorizar o que fecha pontas antes do teste real.
+- `freio`: acionado pelo responsável perto do limite. Só correções críticas. Se o Deploy Preview não rodar, a **ausência** dos checks da Netlify não bloqueia o merge, desde que o check `quality` do GitHub esteja verde e os gates locais tenham passado; registrar isso na PR.
+
+**Ações do responsável (fora do alcance dos agentes):** acompanhar o uso em *Netlify → Team → Usage*; decidir entre migrar para o plano Starter ou reduzir builds no painel (por exemplo, limitar Deploy Previews ou configurar um comando de *ignore build* para mudanças só de docs). Não há `netlify.toml` versionado e nenhuma dessas mudanças foi aplicada; uma configuração de *ignore* deve ser testada primeiro em uma PR só de docs para não bloquear os checks exigidos.
