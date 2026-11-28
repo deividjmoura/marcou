@@ -11,7 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
-- Modal único de criação e edição de serviços no painel do prestador, com suporte à imagem já existente, foco/teclado nativos, rolagem interna e preservação do formulário em erros. Se o serviço for persistido mas o upload da imagem falhar, a nova tentativa atualiza o mesmo serviço em vez de duplicá-lo (Issue #56).
+- Modal único de criação e edição de serviços no painel do prestador, com suporte à imagem já existente, foco/teclado nativos, rolagem interna e preservação do formulário em erros. Se o serviço for persistido mas o upload da imagem falhar, a nova tentativa atualiza o mesmo serviço em vez de duplicá-lo. Inclui testes DOM com happy-dom (MIT) sem navegador binário nem acesso ao Supabase remoto (Issue #56).
 
 - Preparação pura da Fase 2 de E2E (sem novas dependências nem alterações de CI — Issue `#31`):
   - Módulo `src/lib/e2e-smoke.ts` e suíte `src/lib/e2e-smoke.test.ts` (11 testes Vitest) entregando trava fail-closed `assertSafeE2EEnvironment()` (bloqueia `peornypgltuueubmsucm` e `marcoou.netlify.app`, aponta probe `webServer` para `GET /api/health`), cálculo determinístico de data no fuso `America/Sao_Paulo` (`pickDeterministicE2EDate()`) e gerador de massa isolada RFC 2606 `.test` (`buildSmokeFixture()`) validado contra os schemas Zod reais e `aggregateBookingServices()`.
