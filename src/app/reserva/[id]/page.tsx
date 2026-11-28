@@ -9,6 +9,7 @@ import {
 import {
   formatCents,
   getBooking,
+  getBookingCounterpartyPhone,
   getProviderById,
   requireUser,
   type BookingStatus,
@@ -20,6 +21,7 @@ import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
 import { countUnreadNotifications } from "@/server/notifications";
 import { CalendarDownloadButton } from "./calendar-download";
+import { WhatsAppAction } from "./whatsapp-action";
 
 const RESERVATION_FEEDBACK: Record<
   BookingStatus,
@@ -83,6 +85,9 @@ export default async function ReservaPage({
   if (!role) notFound();
 
   const unread = await countUnreadNotifications();
+  const counterpartyPhone = await getBookingCounterpartyPhone(booking.id);
+  const waMessage = `Olá! Sobre o agendamento de ${booking.service_name_snapshot} em ${formatBookingDate(booking.starts_at, booking.timezone)}.`;
+
   // Snapshots já agregam multi-serviço (nome "A + B", duração/preço totais)
   // e permanecem corretos para reservas legadas de um único serviço.
   const serviceLabel = booking.service_name_snapshot;
@@ -197,6 +202,16 @@ export default async function ReservaPage({
             confirmar o agendamento.
           </p>
         ) : null}
+
+        <WhatsAppAction
+          phone={counterpartyPhone}
+          message={waMessage}
+          label={
+            role === "owner"
+              ? "WhatsApp do cliente"
+              : "WhatsApp do prestador"
+          }
+        />
 
         <ReservationActions
           bookingId={booking.id}
