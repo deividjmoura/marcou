@@ -128,7 +128,7 @@
 .shortcut:hover {
   padding-right: 13px;
   padding-left: 13px;
-  background: rgb(247 233 237 / 48%);
+  background: var(--ds-color-surface-muted);
 }
 
 .shortcut:focus-visible {
@@ -144,7 +144,7 @@
   height: 34px;
   flex: 0 0 34px;
   color: var(--ds-color-brand-strong);
-  --icon-accent: #c88da1;
+  --icon-accent: var(--ds-color-brand);
 }
 
 .shortcutText {

@@ -103,6 +103,45 @@
   --ds-focus-color: #f3b2c8;
 }
 
+@media (prefers-color-scheme: dark) {
+[data-theme="system"] {
+  color-scheme: dark;
+  --ds-color-ink: #f5edf0;
+  --ds-color-muted: #c5b7be;
+  --ds-color-paper: #191417;
+  --ds-color-surface: #241c20;
+  --ds-color-line: #4b3942;
+  --ds-color-brand: #e8c4cf;
+  --ds-color-brand-strong: #f3b2c8;
+  --ds-color-brand-soft: #4b303b;
+  --ds-color-success-bg: #26321a;
+  --ds-color-success-text: #b5d98a;
+  --ds-color-warning-bg: #342b18;
+  --ds-color-warning-text: #f2cf70;
+  --ds-color-danger-bg: #3a2023;
+  --ds-color-danger-text: #f3a1a1;
+  --ds-color-info-bg: #1f2e3a;
+  --ds-color-info-text: #a6cce9;
+  --ds-color-background: var(--ds-color-paper);
+  --ds-color-surface-default: var(--ds-color-surface);
+  --ds-color-surface-muted: var(--ds-color-brand-soft);
+  --ds-color-text-primary: var(--ds-color-ink);
+  --ds-color-text-secondary: var(--ds-color-muted);
+  --ds-color-border: var(--ds-color-line);
+  --ds-color-border-strong: #755765;
+  --ds-color-accent: var(--ds-color-brand-strong);
+  --ds-color-accent-subtle: var(--ds-color-brand-soft);
+  --ds-color-link: var(--ds-color-brand-strong);
+  --ds-color-control-bg: var(--ds-color-surface);
+  --ds-color-control-text: var(--ds-color-ink);
+  --ds-color-success: var(--ds-color-success-text);
+  --ds-color-warning: var(--ds-color-warning-text);
+  --ds-color-danger: var(--ds-color-danger-text);
+  --ds-color-info: var(--ds-color-info-text);
+  --ds-focus-color: #f3b2c8;
+}
+}
+
 :where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: var(--ds-focus-width) solid var(--ds-focus-color);
   outline-offset: var(--ds-focus-offset);

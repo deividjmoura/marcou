@@ -41,9 +41,9 @@
 .notice {
   margin-bottom: 24px;
   padding: 20px 22px;
-  border: 1px solid #ead497;
+  border: 1px solid var(--ds-color-warning);
   border-radius: var(--ds-radius-lg);
-  background: #fff9e9;
+  background: var(--ds-color-warning-bg);
 }
 
 .notice h2,
@@ -131,13 +131,13 @@
 }
 
 .status[data-status="published"] {
-  background: #e8f6df;
-  color: #315b20;
+  background: var(--ds-color-success-bg);
+  color: var(--ds-color-success);
 }
 
 .status[data-status="retired"] {
-  background: #efefea;
-  color: var(--ds-color-muted);
+  background: var(--ds-color-surface-muted);
+  color: var(--ds-color-text-secondary);
 }
 
 .versioning {

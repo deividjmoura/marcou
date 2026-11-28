@@ -11,6 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Tema claro/escuro/automático (Issue #121): cookie `marcou-theme`, resolução de `prefers-color-scheme` antes da hidratação, seletor global acessível e cores de estados/telas migradas para tokens semânticos.
 - ADR de pagamentos `docs/ADR-PAGAMENTOS.md` (Issue #28): separa a máquina de estados financeira do estado da reserva, recomenda Pix manual na Fase 1 e compara Asaas, Mercado Pago e Efí para futura Fase 2, com riscos, controles e decisões do responsável. Somente documentação; nenhuma integração ou transação foi ativada.
 - ADR de segurança da demo do feed `docs/ADR-DEMO-FEED-LOCKS.md` (Issue #132): define gate duplo Deploy Preview + flag explícita, geração condicional para excluir fixtures do bundle de produção, isolamento sem Supabase/Auth e testes de não vazamento. Somente desenho; implementação segue bloqueada pelo feed funcional.
 - Preparação pura da Fase 2 de E2E (sem novas dependências nem alterações de CI — Issue `#31`):
