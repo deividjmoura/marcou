@@ -3,7 +3,7 @@
   "repository": "deividjmoura/marcou",
   "coordination_branch": "coordination/agents",
   "coordination_file": ".agent-coordination/state.json",
-  "updated_at": "2026-11-28T13:28:09Z",
+  "updated_at": "2026-11-28",
   "purpose": "Shared compact handoff and dispatch state for parallel agents. Source of truth for ownership, latest outcomes, SHAs, blockers and next actions.",
   "protocol": {
     "read_before_work": true,
@@ -28,6 +28,7 @@
     "security": "Never store secrets, tokens, passwords, recovery links, personal data or credential values.",
     "safety": [
       "AUTORIZAÇÃO ATUALIZADA DO RESPONSÁVEL (2026-11-27, rodada 7): autonomia TOTAL de merge para Agents 1–6. Ao ficar verde o checklist do runbook no SHA exato, faça squash merge sem pedir confirmação e sem esperar teste real em produção (o responsável testa em produção DEPOIS da rodada). Isso inclui a #133 (documental; deixe resumo na PR). Substitui toda restrição anterior de OWNER_DECISION para merges. Continuam proibidos: ações no ambiente real (Supabase remoto, Netlify, Google Cloud, OAuth/SMTP, secrets, e-mails/notificações reais, deploy manual, ativar schedulers), tag/Release sem autorização explícita, force-push e bypass de checks. Instruções detalhadas por agente: docs/FECHAMENTO-AGENTES.md seções 0 e 9 (main).",
+      "WAVE 8 (2026-11-28): o responsável pediu fechar o máximo de branches. Extensão da regra de exclusão: é permitido apagar as branches das classes A/B/C de dispatch.wave_8_limpeza_branches (inclusive de PRs fechadas e substituídas, não só mergeadas), SEMPRE com arquivo morto refs/archive/ e registro em .agent-coordination/branch-ledger.json, com guarda de tip e sem PR aberta nem claim ativo. Continua proibido apagar main, coordination/agents, branch de PR aberta e branch fora da tabela sem prova equivalente.",
       "RODADA 7 (2026-11-27): o responsável pediu o fechamento das pontas abertas (branches, PRs e issues) e a execução é dos Agents 1–6. Valem integralmente as regras de segurança abaixo e os critérios globais de merge. Merge só quando o checklist do runbook estiver 100% verde no SHA exato; itens OWNER_DECISION nunca são mergeados sem aprovação explícita do responsável. A autorização textual da rodada 6 (Agents 1–5) fica substituída por esta.",
       "Autorização explícita do responsável nesta rodada (2026-11-27): Agents 1–5 podem atualizar suas PRs/branches, resolver conflitos, adicionar testes automatizados, marcar PRs Ready e fazer squash merge na main quando TODOS os critérios de merge do dispatch round 6 forem cumpridos. Não é necessário aguardar teste manual/real do responsável.",
       "Teste manual/real pendente NÃO bloqueia merge se testes automatizados relevantes, CI obrigatório, build, typecheck, lint, audit, test:db e changelog estiverem verdes no SHA exato e não houver bloqueio de segurança/review/conflito.",
@@ -349,7 +350,8 @@
       },
       "agent_3": {
         "funcao": "Operações, notificações e qualidade",
-        "entrada": "agent_3_r7_ops_schedulers"
+        "entrada": "agent_3_r7_ops_schedulers",
+        "funcao_wave_8": "Executor da limpeza de branches (único com exclusão comprovada) + continua Operações, notificações e qualidade"
       },
       "agent_4": {
         "funcao": "Segurança, banco, mídia e Calendar",
@@ -361,7 +363,8 @@
       },
       "agent_6": {
         "funcao": "Auditor independente, limpeza de branches e relatório (não implementa)",
-        "entrada": "agent_6_r7_coordinator"
+        "entrada": "agent_6_r7_coordinator",
+        "funcao_wave_8": "Verificador independente da limpeza de branches + relatório; não executa exclusões salvo handoff"
       }
     },
     "wave_5": {
@@ -497,7 +500,8 @@
       "descricao": "Canal JSON entre agentes para coordenação em tempo quase real (evita retrabalho: arquivos em disputa, versões de migration, rebase após merge).",
       "onde": ".agent-coordination/channel/ (branch coordination/agents): PROTOCOL.json, chan.mjs e um agent_N.jsonl por agente.",
       "como": "git fetch -q origin coordination/agents && git show origin/coordination/agents:.agent-coordination/channel/chan.mjs > /tmp/chan.mjs ; node /tmp/chan.mjs help | read --me agent_N | post --from agent_N ...",
-      "obrigatorio": "Ler o canal ao começar tarefa, antes de cada push/PR/merge, depois de cada CI e a cada ~15 min. Claim antes de editar arquivo quente ou criar migration. Avisar merged com --rebase-needed. Responder requests no próximo checkpoint."
+      "obrigatorio": "Ler o canal ao começar tarefa, antes de cada push/PR/merge, depois de cada CI e a cada ~15 min. Claim antes de editar arquivo quente ou criar migration. Avisar merged com --rebase-needed. Responder requests no próximo checkpoint.",
+      "wave_8": "Limpeza de branches: executor agent_3, verificador agent_6, cadeia de privilégio em dispatch.wave_8_limpeza_branches.papeis. Pedidos de handoff vão pelo canal com --needs-reply."
     },
     "wave_7_ajustes": {
       "opened_at": "2026-11-28, após análise da última onda",
@@ -515,6 +519,160 @@
         "5) Agent 6 audita e limpa."
       ],
       "regra": "Combinem tudo isso pelo canal (dispatch.channel). Não feche/reabra PR para refazer."
+    },
+    "wave_8_limpeza_branches": {
+      "opened_at": "2026-11-28, pedido do responsável: fechar o MÁXIMO de branches nesta rodada",
+      "main_verificada": "9e9373695ea2c259c28abc87cc1e0f4d90be8461 (CI quality success no último merge). Reconfirme antes de agir.",
+      "verificado": [
+        "43 branches além da main; só 3 PRs abertas (#178, #172, #130). Das 43: 26 classe A (apagar já), 6 classe B (gatilho), 6 classe C (confirmação do dono) e 5 classe P (preservar).",
+        "Toda PR fechada sem merge tem comentário 'Substituída por …' e a substituta já está mergeada (#117, #135, #138, #140, #141, #142, #143, #146, #150…). Conteúdo conferido linha a linha contra a main: 10 branches com 98–100%; o resto diverge só em CHANGELOG/handoffs que foram arquivados em docs/handoffs/archive (#152).",
+        "Evidência de privilégio: Agent 3 apagou 4 branches na rodada 6 (32→28). Agent 5 registrou 'delete-branch API unavailable' e não tem checkout/origin; Agent 2 também relatou runtime sem checkout/origin e sem DNS. Agent 6 nunca executou exclusão.",
+        "O repositório está com 'apagar branch ao mergear' DESLIGADO: por isso as branches se acumulam. Responsável pode ligar em Settings → General → 'Automatically delete head branches'; até lá, cada autor apaga a própria branch após o merge (ver regras)."
+      ],
+      "meta": "Ao fim da wave: restar apenas main, coordination/agents e branches de PR aberta/trabalho ativo. Meta mínima: apagar as 26 da classe A + as classes B/C assim que cumprirem o gatilho; zerar as demais assim que #172, #178 e a PR de recuperação mergearem.",
+      "papeis": {
+        "executor_limpeza": "agent_3 (único com exclusão comprovada; está bloqueado esperando a #178, logo tem folga). Executa as classes A/B/C e é o único a escrever em .agent-coordination/branch-ledger.json.",
+        "verificador": "agent_6 (auditor): confere de forma independente, depois da exclusão, cada item apagado (tip, ausência de PR aberta, conteúdo na main) e responde no canal; pode restaurar do arquivo morto se discordar. Não bloqueia a classe A.",
+        "donos_por_area": "cada agente confirma pelo canal as branches da sua área (tabela abaixo) e apaga a própria branch de PR depois do merge, se tiver privilégio; senão pede ao executor.",
+        "cadeia_de_privilegio": [
+          "agent_3",
+          "agent_4",
+          "agent_1",
+          "agent_6",
+          "agent_5",
+          "agent_2"
+        ],
+        "observacao_cadeia": "Ordem de tentativa se o executor atual falhar. Agents 5 e 2 por último: runtimes sem git/origin e Agent 5 já relatou exclusão indisponível."
+      },
+      "teste_de_privilegio": "Tentar na ordem: (1) criar arquivo morto de UMA branch da classe A; (2) apagar essa branch. Se (1) ou (2) devolver 401/403/404/'unavailable', você NÃO tem privilégio de exclusão. Nada é perdido: a branch segue existindo e o arquivo morto pode ser apagado depois. Não use bypass, token de outra pessoa nem altere permissões do repositório.",
+      "encaminhamento_sem_privilegio": [
+        "1. Postar no canal: node /tmp/chan.mjs post --from agent_N --to <próximo da cadeia> --type handoff --needs-reply --body \"Sem privilégio de exclusão (HTTP <código>). Assuma executor da wave_8_limpeza_branches. Nada foi apagado ainda.\"",
+        "2. Registrar na sua entrada do state.json (current_state) que passou o papel e para quem.",
+        "3. Quem recebe responde ack no canal, faz o teste de privilégio e, se também falhar, repassa ao próximo da cadeia (sempre com handoff + needs-reply). Nunca deixar o papel sem dono: se a cadeia inteira falhar, o último posta blocker 'cadeia esgotada' e o state.json passa a listar o comando pronto em plano_c_responsavel.",
+        "4. O ledger (.agent-coordination/branch-ledger.json) tem um único escritor por vez: o executor atual."
+      ],
+      "canal_sem_git": "Agentes sem checkout/origin (relatado por Agents 2 e 5): escrevam suas mensagens acrescentando uma linha JSON ao próprio channel/agent_N.jsonl pela API de conteúdo (GET para obter o sha do blob, PUT com o novo conteúdo), com os mesmos campos do PROTOCOL.json. É aceito e é o que já vem sendo feito.",
+      "regras_de_exclusao": [
+        "R1 (guarda de tip): só apague se o tip ATUAL da branch for igual ao SHA da tabela/ledger. Se mudou, não apague: status skipped_tip_moved e avise o dono.",
+        "R2 (sem PR aberta): GET /pulls?state=open&head=deividjmoura:<branch> deve vir vazio. Se houver PR aberta, status skipped_open_pr.",
+        "R3 (sem claim ativo): ler o canal; se houver claim ativo com refs.branch igual à branch, não apague.",
+        "R4 (arquivo morto antes): criar refs/archive/<flat> apontando para o SHA ANTES de apagar. Falhou ao criar o arquivo morto, não apague.",
+        "R5: nunca apagar main, coordination/agents, branch de PR aberta, branch com claim ativo nem branch fora da tabela sem prova equivalente registrada no ledger.",
+        "R6: apagar branch não dispara build na Netlify; mesmo assim faça em lote e grave UM commit de ledger por lote (não um por branch).",
+        "R7: nunca imprimir nem gravar token/credencial; usar apenas a credencial do seu próprio ambiente.",
+        "R8 (depois de cada merge): o autor apaga a própria branch de PR (squash achata; tip == head da PR) ou pede ao executor no canal. Sem isso as branches voltam a se acumular."
+      ],
+      "classes": {
+        "A": {
+          "regra": "Apagar agora. Prova: substituta mergeada e/ou conteúdo na main (detalhe no ledger). Executor faz R1–R4 e apaga; verificador audita depois.",
+          "branches": [
+            "agent5/w2-design-system-current-main",
+            "agent5/w2-design-system-main-latest",
+            "agent5/w2-design-system-reconciled",
+            "agent5/w4-27-reconcile-155",
+            "agent5/w4-27-semantic-tokens",
+            "agent5/w4-design-system-reconciled",
+            "agent5/w4-reconciled-ecdff",
+            "arena/116298da-marcou",
+            "arena/30a92c52-marcou",
+            "arena/3b7c9d2f-marcou",
+            "arena/4017109f-marcou",
+            "arena/6f3a9b1f-marcou",
+            "arena/9e68c2bb-marcou",
+            "arena/f074e752-marcou",
+            "cc212db",
+            "design/identidade-visual",
+            "feat/21-booking-multiple-services",
+            "feat/30-platform-hardening",
+            "feat/booking-flow-confirmation-success",
+            "feat/calendario-mobile",
+            "feat/pagina-publica-agendamento",
+            "fix/131-multi-services-r7",
+            "fix/auth-recovery-redirect-production",
+            "fix/booking-multiple-services-pr123",
+            "fix/booking-transition-concurrency-incremental",
+            "fix/security-definer-execute-grants"
+          ]
+        },
+        "B": {
+          "regra": "Apagar quando o gatilho acontecer (executor acompanha o canal e os merges).",
+          "branches": {
+            "fix/auth-recovery-preview-origin": "gatilho: PR substituta do Agent 1 mergeada E #130 fechada como 'substituída' com comentário",
+            "agent5/w4-121-theme-system": "gatilho: #172 mergeada (PR #159 fechada 'Superseded by #172')",
+            "agent5/w4-121-reconcile-media": "gatilho: #172 mergeada (rascunho de staging do tema)",
+            "agent1/w5-56-service-modal": "gatilho: #178 mergeada (tentativa anterior da #56 antes da troca de funções)",
+            "agent2/w6-56-service-modal": "gatilho: #178 mergeada (PR #171 duplicada, fechada)",
+            "agent2/w6-56-service-modal-main-sync": "gatilho: #178 mergeada (PR #176 duplicada, fechada)"
+          }
+        },
+        "C": {
+          "regra": "O dono posta ack no canal ('pode apagar' ou aponta o que falta). Sem resposta em 45 minutos corridos, e com o verificador sem objeção, o executor pode apagar COM arquivo morto (reversível).",
+          "branches": {
+            "arena/9c0da280-marcou": "agent_4",
+            "arena/29-calendar-integration": "agent_4",
+            "feat/29-google-calendar-sync": "agent_4",
+            "fix/29-oauth-state-atomic": "agent_4",
+            "feat/customer-account-area": "agent_1",
+            "arena/3938e7c2-marcou": "agent_6"
+          }
+        },
+        "P": {
+          "regra": "Preservar; entram na classe A/B quando o trabalho terminar.",
+          "branches": [
+            "agent1/w6-130-auth-recovery-clean",
+            "agent1/w6-130-auth-recovery-v2",
+            "agent2/w6-56-service-modal-current-main",
+            "agent5/w6-121-theme-reconcile",
+            "coordination/agents"
+          ]
+        }
+      },
+      "ledger": ".agent-coordination/branch-ledger.json (branch coordination/agents): SHA completo, classe, motivo e status de cada uma das 43 branches.",
+      "comandos": {
+        "git": "git fetch -q origin <b> && [ \"$(git rev-parse origin/<b>)\" = \"<sha do ledger>\" ] && git push -q origin \"origin/<b>:refs/archive/<flat>\" && git push -q origin --delete <b>",
+        "api": "SHA=$(curl -s -H \"Authorization: Bearer $GH_TOKEN\" https://api.github.com/repos/deividjmoura/marcou/git/ref/heads/<b> | jq -r .object.sha); [ \"$SHA\" = \"<sha do ledger>\" ] && curl -s -X POST -H \"Authorization: Bearer $GH_TOKEN\" -d \"{\\\"ref\\\":\\\"refs/archive/<flat>\\\",\\\"sha\\\":\\\"$SHA\\\"}\" https://api.github.com/repos/deividjmoura/marcou/git/refs && curl -s -X DELETE -H \"Authorization: Bearer $GH_TOKEN\" https://api.github.com/repos/deividjmoura/marcou/git/refs/heads/<b>",
+        "restaurar": "git push origin refs/archive/<flat>:refs/heads/<b>   (ou POST /git/refs com ref refs/heads/<b> e o sha do ledger). PRs fechadas também mantêm refs/pull/<n>/head.",
+        "flat": "<flat> = nome da branch com '/' trocado por '__'"
+      },
+      "sequencia": [
+        "1) Executor lê o canal, posta ack e faz o teste de privilégio. Sem privilégio → encaminhamento_sem_privilegio.",
+        "2) Executor posta heads_up para 'all' com a lista da classe A e a hora de início (os donos têm 10 minutos para objetar com request).",
+        "3) Executor aplica R1–R4 e apaga a classe A em lote; grava o lote no ledger (um commit) e posta heads_up com o resultado.",
+        "4) Verificador audita o lote e responde no canal (answer). Divergência → restaurar do arquivo morto e avisar.",
+        "5) Donos respondem a classe C; executor aplica a regra dos 45 minutos; novo lote e novo commit de ledger.",
+        "6) Executor acompanha #172, #178 e a PR de recuperação do Agent 1: ao mergearem, apaga as branches da classe B/P correspondentes.",
+        "7) Relatório final (Agent 6): branches antes/depois, o que ficou e por quê, e se a configuração 'apagar ao mergear' foi ligada pelo responsável."
+      ],
+      "tarefas": {
+        "agent_1": [
+          "W8-A1-T1: escolher UMA branch canônica entre agent1/w6-130-auth-recovery-clean e agent1/w6-130-auth-recovery-v2, avisar no canal e liberar a outra para a classe A.",
+          "W8-A1-T2: responder (ack) sobre feat/customer-account-area (classe C, #62/#47).",
+          "W8-A1-T3: ao mergear a PR de recuperação, comentar e fechar a #130 como substituída, postar merged no canal e pedir/fazer a exclusão de fix/auth-recovery-preview-origin e da branch canônica (R8). Continuar W6-A1-T1/T2/T3 sem mudança."
+        ],
+        "agent_2": [
+          "W8-A2-T1: confirmar no canal que agent2/w6-56-service-modal e agent2/w6-56-service-modal-main-sync (e agent1/w5-56-service-modal) são duplicadas da #178 e podem ir ao arquivo morto.",
+          "W8-A2-T2: após mergear a #178, postar merged (R8) e liberar agent2/w6-56-service-modal-current-main para exclusão. Seguir com W6-A2-T2/T3."
+        ],
+        "agent_3": [
+          "W8-A3-T1 (executor da limpeza): ack no canal, teste de privilégio, heads_up com a lista A e execução da classe A (sequência 1–3). Sem privilégio, encaminhar conforme a cadeia.",
+          "W8-A3-T2: manter o ledger (único escritor), aplicar classes B e C pelos gatilhos/ack e a regra dos 45 minutos.",
+          "W8-A3-T3: continuar #43 e o roteiro de produção quando a #178 permitir; a limpeza não pode atrasar o caminho crítico (#172 → #178 → #43)."
+        ],
+        "agent_4": [
+          "W8-A4-T1: responder (ack) sobre arena/9c0da280-marcou, arena/29-calendar-integration, feat/29-google-calendar-sync e fix/29-oauth-state-atomic (classe C). Para fix/29-oauth-state-atomic, confirmar se scripts/calendar-check.mjs e a #141 cobrem o consumo atômico do state; se houver lacuna, abrir UMA issue (não PR) descrevendo.",
+          "W8-A4-T2: se o executor ficar sem privilégio e o Agent 4 for o próximo da cadeia, assumir o papel pelo handoff. Revisões de segurança pendentes seguem como estão."
+        ],
+        "agent_5": [
+          "W8-A5-T1: confirmar no canal que as 7 branches agent5/w2-* e agent5/w4-* de design (classe A) são redundantes (conteúdo 98–100% na main) e que agent5/w4-121-theme-system e agent5/w4-121-reconcile-media saem após o merge da #172.",
+          "W8-A5-T2: após mergear a #172, postar merged com --rebase-needed e liberar agent5/w6-121-theme-reconcile (R8). Como seu runtime não apaga branch, peça ao executor pelo canal."
+        ],
+        "agent_6": [
+          "W8-A6-T1 (verificador): depois de cada lote do executor, auditar de forma independente e responder no canal: tip == SHA do ledger, sem PR aberta, arquivo morto existente (git ls-remote origin 'refs/archive/*') e conteúdo na main. Divergência → pedir restauração.",
+          "W8-A6-T2: a branch arena/3938e7c2-marcou é sua (classe C): consolidar o conteúdo útil de docs/AUDITORIA-AGENTE-6-RODADA-7/9 no relatório do state.json (sem PR de docs isolada) e liberar a branch por ack.",
+          "W8-A6-T3: relatório final da limpeza e a pergunta sobre GitHub Release (nada de tag/Release sem autorização). Retomar W6-A6-T1..T5 depois do primeiro lote."
+        ]
+      },
+      "plano_c_responsavel": "Só se a cadeia de privilégio inteira falhar: o responsável pode rodar no próprio computador, para cada branch da classe A do ledger, os comandos 'git' acima (arquivo morto + exclusão), ou ligar 'Automatically delete head branches' e apagar pela página de branches do GitHub."
     }
   },
   "shared_project_state": {
