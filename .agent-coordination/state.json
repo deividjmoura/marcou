@@ -1702,8 +1702,8 @@
           "A1-T1: PR #142 (substitui #131 e #139), migration final 20261127130000_table_privileges_matrix.sql; aguardar CI e merge na main."
         ]
       },
-      "current_state": "A4-T2 concluída: #41 fechada como superada pela #117. A4-T3 concluída: PR #141 mergeada por squash na main em cd6065ad6a46187510bde58e51f474d0ff66a4c0 após CI success e Netlify preview success no HEAD exato 979e43fac1e97d1505cbf4e97d2c388e3d3c8ee1; Issue #29 fechada automaticamente por Fixes #29 e recebeu comentário com evidências V1/OWNER_DECISION. A4-T4 concluída: seis branches auditadas; APAGAR: feat/29-google-calendar-sync, fix/29-oauth-state-atomic, arena/29-calendar-integration; PRESERVAR: arena/9c0da280-marcou (artefatos PR39/patches), arena/9e68c2bb-marcou (booking multi-serviços/#125 até Agent1 confirmar), arena/4017109f-marcou (origem multi-serviços/matriz até Agent1 confirmar). Nenhuma branch foi apagada/modificada. A4-T1 (#136) continua bloqueada pela migration da #131. A dependência de #136 mudou: #131 foi fechada sem merge e substituída pela PR #139 do Agent1. PR #139 tem CI success e Netlify preview success no HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6, mas ainda está mergeable=false/atrás da main após #141; Agent1 precisa atualizar/mesclar main e concluir o merge antes de A4-T1. Atualização da dependência: PR #139 foi fechada sem merge e substituída pela #142 (`fix/139-multi-services-final`), baseada na main atual `cd6065ad6a46187510bde58e51f474d0ff66a4c0`; HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2`, mergeable=true, CI in_progress. #136 permanece bloqueada até #142 integrar migration 20261127130000. PR #142 HEAD `8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2` terminou CI failure no Database integration tests: assert de ordem ainda espera matriz < hardening < Calendar, mas a migration final da matriz `20261127130000` foi renumerada para depois da Calendar e do multi-services. Comentei na #142 com o log e a correção necessária; manter o teste e ajustar a ordem/comentários, sem desabilitar. A PR #142 foi atualizada para HEAD `e41a89d5c034071ab4016ffd68245af1f0bb4ed3`, CI em andamento. O novo commit renomeou as migrations para `20261125120000` e `20261125130000`, o que passa a ordem antiga mas viola a seção 5: a main atual já contém migrations até `20261128000100`. Comentei na #142 exigindo versões > 20261128000100 e ajuste da ordem/asserts para harden < Calendar < fencing < revocation < multi-services < matrix; não alterei o trabalho do Agent1.",
-      "next_action": "Aguardar Agent1 ajustar a versão das migrations para maior que 20261128000100 e alinhar o assert de ordem. Quando #142 mergear com CI verde, atualizar #136 e incluir ambos os harnesses em test:db.",
+      "current_state": "W2-A4-T1 em validação: #136 foi reconciliada sobre main atual pós-#143 (base 03eb70cf11e525260c08abdb8e27d028a6537349), saída de Draft, e liga calendar-check + privileges-check em test:db; o harness usa portas 55438/55439 após colisão observada em 55436. CI run 46085573118 no HEAD f89f26187907499ad825bf23500508153b493b16 está em andamento; Netlify preview pendente. W2-A4-T2: auditoria #142/#141 encontrou 5 funções SECURITY DEFINER multi-serviço com search_path=public; PR corretiva #145 aberta com migration forward-only 20261128000200 e teste específico, primeiro CI falhou por parser do array do pg e a correção do teste foi commitada em 46ba83b4e5356bc0d6ae168be44df74d5176e8b3; aguardar novo CI. W2-A4-T3: compare de árvore confirmou que arena/9e68c2bb-marcou e arena/4017109f-marcou ainda têm handoffs exclusivos docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md ausentes na main; preservar até Agent6 arquivar/portar os handoffs. Nenhuma branch foi apagada.",
+      "next_action": "Aguardar CI verde no HEAD atual da #136; se verde e checks Netlify ok, conferir threads e fazer squash merge com expected_head_sha, comentar/fechar #125 com evidência. Depois validar PR #145 e mergear quando checklist verde. Informar Agent6 via state para preservar as duas arenas até handoffs serem preservados.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1752,6 +1752,42 @@
             "Agent1 precisa corrigir timestamps para > 20261128000100 e atualizar ordem/harness."
           ],
           "next_action": "Aguardar novo SHA da #142 com migration versions monotônicas e CI verde."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W2-A4-T1: reconciliar e ligar privileges-check no CI",
+          "status": "in_progress_ci",
+          "result": "PR #136 branch fix/125-privileges-check-ci reconciliada com main pós-#143 SHA 03eb70cf11e525260c08abdb8e27d028a6537349 via merge commit não-forçado; HEAD atual f89f26187907499ad825bf23500508153b493b16. PR saiu de Draft. test:db executa calendar-check seguido de privileges-check. Primeira CI revelou colisão do harness nas portas 55435/55436; alteradas para 55438/55439. CI run 46085573118 em andamento; Netlify pending. Não mergear até concluir todos os checks.",
+          "head_sha": "PR #136:f89f26187907499ad825bf23500508153b493b16; base/main:03eb70cf11e525260c08abdb8e27d028a6537349",
+          "tests": "Quality in_progress; Netlify Redirect/Header/Pages changed in_progress; aguardar.",
+          "blockers": [
+            "CI no HEAD atual ainda não concluiu."
+          ],
+          "next_action": "Aguardar CI/Netlify; mergear apenas com checklist verde."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W2-A4-T2: auditoria #142/#141 e correção de search_path",
+          "status": "correction_pr_open",
+          "result": "Auditoria da #142 identificou cinco funções SECURITY DEFINER de multi-serviço (booking_service_totals, 2 overloads get_provider_schedule, 2 overloads create_booking) com search_path=public, divergindo do contrato SECURITY-DEFINER-GRANTS.md (pg_catalog, public). ACLs permanecem mínimos: helper interno sem EXECUTE; get_provider_schedule para anon/authenticated; create_booking para authenticated. booking_services tem RLS, policy SELECT para participantes authenticated e nenhuma escrita direta; Calendar tables têm RLS e REVOKE de papéis cliente. PR #145 aberta com migration forward-only 20261128000200 e teste de regressão em social-foundation-check. HEAD inicial d365... falhou por erro de teste (array name[] não parseado pelo pg); corrigido para count(*) FILTER, novo HEAD 46ba83b4e5356bc0d6ae168be44df74d5176e8b3, CI ainda aguardando.",
+          "head_sha": "PR #145:46ba83b4e5356bc0d6ae168be44df74d5176e8b3; main:03eb70cf11e525260c08abdb8e27d028a6537349",
+          "tests": "Primeiro CI quality falhou no teste recém-adicionado; corrigido, novo CI ainda não iniciado/confirmado.",
+          "blockers": [
+            "Aguardar CI completo e Netlify no novo HEAD #145."
+          ],
+          "next_action": "Validar novo CI; squash merge se verde."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W2-A4-T3: confirmar disposição das branches arena após #142",
+          "status": "preserve_until_handoffs_archived",
+          "result": "Tree SHA comparison main vs arena/9e68c2bb-marcou e arena/4017109f-marcou confirmou docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md existem nas arenas e não existem na main. Os códigos/migrations multi-service e matriz já foram integrados pela #142, mas handoffs exclusivos ainda são artefatos úteis; não é seguro apagar até Agent6 arquivar/portar esses dois documentos. Manter ambas PRESERVAR e avisar Agent6 pelo state.",
+          "head_sha": "arena/9e68c2bb-marcou:8d73650dfc62508a22c3b4ed83d1019e493ca871; arena/4017109f-marcou:16f0166fc06e4ddcaac6b77664515b410f3c4d74; main:03eb70cf11e525260c08abdb8e27d028a6537349",
+          "tests": "Comparação recursiva de árvores Git por blob SHA; handoffs ausentes na main.",
+          "blockers": [
+            "Agent6 precisa preservar/arquivar os dois handoffs antes de apagar arenas."
+          ],
+          "next_action": "Manter branches; avisar Agent6 na entrada compartilhada."
         }
       ],
       "branch_disposition": [
