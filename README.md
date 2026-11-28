@@ -129,6 +129,9 @@ As migrations estão em `supabase/migrations/`:
 24. `20261128000700_email_delivery_queue.sql` — fila idempotente server-only
     para entregas de e-mail transacional (sem PII/corpo; desligada por padrão).
     Detalhes em `docs/ADR-EMAIL-PROVEDOR.md`.
+25. `20261128000800_email_queue_recipient_binding.sql` — vincula destinatário
+    da fila de e-mail ao cliente ou dono da reserva e reafirma grants exclusivos
+    de `service_role`.
 
 As regras de escrita ficam no banco, em funções `security definer` com
 verificações explícitas de autorização. As políticas RLS permitem leitura

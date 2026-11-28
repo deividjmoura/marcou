@@ -9,9 +9,10 @@ a passo, o Marcou em ambiente publicado após a Rodada 7.
 > ou ativou schedulers. Toda ação em ambiente real depende de execução e
 > autorização explícita do responsável.
 
-Última revisão contra a `main`: 2026-11-28 (`4c3794b`, incluindo PRs `#128`, `#38`,
+Última revisão contra a `main`: 2026-11-28 (`56e1707`, incluindo PRs `#128`, `#38`,
 `#138`, `#140`, `#141`, `#142`, `#127`, `#143`, `#136`, `#146`, `#145`, `#150`,
-`#151`, `#153`, `#154`, `#155`, `#156`, `#157`, `#158`, `#161`, `#162` e `#53`).
+`#151`, `#153`, `#154`, `#155`, `#156`, `#157`, `#158`, `#160`, `#161`, `#162`,
+`#163`, `#164` e `#170`).
 
 ---
 
@@ -55,9 +56,9 @@ a passo, o Marcou em ambiente publicado após a Rodada 7.
 
 ---
 
-## Fase 1 — Ordem de aplicação das migrations (24 arquivos, incluindo PR #142 e Storage)
+## Fase 1 — Ordem de aplicação das migrations (25 arquivos, incluindo PR #142, Storage e #170)
 
-### 1.1 Inventário completo das 24 migrations na `main`
+### 1.1 Inventário completo das 25 migrations na `main`
 
 | # | Arquivo em `supabase/migrations/` | Escopo principal | Observação |
 | --- | --- | --- | --- |
@@ -83,8 +84,9 @@ a passo, o Marcou em ambiente publicado após a Rodada 7.
 | 20 | `20261128000300_booking_counterparty_phone.sql` | RPC `booking_counterparty_phone` restrita a participantes para atalhos WhatsApp (PR #153/#156) | Aditiva / Segurança |
 | 21 | `20261128000400_service_images_storage.sql` | Coluna `services.image_path`, bucket `service-images` e políticas Storage (PR #154) | **Cria o bucket `service-images`; precede #23** |
 | 22 | `20261128000500_notification_preferences.sql` | Tabela `notification_preferences`, RLS, eventos obrigatórios e respeito em `notify_on_booking_event`/`create_booking_reminders` (PR #161, `#13`) | Aditiva / Segurança |
-| 23 | `20261128000600_provider_avatar_storage.sql` | Coluna `providers.avatar_path` e políticas Storage para avatar no bucket `service-images` (PR `#53`) | **Depende de #21 (`service-images`)** |
-| 24 | `20261128000700_email_delivery_queue.sql` | Tabela server-only `email_delivery_queue` (sem PII/corpo) e RPCs idempotentes (PR #162, `#26`) | Aditiva (desligada por padrão) |
+| 23 | `20261128000600_provider_avatar_storage.sql` | Coluna `providers.avatar_path` e políticas Storage para avatar no bucket `service-images` (PR `#160`, `#53`) | **Depende de #21 (`service-images`)** |
+| 24 | `20261128000700_email_delivery_queue.sql` | Tabela server-only `email_delivery_queue` (sem PII/corpo) e RPCs idempotentes (PR `#162`, `#26`) | Aditiva (desligada por padrão) |
+| 25 | `20261128000800_email_queue_recipient_binding.sql` | Vincula destinatário da fila de e-mail ao cliente/prestador da reserva e reafirma grants server-only (PR `#170`, `#26`) | Hardening / Aditiva (**depende de #24**) |
 
 ### 1.2 Tratamento da ordem fora de sequência da PR #142 e dependências Storage
 
@@ -134,7 +136,7 @@ Escolha o procedimento correspondente ao estado retornado:
   Por padrão, o `supabase db push` recusa migrations com timestamp anterior ao maior
   timestamp já registrado no remoto. Use `--include-all` após revisar o dry-run —
   ele aplicará `20261125120000` → `20261125130000` → eventuais pendentes até
-  `20261128000100` → `20261128000200` até `20261128000700` nessa ordem exata:
+  `20261128000100` → `20261128000200` até `20261128000800` nessa ordem exata:
   ```bash
   supabase db push --dry-run --include-all
   # Confirmar que 20261125120000/130000 aparecem ANTES de 20261128000200
@@ -142,22 +144,23 @@ Escolha o procedimento correspondente ao estado retornado:
   supabase db push --include-all
   ```
   > **Compatibilidade verificada em PostgreSQL real:** ambas as sequências —
-  > ordem natural (`#1..#24`) e cenário de banco que já tinha `#1..#10, #13..#18`
-  > recebendo `#11 → #12 → #19..#24` — foram validadas em PostgreSQL embutido com
+  > ordem natural (`#1..#25`) e cenário de banco que já tinha `#1..#10, #13..#18`
+  > recebendo `#11 → #12 → #19..#25` — foram validadas em PostgreSQL embutido com
   > default privileges do Supabase e esquema mínimo de `storage` emulados. O
   > estado final é idêntico: sem erro SQL, zero funções `SECURITY DEFINER` com
   > `EXECUTE` para `PUBLIC`, `search_path = pg_catalog, public` nas 5 funções
   > multi-serviço, bucket `service-images` criado (`public = true`),
   > `booking_counterparty_phone` restrita a `authenticated`/`service_role`,
-  > `notification_preferences` e `email_delivery_queue` com RLS e privilégios
-  > mínimos preservados.
+  > `enqueue_email_delivery`/`reprocess_dead_email_delivery` restritas a
+  > `service_role`, e `notification_preferences`/`email_delivery_queue` com RLS e
+  > privilégios mínimos preservados.
 
 ### 1.3 Conferência pós-migration (somente-leitura)
 
 Execute no SQL Editor do banco alvo após aplicar:
 
 ```sql
--- 1. Confirmar as 24 versões aplicadas
+-- 1. Confirmar as 25 versões aplicadas
 select count(*) as total_migrations
 from supabase_migrations.schema_migrations;
 
@@ -626,7 +629,7 @@ com SPF/DKIM/DMARC e segredos).
 | **Aplicação (Netlify)** | Regressão de UI, SSR, Auth ou Server Action após deploy | **Netlify → Deploys →** selecionar último deploy estável anterior → **Publish deploy** | Instantâneo, sem rebuild; manter compatibilidade das variáveis de ambiente |
 | **Variáveis / Secrets** | Config incorreta ou suspeita de vazamento | Reverter valor no painel da Netlify / GitHub Actions; em caso de vazamento, **rotacionar no provedor** antes de republicar | Nunca reutilizar credencial exposta |
 | **Mídia / Storage** | Regressão de upload/exibição no bucket `service-images` | Reverter o deploy da aplicação; **nunca** apagar o bucket `service-images` nem limpar objetos em massa sem backup prévio (`services.image_path` e `providers.avatar_path` são `nullable`) | Preserva fotos já enviadas enquanto o incidente é corrigido (`docs/MIDIA-SERVICOS.md`) |
-| **Banco (Supabase)** | Falha grave pós-migration | **Não** executar `DROP TABLE` nem editar migrations aplicadas. Como as migrations até `20261128000700` são aditivas e compatíveis para trás (incluindo RPC legada de 1 serviço, colunas `nullable` e tabelas novas com RLS), prefira rollback só de app/flags; se for indispensável reverter schema, restaurar o backup/snapshot da Fase 0 em janela controlada ou aplicar **nova** migration corretiva validada em staging | Evita perda de dados de reservas e inconsistência em `schema_migrations` |
+| **Banco (Supabase)** | Falha grave pós-migration | **Não** executar `DROP TABLE` nem editar migrations aplicadas. Como as migrations até `20261128000800` são aditivas e compatíveis para trás (incluindo RPC legada de 1 serviço, colunas `nullable` e tabelas novas com RLS), prefira rollback só de app/flags; se for indispensável reverter schema, restaurar o backup/snapshot da Fase 0 em janela controlada ou aplicar **nova** migration corretiva validada em staging | Evita perda de dados de reservas e inconsistência em `schema_migrations` |
 
 ---
 

@@ -131,3 +131,86 @@ Scripts previstos em `package.json`:
 2. **Tempo total controlado:** job `e2e` completo (setup + 3 jornadas) em menos de 8 minutos no runner padrão.
 3. **Sem impacto no gate atual:** `quality` (`check:changelog`, `lint`, `typecheck`, `audit`, `test`, `test:db`, `build`) continua passando de forma independente e sem `continue-on-error`.
 4. **Rastreabilidade na Issue `#31`:** atualizar `docs/QUALITY-AUDIT.md` com o resultado real da primeira execução em CI e seguir para as Fases 3 (acessibilidade automatizada + manual + `prefers-reduced-motion`), 4 (medições reais mobile LCP/CLS/INP sem números inventados) e 5 (revisão de segurança + rate limiting).
+
+---
+
+## 5. Preparação já entregue (sem instalar dependências · Onda 6)
+
+Para começar a Fase 2 imediatamente assim que o responsável registrar o
+`OWNER_DECISION`, os blocos independentes de runner/dependência já foram
+implementados e testados no repositório:
+
+### 5.1 Módulo puro de contrato, guarda anti-produção e massa determinística
+
+- **`src/lib/e2e-smoke.ts`** e **`src/lib/e2e-smoke.test.ts`** (cobertos pelo
+  `npm test` em toda PR, sem novas dependências):
+  - `assertSafeE2EEnvironment({ supabaseUrl, siteUrl })`: trava **fail-closed**
+    que bloqueia explicitamente qualquer execução contra o project ref de
+    produção (`peornypgltuueubmsucm`) ou contra `marcoou.netlify.app`, exige
+    HTTPS para staging remoto e devolve `healthUrl` apontando para
+    `GET /api/health` (PR `#157`) — pronta para uso direto como `webServer.url`
+    do Playwright.
+  - `pickDeterministicE2EDate({ now, timeZone, offsetDays })`: calcula a data
+    futura no fuso `America/Sao_Paulo` e converte o dia da semana para a
+    convenção do Marcou (`0 = domingo .. 6 = sábado`), evitando deriva na virada
+    de dia UTC em runners de CI.
+  - `buildSmokeFixture(runId)`: gera contas isoladas no TLD reservado `.test`
+    (RFC 2606 — prestador, cliente e terceira conta para isolamento), slug único
+    válido, 2 serviços multi-serviço (*Serviço A* + *Serviço B*) e expectativas
+    calculadas por `aggregateBookingServices()`, tudo validado em teste contra
+    `providerInputSchema`, `serviceInputSchema`, `availabilityRuleInputSchema` e
+    os rótulos reais de `reservationActionsFor()`.
+
+### 5.2 Blueprint de `supabase/config.toml` mínimo (se Opção A for aprovada)
+
+```toml
+project_id = "marcou-e2e-local"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+major_version = 15
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/auth/callback**",
+  "http://127.0.0.1:3000/auth/confirm**"
+]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# Desabilitar confirmação obrigatória no container local elimina dependência de
+# SMTP nas jornadas de smoke; ou habilitar e ler links do Inbucket/Mailpit em :54324.
+enable_confirmations = false
+```
+
+### 5.3 Blueprint do job `e2e` no CI (a adicionar em `.github/workflows/ci.yml` após decisão)
+
+- **Opção A (Supabase local — recomendada, zero segredos remotos):**
+  1. `actions/checkout@v4` + `actions/setup-node@v4` (Node 22) + `npm install --no-audit --no-fund --legacy-peer-deps`.
+  2. `supabase/setup-cli@v1` (versão fixa) → `supabase start` (aplica automaticamente as 24+ migrations em `supabase/migrations/`).
+  3. Exportar `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` a partir de `supabase status -o env` + `NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000`.
+  4. `npx playwright install --with-deps chromium` → `npm run build` → `npm run test:e2e` (com `webServer` apontando para `npm run start` e pronto quando `GET /api/health` responder `200`).
+  5. Upload de artefatos Playwright (`playwright-report/`, `test-results/`) somente `if: failure()`, seguido de `supabase stop --no-backup` (`if: always()`).
+- **Opção B (Projeto de *staging* dedicado):**
+  1. Rodar em GitHub Environment protegido (sem execução em PRs de forks), exigindo `assertSafeE2EEnvironment()` no `globalSetup` do Playwright.
+  2. Criar e limpar as contas temporárias `e2e-*-<runId>@marcou.test` em `globalTeardown` via Admin API (`SUPABASE_SERVICE_ROLE_KEY` de staging), sem jamais compartilhar slugs entre runs.
+
+### 5.4 Checklist de execução imediata pós-`OWNER_DECISION` (Fase 2)
+
+1. Adicionar `@playwright/test` em `devDependencies` + scripts `test:e2e` / `test:e2e:ui` em `package.json`.
+2. Criar `playwright.config.ts` chamando `assertSafeE2EEnvironment(process.env)` antes de iniciar e usando `healthUrl` (`http://127.0.0.1:3000/api/health`) em `webServer.url`.
+3. Criar `supabase/config.toml` (se Opção A) e `e2e/smoke.spec.ts` consumindo `buildSmokeFixture()` para executar J1, J2 e J3 com dois `BrowserContext` isolados (Prestador e Cliente) + verificação de bloqueio para `outsiderAccount`.
+4. Adicionar o job `e2e` ao `.github/workflows/ci.yml`, validar 3 execuções consecutivas verdes sem *flakiness* e registrar resultados reais em `docs/QUALITY-AUDIT.md`.
+
