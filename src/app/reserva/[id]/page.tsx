@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatBookingDate, formatBookingTime, BOOKING_STATUS_CLASSES, BOOKING_STATUS_LABELS } from "@/lib/format";
+import {
+  formatBookingDate,
+  formatBookingTime,
+  BOOKING_STATUS_CLASSES,
+  BOOKING_STATUS_LABELS,
+} from "@/lib/format";
 import {
   formatCents,
   getBooking,
   getProviderById,
   requireUser,
+  type BookingStatus,
 } from "@/server/bookings";
 import { ReservationActions } from "./reservation-actions";
 import { resolveReservationRole } from "./reservation-role";
@@ -13,6 +19,38 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
 import { countUnreadNotifications } from "@/server/notifications";
+import { CalendarDownloadButton } from "./calendar-download";
+
+const RESERVATION_FEEDBACK: Record<
+  BookingStatus,
+  { title: string; description: string }
+> = {
+  pending_payment: {
+    title: "Seu horário está reservado!",
+    description:
+      "Agora falta concluir o pagamento do sinal. O prestador confirma o agendamento depois de validar o envio.",
+  },
+  pending_review: {
+    title: "Comprovante enviado!",
+    description:
+      "Recebemos seu aviso. O prestador vai conferir o sinal para confirmar o agendamento.",
+  },
+  confirmed: {
+    title: "Agendamento confirmado!",
+    description:
+      "Tudo certo. Seu horário está confirmado — esperamos você!",
+  },
+  cancelled: {
+    title: "Agendamento cancelado",
+    description:
+      "Esta reserva foi cancelada. Se precisar, você pode escolher outro horário.",
+  },
+  expired: {
+    title: "Esta reserva expirou",
+    description:
+      "O prazo para concluir esta reserva terminou e o horário foi liberado.",
+  },
+};
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +77,15 @@ export default async function ReservaPage({
   const isCustomer = booking.customer_id === user.id;
   const isOwner = provider?.owner_id === user.id;
 
-  const role = resolveReservationRole({ isCustomer, isOwner });
+  if (!isCustomer && !isOwner) notFound();
 
+  const role = resolveReservationRole({ isCustomer, isOwner });
   if (!role) notFound();
 
   const unread = await countUnreadNotifications();
+  // Snapshots já agregam multi-serviço (nome "A + B", duração/preço totais)
+  // e permanecem corretos para reservas legadas de um único serviço.
+  const serviceLabel = booking.service_name_snapshot;
 
   return (
     <main className="page-shell page-reservation">
@@ -57,18 +99,49 @@ export default async function ReservaPage({
         <NotificationBell unreadCount={unread} />
       </div>
 
-      <article className="reservation-card">
-        <span
-          className={`status-pill ${BOOKING_STATUS_CLASSES[booking.status] ?? ""}`}
+      <article
+        className={`reservation-card reservation-success-card is-${booking.status}`}
+      >
+        <section
+          className={`reservation-success-hero is-${booking.status}`}
+          aria-labelledby="reservation-title"
+          aria-live="polite"
         >
-          {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
-        </span>
+          <div className="reservation-success-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              {booking.status === "cancelled" ||
+              booking.status === "expired" ? (
+                <path
+                  className="reservation-success-symbol"
+                  d="M23 23 41 41M41 23 23 41"
+                />
+              ) : (
+                <path
+                  className="reservation-success-symbol"
+                  d="m18 33 9 9 19-21"
+                />
+              )}
+            </svg>
+          </div>
+          <span className="eyebrow">AGENDAMENTO</span>
+          <h1 id="reservation-title">
+            {RESERVATION_FEEDBACK[booking.status].title}
+          </h1>
+          <p>{RESERVATION_FEEDBACK[booking.status].description}</p>
+        </section>
 
-        <h1>{booking.service_name_snapshot}</h1>
-        <p className="muted">
-          {provider?.display_name ?? "Estabelecimento"} ·{" "}
-          {formatBookingDate(booking.starts_at, booking.timezone)}
-        </p>
+        <div className="reservation-success-service">
+          <span
+            className={`status-pill ${BOOKING_STATUS_CLASSES[booking.status] ?? ""}`}
+          >
+            {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+          </span>
+          <h2>{serviceLabel}</h2>
+          <p className="muted">
+            {provider?.display_name ?? "Estabelecimento"} ·{" "}
+            {formatBookingDate(booking.starts_at, booking.timezone)}
+          </p>
+        </div>
 
         <dl className="reservation-details">
           <div>
@@ -80,7 +153,7 @@ export default async function ReservaPage({
             <dd>{formatBookingTime(booking.ends_at, booking.timezone)}</dd>
           </div>
           <div>
-            <dt>Duração</dt>
+            <dt>Duração total</dt>
             <dd>{booking.duration_minutes_snapshot} min</dd>
           </div>
           <div>
@@ -92,6 +165,19 @@ export default async function ReservaPage({
             <dd>{formatCents(booking.deposit_cents_snapshot)}</dd>
           </div>
         </dl>
+
+        {booking.status !== "cancelled" && booking.status !== "expired" ? (
+          <CalendarDownloadButton
+            bookingId={booking.id}
+            startsAt={booking.starts_at}
+            endsAt={booking.ends_at}
+            createdAt={booking.created_at}
+            serviceName={serviceLabel}
+            providerName={provider?.display_name ?? "Estabelecimento"}
+            durationMinutes={booking.duration_minutes_snapshot}
+            priceCents={booking.price_cents_snapshot}
+          />
+        ) : null}
 
         {booking.status === "pending_payment" && booking.expires_at ? (
           <p className="alert alert-warning">
@@ -109,18 +195,6 @@ export default async function ReservaPage({
           <p className="alert alert-info">
             Comprovante registrado. O prestador precisa validar o sinal para
             confirmar o agendamento.
-          </p>
-        ) : null}
-
-        {booking.status === "confirmed" ? (
-          <p className="alert alert-success">
-            Agendamento confirmado. Apresente-se no horário marcado.
-          </p>
-        ) : null}
-
-        {booking.status === "expired" ? (
-          <p className="alert alert-warning">
-            Esta reserva expirou e o horário foi liberado.
           </p>
         ) : null}
 
