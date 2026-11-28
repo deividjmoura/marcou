@@ -2398,8 +2398,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main reconfirmada ecdff384a71a948a3d7e6b713d604a5562a1bebc (#154 integrada enquanto validação estava em andamento). PR #150 foi reconciliada novamente sobre esse SHA; HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, compare 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708 in_progress (install) e status Netlify Preview ainda sem check publicado. Descrição mantém inspeção visual 1440/390, console e overflow como pendência do responsável.",
-      "next_action": "Aguardar CI e Netlify Preview; reconfirmar main antes de merge. Se a main avançar, reconcile de novo. Se checks checklist verdes no HEAD exato, merge autorizado e avisar coordenador. #27 tokens/catalogue continua bloqueada pela integração.",
+      "current_state": "W4 reconfirmada: main ecdff384a71a948a3d7e6b713d604a5562a1bebc. #150 reconciliada duas vezes durante a validação (main passou 994cf1c4 e depois ecdff384; último merge #154), agora HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708: install/changelog/lint/typecheck/audit/unit green, DB integration in_progress, build pendente. Netlify preview pending. A inspeção visual 1440/390 e console/overflow é pendência do responsável conforme autorização de W4, não blocker do agente. #27/#121 atualizadas, aguardando merge.",
+      "next_action": "Aguardar DB tests/build e Netlify Preview/Redirect/Header/Page statuses; reconfirm main/head exact SHA. Se gates checklist green, merge #150. Após merge, atualizar state avisando Agent1, concluir cleanup das branches duplicadas se houver ferramenta de delete disponível e iniciar #27 tokens semânticos/catalogue. #121 após #27.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2460,6 +2460,18 @@
             "Aguardar CI/Netlify no head atual e reconfirmar main antes de mergear."
           ],
           "next_action": "Aguardar checks; se main não avançar e gates forem verdes, mergear #150 segundo autorização Wave 4."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T1 — estado de validação do HEAD reconciliado",
+          "status": "in_progress",
+          "result": "Main estável e confirmada ecdff384a71a948a3d7e6b713d604a5562a1bebc. PR #150 HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, ready. CI: install/changelog/lint/typecheck/audit/unit tests green; test:db running, build pending. Preview pending. Pendência visual transferida ao responsável por decisão wave_4.",
+          "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
+          "tests": "CI quality parcial; DB/build pendentes; preview pending. Nenhuma inspeção visual foi realizada pelo agente.",
+          "blockers": [
+            "Aguardar CI completo e Netlify checks. Main reconfirmar antes do merge."
+          ],
+          "next_action": "Aguardar checks, merge com autonomia se green. Depois iniciar #27."
         }
       ],
       "wave_2_tasks": [
@@ -2506,11 +2518,11 @@
           "status": "in_progress",
           "result": "Main avançou para ecdff384a71a948a3d7e6b713d604a5562a1bebc (#154); PR #150 reconciliada novamente. HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708 em andamento (install); Netlify Preview sem check publicado. Revisão visual desktop/mobile/console/overflow marcada na descrição como pendência do responsável conforme regra Wave 4. Ainda não mergeada.",
           "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
-          "tests": "CI run 46141610708: install em progresso, steps seguintes pendentes. Netlify Preview status ainda não publicado. Inspeção visual agente não executada, pendência explicitada.",
+          "tests": "CI run 46141610708 no HEAD 781ace0e2ad86c7373b1e488907237bd89147bda: install, check:changelog, lint, typecheck, audit, unit/domain tests success; database integration tests in_progress; production build pending. Netlify deploy-preview pending. Visual inspection não realizada, descrita na PR como pendência do responsável.",
           "blockers": [
-            "CI Quality e Netlify Deploy Preview/Redirect/Header/Pages precisam terminar e confirmar no SHA exato; main reconfirmar antes do merge."
+            "Aguardar test:db/build e Netlify deploy-preview checks no SHA exato; reconfirm main antes de merge."
           ],
-          "next_action": "Merge #150 se todos os checks especificados pela coordenação estiverem verdes no HEAD exato; registrar merge SHA e avisar no state."
+          "next_action": "Poll CI/Netlify; merge se checks Wave4 checklist estiverem verdes e main não avançar."
         },
         {
           "id": "W4-A5-T2",
