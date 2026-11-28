@@ -96,22 +96,6 @@ beforeEach(() => {
   actionMocks.toggleServiceAction.mockReset();
   actionMocks.toggleServiceAction.mockResolvedValue({});
 
-  // happy-dom provides the DOM but does not emulate the browser's native modal
-  // focus trap. Keep open/close state deterministic; native semantics are
-  // supplied by HTMLDialogElement.showModal() in production browsers.
-  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
-    configurable: true,
-    value: function (this: HTMLDialogElement) {
-      this.setAttribute("open", "");
-    },
-  });
-  Object.defineProperty(HTMLDialogElement.prototype, "close", {
-    configurable: true,
-    value: function (this: HTMLDialogElement) {
-      this.removeAttribute("open");
-      this.dispatchEvent(new Event("close"));
-    },
-  });
 });
 
 afterEach(async () => {
