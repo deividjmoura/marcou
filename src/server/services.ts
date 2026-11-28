@@ -34,7 +34,12 @@ export async function listServicesForOwner(
     .order("name", { ascending: true });
 
   if (error) fail(error);
-  return (data ?? []) as Service[];
+  return (data ?? []).map((service) => ({
+    ...service,
+    image_url: service.image_path
+      ? supabase.storage.from("service-images").getPublicUrl(service.image_path).data.publicUrl
+      : null,
+  })) as Service[];
 }
 
 export async function createService(
