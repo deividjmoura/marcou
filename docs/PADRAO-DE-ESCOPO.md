@@ -90,3 +90,13 @@ Issues de roadmap distantes **não** são detalhadas antecipadamente: o detalhe 
 - Registrar: SHA exato, resultado real de CI/testes, bloqueios e próxima ação. O que não foi verificado é marcado como não verificado.
 - Um merge por vez; depois do merge, avisar para os demais atualizarem a branch.
 - Comentário de issue com "Escopo refinado" tem prioridade sobre o corpo original quando houver divergência; o corpo original é histórico.
+
+## 8. Autoria e coautoria nos commits
+
+Registre a autoria de forma **verdadeira e transparente**:
+
+- Trabalho feito com assistência de IA: inclua no fim da mensagem do commit (após uma linha em branco) o trailer `Co-authored-by: Claude <noreply@anthropic.com>`.
+- Quando o responsável **participou de fato** (sessão de depuração em conjunto, código ou teste fornecido por ele, decisão de desenho que mudou a solução) e o commit não for autoria dele, inclua também `Co-authored-by: Deivid de Jesus de Moura <86139999+deividjmoura@users.noreply.github.com>`.
+- **Nunca** adicione como coautor quem não colaborou, nem use o trailer como enfeite. Na dúvida, não inclua.
+- Ao mergear por *squash*, repita os trailers de coautoria no corpo da mensagem do squash (`commit_message`), para que não se percam.
+- Os trailers não alteram o escopo, a revisão nem o checklist da PR.
