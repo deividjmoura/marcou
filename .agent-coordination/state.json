@@ -1871,21 +1871,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W3-A4-T1 concluída: PR #152 mergeada em 5538a441d0023926919f165c833629079f98e442; handoffs arquivados, Agent6 pode limpar as arenas após conferir main. W3-A4-T2: PR #154 aberta, HEAD a47755a3d1b25b8c81595b5a5bac161811231f96, base main 994cf1c4efe65754ebb70042b448259344a2cc7c (#153). CI quality queued; Netlify Pages changed in_progress. Migration de mídia renumerada para 20261128000400 após detectar colisão com migration #153; merge commit de reconciliação da branch a47755a3d1b25b8c81595b5a5bac161811231f96 preserva as mudanças de #153.",
-      "next_action": "Acompanhar CI quality e Netlify da #154 no SHA exato; corrigir falhas sem bypass. Checklist de merge: quality verde (check:changelog/lint/typecheck/audit/test/test:db/build), Redirect/Header verdes, Pages neutral/verde, sem review bloqueante. Depois merge #154; #52 permanece aberta até validação real do Supabase Storage pelo responsável. Em seguida #53, relendo Escopo refinado e PADRAO-DE-ESCOPO.md.",
+      "current_state": "W3-A4-T1 concluída: PR #152 mergeada em 5538a441d0023926919f165c833629079f98e442; handoffs arquivados, Agent6 pode limpar as arenas após conferir main. W3-A4-T2: PR #154 aberta, HEAD 6e5c1c68c430edc1e3051d325e1ee55bbdf18292, base main 994cf1c4efe65754ebb70042b448259344a2cc7c (#153). Migration de imagens está em 20261128000400, após a migration 00300 da #153. CI quality run 46088652865 em andamento. Runs anteriores: a477 falhou no typecheck por fixture sem bufferMinutes; 5f49 passou typecheck/unit/audit mas falhou em test:db por terminador $$ perdido no auth.uid do harness; fixtures e delimitador corrigidos, migration reescrita limpa (104 linhas).",
+      "next_action": "Acompanhar run 46088652865 e checks Netlify no HEAD 6e5c1c68c430edc1e3051d325e1ee55bbdf18292. Corrigir falhas. Merge #154 somente com quality completo e Redirect/Header verdes, Pages neutral/green, sem review bloqueante. #52 permanece aberta até validação real de Storage pelo responsável. Depois iniciar #53 com nova leitura do Escopo refinado e PADRAO-DE-ESCOPO.md.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W2-A4-T3: confirmação de branches arena para Agent6",
-          "status": "completed_disposition_reported",
-          "result": "Comparação recursiva de Git trees confirma que arena/9e68c2bb-marcou (tip 8d73650d) e arena/4017109f-marcou (tip 16f0166f) ainda contêm docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md, inexistentes na main. Código multi-serviço/matriz está integrado pela #142; não há justificativa para preservar as branches por código, apenas pelos dois handoffs exclusivos. Informado ao Agent6 pela entrada compartilhada: não apagar até arquivar/portar esses arquivos.",
-          "head_sha": "main:09c744e77bfc748dca83c6c5f476fc931c90a302",
-          "tests": "Comparação de Git trees recursiva por SHA de blobs.",
-          "blockers": [
-            "Agent6 precisa arquivar/portar os dois handoffs antes de apagar as arenas."
-          ],
-          "next_action": "Agent6 arquivar/portar os dois handoffs antes de apagar as branches."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W3-A4-T1: arquivar handoffs das arenas",
@@ -1905,6 +1893,17 @@
           "tests": "CI quality queued run 46088183951; Pages changed in_progress. Não atribuir resultado até concluir no SHA exato.",
           "blockers": [
             "Aguardar checks e revisar possíveis falhas."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W3-A4-T2: corrigir falhas CI iniciais da #154",
+          "status": "in_progress_ci",
+          "result": "CI 46088183951 falhou no typecheck por fixture de BookingWidget sem bufferMinutes; corrigido. CI 46088332360 passou typecheck, audit e unit tests, mas falhou em test:db porque a migration do harness db-check tinha delimitador auth.uid() encerrado como $; em vez de $$;. Corrigido; migration 00400 reescrita integralmente após detectar duplicação acidental de texto. Nenhuma falha foi ocultada ou ignorada.",
+          "head_sha": "6e5c1c68c430edc1e3051d325e1ee55bbdf18292",
+          "tests": "CI 46088652865 em andamento no SHA atual.",
+          "blockers": [
+            "Aguardar CI completo no SHA atual."
           ]
         }
       ],
@@ -2198,12 +2197,12 @@
             "target": "Issue #52: imagem opcional de serviço e padrão reutilizável de Storage/mídia.",
             "status": "in_progress_ci",
             "result": "PR #154 aberta (não mergeada). Migration 20261128000400_service_images_storage.sql; bucket público service-images; políticas owner-scoped; validação JPEG/PNG/WebP por magic bytes, 5 MiB, 4096 px/16 MP; upload/substituição/remoção; cards públicos alt/fallback; painel; docs/changelog. Reconciliada com #153 preservando booking_counterparty_phone e usando timestamp posterior. Teste real Supabase Storage permanece pendente e não foi alegado.",
-            "head_sha": "a47755a3d1b25b8c81595b5a5bac161811231f96",
+            "head_sha": "6e5c1c68c430edc1e3051d325e1ee55bbdf18292",
             "pr": 154,
             "base_sha": "994cf1c4efe65754ebb70042b448259344a2cc7c",
-            "tests": "CI quality queued (run 46088183951); Netlify Pages changed in_progress. Harness emula storage.buckets/objects e RLS; não valida Storage real.",
+            "tests": "CI quality run 46088652865 in_progress; Netlify checks em progresso. Falhas anteriores corrigidas: bufferMinutes ausente no fixture de renderização (typecheck) e terminador $$ de auth.uid perdido no db-check (test:db). A migration foi reescrita para 104 linhas sem duplicações.",
             "blockers": [
-              "Aguardar CI quality e Redirect/Header; Pages changed pode ser neutral/green. Não mergear antes do checklist."
+              "Aguardar quality e Redirect/Header; Pages changed pode ser neutral/green."
             ]
           },
           {
