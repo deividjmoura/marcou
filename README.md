@@ -182,6 +182,7 @@ O inventário técnico, a matriz de variáveis de ambiente (`PUBLIC` vs
 `SERVER-ONLY / SECRET`), o fluxo de deploy e rollback na Netlify, os mecanismos
 canônicos de schedulers e o checklist de provisionamento estão documentados em:
 
+- [Roteiro de teste real em produção (pós-Rodada 7)](docs/TESTE-REAL-PRODUCAO.md)
 - [Plataforma, ambientes e operação](docs/PLATFORM.md)
 - [Scheduler de expiração de holds](docs/BOOKING-EXPIRATION-SCHEDULER.md)
 - [Notificações e scheduler de lembretes](docs/NOTIFICACOES.md)

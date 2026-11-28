@@ -11,6 +11,24 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Roteiro operacional ordenado para teste real em produção pelo responsável em
+  `docs/TESTE-REAL-PRODUCAO.md` (Issues `#30`, `#20`, `#26`, `#31`): sequência
+  das 19 migrations (incluindo tratamento da ordem fora de sequência da PR
+  `#142` e precedência obrigatória antes da `20261128000200` da PR `#145`),
+  variáveis de ambiente por fase, teste de recuperação de senha pós-PR `#127`,
+  reserva multi-serviço ponta a ponta pós-PRs `#142`/`#143`/`#146`, ativação
+  segura e desligamento de cada scheduler (expiração, lembretes e Google
+  Calendar) e plano de rollback por camada. Somente documentação; nenhuma
+  migration ou scheduler foi aplicado/ativado.
+- Cobertura de integração em PostgreSQL real (`scripts/db-check.mjs`) para
+  expiração periódica (`expire_stale_bookings()`, `#128`), expiração inline e
+  lembretes (`create_booking_reminders(24)`, `#38`) sobre reservas de múltiplos
+  serviços (`20261125120000_booking_multiple_services.sql`, `#142`, e
+  `20261128000200_booking_definer_search_path.sql`, `#145`): validação de
+  snapshots agregados, preservação de `booking_services`, liberação completa da
+  janela combinada (inclusive faixa do 2º serviço), idempotência diária por fuso
+  do prestador na virada de dia UTC independente do fuso da sessão, concorrência
+  (`FOR UPDATE SKIP LOCKED`) e verificação RLS/privilégios de `booking_services`.
 - Página de confirmação `/reserva/[id]` com feedback visual por status, download `.ics` (duração e preço totais no evento) e rótulos compatíveis com reservas multi-serviço e de um serviço (PR `#68` / onda 2).
 - Motor de reservas com múltiplos serviços do mesmo estabelecimento (Issue `#21`, PR `#139`): tabela `booking_services`, RPCs agregadas, seleção múltipla na página pública, compatibilidade com reservas de um serviço e migration `20261125120000_booking_multiple_services.sql`.
 - Matriz de privilégios com grants mínimos para `notifications` e `booking_services` (`20261125130000_table_privileges_matrix.sql`).
