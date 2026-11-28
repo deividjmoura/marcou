@@ -191,6 +191,11 @@ describe("contraste dos tokens publicados", () => {
     expect(tokens["ds-color-link"]).toBe("var(--ds-color-brand-strong)");
   });
 
+  it("provides a system-dark media fallback", () => {
+    expect(tokenCss).toContain("@media (prefers-color-scheme: dark)");
+    expect(tokenCss).toContain('[data-theme="system"]');
+  });
+
   it("dark semantic text and feedback pairs meet AA", () => {
     const pairs = [
       ["ds-color-text-primary", "ds-color-background"],
