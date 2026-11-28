@@ -1652,8 +1652,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W2-A2-T1 concluída: #127 foi atualizada com main 4badea4 sem conflitos, suíte local completa passou no SHA f8977caf67c3bf0435683eed2ae7a9172ae8d047; GitHub confirmou quality success, Redirect rules/Header rules success, Pages changed neutral, PR limpa sem reviews bloqueantes. Squash merge realizado; SHA do merge 82af7506e2f514345a07b15b6f6e23dcd412ab01. Reconferir main antes de reconstruir #130.",
-      "next_action": "Reconferir main pós-#127; reconstruir #130 sobre a main atual, mantendo apenas alterações de recuperação de senha e testes com mocks. Não executar e-mail real nem alterar Supabase/Netlify.",
+      "current_state": "Wave 4 revisada: dispatch.wave_4 não atribui tarefas ao Agent 2. Pendências W2-A2-T2/T3/T4 seguem válidas. Main reconfirmada em 994cf1c4efe65754ebb70042b448259344a2cc7c. PR #130 continua Draft/open, remote HEAD 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, 29 ahead/21 behind, mergeable=false; CI #277 success refere-se somente a esse SHA antigo. O usuário reportou proxy.test.ts 3/3 após configurar metadados de preview localmente, mas essas alterações ainda não aparecem no HEAD remoto.",
+      "next_action": "Sincronizar a branch fix/auth-recovery-preview-origin com a main atual sem force-push, preservando as alterações locais de teste já feitas no Codespace; publicar o novo HEAD, executar quality completa e confirmar CI/Netlify no SHA exato. Depois marcar #130 Ready e integrar se o checklist estiver verde. Atualizar #70/#23 com evidência após integração; manter ambas abertas enquanto pendentes as validações reais e/ou lacunas de aceite.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1677,6 +1677,20 @@
           "tests": "check:changelog, lint, typecheck, audit, test, test:db e build — todos PASSOU localmente; CI quality success no SHA exato; Netlify Redirect/Header success; Pages changed neutral.",
           "blockers": [],
           "next_action": "Reconferir main pós-merge e reconstruir #130 sobre ela."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "Wave 4 — conferência de escopo e reconciliação remota da autenticação",
+          "status": "blocked",
+          "result": "dispatch.wave_4 não contém tarefas para Agent 2; W2-A2-T2/T3/T4 continuam pendentes. Main reconfirmada em 994cf1c4efe65754ebb70042b448259344a2cc7c. PR #130 segue Draft, HEAD remoto 852f1dcdc29a034c3fc3983f304a0fef7a09aca9, 29 ahead/21 behind, mergeable=false. CI #277 success e Netlify preview success pertencem ao HEAD remoto antigo. O usuário reportou proxy.test.ts 3/3 após ajustar envs localmente, mas a alteração ainda não foi publicada no GitHub. Escopos refinados #70/#23 lidos; #70 exige código/mocks e teste redirect, validação real fica com responsável; #23 exige auditoria de telefone, logout, rotas protegidas, isolamento de perfil e docs.",
+          "head_sha": "852f1dcdc29a034c3fc3983f304a0fef7a09aca9",
+          "tests": "Usuário reportou npx vitest run src/proxy.test.ts: 3/3. Não é evidência do SHA remoto atual; quality #277 success e Netlify preview success no SHA remoto 852f1dcdc29a034c3fc3983f304a0fef7a09aca9.",
+          "blockers": [
+            "Branch remota está 21 commits atrás da main 994cf1c4efe65754ebb70042b448259344a2cc7c.",
+            "Alterações locais do Codespace ainda não foram commitadas/publicadas; GitHub não permite validar nem executar CI sobre elas.",
+            "PR #130 permanece Draft e mergeable=false; checklist de quality/Netlify precisa ser revalidado no novo SHA."
+          ],
+          "next_action": "Sincronizar a branch local sem force-push, preservar os testes e alterações locais, publicar o novo HEAD e rodar quality completa; só então revisar e mergear."
         }
       ]
     },
