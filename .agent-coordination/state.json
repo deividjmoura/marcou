@@ -2160,10 +2160,11 @@
         "arena/116298da-marcou",
         "feat/calendario-mobile",
         "feat/pagina-publica-agendamento",
-        "feat/customer-account-area"
+        "feat/customer-account-area",
+        "agent5/w2-design-system-main-latest"
       ],
-      "status": "in_progress",
-      "active_assignment": "Resolver #133 até a revisão do responsável, integrar #67 se válida, fechar #46 e #2 se superadas (com evidência) e triar as issues de produto.",
+      "status": "completed_with_blocker",
+      "active_assignment": "Wave 2 W2-A5-T1 (#67), W2-A5-T2 (#121/design), W2-A5-T3 (status comments em todas as issues abertas).",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2200,21 +2201,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Wave 2 W2-A5 iniciada. main reconfirmada no SHA 4badea4b8ba8ecfa95bfdfa526dad606c5a56691 (#142), runbook seções 0/4/5/9 relidas. #67 reconfirmada draft, head b35653c, 43 commits behind; visual headless requer browser, mas navegador conectado só possui abas sem controle/preview.",
-      "next_action": "Reconstruir #67 sobre main sem force push, adicionar changelog, CI exato e deploy preview; inspeção visual headless será tentada com ferramenta disponível. Triar #121/#27 e comentar status em issues abertas.",
+      "current_state": "W2-A5-T2 concluída: #121 e #27 atualizadas, PR de design #67 foi substituída por #149 (reconstruída duas vezes para seguir main concorrente; base atual 539035b29e9a8971279215607eba8f80ec369757, 9 commits ahead/0 behind, head ab2d2861744a793259ec9cc62deddda9c559bead). CI quality run 46086141759 está em andamento (install completado, changelog verde, lint em execução). #149 Draft/mergeable; Netlify Preview ainda não reportou status. Inspeção headless 1440/390 não disponível (browser sem navegação/captura). W2-A5-T3 concluída: 59/59 issues abertas têm comentário status/próxima ação; #125 já fechada por outro agente e recebeu comentário de acompanhamento.",
+      "next_action": "Aguardar CI completo e Preview #149. Se ambos verdes, checklist técnico fica atendido, mas não mergear enquanto inspeção headless 1440/390 (overflow/console/screenshots) não puder ser comprovada. Se a main avançar novamente, atualizar branch antes de merge.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "Squash merge PR #140 e verificação de integração",
-          "status": "completed",
-          "result": "PR #140 mergeada. Merge commit cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b confirmado como main; compare main vs merge = identical. Documentos sociais e changelog presentes na main. PR #133 fechada como substituída; #46/#2 superadas e fechadas. #67 não mergeada por pendências documentadas.",
-          "head_sha": "cd30f00c5d29dda6f65fe88ddb7d60dd7a57625b",
-          "tests": "CI run 46081754355 (#301) success: check:changelog, lint, typecheck, audit, unit/domain tests, test:db e build. Netlify deploy-preview #140 success. PR mergeable, não draft, 0 behind, sem review threads bloqueantes.",
-          "blockers": [
-            "PR #67 requer reconciliação com main, changelog e inspeção visual humana desktop/mobile; sem acesso ao preview em navegador nesta sessão."
-          ],
-          "next_action": "Concluir escopo com #67 pendente até revisão visual/CI atualizado."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "Fechamento da atuação Agent5 na rodada 7",
@@ -2236,6 +2225,37 @@
           "tests": "Main commit foi consultado. #67 CI antigo não satisfaz SHA atual; será necessário workflow novo.",
           "blockers": [],
           "next_action": "Reconciliar #67 com main e validar CI."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "Wave 2 W2-A5 — design/docs/backlog",
+          "status": "completed_with_blocker",
+          "result": "#67/#144/#148 encerradas como versões substituídas; PR canônica #149 Draft sobre main SHA 539035b, 9 ahead/0 behind. CI run 46086141759 em andamento; preview pendente. T2 #121/#27 status atualizado. T3: 59/59 issues abertas com status e próxima ação comentados; roadmap aberto. Inspeção headless 1440/390 não pode ser realizada neste browser (somente leitura de tabs).",
+          "head_sha": "ab2d2861744a793259ec9cc62deddda9c559bead",
+          "tests": "CI: install success, check:changelog success, lint em andamento; restante pendente. Nenhum teste local executado. Netlify preview status sem check publicado ainda.",
+          "blockers": [
+            "Inspeção headless/screenshots 1440px e 390px, console e overflow não possível na sessão; não mergear sem evidência visual.",
+            "CI quality run 46086141759 ainda em andamento; preview pending."
+          ],
+          "next_action": "Aguardar checks e inspeção visual; atualizar branch se main avançar."
+        }
+      ],
+      "wave_2_tasks": [
+        {
+          "id": "W2-A5-T1",
+          "status": "completed_with_blocker",
+          "result": "PR #67 fechada; #144 e #148 (branches reconstruídas sobre main) fechadas como superadas. PR canônica #149, branch agent5/w2-design-system-main-latest, base main SHA 539035b29e9a8971279215607eba8f80ec369757, head ab2d2861744a793259ec9cc62deddda9c559bead, 9 ahead/0 behind. Fontes/tokens/CSS/docs/licenses/changelog/test reconciliados. CI run 46086141759 in_progress; Preview status ainda não apareceu. Visual headless 1440/390 bloqueado por limitações de browser desta sessão.",
+          "next_action": "Aguardar CI e Preview; inspeção visual exige browser headless controlável/captura."
+        },
+        {
+          "id": "W2-A5-T2",
+          "status": "completed",
+          "result": "Issue #121 comentada como BACKLOG não coberta pela PR tipográfica; Issue #27 comentada PARTIAL com #149 e pendências de validação visual, ícones animados/catalogue/tokens."
+        },
+        {
+          "id": "W2-A5-T3",
+          "status": "completed",
+          "result": "Search do GitHub confirmou 59 issues abertas; todas as 59 receberam comentário status + próxima ação (incluindo as triagens prévias #19/#28/#43/#47/#52-57/#24/#27/#121/#132 atualizadas/refrescadas). #125 já estava fechada, recebeu comentário de acompanhamento. Roadmap #72-#112 mantido aberto."
         }
       ]
     },
