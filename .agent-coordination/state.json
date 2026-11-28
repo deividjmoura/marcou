@@ -1906,7 +1906,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "Wave 4: W4-A4-T1 (#154 aguardando resolução da dependência #150; CI verde no HEAD 96f1490c), W4-A4-T2 (#156 adiciona teste DB de isolamento da RPC booking_counterparty_phone; CI em execução), W4-A4-T3 aguardando PR de correção DDD do Agent1 e PRs/escopo #47.",
+      "active_assignment": "Wave 4: W4-A4-T1 #154 reconciliada sobre main atual após merge #150; CI novo em execução. W4-A4-T2 #156 mergeada. W4-A4-T3 auditoria de segurança da #155 concluída; aguardar eventuais PRs de #47.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -1937,20 +1937,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W4-A4-T1: #154 tecnicamente pronta, mas não integrada porque a regra de conflito da Wave3 exige #150 mergeada ou rebase seguro sobre ela; #150 continua Draft. W4-A4-T2: identificada ausência de teste DB para booking_counterparty_phone; PR #156 aberta com fixtures para dono, cliente, terceiro e dono de outro negócio, asserts de telefone/NULL e grants. HEAD 18c1d9c5af49c429a7279411fa65140f1789722d, CI quality run 46141506670 em andamento. Anônimo não tem EXECUTE (permission denied), mais restritivo que NULL, preservando grant mínimo aprovado. W4-A4-T3: nenhuma PR de bug DDD encontrada até agora; #47 aberta, sem PR própria.",
-      "next_action": "Aguardar CI run 46141506670 da #156; corrigir falhas e confirmar quality/Netlify checks no SHA exato. Mergear #156 apenas com checklist completo. Continuar aguardando #150 para reconciliar/mergear #154. Monitorar PR do Agent1 para DDD e PRs de exclusão de conta/#47; revisar segurança quando surgirem. Não iniciar #53 até #154 integrada e #52 validada pelo responsável no Storage real.",
+      "current_state": "Main atual 5a4b069596f7ac9e2575677dc97dfd85318ed2c8 (#156 merge), incluindo #155 em ecdff384a71a948a3d7e6b713d604a5562a1bebc e #150 em 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. W4-A4-T1: #154 foi reconciliada sem force-push com merge commit e23e9e4f88003ad39d30a0446be379f28f1bce60 (parents: head anterior 96f1490c + main 5a4b0695), preservando CSS/tipografia da #150, changelog #155/#150 e teste de isolamento #156; branch agora 0 atrás, PR mergeable=true. CI quality run 46142009138 em andamento; Netlify checks iniciados. W4-A4-T2: #156 squash-mergeada em 5a4b069596f7ac9e2575677dc97dfd85318ed2c8 após quality success, Redirect/Header success, Pages neutral e Preview ready; logs DB confirmam 57 checks sociais passaram, incluindo dono/cliente/terceiro/outro prestador/anon. W4-A4-T3: PR #155 auditada; alteração só em normalização de telefone e testes, sem mudança nos caminhos de autorização/RPC nem exposição em listagens; CI quality e Netlify verdes no head b3c9e83 e merge commit ecdff384. #47 permanece aberta sem PR relacionada.",
+      "next_action": "Aguardar CI run 46142009138 e Netlify Redirect/Header/Pages/Preview no SHA e23e9e4f88003ad39d30a0446be379f28f1bce60; inspecionar logs DB Storage RLS e corrigir falhas se houver. Mergear #154 com expected_head_sha somente após checklist verde. Depois reler Escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md antes de iniciar W4-A4-T1 follow-up. Manter #52 aberta até teste real Supabase Storage feito pelo responsável. Monitorar PRs de exclusão de conta/#47 e revisar quando surgirem.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W3-A4-T2: corrigir falhas CI iniciais da #154",
-          "status": "in_progress_ci",
-          "result": "CI 46088183951 falhou no typecheck por fixture de BookingWidget sem bufferMinutes; corrigido. CI 46088332360 passou typecheck, audit e unit tests, mas falhou em test:db porque a migration do harness db-check tinha delimitador auth.uid() encerrado como $; em vez de $$;. Corrigido; migration 00400 reescrita integralmente após detectar duplicação acidental de texto. Nenhuma falha foi ocultada ou ignorada.",
-          "head_sha": "6e5c1c68c430edc1e3051d325e1ee55bbdf18292",
-          "tests": "CI 46088652865 em andamento no SHA atual.",
-          "blockers": [
-            "Aguardar CI completo no SHA atual."
-          ]
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W3-A4-T2: CI verde; aguardar dependência #150",
@@ -1973,6 +1962,19 @@
             "#154 espera #150 por regra de conflito wave_3.",
             "#156 aguarda quality/Netlify no SHA exato.",
             "W4-A4-T3 aguarda PRs do Agent1."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T09:02:00-03:00",
+          "task": "Wave 4 — merge #156, revisão #155 e reconciliação #154 após #150",
+          "status": "w4_t2_merged_t3_reviewed_t1_ci_pending",
+          "result": "#150 squash-mergeada em 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. #156 squash-mergeada em 5a4b069596f7ac9e2575677dc97dfd85318ed2c8; quality run 46141582606 success no HEAD 761ea12e, Redirect/Header success, Pages neutral, Preview ready; logs DB: 57 checks passaram/0 falhas incluindo isolamento da RPC e grants. #155 revisada após merge: diff só em normalizador/testes/CHANGELOG, sem relaxar privacidade ou mexer na RPC; CI quality e Netlify verdes. #47 sem PR relacionada. #154 reconciliada sobre main 5a4b por merge commit e23e9e4f (first parent antigo head 96f1490c, second parent main), sem force-push; compare main...branch ahead 53/behind 0 e PR mergeable true. CI run 46142009138 e Netlify checks aguardando.",
+          "head_sha": "e23e9e4f88003ad39d30a0446be379f28f1bce60",
+          "tests": "#156 full quality/Netlify success; #155 full quality/Netlify success; #154 new quality/Netlify pending.",
+          "blockers": [
+            "Não mergear #154 até checks verdes no novo SHA e23e9e4f.",
+            "#52 exige validação real de Storage pelo responsável antes de fechar.",
+            "#53 depende do merge de #154."
           ]
         }
       ],
@@ -2293,34 +2295,36 @@
           {
             "id": "W4-A4-T1",
             "target": "#154 / Issue #52: mergear imagens de serviço se checklist verde; depois #53",
-            "status": "blocked_by_150",
+            "status": "reconciled_waiting_ci",
             "pr": 154,
-            "head_sha": "96f1490cccfb3daeb59a9dd37a50a1c9b459ef45",
-            "tests": "quality success run 46089503494; Redirect/Header success; Pages neutral; Deploy Preview ready; harness valida metadados/RLS apenas, sem Storage real.",
+            "head_sha": "e23e9e4f88003ad39d30a0446be379f28f1bce60",
+            "base_sha": "5a4b069596f7ac9e2575677dc97dfd85318ed2c8",
+            "tests": "Branch reconciliada sobre main após #150/#155/#156; merge commit e23e9e4f com parents antigo head 96f1490c + main 5a4b0695; compare main...branch ahead 53/behind 0; PR mergeable true. CI quality run 46142009138 in_progress; Netlify Header/Pages in_progress.",
             "blockers": [
-              "#150 continua Draft. Regra wave_3.regra_de_conflito: mudanças em painel-client.tsx aguardam #150 mergeada ou reconciliação segura sobre ela.",
-              "#52 requer teste real de upload/persistência/renderização pelo responsável; nenhum Supabase remoto foi alterado."
+              "Aguardar quality completo e Redirect/Header success; Pages neutral/green; Preview success.",
+              "#52 continua aberta até responsável validar Storage real; harness não simula upload remoto real."
             ]
           },
           {
             "id": "W4-A4-T2",
-            "target": "Teste de isolamento DB da RPC booking_counterparty_phone: dono, cliente, terceiro, anônimo e dono de outro negócio",
-            "status": "in_progress_ci",
+            "target": "Teste de isolamento DB da RPC booking_counterparty_phone",
+            "status": "completed_merged",
             "pr": 156,
-            "branch": "agent4/w4-counterparty-phone-isolation",
-            "head_sha": "18c1d9c5af49c429a7279411fa65140f1789722d",
-            "tests": "PR #156 criada; quality run 46141506670 in_progress. Cobertura: dono recebe customer_phone; cliente recebe telefone do perfil do dono; terceiro e dono de outro negócio recebem NULL; anon recebe permission denied pois não tem EXECUTE (mais restritivo que NULL); grants assert authenticated=true, anon/service_role=false.",
-            "blockers": [
-              "Aguardar CI completo e checks Netlify no SHA exato."
-            ]
+            "head_sha": "761ea12e172b143b24a98b2aae0ca1098726366f",
+            "merge_sha": "5a4b069596f7ac9e2575677dc97dfd85318ed2c8",
+            "tests": "PR #156 squash-mergeada. CI quality run 46141582606 success no SHA exato (changelog, lint, typecheck, audit, unit/domain, DB integration, build); Redirect/Header success, Pages neutral, Preview ready. Logs confirm `telefone da contraparte só é executável por authenticated`, dono recebe customer_phone, cliente recebe telefone do dono, terceiro e dono de outro negócio recebem NULL, anon recebe permission denied; `resultado social: 57 passaram, 0 falharam`.",
+            "blockers": []
           },
           {
             "id": "W4-A4-T3",
-            "target": "Revisar segurança da PR do Agent1 para correção DDD e PRs relacionadas à exclusão de conta/#47",
-            "status": "monitoring_no_pr",
-            "tests": "Busca GitHub de PRs relacionadas a #47 não retornou PR; #47 permanece aberta. Nenhuma PR do bug DDD encontrada no inventário aberto atual.",
+            "target": "Revisar segurança da PR Agent1 para DDD e PRs relacionadas à exclusão de conta/#47",
+            "status": "ddd_pr_review_completed_monitor_47",
+            "pr": 155,
+            "head_sha": "b3c9e83e71e3a40dd77359722fb839d4805db9e2",
+            "merge_sha": "ecdff384a71a948a3d7e6b713d604a5562a1bebc",
+            "tests": "PR #155 auditada após merge: diff limitado a src/lib/whatsapp.ts, src/lib/whatsapp.test.ts e CHANGELOG; normalização remove heurística NANP, assume BR sem +, aceita apenas +55 explícito, valida DDD Anatel; nenhuma mudança na RPC booking_counterparty_phone, autorização, payload/listagens ou superfície pública. Regressões cobrem DDDs 11–19 e outros DDDs. CI quality success no head ecdff merge commit, Netlify Redirect/Header success, Pages neutral. #47 aberta sem PR relacionada na busca/listagem.",
             "blockers": [
-              "Aguardar PR do Agent1 para bug DDD e eventual PR de exclusão de conta; revisar assim que surgirem."
+              "Aguardar eventual PR de exclusão de conta ou outra PR ligada à #47 para revisão."
             ]
           }
         ]
