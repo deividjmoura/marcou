@@ -11,6 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- ADR de pagamentos `docs/ADR-PAGAMENTOS.md` (Issue #28): separa a máquina de estados financeira do estado da reserva, recomenda Pix manual na Fase 1 e compara Asaas, Mercado Pago e Efí para futura Fase 2, com riscos, controles e decisões do responsável. Somente documentação; nenhuma integração ou transação foi ativada.
 - ADR de estratégia E2E e plano de Smoke E2E das 3 jornadas críticas em `docs/ADR-E2E.md` (Issue `#31`, Fase 1 do *Escopo refinado*): compara Supabase local via CLI/Docker no CI (recomendado para PRs sem custo nem segredos) contra projeto Supabase de *staging* dedicado (`OWNER_DECISION`), especifica as 3 jornadas contra build local (cadastro do prestador → criar serviço → publicar; reserva pública multi-serviço; confirmação/cancelamento pelo prestador e notificações) e registra medições reais atualizadas em `docs/QUALITY-AUDIT.md` (46 arquivos / 438 testes Vitest, 7 harnesses PostgreSQL com 24 migrations e `db-check` 140/140).
 - Fundação neutra para futura entrega de e-mail transacional sem envio real (Issue `#26`):
   - ADR de escolha de provedor em `docs/ADR-EMAIL-PROVEDOR.md` comparando Resend, Postmark, Amazon SES e Brevo em entregabilidade (domínio próprio, SPF/DKIM/DMARC), custo, limites, tratamento de *bounce*/*complaint*, templates pt-BR e LGPD (aguarda `OWNER_DECISION`).
