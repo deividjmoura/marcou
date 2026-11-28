@@ -2481,8 +2481,8 @@
         "agent5/w2-design-system-main-latest",
         "agent5/w2-design-system-main-current"
       ],
-      "status": "in_progress",
-      "active_assignment": "W5-A5-T1 #121 PR #159 Ready for Review; automated checks green. W5-A5-T3 checklist created. W5-A5-T2 blocked until owner visual review and #159 merge. W5-A5-T4 cannot delete branches (no API; divergent ahead work preserved).",
+      "status": "completed_with_blocker",
+      "active_assignment": "W5-A5-T1 #121 PR #159 Ready for Review, CI/Netlify verdes, aguardando revisão visual do responsável; W5-A5-T2 #27 migração por tela bloqueada pela revisão/merge #159 e conflito com Agent1 painel; W5-A5-T3 checklist visual entregue; W5-A5-T4 branches comparadas mas sem delete API.",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2519,8 +2519,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f, base main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, 14 ahead/0 behind, mergeable, Ready for Review. CI Quality run 46142988730 success (changelog, lint, typecheck, audit, unit/domain, test:db, build); Netlify Deploy Preview success https://deploy-preview-159--marcoou.netlify.app. Checklist visual criado. Owner visual review 390/1440 all modes, console/overflow remains acceptance evidence. Issues #121/#27/#132/#19/#28 updated. Temporary branches diverged; no branch deletion tool.",
-      "next_action": "Owner inspect PR preview and docs/REVISAO-VISUAL-DONO.md; if accepted, merge PR #159 under autonomy, then implement remaining #27 screen token migrations in small PRs (home/auth/customer, no panel while Agent1 owns). Reconfirm main before merge. Branch cleanup unavailable.",
+      "current_state": "Main confirmada 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f, 14 ahead/0 behind, mergeable, Ready for Review. CI run 46142988730 success (changelog/lint/typecheck/audit/unit/domain/test:db/build); Netlify Redirect/Header success, Pages neutral, Deploy Preview success https://deploy-preview-159--marcoou.netlify.app. Tema cookie light/dark/system, beforeInteractive, selector, tokens, tests/docs. Visual owner checklist docs/REVISAO-VISUAL-DONO.md; manual capture 390/1440 in all modes, console, overflow and areas remains pending. #121 stays open and PR not merged.",
+      "next_action": "Responsible owner inspect preview #159 and complete docs/REVISAO-VISUAL-DONO.md. Merge #159 after evidence. Then W5-A5-T2 apply semantic tokens to home/auth/client in small PRs; panel deferred until Agent1's #56/#55/#54/#43 changes. Branch deletion unavailable, retain.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2559,6 +2559,19 @@
             "Branch deletion capability unavailable; candidate branches diverge and retain ahead commits."
           ],
           "next_action": "Owner visual review; merge PR159 if acceptance is verified; proceed with #27 screen token PRs after."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W5-A5 — #121 CI green, visual pending; checklist done; branch audit",
+          "status": "completed_with_blocker",
+          "result": "PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f Ready for Review; CI quality success; Netlify redirect/header success, Pages neutral, deploy preview success. Owner checklist docs/REVISAO-VISUAL-DONO.md delivered but not completed. Branch cleanup audit compared seven legacy branches; all diverged with ahead commits, delete API absent.",
+          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
+          "tests": "CI run 46142988730 success; Netlify redirect/header success, Pages neutral, Deploy Preview success. Visual review owner pending.",
+          "blockers": [
+            "Owner screenshots/visual acceptance for 390/1440 and all themes required before merge.",
+            "Delete branch capability not available."
+          ],
+          "next_action": "Maintainer review PR preview and complete checklist; then merge. W5-A5-T2 after merge; branch cleanup delegated/blocked."
         }
       ],
       "wave_2_tasks": [
@@ -2607,14 +2620,14 @@
           "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
           "tests": "CI quality success; Netlify redirect/header success, Pages neutral, Deploy Preview success. Visual review pendente do responsável.",
           "blockers": [
-            "Branch cleanup (Agent5 legacy branches) not possible with available GitHub tools: no delete-branch action."
+            "Branch deletion capability absent; coordinator removed agent5/w2-design-system-main-current but other legacy refs still present."
           ],
           "next_action": "Avisar coordinator no state; manter branch cleanup pendente, não usar ação destrutiva alternativa."
         },
         {
           "id": "W4-A5-T2",
           "status": "completed",
-          "result": "Issue #27 semantic tokens/catalogue merged via PR #158, merge SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. CI quality green, Netlify redirect/header green, Pages neutral, preview green. Dark token contract and component catalogue now on main. Visual screenshots pending responsible before theme audit.",
+          "result": "PR #158 semantic tokens/catalogue merged (SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82), checks green; manual design-system screenshots pending owner.",
           "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
           "tests": "CI quality success; Netlify redirect/header success, Pages neutral, preview success. Visual review 390/1440 not performed by agent, noted.",
           "blockers": [
@@ -2631,43 +2644,43 @@
         {
           "id": "W4-A5-T2-121",
           "status": "in_progress",
-          "result": "PR #159 updated to HEAD a5340226ee75c97a361ff622e32369dd5f320e9f after adding docs/REVISAO-VISUAL-DONO.md owner checklist. Main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, 14 ahead/0 behind. CI run 46142988730 in_progress (install); prior quality run cancelled due new head. Netlify statuses in_progress. Visual capture still owner pending.",
+          "result": "PR #159 implementation passes CI and Netlify; Ready for Review, merge blocked on owner visual evidence per scope.",
           "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
-          "tests": "CI run 46142988730 in_progress (install); earlier run 46142911252 cancelled when HEAD changed. Netlify redirect/header/pages/preview in progress. No screenshots captured by agent.",
+          "tests": "CI success on a5340226ee75c97a361ff622e32369dd5f320e9f; Netlify redirect/header success, Pages neutral, deploy-preview success.",
           "blockers": [
-            "CI and Netlify pending on exact latest HEAD; owner visual checklist must be completed before merge."
+            "Owner visual evidence pending; do not merge/close #121 without review."
           ],
-          "next_action": "Poll checks; if green, mark ready, but don't merge until owner visual checklist/screenshots in all themes are complete."
+          "next_action": "Owner complete visual checklist; then merge and continue W5-A5-T2."
         }
       ],
       "wave_5_tasks": [
         {
           "id": "W5-A5-T1",
-          "status": "ready_for_owner_review",
-          "result": "PR #159 Ready for Review. HEAD a5340226ee75c97a361ff622e32369dd5f320e9f; CI quality success run 46142988730 (all required steps green), Netlify Preview success. Issue #121 still open awaiting manual visual acceptance.",
+          "status": "completed_with_blocker",
+          "result": "PR #159 implemented #121, Ready for Review. HEAD a5340226ee75c97a361ff622e32369dd5f320e9f, 14 ahead/0 behind. CI quality success; Netlify redirect/header success, Pages neutral, preview success. Owner visual checklist remains pending, so merge/close issue not yet done.",
           "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
-          "tests": "CI Quality success; Netlify Deploy Preview success; automated contrast/theme contract tests passed. Visual manual checks 390/1440 remain pending owner.",
+          "tests": "CI run 46142988730 success (all steps); Netlify checks success/neutral and preview success.",
           "blockers": [
-            "Owner visual review across screens and themes; check overflow/console and evidence."
+            "Maintainer visual review across screens/themes, viewport 390/1440, console/overflow evidence not yet performed."
           ],
-          "next_action": "Owner review; merge if acceptance evidence confirms visual/responsive behavior."
+          "next_action": "Await owner screenshots/checklist; merge only after acceptance."
         },
         {
           "id": "W5-A5-T2",
           "status": "blocked_dependency",
-          "result": "Aguardando PR #159 integrar e revisão visual para aplicar tokens nas telas remanescentes em PRs pequenas. Painel reservado ao Agent1.",
-          "next_action": "Após #159, identificar tela/arquivo sem sobreposição e criar PRs separadas home, auth e customer."
+          "result": "Wait for #159 to merge and owner review; then migrate tokens in small PRs home/auth/client. Panel blocked by Agent1 priority changes.",
+          "next_action": "After #159 merge, work only on home/auth/client; do not touch painel-client.tsx until Agent1 changes land."
         },
         {
           "id": "W5-A5-T3",
           "status": "completed",
-          "result": "Criado docs/REVISAO-VISUAL-DONO.md na branch #159 com checklist viewport 390/1440, Claro/Escuro/Automático, áreas/telas, overflow, console, foco, movimento reduzido e evidências."
+          "result": "docs/REVISAO-VISUAL-DONO.md created and included in #159, covering 390/360/1440, all modes, key areas, no flash, overflow, keyboard, focus, contrast, reduced motion, console and evidence."
         },
         {
           "id": "W5-A5-T4",
           "status": "blocked_tool_and_safety",
-          "result": "Branches temporárias pesquisadas e comparadas à main; todas têm commits ahead e estão divergidas (não são provadamente superadas). Nenhuma API de delete branch disponível; não apagar nem reescrever.",
-          "next_action": "Preservar; coordenador pode limpar quando houver API e prova individual de superação."
+          "result": "Searched branch refs and compared against main: legacy branches all diverged/ahead with repeated #150 files; examples ahead/behind 9/11, 9/10, 3/58, 5/2, 5/4, 9/6, 9/5. They are redundant but not tip-equal; delete-branch API unavailable. Staging branch agent5/w4-121-reconcile-media also exists; preserved because no deletion action.",
+          "next_action": "Coordinate with maintainer/Agent6 for cleanup once a branch-delete action is available; don't force or rewrite branches."
         }
       ]
     },
