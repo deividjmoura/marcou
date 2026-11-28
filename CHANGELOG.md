@@ -11,6 +11,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- ADR de segurança da demo do feed `docs/ADR-DEMO-FEED-LOCKS.md` (Issue #132): define gate duplo Deploy Preview + flag explícita, geração condicional para excluir fixtures do bundle de produção, isolamento sem Supabase/Auth e testes de não vazamento. Somente desenho; implementação segue bloqueada pelo feed funcional.
 - Preparação pura da Fase 2 de E2E (sem novas dependências nem alterações de CI — Issue `#31`):
   - Módulo `src/lib/e2e-smoke.ts` e suíte `src/lib/e2e-smoke.test.ts` (11 testes Vitest) entregando trava fail-closed `assertSafeE2EEnvironment()` (bloqueia `peornypgltuueubmsucm` e `marcoou.netlify.app`, aponta probe `webServer` para `GET /api/health`), cálculo determinístico de data no fuso `America/Sao_Paulo` (`pickDeterministicE2EDate()`) e gerador de massa isolada RFC 2606 `.test` (`buildSmokeFixture()`) validado contra os schemas Zod reais e `aggregateBookingServices()`.
   - Seção 5 de `docs/ADR-E2E.md` com blueprint pronto de `supabase/config.toml` mínimo (Opção A), job `e2e` no CI e checklist em 4 passos para execução imediata pós-`OWNER_DECISION`.
