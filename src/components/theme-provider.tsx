@@ -24,7 +24,7 @@ export function ThemeProvider({
   children: ReactNode;
 }) {
   const [mode, setMode] = useState<ThemeMode>(() => parseThemeMode(initialMode));
-  const [systemPreference, setSystemPreference] = useState<ResolvedTheme>("light");
+  const [systemPreference, setSystemPreference] = useState<ResolvedTheme | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -35,7 +35,8 @@ export function ThemeProvider({
   }, []);
 
   useEffect(() => {
-    const resolved = resolveTheme(mode, systemPreference);
+    if (mode === "system" && systemPreference === null) return;
+    const resolved = resolveTheme(mode, systemPreference ?? "light");
     const root = document.documentElement;
     root.dataset.theme = resolved;
     root.dataset.themeMode = mode;
