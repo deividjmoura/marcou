@@ -2398,8 +2398,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main confirmada 994cf1c4efe65754ebb70042b448259344a2cc7c (merge #151–#153). PR #150 foi reconciliada sobre main atual por re-aplicação de patch, mantendo os 9 arquivos e changelog atualizado; HEAD fc92a8bdc2b10da40f8b719f735ebf606672d453, compare 9 ahead/0 behind, mergeable=true, Ready for Review. Descrição registra inspeção visual 1440/390, console e overflow como pendência do responsável conforme decisão de desbloqueio_wave4. CI run 46141488822 e Netlify preview ainda in progress/pending. #27/#121 comentários atualizados, aguardando integração.",
-      "next_action": "Aguardar CI e Netlify preview no SHA fc92a8bdc2b10da40f8b719f735ebf606672d453; confirmar checks do checklist (CI quality, Redirect/Header e Pages neutral). Se todos verdes, mergear #150 e avisar coordenação. Depois iniciar #27 tokens/catalogue.",
+      "current_state": "Main reconfirmada ecdff384a71a948a3d7e6b713d604a5562a1bebc (#154 integrada enquanto validação estava em andamento). PR #150 foi reconciliada novamente sobre esse SHA; HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, compare 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708 in_progress (install) e status Netlify Preview ainda sem check publicado. Descrição mantém inspeção visual 1440/390, console e overflow como pendência do responsável.",
+      "next_action": "Aguardar CI e Netlify Preview; reconfirmar main antes de merge. Se a main avançar, reconcile de novo. Se checks checklist verdes no HEAD exato, merge autorizado e avisar coordenador. #27 tokens/catalogue continua bloqueada pela integração.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2448,6 +2448,18 @@
             "Checks CI e Netlify Deploy Preview/Redirect/Header/Pages ainda precisam finalizar e ser confirmados no SHA exato."
           ],
           "next_action": "Aguardar checks; merge autorizado somente após checklist coordenador completo; depois destravar #27."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T1 — segunda reconciliação por avanço de main",
+          "status": "in_progress",
+          "result": "Main avançou para ecdff384a71a948a3d7e6b713d604a5562a1bebc durante CI (PR #154 integrada). PR #150 reaplicada sobre essa base e head atualizado. Compare 9 ahead/0 behind, mergeable. CI run 46141610708 in_progress; preview check ainda não publicado.",
+          "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
+          "tests": "Install in progress; demais gates pending; preview pending. Visual inspection não realizada pelo agente e explicitamente marcada pendente do responsável.",
+          "blockers": [
+            "Aguardar CI/Netlify no head atual e reconfirmar main antes de mergear."
+          ],
+          "next_action": "Aguardar checks; se main não avançar e gates forem verdes, mergear #150 segundo autorização Wave 4."
         }
       ],
       "wave_2_tasks": [
@@ -2492,11 +2504,11 @@
         {
           "id": "W4-A5-T1",
           "status": "in_progress",
-          "result": "PR #150 reconciliada com main 994cf1c4efe65754ebb70042b448259344a2cc7c após avanço #151–#153. HEAD fc92a8bdc2b10da40f8b719f735ebf606672d453; compare 9 ahead/0 behind; mergeable, Ready for Review. Body atualizada com revisão visual 1440/390, console/overflow pendente do responsável (regra do coordenador). CI run 46141488822 in_progress; Netlify deploy-preview pending. Ainda não mergeada.",
-          "head_sha": "fc92a8bdc2b10da40f8b719f735ebf606672d453",
-          "tests": "CI ainda in progress (install dependencies); Netlify Deploy Preview pending. Visual review por agente não executada; marcada explicitamente como pendência do responsável.",
+          "result": "Main avançou para ecdff384a71a948a3d7e6b713d604a5562a1bebc (#154); PR #150 reconciliada novamente. HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708 em andamento (install); Netlify Preview sem check publicado. Revisão visual desktop/mobile/console/overflow marcada na descrição como pendência do responsável conforme regra Wave 4. Ainda não mergeada.",
+          "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
+          "tests": "CI run 46141610708: install em progresso, steps seguintes pendentes. Netlify Preview status ainda não publicado. Inspeção visual agente não executada, pendência explicitada.",
           "blockers": [
-            "Aguardar CI quality e Netlify Redirect/Header verdes, Pages neutral e Deploy Preview success no SHA reconciliado."
+            "CI Quality e Netlify Deploy Preview/Redirect/Header/Pages precisam terminar e confirmar no SHA exato; main reconfirmar antes do merge."
           ],
           "next_action": "Merge #150 se todos os checks especificados pela coordenação estiverem verdes no HEAD exato; registrar merge SHA e avisar no state."
         },
