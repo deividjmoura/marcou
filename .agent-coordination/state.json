@@ -393,10 +393,10 @@
           "W5-A3-T4: #31 ADR do backend de teste E2E e plano das 3 jornadas smoke."
         ],
         "agent_4": [
-          "W5-A4-T1: auditar migrations recentes de #13/#20 e efeitos de RLS/privilégios.",
-          "W5-A4-T2: concluir #53 (PR #160), incluindo testes de ownership, preview/fallback e migration 00600 após notification_preferences 00500.",
-          "W5-A4-T3: revisar PRs relacionadas a #47/exclusão de conta quando surgirem.",
-          "W5-A4-T4: confirmar que a matriz de privilégios cobre novas tabelas e não cria grants indevidos."
+          "W5-A4-T1: completar auditoria de migrations #13/#20 e efeitos de RLS/privilégios; #13 já revisada, lacuna não bloqueante registrada.",
+          "W5-A4-T2: #53 concluída via PR #160 (merge 96f8ed9b); issue fechada com evidências.",
+          "W5-A4-T3: revisar PRs relacionadas a #47/exclusão de conta quando surgirem; #47 aberta sem PR no momento.",
+          "W5-A4-T4: concluída — matriz cobre notification_preferences e nenhuma tabela/função pública nova foi criada por #52/#53."
         ],
         "agent_5": [
           "W5-A5-T1: #121 temas claro/escuro sobre os tokens da #158 (existe a branch agent5/w4-121-theme-system): cookie de tema, seletor acessível, sem flash, contraste AA nos dois temas por teste.",
@@ -2013,7 +2013,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W5-A4-T1 #154 concluída; W5-A4-T2 #53 PR #160 MERGED; W5-A4-T3 #13 revisada, #47 aguardando PR; W5-A4-T4 concluída.",
+      "active_assignment": "W4 concluída. W5: #53 (#160) concluída e issue fechada; matriz de privilégios verificada; revisão #13 registrada; monitorar PR de #47 e completar auditoria #20 se a coordenação mantiver a atribuição.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2044,22 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #154 integrada na main em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #160 (#53) integrada via squash em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; main HEAD confirmado no mesmo SHA; branch foi reconciliada com a PR #161/#13 e migration de avatar renumerada para 20261128000600_provider_avatar_storage.sql (a 00500 agora pertence a notification_preferences). CI pré-merge no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160: quality SUCCESS (changelog, lint, typecheck, audit, unit, test:db, build), Netlify Redirect/Header SUCCESS e Pages changed NEUTRAL; sem review threads. CI pós-merge run 46143945775 ainda in_progress no merge SHA 96f8ed9b. Issue #53 ainda aberta até confirmar pós-merge. W5-A4-T3: auditoria da PR #161/#13 publicada como comentário 7239072822; nenhuma falha de autorização encontrada, mas recomendei teste explícito de EXECUTE para is_notification_enabled (anon=false, authenticated=false, service_role=true). PR para #47 não existe no snapshot; Agent 2 segue bloqueado em Codespace. W5-A4-T4 concluída: matriz public de tabelas/views inclui notification_preferences; função booking_counterparty_phone tem grant matrix explícita; #154 e #53 não criam tabela/função pública nova. #52 segue OWNER_ACTION para teste real do Supabase Storage.",
-      "next_action": "Aguardar CI pós-merge run 46143945775 no SHA 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; se success, fechar issue #53 com evidência. Monitorar criação da PR #47 pelo Agent 2 e revisar imediatamente migrations/tabelas/funções. Acompanhar eventual resposta à lacuna de teste apontada na PR #161. Manter #52 aberta para validação real de Storage pelo responsável; não tocar Supabase remoto nem deploy.",
+      "current_state": "Main HEAD 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1. PR #160 (#53) squash-mergeada em 96f8ed9b; issue #53 fechada. Pré-merge quality run 46143785917 success no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160 (changelog/lint/typecheck/audit/unit/test:db/build), Netlify Redirect/Header success, Pages neutral e Preview ready. Pós-merge quality run 46143945775 success no merge SHA. Migration avatar 20261128000600 após 20261128000500_notification_preferences (#161); sem colisão. Issue #53 recebeu comentário 7239151401 com evidência e limitação do Storage real. W4: #154/#156 mergeadas, #155 auditada. #52 permanece OWNER_ACTION para validação real de Supabase Storage. #47 aberta, sem PR relacionada. W5-A4-T4: privileges-check inclui notification_preferences, e #53 não cria tabela/função pública nova; migration de avatar é aplicada depois da notificação e excluída da baseline anterior.",
+      "next_action": "W4 encerrada. Manter #52 aberta até o responsável testar upload/persistência/renderização no Supabase Storage real. Monitorar PR de #47/exclusão de conta do Agent2 e revisar imediatamente quando aparecer. W5-A4-T1: completar auditoria de RLS/privilégios da migration #20 se ainda atribuída; #13 revisada com observação não bloqueante para teste explícito de EXECUTE em is_notification_enabled (anon=false, authenticated=false, service_role=true).",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:18:00-03:00",
-          "task": "W5-A4-T2 #53 — completar cobertura DB e abrir PR; W5-A4-T4 — auditar matriz",
-          "status": "draft_pr_ci_running",
-          "result": "PR #160 aberta Draft no HEAD 2d437bbe7bf8d6483eac0b518dca1adebf53a345, base main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (15 ahead/0 behind). Implementação confirmada: ação deriva provider da sessão autenticada, preview/upload/substituição/remoção, perfil público/painel com fallback/alt. Corrigido callback JSX com escapes literais. Teste DB aplica migration 20261128000500 e cobre políticas de avatar (owner, outro prestador, anon, leitura pública e remoção); privileges-check inclui migration e baseline exclusion; CHANGELOG atualizado. T4: `social-foundation-check.mjs` contém grant matrix explícita para `booking_counterparty_phone(uuid)` (anon false, authenticated true, service_role false), checagem de PUBLIC EXECUTE e search_path SECURITY DEFINER; `privileges-check.mjs` cobre todas as tabelas/views public e #154 não cria tabela/função pública. PRs #13/#47 ainda não abertas no snapshot.",
-          "head_sha": "2d437bbe7bf8d6483eac0b518dca1adebf53a345",
-          "tests": "CI quality run 46143194577: check:changelog success, lint success, typecheck in_progress, audit/unit/test:db/build pending. Netlify Redirect/Header/Pages in_progress. Nenhum resultado final ainda.",
-          "blockers": [
-            "Aguardar CI/Netlify no SHA exato antes de Ready/merge.",
-            "W5-A4-T3 aguarda PRs de #13 (Agent3) e #47 (Agent2).",
-            "Validação real de Supabase Storage #52 é OWNER_ACTION."
-          ]
-        },
         {
           "timestamp": "2026-11-28T09:45:00-03:00",
           "task": "W4 encerrada e W5 follow-up #53 em CI",
@@ -2083,6 +2070,18 @@
             "Aguardar CI pós-merge antes de fechar #53.",
             "Revisão #47 depende da PR do Agent2.",
             "Validação real do Supabase Storage #52 depende do responsável."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T12:25:00Z",
+          "task": "W5-A4-T2 #53 concluída; W4 encerrada",
+          "status": "merged_and_postmerge_ci_success",
+          "result": "PR #160 (#53) squash-mergeada em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; issue #53 está closed. Pré-merge quality run 46143785917 success no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160; Redirect/Header success, Pages neutral, Preview ready. Pós-merge quality run 46143945775 success no merge SHA. Comentário de evidências publicado na #53 (#7239151401). Migration de avatar 00600 após notification_preferences 00500; sem migration remota. W4 tarefas concluídas: #154, #156 mergeadas; #155 auditada; #47 sem PR. #52 permanece OWNER_ACTION para teste real Storage.",
+          "head_sha": "96f8ed9b52137d8c7ef1a028009e77a7941ff7a1",
+          "tests": "Pré e pós-merge CI quality success; Netlify Redirect/Header success, Pages neutral, Deploy Preview ready.",
+          "blockers": [
+            "Aguardar validação real do Supabase Storage pelo responsável (#52).",
+            "Monitorar futura PR de #47 para revisão de segurança."
           ]
         }
       ],
@@ -2438,13 +2437,16 @@
           {
             "id": "W4-A4-T1-followup-53",
             "target": "Issue #53 — foto do próprio perfil profissional, reutilizando padrão de mídia #52",
-            "status": "in_progress",
+            "status": "completed_merged",
             "branch": "agent4/w4-provider-avatar",
             "base_sha": "7a9d2be52c9fa2dd66411c98e9f4effbf0238591",
             "scope": "Escopo refinado de 27/11 relido: preview antes de salvar, enviar/substituir/remover; mesma validação server-side da #52; caminho providers/{provider_id}/avatar/{uuid}.{ext}; política por dono; exibir publicamente e no painel com fallback/alt; testes de autorização e fallback. docs/PADRAO-DE-ESCOPO.md relido.",
             "blockers": [
-              "Nenhuma; #52 está implementada/mergeada. Validação Storage real permanece pendente do responsável, mas não bloqueia implementação local de #53."
-            ]
+              "Validação real do Supabase Storage permanece ação do responsável sob #52."
+            ],
+            "merge_sha": "96f8ed9b52137d8c7ef1a028009e77a7941ff7a1",
+            "pr": 160,
+            "tests": "PR #160 mergeada; pre-merge CI 46143785917 success, Netlify Redirect/Header success, Pages neutral, Preview ready; post-merge quality 46143945775 success. Issue #53 fechada após comentário de evidências 7239151401. Migration 00600 e políticas Storage owner-scoped integradas."
           }
         ]
       }
