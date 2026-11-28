@@ -158,3 +158,111 @@ A sessão só permite enviar para `arena/3938e7c2-marcou`. Não consigo empurrar
 ## 8. Pergunta sobre release (adiada)
 
 Sem mudança desde a seção 6: não recomendo release agora. Só será formulada no relatório final, depois da Onda 3.
+
+## 9. Wave 2 — auditoria, migrations e limpeza (2026-11-28T00:02:38Z)
+
+Escopo: W2-A6-T1 a T4 (`dispatch.wave_2` do `state.json`). Reconfirmados `main` (`03eb70c`), PRs e CI no GitHub antes de agir.
+
+### 9.1 W2-A6-T1 — auditoria independente de #137, #138, #140, #141, #142
+
+| PR | Merge SHA | CI no head | CI no merge | Conteúdo na main | Observação |
+|---|---|---|---|---|---|
+| #137 | `90b05aa` | quality + Netlify verdes | quality verde | 1/1 arquivo idêntico | — |
+| #138 | `44ed540` | quality + Netlify verdes | quality verde | 8/8 arquivos da PR iguais ao head | substituiu #32 |
+| #140 | `cd30f00` | quality + Netlify verdes | quality verde | arquivos iguais; 1 diferença explicada por edição posterior da #142 | substituiu #133 |
+| #141 | `cd6065a` | quality + Netlify verdes | quality verde | 14 arquivos; 2 diferenças explicadas por edições posteriores da #142 | fecha #29 com evidência |
+| #142 | `4badea4` | quality + Netlify verdes | quality verde | 14/14 arquivos iguais ao head | **fechou #21 automaticamente** (ver 9.3) |
+
+Além disso, a PR #127 (`82af750`) e a PR #143 (`03eb70c`), mergeadas depois, foram conferidas: árvore do merge = árvore do head (#127), CI verde nos dois SHAs de merge e nos heads.
+
+**Validação local independente da `main` atual (`03eb70c`)**, clone limpo, todos exit 0: `check:changelog`, `lint`, `typecheck`, `audit`, `test`, `test:db`, `build`.
+
+**Validação local independente da PR #127 no head `f8977ca`** (antes do merge), todos exit 0.
+
+### 9.2 Ordem das migrations da #142 (ponto pedido pelo coordenador)
+
+Fato: a #142 adicionou `20261125120000_booking_multiple_services.sql` e `20261125130000_table_privileges_matrix.sql`, versões **menores** que `20261128000100` (última já na `main`). Isso viola o item "versão maior que a última da main" do checklist. O Agente 4 apontou o problema antes do merge; a tentativa de renumerar (`20261127120000`/`130000`, na #139) foi fechada.
+
+Análise de risco (lendo o SQL, sem aplicar em banco):
+- `20261125120000` redefine `create_booking` e `get_provider_schedule`. Nenhuma migration posterior redefine essas funções, e a checagem de idempotência/autorização de `create_booking` (`v_actor`, `forbidden`) foi mantida. Não encontrei dependência de objetos criados por migrations posteriores.
+- `20261125130000` faz `REVOKE ALL` seguido de `GRANT` nas tabelas `notifications` e `booking_services`. O resultado final é o mesmo que a `20261125140000` (já na main) deixa. O bloco de `calendar_connections` é condicional (`to_regclass`), então funciona antes ou depois da migration do Calendar.
+- Conclusão: o **esquema final deve ser igual** quando as migrations são aplicadas em ordem a partir do zero (é o que o CI faz, em ordem de nome). Em banco que já tenha aplicado `20261128000100`, a ordem fora de sequência **não foi testada** e a ferramenta de migrations pode recusar a aplicação sem opção explícita.
+- **Não há migration corretiva a propor agora**: não encontrei quebra concreta, e migration mergeada não deve ser editada.
+- Recomendação ao responsável: se o ambiente de produção **já** tiver aplicado migrations acima de `20261125130000`, aplicar `20261125120000` e `20261125130000` manualmente, nessa ordem, antes das demais, e documentar isso em `docs/TESTE-REAL-PRODUCAO.md` (W2-A3-T2). Recomendo também um teste futuro que aplique as migrations fora de ordem e compare o esquema com a ordem normal.
+
+### 9.3 Achado: #21 fechada sem aceite comprovado
+
+A issue #21 foi fechada em `23:31:12Z` pelo commit de merge da #142 (`Closes #21` na mensagem do squash), **sem comentário de evidência**. Critérios de aceite não comprovados:
+- "Banco rejeita sobreposição, inclusive em requisições simultâneas": nenhum harness de `test:db` cobre `booking_services` (só o `privileges-check` cita a tabela). `booking-concurrency` não cobre multi-serviço.
+- "Atualizar `AGENT_TASK_MARCOU.md` e documentação": nenhum arquivo desses foi alterado pela #142.
+- "Preço e duração correspondem ao conjunto": testes de domínio existem (`aggregate.test.ts`), mas não há teste de integração no banco.
+
+Não reabri a issue (é escopo do Agente 1 e exige decisão). Recomendação: reabrir #21 ou comentar as lacunas e manter como "parcial", ou o responsável aceitar o fechamento com justificativa. Registrado como achado de processo.
+
+### 9.4 W2-A6-T2 — limpeza de branches (classificação com prova)
+
+**Não executei nenhuma remoção de branch remoto nesta rodada.** A sessão só me autoriza a enviar para `arena/3938e7c2-marcou`, e apagar branches de outros agentes via `git push --delete` ou API seria escrita fora da minha branch. Os itens abaixo estão prontos para apagar assim que o responsável autorizar (ou se a regra da sessão mudar).
+
+Já não existem no remoto (apagadas pelos próprios agentes ao integrar): `agent5/133-docs-main-reconciled`, `arena/fdad472c-marcou`, `docs/runbook-r7-autonomia`, `fix/139-multi-services-final`, `fix/calendar-callback-fail-closed-worker-fencing`.
+
+**Prontas para apagar (prova):**
+
+| Branch | Tip | Prova |
+|---|---|---|
+| `arena/18c3a3fa-marcou` | `f8977ca` | PR #127 MERGED (`82af750`); tip = headRefOid; árvore do merge igual ao head |
+| `arena/f074e752-marcou` | `d469ce8` | PR #133 CLOSED como superada pela #140 (agente 5); todos os arquivos da PR existem na main |
+| `arena/30a92c52-marcou` | `f320fe8` | PR #124 CLOSED como substituída pela #143 (agente 1, `03eb70c`) |
+| `arena/3b7c9d2f-marcou` | `664cb5b` | disposição **APAGAR** registrada pelo Agente 3 (duplica o mecanismo canônico #128/#38) |
+| `feat/29-google-calendar-sync`, `fix/29-oauth-state-atomic`, `arena/29-calendar-integration` | `b83e0cd`, `2f577e2`, `26baee9` | disposição **APAGAR** registrada pelo Agente 4 (Calendar integrado via #135/#141) |
+
+**Preservar (com motivo):**
+- `main`, `coordination/agents`, `arena/3938e7c2-marcou` (esta sessão).
+- Branches de PR aberta: `arena/3938e7c2-marcou` não tem PR; as abertas são #136, #130, #144, #145, #146, #147 e seus heads.
+- `fix/131-multi-services-r7` (`90b05aa`/`58b16fd`): **contém migrations `20261127120000` e `20261127130000` que a main não tem**; relevante para o item 9.2.
+- `arena/9e68c2bb-marcou` (#126 fechada): contém `docs/handoffs/21-booking.md` e `docs/handoffs/privilegios-tabelas.md` que a main não tem. Aguarda o Agente 4 (W2-A4-T3).
+- `arena/4017109f-marcou` (#123 fechada): aguarda o Agente 4 (W2-A4-T3).
+- `arena/9c0da280-marcou`: disposição PRESERVAR registrada pelo Agente 4 (artefatos PR39/patches).
+- `cc212db` (`38aab51`): não é ancestral da #127; sem prova de integração.
+- `feat/21-booking-multiple-services`: contém arquivos que a main não tem; a issue #21 foi fechada, mas o fechamento é contestado (9.3).
+- `feat/30-platform-hardening` (#32): preservar pedido pelo Agente 3 (texto de `docs/MOTION.md` para a Issue #27).
+- `arena/6f3a9b1f-marcou`, `fix/booking-transition-concurrency-incremental`: todos os arquivos já existem na main, mas sem disposição registrada pelo dono; sem PR. Candidatas a apagar após confirmação do dono.
+- Fechadas sem disposição explícita (preservar até decisão): `arena/116298da-marcou` (#46), `fix/security-definer-execute-grants` (#41), `feat/calendario-mobile` (#2), `feat/customer-account-area` (#48), `feat/pagina-publica-agendamento` (#1), `fix/auth-recovery-redirect-production` (#71).
+- `cc212db`, `fix/booking-transition-concurrency-incremental`: ver acima.
+
+### 9.5 W2-A6-T3 — fila de merges
+
+- #127 (Agente 2): **mergeada** em `82af750` às 23:56:16Z. Verificada por mim (9.1). Não assumi a PR: o Agente 2 já tinha feito a atualização e a validação.
+- #124 (Agente 1): **fechada e substituída** pela #143, mergeada em `03eb70c`. Verificada (9.1).
+- Fila atual (revalidar antes de agir): #136, #130 (drafts/conflito), #144, #145, #146, #147 (abertas, de outros agentes). Não merguei nenhuma delas.
+
+### 9.6 W2-A6-T4 — relatório e release
+
+Relatório consolidado: as seções 1–9 deste documento. Pergunta de release (`AGENTS.md`), sem tag nem Release:
+
+> Esta entrega (junto com as mudanças acumuladas desde a última release) já justifica publicar uma nova GitHub Release? Quer que eu prepare/publique uma versão agora?
+
+Recomendação: **ainda não**. Motivos: #136, #130, #144 a #147 abertas; #21 fechada sem aceite comprovado; ordem das migrations da #142 sem teste fora de sequência; testes reais de produção pendentes (seção 7 do runbook). Sem autorização, nada foi publicado.
+
+### 9.7 Incidentes de ambiente
+
+- Durante a sessão, o workspace foi recriado a partir de um snapshot: o branch local voltou a `5b4e894` e o `node_modules` foi removido. O remoto `arena/3938e7c2-marcou` estava intacto em `af4e27a`. Restaurei o local com fast-forward para `af4e27a` (arquivo idêntico verificado), sem perda. Dependências reinstaladas.
+- Não usei nenhuma branch além da minha.
+
+### 9.8 Entrada para o `state.json` (não consigo empurrar para `coordination/agents`)
+
+```json
+{
+  "agent_6_r7_coordinator": {
+    "status": "wave_2_audit_done_cleanup_pending_authorization",
+    "head_sha": "main=03eb70c; branch arena/3938e7c2-marcou=af4e27a",
+    "tests": "main 03eb70c: check:changelog, lint, typecheck, audit, test, test:db, build = exit 0 (clone limpo). PR #127 f8977ca: idem = exit 0.",
+    "merges_verified": ["#137 90b05aa", "#138 44ed540", "#140 cd30f00", "#141 cd6065a", "#142 4badea4", "#127 82af750", "#143 03eb70c"],
+    "closed_verified": ["#21 (fechada por Closes no merge da #142; aceite NÃO comprovado: ver 9.3)", "#29 (comentário com evidências)", "#124 (substituída por #143)", "#133 (substituída por #140)"],
+    "branches_deleted_by_me": [],
+    "branches_ready_to_delete_pending_authorization": ["arena/18c3a3fa-marcou", "arena/f074e752-marcou", "arena/30a92c52-marcou", "arena/3b7c9d2f-marcou", "feat/29-google-calendar-sync", "fix/29-oauth-state-atomic", "arena/29-calendar-integration"],
+    "blockers": ["escrita no state.json bloqueada pela sessão (apenas branch próprio)", "deleção de branches de outros agentes exige autorização explícita (regra da sessão)", "#21 fechada sem aceite: decisão do responsável ou do Agente 1"],
+    "owner_decisions": ["ordem das migrations 20261125120000/130000 em produção (se já aplicada versão maior)", "reabrir ou aceitar fechamento da #21", "release: não recomendada agora"],
+    "next_action": "Aguardar merges de #136, #130, #144-#147 com verificação independente; depois, com autorização, apagar as 7 branches prontas."
+  }
+}
+```
