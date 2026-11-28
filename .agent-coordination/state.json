@@ -2013,7 +2013,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W5-A4-T2 #53 em andamento; W5-A4-T1 #154 já mergeada; aguardando PRs de #13 e #47 para revisão W5-A4-T3; W5-A4-T4 em auditoria.",
+      "active_assignment": "W5-A4-T2 #53 em PR #160; W5-A4-T3 aguardando PRs de #13/#47; W5-A4-T4 auditada.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2044,20 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Reconfirmado no GitHub: #154 está MERGED em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, migration 20261128000400 na main; #52 segue aberta apenas para teste real de Storage pelo responsável. Para #53, branch agent4/w4-provider-avatar está 4 commits à frente e 0 atrás da main (base 7a9d2be52c9fa2dd66411c98e9f4effbf0238591), HEAD f11f5654908d3701fec1fd350bbeb14a02948f1c. Já existem migration 20261128000500, helper server-side que reutiliza inspectServiceImage e componente ProviderAvatar com fallback/testes. Ainda não há integração do componente na página pública/painel, UI de preview/seleção, nem Server Actions que derivem o provider da sessão; os helpers recebem providerId como argumento e exigem chamada exclusivamente após ownedProviderOrError. Combined commit status não retornou checks para o HEAD; não foi encontrada execução de workflow para essa branch. Não criar claim de CI verde.",
-      "next_action": "Completar #53 sem aceitar providerId do cliente: Server Actions autenticadas derivam provider por requireUser/getOwnedProvider, validar File no servidor e ligar preview/upload/substituição/remoção no painel; exibir avatar_path via URL pública na página /p/[slug] e no painel, com fallback/alt. Adicionar testes de autorização, ações, preview e RLS/migration. Verificar privileges-check/test:db e CHANGELOG, rodar suíte completa/CI no SHA exato, abrir PR e mergear só com checklist verde. Em paralelo, auditar a cobertura da matriz para #153/#154 e revisar #13/#47 assim que as PRs forem abertas. Nenhuma alteração remota.",
+      "current_state": "PR #154 confirmada MERGED em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591; #52 continua aberta somente para validação real do Storage pelo responsável. #53: PR #160 aberta Draft, branch agent4/w4-provider-avatar, HEAD 2d437bbe7bf8d6483eac0b518dca1adebf53a345, 15 commits ahead/0 behind da main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. Revisão confirmou Server Action deriva provider de requireUser/getOwnedProvider; preview local; upload/substituição/remoção; exibição pública/painel com fallback e alt. Corrigido literal '\\\\n' inválido no callback JSX. Adicionado db-check aplicando 20261128000500 e testes RLS para avatar (dono, outro prestador, anon, leitura pública, remoção), privileges-check atualizado para incluir a migration e CHANGELOG. CI quality run 46143194577 no SHA exato: check:changelog e lint success; typecheck em andamento; audit/unit/db/build pendentes. Netlify Redirect/Header/Pages em andamento. W5-A4-T4: privileges-check cobre todas as tabelas/views públicas; social-foundation-check lista explicitamente booking_counterparty_phone(uuid) com EXECUTE apenas authenticated, sem PUBLIC EXECUTE e valida search_path de SECURITY DEFINER; #154 não cria tabela/função pública, só coluna + policies Storage. PRs de #13 e #47 ainda não aparecem abertas; #47 depende do Agent2 recuperar Codespace.",
+      "next_action": "Aguardar CI quality e Netlify no SHA exato 2d437bbe7bf8d6483eac0b518dca1adebf53a345; corrigir qualquer falha, validar revisão sem threads bloqueantes, atualizar PR e sair de Draft apenas com todos os checks verdes. Depois squash merge com expected_head_sha, registrar merge SHA e fechar #53 com evidência. Aguardar PRs de #13/#47 para revisão de migrations/tabelas/funções. Manter #52 aberta como OWNER_ACTION para teste real de Storage; nenhum acesso remoto.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:20:00-03:00",
-          "task": "W4-A4-T1: reconciliar #154 após PR #158; W4-A4-T2 evidência na #57",
-          "status": "reconciled_waiting_ci",
-          "result": "PR #158 foi squash-mergeada em b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82 (tokens semânticos). #154 tinha CI verde em d2a427c8, mas a main avançou com CSS compartilhado; reconciliei de novo sem force-push, merge commit 82ef1729f940c03b1a796c51916c99bfe858dfe5 com base b0b1aeef. Compare main...branch ahead 56/behind 0, PR mergeable true. Novo CI 46142463946: changelog/lint/typecheck/audit/unit success, test:db in_progress, build pending. W4-A4-T2: comentário #7238929309 publicado na Issue #57 com evidência completa do isolamento e limitação do anon; issue mantida aberta para auditoria final Agent6.",
-          "head_sha": "82ef1729f940c03b1a796c51916c99bfe858dfe5",
-          "tests": "CI quality 46142463946 parcial verde; DB/build pendentes. PR #156 já mergeada e CI verde.",
-          "blockers": [
-            "Aguardar CI e Netlify no HEAD 82ef1729 antes de mergear #154."
-          ]
-        },
         {
           "timestamp": "2026-11-28T09:30:00-03:00",
           "task": "W4-A4-T1 #154 concluída; iniciar Issue #53",
@@ -2080,6 +2069,19 @@
             "Implementação #53 incompleta; falta integração autenticada, preview e testes.",
             "PRs #13/#47 ainda não abertas no snapshot; W5-A4-T3 aguarda diffs.",
             "Validação real de Storage #52 depende do responsável."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T09:18:00-03:00",
+          "task": "W5-A4-T2 #53 — completar cobertura DB e abrir PR; W5-A4-T4 — auditar matriz",
+          "status": "draft_pr_ci_running",
+          "result": "PR #160 aberta Draft no HEAD 2d437bbe7bf8d6483eac0b518dca1adebf53a345, base main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (15 ahead/0 behind). Implementação confirmada: ação deriva provider da sessão autenticada, preview/upload/substituição/remoção, perfil público/painel com fallback/alt. Corrigido callback JSX com escapes literais. Teste DB aplica migration 20261128000500 e cobre políticas de avatar (owner, outro prestador, anon, leitura pública e remoção); privileges-check inclui migration e baseline exclusion; CHANGELOG atualizado. T4: `social-foundation-check.mjs` contém grant matrix explícita para `booking_counterparty_phone(uuid)` (anon false, authenticated true, service_role false), checagem de PUBLIC EXECUTE e search_path SECURITY DEFINER; `privileges-check.mjs` cobre todas as tabelas/views public e #154 não cria tabela/função pública. PRs #13/#47 ainda não abertas no snapshot.",
+          "head_sha": "2d437bbe7bf8d6483eac0b518dca1adebf53a345",
+          "tests": "CI quality run 46143194577: check:changelog success, lint success, typecheck in_progress, audit/unit/test:db/build pending. Netlify Redirect/Header/Pages in_progress. Nenhum resultado final ainda.",
+          "blockers": [
+            "Aguardar CI/Netlify no SHA exato antes de Ready/merge.",
+            "W5-A4-T3 aguarda PRs de #13 (Agent3) e #47 (Agent2).",
+            "Validação real de Supabase Storage #52 é OWNER_ACTION."
           ]
         }
       ],
