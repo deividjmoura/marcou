@@ -31,6 +31,7 @@ import path from "node:path";
 import { readdir, readFile, rm } from "node:fs/promises";
 import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
+import { bootstrapStorageHarness } from "./storage-harness.mjs";
 
 const { Client } = pg;
 const MULTI_MIGRATION = "20261125120000_booking_multiple_services.sql";
@@ -257,6 +258,7 @@ async function runPhase(phase) {
       alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
       alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
     `);
+    await bootstrapStorageHarness(db);
 
     const migrationDirectory = path.join(process.cwd(), "supabase", "migrations");
     let names = (await readdir(migrationDirectory))
