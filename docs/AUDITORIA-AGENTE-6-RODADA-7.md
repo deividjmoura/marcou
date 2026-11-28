@@ -203,7 +203,7 @@ Não reabri a issue (é escopo do Agente 1 e exige decisão). Recomendação: re
 
 **Não executei nenhuma remoção de branch remoto nesta rodada.** A sessão só me autoriza a enviar para `arena/3938e7c2-marcou`, e apagar branches de outros agentes via `git push --delete` ou API seria escrita fora da minha branch. Os itens abaixo estão prontos para apagar assim que o responsável autorizar (ou se a regra da sessão mudar).
 
-Já não existem no remoto (apagadas pelos próprios agentes ao integrar): `agent5/133-docs-main-reconciled`, `arena/fdad472c-marcou`, `docs/runbook-r7-autonomia`, `fix/139-multi-services-final`, `fix/calendar-callback-fail-closed-worker-fencing`.
+Já não existem no remoto (apagadas por terceiros; autoria não verificada por mim): `agent5/133-docs-main-reconciled`, `arena/fdad472c-marcou`, `docs/runbook-r7-autonomia`, `fix/139-multi-services-final`, `fix/calendar-callback-fail-closed-worker-fencing`.
 
 **Prontas para apagar (prova):**
 
