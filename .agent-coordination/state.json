@@ -39,7 +39,8 @@
       "Após merge, apagar branch apenas quando GitHub confirmar merged e todos os commits exclusivos estiverem no merge; preservar branches com trabalho exclusivo, coordination/agents e sessões ativas.",
       "Não force-push. Se branch divergir, rebase/merge main sem reescrever histórico remoto e rode CI novamente.",
       "Não modificar atribuição/branch de outro agente. Cada agente escreve somente seu state_entry, com fetch do state.json mais recente e blob SHA atual antes de cada write.",
-      "AUTORIA: siga docs/PADRAO-DE-ESCOPO.md seção 8 (trailers Co-authored-by verdadeiros: Claude em trabalho assistido por IA; o responsável apenas quando participou de fato; repetir os trailers no corpo do squash). Nunca adicionar coautor que não colaborou."
+      "AUTORIA: siga docs/PADRAO-DE-ESCOPO.md seção 8 (trailers Co-authored-by verdadeiros: Claude em trabalho assistido por IA; o responsável apenas quando participou de fato; repetir os trailers no corpo do squash). Nunca adicionar coautor que não colaborou.",
+      "ORÇAMENTO DE BUILD (Netlify gratuito): leia dispatch.netlify_budget e docs/PADRAO-DE-ESCOPO.md seção 9 antes de dar push. Modo atual: economia."
     ],
     "handoff": "Round 6 é uma rodada de conclusão: cinco agentes externos em paralelo e Agent6 como coordenador/auditor independente. Os números do prompt definem os slots. Cada agente deve corrigir lacunas, integrar sua área, fazer squash merge quando os critérios globais forem cumpridos e fechar somente issues realmente concluídas. Teste manual/real do responsável ficará para depois e não bloqueia merges com CI automatizado verde. Agent3 faz limpeza final de branches após os demais merges. Agent5 inventaria PRs restantes e faz triagem de issues sem duplicar os clusters. Agent6 audita SHAs/CI/merges e consolida.",
     "completion": "After completing active_assignment, update status/current_state/next_action and append one update. Do not wait for the user to request a JSON update.",
@@ -92,7 +93,7 @@
     "dispatched_at": "2026-11-27",
     "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
-    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*). WAVE 5: leia dispatch.identities e dispatch.wave_5 (tasks W5-*); wave_5 substitui as tarefas pendentes das ondas anteriores. WAVE 6: leia dispatch.identities, dispatch.role_swap e dispatch.wave_6 (tasks W6-*); wave_6 prevalece sobre wave_5. ATENÇÃO: Agents 1 e 2 trocaram de função.",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*). WAVE 5: leia dispatch.identities e dispatch.wave_5 (tasks W5-*); wave_5 substitui as tarefas pendentes das ondas anteriores. WAVE 6: leia dispatch.identities, dispatch.role_swap e dispatch.wave_6 (tasks W6-*); wave_6 prevalece sobre wave_5. ATENÇÃO: Agents 1 e 2 trocaram de função. BUILD: modo 'economia' ativo (dispatch.netlify_budget): rode os gates localmente, um push por rodada, sem PR duplicada.",
     "execution_order": [
       "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
@@ -478,6 +479,17 @@
           "W6-A6-T4: limpeza das branches restantes só com prova. Preservar main, coordination/agents, branches de PR aberta (#159 e a PR nova da recuperação), a branch antiga fix/auth-recovery-preview-origin até a #130 ser fechada como substituída, e trabalho ativo de qualquer agente.",
           "W6-A6-T5: relatório final parcial no state.json e a pergunta sobre GitHub Release (nada de tag/Release sem autorização). Incluir as decisões pendentes do responsável. Atualizar ao fim de cada onda."
         ]
+      }
+    },
+    "netlify_budget": {
+      "state": "economia",
+      "desde": "2026-11-28",
+      "motivo": "A Netlify avisou que o uso de minutos de build do plano gratuito chegou a 50% do limite de novembro. Ao estourar, todos os projetos são suspensos até o dia 1º do mês seguinte.",
+      "regras": "docs/PADRAO-DE-ESCOPO.md seção 9. Resumo: gates locais antes do push, um push por rodada, sem PR duplicada, docs agrupadas, merges serializados, só PRs essenciais.",
+      "modos": {
+        "normal": "regras da seção 9",
+        "economia": "somente PRs essenciais do backlog vigente; sem polimento nem docs isoladas",
+        "freio": "só correções críticas; ausência dos checks da Netlify não bloqueia o merge se o check quality do GitHub estiver verde e os gates locais passaram (registrar na PR). Acionado só pelo responsável."
       }
     }
   },
