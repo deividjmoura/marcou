@@ -94,6 +94,7 @@ export default async function ProviderPage({
               id: service.id,
               name: service.name,
               description: service.description,
+              imageUrl: service.image_url,
               durationMinutes: service.duration_minutes,
               priceCents: service.price_cents,
               bufferMinutes: service.buffer_minutes,
