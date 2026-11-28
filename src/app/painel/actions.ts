@@ -19,6 +19,7 @@ import {
 } from "@/domain/discovery/discovery";
 import { isSocialFeatureEnabled } from "@/server/feature-flags";
 import { uploadServiceImage, removeServiceImage } from "@/server/service-images";
+import { uploadProviderAvatar, removeProviderAvatar } from "@/server/provider-avatar";
 import { inspectServiceImage, SERVICE_IMAGE_MAX_BYTES } from "@/server/service-image-validation";
 import {
   BookingOperationError,
@@ -123,6 +124,62 @@ export async function saveProviderAction(
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Não foi possível salvar.",
+    };
+  }
+}
+
+export async function saveProviderAvatarAction(
+  _prev: PainelActionState,
+  formData: FormData,
+): Promise<PainelActionState> {
+  if (!isSupabaseConfigured()) return unavailableState();
+
+  try {
+    const provider = await ownedProviderOrError();
+    if (!provider) return { error: "Você ainda não configurou seu negócio." };
+
+    const intent = String(formData.get("intent") ?? "save");
+    if (intent === "remove") {
+      const result = await removeProviderAvatar(provider.id);
+      revalidatePath("/painel");
+      revalidatePath(`/p/${provider.slug}`);
+      return {
+        success: result.cleanupWarning
+          ? "Foto removida do perfil. O arquivo antigo não pôde ser apagado do Storage."
+          : "Foto do perfil removida.",
+      };
+    }
+
+    const avatarValue = formData.get("avatar");
+    const avatarFile =
+      avatarValue instanceof File && avatarValue.size > 0 ? avatarValue : null;
+    if (!avatarFile) return { error: "Selecione uma foto para enviar." };
+    if (avatarFile.size > SERVICE_IMAGE_MAX_BYTES) {
+      return { error: "A imagem deve ter no máximo 5 MB." };
+    }
+
+    try {
+      inspectServiceImage(
+        new Uint8Array(await avatarFile.arrayBuffer()),
+        avatarFile.type,
+      );
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Imagem inválida.",
+      };
+    }
+
+    const result = await uploadProviderAvatar(provider.id, avatarFile);
+    revalidatePath("/painel");
+    revalidatePath(`/p/${provider.slug}`);
+    return {
+      success: result.cleanupWarning
+        ? "Foto atualizada. A foto anterior não pôde ser apagada do Storage."
+        : "Foto do perfil atualizada.",
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Não foi possível atualizar a foto.",
     };
   }
 }
