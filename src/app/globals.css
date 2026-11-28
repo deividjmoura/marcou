@@ -8,6 +8,16 @@
   --surface: var(--ds-color-surface);
 }
 
+/* Legacy aliases follow semantic tokens when the theme attribute is applied. */
+[data-theme="dark"] {
+  --ink: var(--ds-color-text-primary);
+  --muted: var(--ds-color-text-secondary);
+  --paper: var(--ds-color-background);
+  --green: var(--ds-color-brand);
+  --line: var(--ds-color-border);
+  --surface: var(--ds-color-surface-default);
+}
+
 * { box-sizing: border-box; }
 html { min-height: 100%; background: var(--paper); scroll-behavior: smooth; }
 body {
