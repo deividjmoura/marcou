@@ -393,10 +393,10 @@
           "W5-A3-T4: #31 ADR do backend de teste E2E e plano das 3 jornadas smoke."
         ],
         "agent_4": [
-          "W5-A4-T1: concluir e mergear a #154 (CI/Netlify verdes no SHA exato; reconfirmar main imediatamente antes). Fechar #52 com evidência após o merge.",
-          "W5-A4-T2: #53 foto do profissional, reutilizando o padrão de mídia da #154.",
-          "W5-A4-T3: revisão de segurança, com comentário na PR, das migrations de #13 (Agent 3), #47 (Agent 2) e de tudo que criar tabela/função nova: RLS, search_path, grants, matriz do privileges-check.",
-          "W5-A4-T4: confirmar que a matriz de privilégios cobre as tabelas/funções criadas desde a #142 (inclui as da #154 e da #153)."
+          "W5-A4-T1: auditar migrations recentes de #13/#20 e efeitos de RLS/privilégios.",
+          "W5-A4-T2: concluir #53 (PR #160), incluindo testes de ownership, preview/fallback e migration 00600 após notification_preferences 00500.",
+          "W5-A4-T3: revisar PRs relacionadas a #47/exclusão de conta quando surgirem.",
+          "W5-A4-T4: confirmar que a matriz de privilégios cobre novas tabelas e não cria grants indevidos."
         ],
         "agent_5": [
           "W5-A5-T1: #121 temas claro/escuro sobre os tokens da #158 (existe a branch agent5/w4-121-theme-system): cookie de tema, seletor acessível, sem flash, contraste AA nos dois temas por teste.",
@@ -2013,7 +2013,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W5-A4-T2 #53 em PR #160; W5-A4-T3 aguardando PRs de #13/#47; W5-A4-T4 auditada.",
+      "active_assignment": "W4 concluída: #154 mergeada, #156 mergeada, #155 auditada; #47 sem PR. Follow-up #53 em PR #160 (W5-A4-T2) após releitura do escopo, atualmente Draft e CI em execução. W5-A4-T4: matriz de privilégios inclui notification_preferences (#161) e migration de avatar será testada na sequência.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2044,20 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #154 confirmada MERGED em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591; #52 continua aberta somente para validação real do Storage pelo responsável. #53: PR #160 aberta Draft, branch agent4/w4-provider-avatar, HEAD 2d437bbe7bf8d6483eac0b518dca1adebf53a345, 15 commits ahead/0 behind da main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. Revisão confirmou Server Action deriva provider de requireUser/getOwnedProvider; preview local; upload/substituição/remoção; exibição pública/painel com fallback e alt. Corrigido literal '\\\\n' inválido no callback JSX. Adicionado db-check aplicando 20261128000500 e testes RLS para avatar (dono, outro prestador, anon, leitura pública, remoção), privileges-check atualizado para incluir a migration e CHANGELOG. CI quality run 46143194577 no SHA exato: check:changelog e lint success; typecheck em andamento; audit/unit/db/build pendentes. Netlify Redirect/Header/Pages em andamento. W5-A4-T4: privileges-check cobre todas as tabelas/views públicas; social-foundation-check lista explicitamente booking_counterparty_phone(uuid) com EXECUTE apenas authenticated, sem PUBLIC EXECUTE e valida search_path de SECURITY DEFINER; #154 não cria tabela/função pública, só coluna + policies Storage. PRs de #13 e #47 ainda não aparecem abertas; #47 depende do Agent2 recuperar Codespace.",
-      "next_action": "Aguardar CI quality e Netlify no SHA exato 2d437bbe7bf8d6483eac0b518dca1adebf53a345; corrigir qualquer falha, validar revisão sem threads bloqueantes, atualizar PR e sair de Draft apenas com todos os checks verdes. Depois squash merge com expected_head_sha, registrar merge SHA e fechar #53 com evidência. Aguardar PRs de #13/#47 para revisão de migrations/tabelas/funções. Manter #52 aberta como OWNER_ACTION para teste real de Storage; nenhum acesso remoto.",
+      "current_state": "PR #160 (branch agent4/w4-provider-avatar) aberta Draft, HEAD 3117377bd6264538734a39d14c91eed7c6cf2160, base reconciliada com main e4307a7f86a10bb72759f10f5736823afd68f4d3 (#161). Merge commit sem force-push incorpora notificação #161 e preserva avatar. Detectada colisão de timestamp: #161 já usa 20261128000500_notification_preferences.sql; migration de avatar foi corrigida para 20261128000600_provider_avatar_storage.sql, antigo arquivo 00500_provider_avatar_storage removido da branch. db-check e privileges-check reconciliados com testes/matriz de #161. PR #160: quality run 46143785917 em andamento (changelog success, lint em andamento); Redirect/Header/Pages em andamento. #52 permanece pendente de teste real Storage pelo responsável; sem mudanças remotas.",
+      "next_action": "Acompanhar quality run 46143785917 e Netlify no SHA 3117377bd6264538734a39d14c91eed7c6cf2160. Corrigir falhas de lint/typecheck/unit/db/build. Depois inspecionar checks e comentários, fazer revisão final de segurança, remover Draft só com CI completo e Preview verde. Merge PR #160 somente com main/PR/CI reconfirmados e sem review bloqueante. Atualizar state com o merge. W5-A4-T4 verificar a matriz final após migration #161 e #53.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:30:00-03:00",
-          "task": "W4-A4-T1 #154 concluída; iniciar Issue #53",
-          "status": "pr154_merged_w4_t1_followup_53_started",
-          "result": "PR #154 squash-mergeada em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. CI quality run 46142463946 success no HEAD 82ef1729; Redirect/Header success, Pages neutral, Preview ready. Main confirmada no merge SHA. Migration 20261128000400 está integrada. Issue #52 mantida aberta para validação real do Storage pelo responsável. Escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md relidos; branch agent4/w4-provider-avatar criada a partir da main.",
-          "head_sha": "7a9d2be52c9fa2dd66411c98e9f4effbf0238591",
-          "tests": "PR #154 CI/Netlify verdes; PR #156 mergeada e evidência na #57; #155 auditada.",
-          "blockers": [
-            "Teste real Supabase Storage de #52 é pendência OWNER; sem alteração remota."
-          ]
-        },
         {
           "timestamp": "2026-11-28T09:04:00-03:00",
           "task": "Retomada W5-A4: conferir #154 e iniciar #53",
@@ -2082,6 +2071,18 @@
             "Aguardar CI/Netlify no SHA exato antes de Ready/merge.",
             "W5-A4-T3 aguarda PRs de #13 (Agent3) e #47 (Agent2).",
             "Validação real de Supabase Storage #52 é OWNER_ACTION."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T09:45:00-03:00",
+          "task": "W4 encerrada e W5 follow-up #53 em CI",
+          "status": "pr160_draft_ci_running",
+          "result": "#154/#156 mergeadas, #155 auditada e #47 sem PR. #53 implementada em PR #160; após main avançar com #161, reconciliei a branch sem force-push sobre e4307a7f. Colisão de versão 00500 detectada e resolvida: notification_preferences mantém 00500, avatar passa a 00600; removido arquivo avatar 00500. db-check e privileges-check reconciliados com a migration/tabela de notificações #161. PR #160 Draft no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160; CI quality run 46143785917 em andamento, changelog success e lint running.",
+          "head_sha": "3117377bd6264538734a39d14c91eed7c6cf2160",
+          "tests": "CI e Netlify pendentes no SHA 3117377bd6264538734a39d14c91eed7c6cf2160.",
+          "blockers": [
+            "Aguardar CI completo e Netlify Preview/checks antes de retirar Draft ou mergear.",
+            "#52 requer validação real do Storage pelo responsável."
           ]
         }
       ],
@@ -2406,7 +2407,7 @@
             "pr": 154,
             "head_sha": "82ef1729f940c03b1a796c51916c99bfe858dfe5",
             "base_sha": "b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82",
-            "tests": "PR #154 squash-mergeada; CI quality 46142463946 success (changelog, lint, typecheck, audit, unit, DB integration, build); Netlify Redirect/Header success, Pages neutral, Preview ready. Migration 20261128000400 na main. Harness valida RLS/metadata, não Storage real.",
+            "tests": "PR #154 mergeada e CI/Netlify verdes. Issue #52 aguarda apenas validação real de Storage pelo responsável.",
             "blockers": [
               "Issue #52 fica aberta até o responsável testar upload/persistência/renderização no Supabase Storage real. Nenhuma alteração remota feita."
             ],
@@ -2419,17 +2420,17 @@
             "pr": 156,
             "head_sha": "761ea12e172b143b24a98b2aae0ca1098726366f",
             "merge_sha": "5a4b069596f7ac9e2575677dc97dfd85318ed2c8",
-            "tests": "PR #156 squash-mergeada. CI quality run 46141582606 success no SHA exato (changelog, lint, typecheck, audit, unit/domain, DB integration, build); Redirect/Header success, Pages neutral, Preview ready. Logs confirm `telefone da contraparte só é executável por authenticated`, dono recebe customer_phone, cliente recebe telefone do dono, terceiro e dono de outro negócio recebem NULL, anon recebe permission denied; `resultado social: 57 passaram, 0 falharam`.",
+            "tests": "PR #156 mergeada; issue #57 recebeu comentário com evidências; 57 testes sociais passaram, 0 falharam.",
             "blockers": []
           },
           {
             "id": "W4-A4-T3",
             "target": "Revisar segurança da PR Agent1 para DDD e PRs relacionadas à exclusão de conta/#47",
-            "status": "ddd_pr_review_completed_monitor_47",
+            "status": "ddd_review_completed_monitor_47",
             "pr": 155,
             "head_sha": "b3c9e83e71e3a40dd77359722fb839d4805db9e2",
             "merge_sha": "ecdff384a71a948a3d7e6b713d604a5562a1bebc",
-            "tests": "PR #155 auditada após merge: diff limitado a src/lib/whatsapp.ts, src/lib/whatsapp.test.ts e CHANGELOG; normalização remove heurística NANP, assume BR sem +, aceita apenas +55 explícito, valida DDD Anatel; nenhuma mudança na RPC booking_counterparty_phone, autorização, payload/listagens ou superfície pública. Regressões cobrem DDDs 11–19 e outros DDDs. CI quality success no head ecdff merge commit, Netlify Redirect/Header success, Pages neutral. #47 aberta sem PR relacionada na busca/listagem.",
+            "tests": "PR #155 auditada, sem relaxamento de privacidade; #47 permanece aberta sem PR relacionada.",
             "blockers": [
               "Aguardar eventual PR de exclusão de conta ou outra PR ligada à #47 para revisão."
             ]
