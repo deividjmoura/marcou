@@ -1794,10 +1794,10 @@
             "W2-A3-T3": "COMPLETED (issues #26/#13/#30/#20/#31 confirmadas atualizadas e abertas com próxima ação)"
           },
           "issues_wave_2": {
-            "26": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7230771025)",
             "13": "OPEN (BACKLOG/OWNER_DECISION — Escopo refinado da coordenação confirmado atual; sem comentário redundante)",
-            "30": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7230771285)",
             "20": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/20#issuecomment-7230771537)",
+            "26": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7230771025)",
+            "30": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7230771285)",
             "31": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7230771759)"
           }
         }
@@ -1830,8 +1830,8 @@
         "arena/9e68c2bb-marcou",
         "arena/4017109f-marcou"
       ],
-      "status": "completed",
-      "active_assignment": "Wave 2 concluída no escopo do Agent 4: #136 integrada e #125 fechada; auditoria #142/#141 concluída e correção #145 integrada; Agent6 informado para preservar arenas até arquivar handoffs exclusivos.",
+      "status": "in_progress",
+      "active_assignment": "Wave 3: W3-A4-T1 concluída (#152 mergeada; handoffs arquivados; Agent6 pode limpar as duas arenas após confirmar arquivos na main). W3-A4-T2 em execução: #52 primeiro; #53 somente após #52.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -1862,79 +1862,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W2-A4-T1 CONCLUÍDA: PR #136 squash-mergeada na main em 09c744e77bfc748dca83c6c5f476fc931c90a302; CI quality success no SHA exato f89f26187907499ad825bf23500508153b493b16 e Netlify Redirect/Header success, Pages changed neutral. Issue #125 fechada e comentada com evidências; nenhum Supabase remoto alterado. W2-A4-T2 CONCLUÍDA: auditoria #142/#141 encontrou cinco funções SECURITY DEFINER multi-serviço com search_path=public; PR corretiva #145 mergeada por squash em d1e0c2faf0f99124ba65ab08fe24252e1f79406a, com migration forward-only 20261128000200 e testes de search_path/grants. CI/Netlify verdes no HEAD exato 7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12; post-merge quality na main também concluiu success no SHA d1e0c2faf0f99124ba65ab08fe24252e1f79406a. W2-A4-T3 CONCLUÍDA: comparação recursiva das árvores Git mostrou que arena/9e68c2bb-marcou e arena/4017109f-marcou contêm handoffs exclusivos docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md ausentes na main; Agent6 informado pela entrada compartilhada para preservar até arquivar/portar os dois documentos. Nenhuma branch foi apagada.",
-      "next_action": "Nenhuma tarefa W2 pendente no escopo Agent 4. Agent6 deve preservar/arquivar os dois handoffs antes de remover arena/9e68c2bb-marcou e arena/4017109f-marcou. Aguardar somente a conclusão do CI pós-merge na main como observação.",
+      "current_state": "W3-A4-T1 CONCLUÍDA: PR #152 squash-mergeada em 5538a441d0023926919f165c833629079f98e442. Arquivo histórico preserva handoff #21 idêntico nas duas arenas e as duas variantes de privilegios-tabelas.md. CI quality e Netlify Redirect/Header verdes no HEAD 6ada5597318f3c6eadb79423eec3cd5325e0582a; Pages changed neutral. Pós-merge quality na main 5538a441d0023926919f165c833629079f98e442 estava queued na última consulta. Agent6 informado pelo state para poder apagar arena/9e68c2bb-marcou e arena/4017109f-marcou após confirmar os arquivos arquivados. W3-A4-T2: iniciar #52 sobre a main atual; #53 bloqueada pela #52.",
+      "next_action": "Concluir #52 com upload seguro, migration > 20261128000200, políticas/testes de storage em harness emulado, docs e changelog; abrir PR e integrar só com checklist verde. Depois executar #53 reutilizando o padrão, sem segundo mecanismo de mídia. Revisar #57/#47 quando PRs surgirem.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T1: auditoria da falha CI da PR #142",
-          "status": "blocked_waiting_agent1_fix",
-          "result": "PR #142 CI run 46082581457 falhou no Database integration tests. O único assert estrutural explícito falho é `migration do Calendar é posterior à matriz de privilégios (#123)`: script/migration ainda assumem matriz antes do Calendar, mas migration renumerada para 20261127130000 vem depois da Calendar 20261125153000 e do multi-services 20261127120000. Comentei na #142 com o log e proposta de corrigir a ordem esperada e o comentário da migration, preservando o check e a regra harden imediatamente antes da Calendar.",
-          "head_sha": "PR #142:8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2; CI run:46082581457; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
-          "tests": "CI failure no Database integration tests; lint, typecheck, quality audit e unit/domain tests concluíram success.",
-          "blockers": [
-            "Agent1 precisa corrigir o order assertion/comment na PR #142 e rerodar CI; #136 continua bloqueada."
-          ],
-          "next_action": "Aguardar novo SHA/CI da #142 e só então atualizar #136."
-        },
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T1: revisão da segunda tentativa de correção da PR #142",
-          "status": "blocked_waiting_agent1_migration_version",
-          "result": "Novo HEAD #142 e41a89d5c034071ab4016ffd68245af1f0bb4ed3 reverteu timestamps das migrations para 20261125120000/20261125130000. Isso viola o checklist de migration version > última da main (após #141, latest = 20261128000100). Comentei que devem usar versões maiores e atualizar ordem real no harness; não mexi na branch do Agent1. CI segue in_progress e Netlify preview success.",
-          "head_sha": "PR #142:e41a89d5c034071ab4016ffd68245af1f0bb4ed3; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
-          "tests": "CI ainda in_progress; não mergear. Netlify preview success.",
-          "blockers": [
-            "Agent1 precisa corrigir timestamps para > 20261128000100 e atualizar ordem/harness."
-          ],
-          "next_action": "Aguardar novo SHA da #142 com migration versions monotônicas e CI verde."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W2-A4-T1: reconciliar e ligar privileges-check no CI",
-          "status": "in_progress_ci",
-          "result": "PR #136 branch fix/125-privileges-check-ci reconciliada com main pós-#143 SHA 03eb70cf11e525260c08abdb8e27d028a6537349 via merge commit não-forçado; HEAD atual f89f26187907499ad825bf23500508153b493b16. PR saiu de Draft. test:db executa calendar-check seguido de privileges-check. Primeira CI revelou colisão do harness nas portas 55435/55436; alteradas para 55438/55439. CI run 46085573118 em andamento; Netlify pending. Não mergear até concluir todos os checks.",
-          "head_sha": "PR #136:f89f26187907499ad825bf23500508153b493b16; base/main:03eb70cf11e525260c08abdb8e27d028a6537349",
-          "tests": "Quality in_progress; Netlify Redirect/Header/Pages changed in_progress; aguardar.",
-          "blockers": [
-            "CI no HEAD atual ainda não concluiu."
-          ],
-          "next_action": "Aguardar CI/Netlify; mergear apenas com checklist verde."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W2-A4-T2: auditoria #142/#141 e correção de search_path",
-          "status": "correction_pr_open",
-          "result": "Auditoria da #142 identificou cinco funções SECURITY DEFINER de multi-serviço (booking_service_totals, 2 overloads get_provider_schedule, 2 overloads create_booking) com search_path=public, divergindo do contrato SECURITY-DEFINER-GRANTS.md (pg_catalog, public). ACLs permanecem mínimos: helper interno sem EXECUTE; get_provider_schedule para anon/authenticated; create_booking para authenticated. booking_services tem RLS, policy SELECT para participantes authenticated e nenhuma escrita direta; Calendar tables têm RLS e REVOKE de papéis cliente. PR #145 aberta com migration forward-only 20261128000200 e teste de regressão em social-foundation-check. HEAD inicial d365... falhou por erro de teste (array name[] não parseado pelo pg); corrigido para count(*) FILTER, novo HEAD 46ba83b4e5356bc0d6ae168be44df74d5176e8b3, CI ainda aguardando.",
-          "head_sha": "PR #145:46ba83b4e5356bc0d6ae168be44df74d5176e8b3; main:03eb70cf11e525260c08abdb8e27d028a6537349",
-          "tests": "Primeiro CI quality falhou no teste recém-adicionado; corrigido, novo CI ainda não iniciado/confirmado.",
-          "blockers": [
-            "Aguardar CI completo e Netlify no novo HEAD #145."
-          ],
-          "next_action": "Validar novo CI; squash merge se verde."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W2-A4-T3: confirmar disposição das branches arena após #142",
-          "status": "preserve_until_handoffs_archived",
-          "result": "Tree SHA comparison main vs arena/9e68c2bb-marcou e arena/4017109f-marcou confirmou docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md existem nas arenas e não existem na main. Os códigos/migrations multi-service e matriz já foram integrados pela #142, mas handoffs exclusivos ainda são artefatos úteis; não é seguro apagar até Agent6 arquivar/portar esses dois documentos. Manter ambas PRESERVAR e avisar Agent6 pelo state.",
-          "head_sha": "arena/9e68c2bb-marcou:8d73650dfc62508a22c3b4ed83d1019e493ca871; arena/4017109f-marcou:16f0166fc06e4ddcaac6b77664515b410f3c4d74; main:03eb70cf11e525260c08abdb8e27d028a6537349",
-          "tests": "Comparação recursiva de árvores Git por blob SHA; handoffs ausentes na main.",
-          "blockers": [
-            "Agent6 precisa preservar/arquivar os dois handoffs antes de apagar arenas."
-          ],
-          "next_action": "Manter branches; avisar Agent6 na entrada compartilhada."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W2-A4-T1: #136 integrada e Issue #125 encerrada",
-          "status": "completed",
-          "result": "PR #136 saiu de Draft, reconciliada com main pós-#143, test:db passou a executar calendar-check + privileges-check. Portas do harness corrigidas para 55438/55439 após colisão detectada. Checklist verde no SHA exato f89f26187907499ad825bf23500508153b493b16: Actions quality success; Netlify Redirect rules/Header rules success e Pages changed neutral (aceito); PR mergeable=true sem reviews/threads bloqueantes. Squash merge SHA 09c744e77bfc748dca83c6c5f476fc931c90a302. Issue #125 fechada automaticamente e comentada com evidências. Nenhum Supabase remoto alterado.",
-          "head_sha": "PR #136:f89f26187907499ad825bf23500508153b493b16; merge/main:09c744e77bfc748dca83c6c5f476fc931c90a302",
-          "tests": "GitHub Actions CI quality success; Netlify Redirect/Header success, Pages changed neutral.",
-          "blockers": [],
-          "next_action": "W2-A4-T1 concluída."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W2-A4-T2: auditoria de segurança e PR corretiva #145",
@@ -1956,6 +1886,16 @@
             "Agent6 precisa arquivar/portar os dois handoffs antes de apagar as arenas."
           ],
           "next_action": "Agent6 arquivar/portar os dois handoffs antes de apagar as branches."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W3-A4-T1: arquivar handoffs das arenas",
+          "status": "completed",
+          "result": "PR #152 squash-mergeada. Arquivados handoff #21 idêntico nas duas branches (uma cópia) e as duas variantes históricas de privilegios-tabelas.md, com README de proveniência/aviso histórico. Agent6 pode remover as duas arenas após confirmar os arquivos na main.",
+          "head_sha": "PR #152:6ada5597318f3c6eadb79423eec3cd5325e0582a; merge/main:5538a441d0023926919f165c833629079f98e442",
+          "tests": "CI quality success no HEAD exato; Netlify Redirect/Header success; Pages changed neutral. Pós-merge quality queued na última consulta.",
+          "blockers": [],
+          "next_action": "Executar #52; depois #53."
         }
       ],
       "branch_disposition": [
@@ -2228,7 +2168,43 @@
           "disposition": "PRESERVAR",
           "reason": "O código/migration de multi-serviços e matriz foram integrados à main pela #142, mas a branch ainda contém docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md ausentes na main (comparação recursiva de Git trees/blob SHAs). Preservar até Agent6 arquivar/portar os dois handoffs; demais diferenças são versões antigas já substituídas."
         }
-      ]
+      ],
+      "wave_3": {
+        "tasks": [
+          {
+            "id": "W3-A4-T1",
+            "target": "Arquivar os handoffs exclusivos de arena/9e68c2bb-marcou e arena/4017109f-marcou; avisar Agent6.",
+            "status": "completed",
+            "result": "PR #152 squash-mergeada; handoff #21 idêntico arquivado uma vez em docs/handoffs/archive/2026-11-27/21-booking.md; duas variantes distintas de privilegios-tabelas.md arquivadas sob pastas de origem; README registra proveniência e caráter histórico. Agent6 pode apagar as duas arenas após verificar os arquivos na main.",
+            "head_sha": "6ada5597318f3c6eadb79423eec3cd5325e0582a",
+            "merge_sha": "5538a441d0023926919f165c833629079f98e442",
+            "tests": "CI quality success no SHA 6ada5597318f3c6eadb79423eec3cd5325e0582a; Netlify Redirect/Header success; Pages changed neutral. Post-merge quality queued na última consulta.",
+            "blockers": [
+              "Aguardar/confirmar CI quality pós-merge na main; Agent6 executa a limpeza das arenas."
+            ]
+          },
+          {
+            "id": "W3-A4-T2",
+            "target": "Issue #52: imagem opcional de serviço e padrão reutilizável de Storage/mídia.",
+            "status": "in_progress",
+            "result": "Lido o comentário Escopo refinado — 27/11/2026 e docs/PADRAO-DE-ESCOPO.md. Escopo inclui coluna de imagem, bucket público service-images, caminho providers/{provider_id}/services/{service_id}/{uuid}.{ext}, escrita restrita ao dono, magic bytes JPEG/PNG/WebP, limite de bytes/dimensões, substituição/remoção segura, alt/fallback, docs e harness storage.objects emulado; não afirmar teste de Storage real.",
+            "head_sha": null,
+            "tests": "Não iniciados.",
+            "blockers": []
+          },
+          {
+            "id": "W3-A4-T3",
+            "target": "Issue #53: foto do próprio perfil, após #52, reutilizando o padrão sem mecanismo separado.",
+            "status": "blocked_by_W3-A4-T2",
+            "result": "Escopo refinado lido. Upload/preview/substituição/remoção, mesmo validador, caminho providers/{provider_id}/avatar/{uuid}.{ext}, políticas por dono, exibição pública e painel com fallback/alt.",
+            "head_sha": null,
+            "tests": "Não iniciados.",
+            "blockers": [
+              "Depende da conclusão/merge da #52."
+            ]
+          }
+        ]
+      }
     },
     "agent_5_r7_product_backlog": {
       "scope": "PRs de design/docs/legado e triagem de issues de produto",
