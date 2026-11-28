@@ -2365,7 +2365,7 @@
         "agent5/w2-design-system-main-current"
       ],
       "status": "in_progress",
-      "active_assignment": "Wave 4 W4-A5-T1 (#150 reconciliada sobre main atual; CI/Preview reexecutando; merge autorizado quando checks do checklist green), W4-A5-T2 (#27 tokens/catalogue após #150; #121 após #27), W4-A5-T3 status backlog",
+      "active_assignment": "W4-A5-T1 concluída (#150 merge); W4-A5-T2 (#27 PR #158 em CI); W4-A5-T3 backlog status atualizado.",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2402,8 +2402,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W4 reconfirmada: main ecdff384a71a948a3d7e6b713d604a5562a1bebc. #150 reconciliada duas vezes durante a validação (main passou 994cf1c4 e depois ecdff384; último merge #154), agora HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708: install/changelog/lint/typecheck/audit/unit green, DB integration in_progress, build pendente. Netlify preview pending. A inspeção visual 1440/390 e console/overflow é pendência do responsável conforme autorização de W4, não blocker do agente. #27/#121 atualizadas, aguardando merge.",
-      "next_action": "Aguardar DB tests/build e Netlify Preview/Redirect/Header/Page statuses; reconfirm main/head exact SHA. Se gates checklist green, merge #150. Após merge, atualizar state avisando Agent1, concluir cleanup das branches duplicadas se houver ferramenta de delete disponível e iniciar #27 tokens semânticos/catalogue. #121 após #27.",
+      "current_state": "PR #150 merged squash: merge SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36, main após merge 5a4b069596f7ac9e2575677dc97dfd85318ed2c8. CI quality success e Netlify Redirect/Header success, Pages neutral, Preview success no HEAD 781ace0e2ad86c7373b1e488907237bd89147bda. Inspeção visual 1440/390, console e overflow marcada como pendência do responsável na descrição, conforme desbloqueio W4. Issue #27 etapa tokens/catalogue aberta em PR #158 HEAD 5d09830c6182fad6f2785e26fab6618d4a9d98a4, base main 5a4b069; compare 5 ahead/0 behind; CI run 46142071058 in_progress (install). #121 permanece bloqueada até #158.",
+      "next_action": "Aguardar CI/Preview da #158; corrigir eventuais falhas. Se main avançar, reconciliar. Merge apenas com gates verdes e checklist visual pendente do responsável explicitado. Após #158 integrada, iniciar #121 conforme escopo refinado. Limpeza de branches antigas de Agent5 após merges não executável com ferramentas GitHub disponíveis (sem API de delete branch).",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2476,6 +2476,18 @@
             "Aguardar CI completo e Netlify checks. Main reconfirmar antes do merge."
           ],
           "next_action": "Aguardar checks, merge com autonomia se green. Depois iniciar #27."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T1 merge #150 + W4-A5-T2 PR #158",
+          "status": "in_progress",
+          "result": "#150 merged squash SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36; checks verdes (CI quality, redirect/header, pages neutral, preview). Inspeção visual é pendência do responsável. #27 implementada incrementalmente em PR #158, HEAD 5d09830c6182fad6f2785e26fab6618d4a9d98a4; CI run 46142071058 in progress; base main 5a4b069596f7ac9e2575677dc97dfd85318ed2c8. #121 bloqueada.",
+          "head_sha": "5d09830c6182fad6f2785e26fab6618d4a9d98a4",
+          "tests": "#150: all checks success (Netlify Pages neutral). #158: CI in_progress, install step pending; no preview check yet.",
+          "blockers": [
+            "CI/preview for #158 pending; visual review responsibility pending; branch cleanup API unavailable."
+          ],
+          "next_action": "Complete #158 CI/preview, merge if checklist green, then #121."
         }
       ],
       "wave_2_tasks": [
@@ -2519,26 +2531,31 @@
       "wave_4_tasks": [
         {
           "id": "W4-A5-T1",
-          "status": "in_progress",
-          "result": "Main avançou para ecdff384a71a948a3d7e6b713d604a5562a1bebc (#154); PR #150 reconciliada novamente. HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, Ready for Review. CI run 46141610708 em andamento (install); Netlify Preview sem check publicado. Revisão visual desktop/mobile/console/overflow marcada na descrição como pendência do responsável conforme regra Wave 4. Ainda não mergeada.",
+          "status": "completed",
+          "result": "PR #150 reconciliada duas vezes após main avançar, final base 5a4b069596f7ac9e2575677dc97dfd85318ed2c8 e HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind. CI quality success; Netlify Redirect rules success, Header rules success, Pages neutral, Deploy Preview success. Merge squash efetuado conforme desbloqueio W4; merge SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. Inspeção visual 1440/390/console/overflow não executada; descrita como pendência do responsável. Branch cleanup pós-merge ficou sem ferramenta de delete branch.",
           "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
-          "tests": "CI run 46141610708 no HEAD 781ace0e2ad86c7373b1e488907237bd89147bda: install, check:changelog, lint, typecheck, audit, unit/domain tests success; database integration tests in_progress; production build pending. Netlify deploy-preview pending. Visual inspection não realizada, descrita na PR como pendência do responsável.",
+          "tests": "CI quality success; Netlify redirect/header success, Pages neutral, Deploy Preview success. Visual review pendente do responsável.",
           "blockers": [
-            "Aguardar test:db/build e Netlify deploy-preview checks no SHA exato; reconfirm main antes de merge."
+            "Branch cleanup (agent5 antigas) não pode ser executada via ferramentas conectadas: não há ação de delete GitHub branch, fetch é GET-only."
           ],
-          "next_action": "Poll CI/Netlify; merge se checks Wave4 checklist estiverem verdes e main não avançar."
+          "next_action": "Avisar coordinator no state; manter branch cleanup pendente, não usar ação destrutiva alternativa."
         },
         {
           "id": "W4-A5-T2",
-          "status": "blocked_dependency",
-          "result": "Escopo refinado #27/#121 lido junto de docs/PADRAO-DE-ESCOPO.md. Comentários de progresso publicados: #27 recebe tokens semânticos/catalogue depois da #150; #121 continua bloqueada até #27.",
-          "next_action": "Após merge #150, iniciar #27 (tokens semânticos + catálogo em docs/DESIGN-SYSTEM.md) com PR pequena e critérios/testes; #121 apenas depois."
+          "status": "in_progress",
+          "result": "#27 tokens semânticos/catalogue iniciada após #150 merge. PR #158 aberta draft, branch agent5/w4-27-rebased-main, HEAD 5d09830c6182fad6f2785e26fab6618d4a9d98a4, base main 5a4b069596f7ac9e2575677dc97dfd85318ed2c8, compare 5 ahead/0 behind, mergeable. Aliases semantic roles, dark tokens `[data-theme=dark]` preparatórios, legacy aliases, catálogo e testes de contraste/contract, changelog. CI run 46142071058 in progress (install). #121 comentada e bloqueada até #158.",
+          "head_sha": "5d09830c6182fad6f2785e26fab6618d4a9d98a4",
+          "tests": "CI run 46142071058 in_progress, install pendente; Preview pending. Nenhum teste local foi executado.",
+          "blockers": [
+            "CI e Netlify Preview ainda pendentes; visual review 390/1440 não realizada."
+          ],
+          "next_action": "Aguardar CI e Preview; se main avançar, reconciliar; corrigir CI; merge se checklist green e visual review pendente registrada."
         },
         {
           "id": "W4-A5-T3",
           "status": "completed",
-          "result": "Triagem de issues #24/#43/#47/#52–57/#132/#19/#28 verificada na Wave 3; nenhuma precisa ser fechada sem evidência, mantendo status e decisões/dependências.",
-          "next_action": "Atualizar status após entregas futuras, sem fechar backlog artificialmente."
+          "result": "Triagem de backlog confirmada; issues #24/#43/#47/#52–57/#132/#19/#28 mantidas classificadas por status/owner decisions, sem encerramentos indevidos.",
+          "next_action": "Revisar status quando outras PRs integram."
         }
       ]
     },
