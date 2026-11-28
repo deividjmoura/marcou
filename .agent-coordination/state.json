@@ -1871,19 +1871,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W3-A4-T1 CONCLUÍDA: PR #152 squash-mergeada em 5538a441d0023926919f165c833629079f98e442. Arquivo histórico preserva handoff #21 idêntico nas duas arenas e as duas variantes de privilegios-tabelas.md. CI quality e Netlify Redirect/Header verdes no HEAD 6ada5597318f3c6eadb79423eec3cd5325e0582a; Pages changed neutral. Pós-merge quality na main 5538a441d0023926919f165c833629079f98e442 estava queued na última consulta. Agent6 informado pelo state para poder apagar arena/9e68c2bb-marcou e arena/4017109f-marcou após confirmar os arquivos arquivados. W3-A4-T2: iniciar #52 sobre a main atual; #53 bloqueada pela #52.",
-      "next_action": "Concluir #52 com upload seguro, migration > 20261128000200, políticas/testes de storage em harness emulado, docs e changelog; abrir PR e integrar só com checklist verde. Depois executar #53 reutilizando o padrão, sem segundo mecanismo de mídia. Revisar #57/#47 quando PRs surgirem.",
+      "current_state": "W3-A4-T1 concluída: PR #152 mergeada em 5538a441d0023926919f165c833629079f98e442; handoffs arquivados, Agent6 pode limpar as arenas após conferir main. W3-A4-T2: PR #154 aberta, HEAD a47755a3d1b25b8c81595b5a5bac161811231f96, base main 994cf1c4efe65754ebb70042b448259344a2cc7c (#153). CI quality queued; Netlify Pages changed in_progress. Migration de mídia renumerada para 20261128000400 após detectar colisão com migration #153; merge commit de reconciliação da branch a47755a3d1b25b8c81595b5a5bac161811231f96 preserva as mudanças de #153.",
+      "next_action": "Acompanhar CI quality e Netlify da #154 no SHA exato; corrigir falhas sem bypass. Checklist de merge: quality verde (check:changelog/lint/typecheck/audit/test/test:db/build), Redirect/Header verdes, Pages neutral/verde, sem review bloqueante. Depois merge #154; #52 permanece aberta até validação real do Supabase Storage pelo responsável. Em seguida #53, relendo Escopo refinado e PADRAO-DE-ESCOPO.md.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W2-A4-T2: auditoria de segurança e PR corretiva #145",
-          "status": "completed",
-          "result": "PR #145 mergeada por squash na main: d1e0c2faf0f99124ba65ab08fe24252e1f79406a. Migration forward-only 20261128000200 ajusta search_path das cinco funções para pg_catalog, public. social-foundation-check agora verifica exatamente cinco funções com esse path e grants mínimos (booking_service_totals sem EXECUTE para anon/authenticated/service_role; overload get_provider_schedule público; overload create_booking só authenticated). Checklist verde no SHA exato 7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12: Actions quality success (inclui test:db e build); Netlify Redirect/Header success e Pages changed neutral. PR mergeable=true sem reviews pendentes. Post-merge quality na main também success no SHA d1e0c2faf0f99124ba65ab08fe24252e1f79406a.",
-          "head_sha": "PR #145:7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12; merge/main:d1e0c2faf0f99124ba65ab08fe24252e1f79406a",
-          "tests": "CI quality success no HEAD exato 7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12; test:db e build success; Netlify Redirect/Header success, Pages changed neutral; post-merge quality success no merge SHA d1e0c2faf0f99124ba65ab08fe24252e1f79406a.",
-          "blockers": [],
-          "next_action": "W2-A4-T2 concluída."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W2-A4-T3: confirmação de branches arena para Agent6",
@@ -1905,6 +1895,17 @@
           "tests": "CI quality success no HEAD exato; Netlify Redirect/Header success; Pages changed neutral. Pós-merge quality queued na última consulta.",
           "blockers": [],
           "next_action": "Executar #52; depois #53."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W3-A4-T2: PR #154 para imagem de serviços",
+          "status": "in_progress_ci",
+          "result": "PR #154 aberta em branch agent4/w3-service-media. Implementação inclui migration de bucket/RLS, validador server-side, fluxo upload/substituição/remoção, UI pública/painel, docs, changelog e harness de Storage emulado. Detectada colisão de timestamp com #153; migration renumerada para 20261128000400 e branch reconciliada com main 994cf1c4efe65754ebb70042b448259344a2cc7c.",
+          "head_sha": "a47755a3d1b25b8c81595b5a5bac161811231f96",
+          "tests": "CI quality queued run 46088183951; Pages changed in_progress. Não atribuir resultado até concluir no SHA exato.",
+          "blockers": [
+            "Aguardar checks e revisar possíveis falhas."
+          ]
         }
       ],
       "branch_disposition": [
@@ -2195,11 +2196,15 @@
           {
             "id": "W3-A4-T2",
             "target": "Issue #52: imagem opcional de serviço e padrão reutilizável de Storage/mídia.",
-            "status": "in_progress",
-            "result": "Lido o comentário Escopo refinado — 27/11/2026 e docs/PADRAO-DE-ESCOPO.md. Escopo inclui coluna de imagem, bucket público service-images, caminho providers/{provider_id}/services/{service_id}/{uuid}.{ext}, escrita restrita ao dono, magic bytes JPEG/PNG/WebP, limite de bytes/dimensões, substituição/remoção segura, alt/fallback, docs e harness storage.objects emulado; não afirmar teste de Storage real.",
-            "head_sha": null,
-            "tests": "Não iniciados.",
-            "blockers": []
+            "status": "in_progress_ci",
+            "result": "PR #154 aberta (não mergeada). Migration 20261128000400_service_images_storage.sql; bucket público service-images; políticas owner-scoped; validação JPEG/PNG/WebP por magic bytes, 5 MiB, 4096 px/16 MP; upload/substituição/remoção; cards públicos alt/fallback; painel; docs/changelog. Reconciliada com #153 preservando booking_counterparty_phone e usando timestamp posterior. Teste real Supabase Storage permanece pendente e não foi alegado.",
+            "head_sha": "a47755a3d1b25b8c81595b5a5bac161811231f96",
+            "pr": 154,
+            "base_sha": "994cf1c4efe65754ebb70042b448259344a2cc7c",
+            "tests": "CI quality queued (run 46088183951); Netlify Pages changed in_progress. Harness emula storage.buckets/objects e RLS; não valida Storage real.",
+            "blockers": [
+              "Aguardar CI quality e Redirect/Header; Pages changed pode ser neutral/green. Não mergear antes do checklist."
+            ]
           },
           {
             "id": "W3-A4-T3",
