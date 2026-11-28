@@ -23,9 +23,11 @@ export function normalizePhoneToE164Digits(input: unknown): string | null {
   if (!digits || /^0+$/.test(digits)) return null;
 
   let e164: string;
-  if (digits.startsWith(DEFAULT_DDI) && digits.length >= 12 && digits.length <= 13) {
+  if (digits.startsWith(DEFAULT_DDI) && (digits.length === 12 || digits.length === 13)) {
     e164 = digits;
   } else if (digits.length === 10 || digits.length === 11) {
+    // Evita tratar NANP (+1 …) como DDD brasileiro.
+    if (digits.length === 11 && digits.startsWith("1")) return null;
     e164 = DEFAULT_DDI + digits;
   } else {
     return null;
