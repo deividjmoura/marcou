@@ -41,7 +41,7 @@ const CALENDAR_MIGRATION = "20261125153000_google_calendar_sync.sql";
 const CALENDAR_FENCING_MIGRATION = "20261128000000_calendar_worker_fencing.sql";
 const CALENDAR_REVOCATION_MIGRATION = "20261128000100_calendar_disconnect_revocation_retry.sql";
 const MEDIA_MIGRATION = "20261128000400_service_images_storage.sql";
-const AVATAR_MIGRATION = "20261128000500_provider_avatar_storage.sql";
+const AVATAR_MIGRATION = "20261128000600_provider_avatar_storage.sql";
 /** Tabelas criadas pela migration do Calendar: só existem na fase after. */
 const CALENDAR_OBJECTS = ["calendar_connections", "calendar_sync_outbox", "booking_calendar_events"];
 /** Tabelas anteriores à convenção `revoke all … grant …`, endurecidas pela #125. */
@@ -106,6 +106,11 @@ const MATRIX = {
   feature_flags: { anon: [], authenticated: [], service_role: ["ALL"] },
   legal_acceptances: { anon: [], authenticated: ["SELECT"], service_role: ["ALL"] },
   legal_documents: { anon: ["SELECT"], authenticated: ["SELECT"], service_role: ["ALL"] },
+  notification_preferences: {
+    anon: [],
+    authenticated: ["SELECT", "INSERT", "UPDATE"],
+    service_role: ["ALL"],
+  },
   notifications: { anon: [], authenticated: ["SELECT"], service_role: ["ALL"] },
   profiles: {
     anon: [],
@@ -645,8 +650,29 @@ async function runPhase(phase) {
       [notificationRow?.rows[0]?.id],
       (result) => result.rows[0]?.one === true,
     );
+    await expectAllowed(
+      "authenticated: grava e atualiza própria preferência de notificação",
+      customerClient,
+      `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+       values ($1, 'booking.reminder', 'in_app', false)
+       on conflict (user_id, event_type, channel) do update set enabled = excluded.enabled
+       returning enabled`,
+      [customer],
+      (result) => result.rows[0]?.enabled === false,
+    );
 
     // Escritas diretas e leituras sem política: negadas por privilégio.
+    await expectDenied(
+      "authenticated: DELETE em notification_preferences",
+      customerClient,
+      `delete from public.notification_preferences where user_id = $1`,
+      [customer],
+    );
+    await expectDenied(
+      "anon: SELECT em notification_preferences",
+      anonClient,
+      `select user_id from public.notification_preferences`,
+    );
     await expectDenied(
       "authenticated: INSERT direto em bookings",
       customerClient,
