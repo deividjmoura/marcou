@@ -1,0 +1,127 @@
+{
+  "versao": 1,
+  "objetivo": "Canal entre agentes para evitar retrabalho: avisar o que você está tocando, o que acabou de mergear e o que precisa do outro. Não é documentação; o responsável não precisa ler. Mensagens são curtas e em JSON.",
+  "instalar_e_usar": {
+    "baixar_script": "git fetch -q origin coordination/agents && git show origin/coordination/agents:.agent-coordination/channel/chan.mjs > /tmp/chan.mjs",
+    "ler": "node /tmp/chan.mjs read --me agent_N   (mostra claims_ativos, inbox_sem_resposta e recentes)",
+    "escrever": "node /tmp/chan.mjs post --from agent_N --to agent_M[,agent_K|all] --type TIPO --body \"texto curto\" [--pr 178,172] [--issue 56] [--files a.ts,b.ts] [--branch x] [--migration 20261128000900] [--needs-reply] [--reply-to ID] [--ttl MINUTOS] [--rebase-needed]",
+    "release": "node /tmp/chan.mjs post --from agent_N --type release --reply-to ID_DO_CLAIM --body \"liberado\"",
+    "observacoes": [
+      "Cada agente escreve SOMENTE no próprio arquivo channel/agent_N.jsonl (o script cuida disso).",
+      "Mensagens têm no máximo 400 caracteres; segredos e tokens são recusados.",
+      "O script apaga do seu arquivo mensagens com mais de 24 h; nada precisa ser mantido."
+    ]
+  },
+  "quando_ler": [
+    "Ao começar qualquer tarefa e antes de criar branch.",
+    "Antes de CADA push, de abrir PR e de mergear.",
+    "Depois de cada resultado de CI/Netlify.",
+    "Sempre que alguém avisar um merge (tipo merged) ou você estiver esperando outro agente.",
+    "No mínimo a cada ~15 minutos de trabalho ativo."
+  ],
+  "tipos": {
+    "claim": "Reserva de algo que você vai tocar (arquivos quentes, PR, branch, versão de migration). Vale ttl_min (padrão 180). Enquanto ativo, ninguém mais edita aquilo.",
+    "release": "Libera um claim (reply_to = id do claim). Faça assim que mergear ou desistir.",
+    "heads_up": "Aviso útil, sem exigir resposta.",
+    "merged": "Você mergeou na main. Informe pr, sha e files; use --rebase-needed se quem tem PR aberta tocando esses arquivos precisa atualizar.",
+    "request": "Pedido a outro agente. Use --needs-reply.",
+    "answer": "Resposta a um request (reply_to = id).",
+    "blocker": "Você está parado esperando algo de outro agente ou do responsável. Diga exatamente o quê.",
+    "ack": "Confirmação curta de que leu e vai fazer.",
+    "handoff": "Passagem de trabalho: o que foi feito, onde parou, armadilhas."
+  },
+  "arquivos_quentes": [
+    "src/app/painel/painel-client.tsx",
+    "src/app/globals.css",
+    "src/lib/identity.ts",
+    "next.config.ts",
+    "package.json",
+    "package-lock.json",
+    "CHANGELOG.md",
+    "scripts/db-check.mjs",
+    "docs/TESTE-REAL-PRODUCAO.md",
+    "supabase/migrations/* (versão da migration)"
+  ],
+  "regras": [
+    "1. CLAIM ANTES DE EDITAR: para qualquer arquivo quente, poste um claim com refs.files antes de alterar. Se já existir claim ativo de outro agente sobre o arquivo, NÃO edite: mande um request ou aguarde o release/merged.",
+    "2. MIGRATIONS: antes de criar uma migration, reserve a versão com claim (refs.migration). A versão deve ser maior que a última da main e que qualquer claim ativo. Duas migrations nunca podem ter a mesma versão.",
+    "3. AO MERGEAR, avise: tipo merged com pr, sha e files; --rebase-needed quando afetar PRs abertas de outros. Quem for afetado reconcilia UMA vez, depois de esperar o fim da rajada de merges.",
+    "4. NÃO DUPLIQUE: antes de abrir PR ou branch para uma issue, confira o canal e a lista de PRs abertas. Não feche e reabra PR para 'refazer': reconcilie a mesma branch (o squash achata o histórico). Cada PR nova é um build novo na Netlify.",
+    "5. ORÇAMENTO DE BUILD: respeite dispatch.netlify_budget. Antes de rebasear e dar push, leia o canal para saber se outro merge está chegando; assim você faz um push só.",
+    "6. BLOQUEIO: se estiver esperando alguém, poste blocker com a referência exata. Quem recebe responde no próximo checkpoint.",
+    "7. Mensagem curta, factual, sem opinião; nada de segredo, token ou dado pessoal.",
+    "8. O canal não substitui o state.json: estado oficial, SHAs e relatórios continuam lá. O canal é para coordenação rápida."
+  ],
+  "campos_da_mensagem": {
+    "id": "gerado",
+    "ts": "gerado",
+    "from": "agent_N|coordinator",
+    "to": [
+      "agent_M|all"
+    ],
+    "type": "um dos tipos",
+    "refs": {
+      "pr": [],
+      "issue": [],
+      "files": [],
+      "branch": [],
+      "migration": []
+    },
+    "body": "texto",
+    "needs_reply": "bool",
+    "reply_to": "id",
+    "ttl_min": "minutos",
+    "rebase_needed": "bool"
+  },
+  "exemplos": [
+    {
+      "from": "agent_2",
+      "to": [
+        "all"
+      ],
+      "type": "claim",
+      "refs": {
+        "files": [
+          "src/app/painel/painel-client.tsx"
+        ],
+        "pr": [
+          "178"
+        ]
+      },
+      "body": "Editando painel-client.tsx para #56. Peço que ninguém mexa até o release.",
+      "ttl_min": 180
+    },
+    {
+      "from": "agent_5",
+      "to": [
+        "agent_2"
+      ],
+      "type": "merged",
+      "refs": {
+        "pr": [
+          "172"
+        ],
+        "files": [
+          "src/app/globals.css",
+          "src/app/layout.tsx"
+        ]
+      },
+      "body": "#172 mergeada na main (sha abc1234). Rebase necessário se você tocou globals.css.",
+      "rebase_needed": true
+    },
+    {
+      "from": "agent_4",
+      "to": [
+        "agent_3"
+      ],
+      "type": "request",
+      "refs": {
+        "migration": [
+          "20261128000900"
+        ]
+      },
+      "body": "Preciso reservar 20261128000900 para a migration da #53? Você tem alguma em andamento?",
+      "needs_reply": true
+    }
+  ]
+}
