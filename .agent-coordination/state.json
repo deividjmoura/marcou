@@ -1372,8 +1372,8 @@
     "agent_1_r7_booking": {
       "scope": "Reservas: multi-serviços, valores/sinal e confirmação (.ics)",
       "pull_requests": [
-        124,
-        68
+        143,
+        146
       ],
       "issues": [
         21,
@@ -1387,8 +1387,8 @@
         "feat/booking-flow-confirmation-success",
         "feat/21-booking-multiple-services"
       ],
-      "status": "in_progress",
-      "active_assignment": "A1-T2 #124",
+      "status": "wave_2_complete",
+      "active_assignment": "W2 complete",
       "tasks": [
         {
           "id": "A1-T1",
@@ -1429,28 +1429,38 @@
         ],
         "blocked_by": []
       },
-      "current_state": "PR #142 squash-merged em 4badea4b8ba8ecfa95bfdfa526dad606c5a56691. Migrations 20261125120000_booking_multiple_services.sql e 20261125130000_table_privileges_matrix.sql. Redirect fora do try/catch; UI multi-serviço; CI quality+Netlify verdes no HEAD e41a89d. #131/#139 fechadas como substituídas. Destrava #136/#124/#68.",
-      "next_action": "A1-T2: atualizar #124 sobre main pós-#142; parser BRL e ações por papel.",
+      "current_state": "Onda 2 Agent 1 concluída: #143, #146, #22 fechada. PRs #124/#68/#131/#139 superadas.",
+      "next_action": "Sem tarefa W2 pendente.",
       "updates": [
         {
-          "timestamp": "2026-11-27T23:31:22Z",
-          "task": "A1-T1",
+          "timestamp": "2026-11-28T00:03:52Z",
+          "task": "W2-A1-T4",
           "status": "done",
-          "result": "PR #142 squash-merged em 4badea4b8ba8ecfa95bfdfa526dad606c5a56691. Migrations 20261125120000_booking_multiple_services.sql e 20261125130000_table_privileges_matrix.sql. Redirect fora do try/catch; UI multi-serviço; CI quality+Netlify verdes no HEAD e41a89d. #131/#139 fechadas como substituídas. Destrava #136/#124/#68.",
-          "head_sha": "4badea4b8ba8ecfa95bfdfa526dad606c5a56691",
-          "tests": "CI quality success + Netlify success no SHA e41a89d5c034071ab4016ffd68245af1f0bb4ed3",
+          "result": "#21 já closed. #22 fechada com evidência #142/#143/#146. #50 comentada (multi-select ok; redesign visual residual). #8 comentada (fora do escopo prioritário).",
+          "head_sha": "13d67f672f98551b35db12d10ac1a3f756a88bf0",
+          "tests": null,
           "blockers": null,
-          "next_action": "A1-T2: atualizar #124 sobre main pós-#142; parser BRL e ações por papel."
+          "next_action": "Escopo W2 Agent 1 concluído."
         },
         {
-          "timestamp": "2026-11-27T23:18:27Z",
-          "task": "A1-T1",
-          "status": "in_progress",
-          "result": "PR #131 fechada (conflito/regressão). Nova PR #139 em fix/131-multi-services-r7 @ 7d4dc3f4f1cc12a3a7323b8cb7f7a88601be32bf: redirect fora do try/catch, UI multi-serviço, migrations 20261127120000 e 20261127130000, teste de regressão. CI em andamento.",
-          "head_sha": "7d4dc3f4f1cc12a3a7323b8cb7f7a88601be32bf",
-          "tests": "CI quality + Netlify checks in_progress no SHA 7d4dc3f",
+          "timestamp": "2026-11-28T00:03:52Z",
+          "task": "W2-A1-T2+T3",
+          "status": "done",
+          "result": "PR #146 mergeada (13d67f6): confirmação, .ics multi-serviço, testes. #68 fechada. Migrations #142 documentadas em docs/BOOKING-OPS.md.",
+          "head_sha": "13d67f672f98551b35db12d10ac1a3f756a88bf0",
+          "tests": "CI quality+Netlify success no SHA 191fff3",
           "blockers": null,
-          "next_action": "Aguardar CI verde em #139; se verde, squash merge; registrar SHA e avisar Agent 4 sobre migrations 20261127120000/20261127130000."
+          "next_action": "W2-A1-T4"
+        },
+        {
+          "timestamp": "2026-11-28T00:03:52Z",
+          "task": "W2-A1-T1",
+          "status": "done",
+          "result": "PR #143 mergeada (03eb70c): parser BRL, sinal 0, ações por papel. #124 fechada.",
+          "head_sha": "03eb70cf11e525260c08abdb8e27d028a6537349",
+          "tests": "CI quality+Netlify success no SHA 112483b",
+          "blockers": null,
+          "next_action": "W2-A1-T2"
         }
       ]
     },
