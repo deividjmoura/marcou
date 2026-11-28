@@ -91,7 +91,7 @@
     "dispatched_at": "2026-11-27",
     "runbook": "docs/FECHAMENTO-AGENTES.md (branch main, commit f1983b1)",
     "supersedes": "2026-11-27-round-6-closeout-and-integration (preservada em dispatch_history)",
-    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*). WAVE 5: leia dispatch.identities e dispatch.wave_5 (tasks W5-*); wave_5 substitui as tarefas pendentes das ondas anteriores.",
+    "instruction": "Rodada de fechamento total solicitada pelo responsável. Releia este arquivo e o runbook, assuma o slot do seu número e reconfirme refs, main e CI no GitHub antes de agir (o snapshot pode estar velho). Cada agente trabalha só nos seus PRs/issues/branches; cruzamentos se resolvem pelo state.json. Corrija com teste, atualize sem force-push, rode a suíte completa e integre apenas com o checklist 100% verde. Registre cada tarefa concluída em updates com os campos obrigatórios. ATUALIZAÇÃO: leia docs/FECHAMENTO-AGENTES.md seções 0 (autorização de merge) e 9 (instruções por agente) na main antes de agir. WAVE 2: ao retomar, leia dispatch.wave_2 (tarefas W2-*) e registre cada tarefa concluída na sua entrada. Leia também dispatch.wave_2.scope_standard e backlog_after_open_prs. WAVE 3: leia dispatch.wave_3 (tasks W3-*). WAVE 4: leia dispatch.wave_4 (tasks W4-*). WAVE 5: leia dispatch.identities e dispatch.wave_5 (tasks W5-*); wave_5 substitui as tarefas pendentes das ondas anteriores. WAVE 6: leia dispatch.identities, dispatch.role_swap e dispatch.wave_6 (tasks W6-*); wave_6 prevalece sobre wave_5. ATENÇÃO: Agents 1 e 2 trocaram de função.",
     "execution_order": [
       "Onda 0 (paralelo): A2-T1 (#127), A3-T1 (integrar #38 sobre a main que já tem a #128), A1-T1 (corrigir #131), A5-T3/T4 (fechar #46 e #2), A4-T2/T3/T4 (auditorias), A6-T1",
       "Onda 1: merge da #131 (destrava A4-T1, A1-T2, A1-T3)",
@@ -333,14 +333,16 @@
       }
     },
     "identities": {
-      "aviso": "O ambiente do responsável caiu e os agentes perderam o contexto. A identidade de cada agente é reatribuída pelo responsável no prompt inicial. Cada agente escreve SOMENTE na própria entrada do state.json.",
+      "aviso": "TROCA DE FUNÇÕES (28/11/2026): Agent 1 e Agent 2 trocaram de área a pedido do responsável. Cada agente continua com o MESMO número, mas assume a função e a entrada novas acima. As entradas antigas (agent_1_r7_booking e agent_2_r7_auth) ficam como histórico somente leitura. Agentes 3 a 6 não mudam.",
       "agent_1": {
-        "funcao": "Reservas e painel do prestador",
-        "entrada": "agent_1_r7_booking"
+        "funcao": "Autenticação e conta do usuário (ANTES: Reservas e painel)",
+        "entrada": "agent_1_r7_auth",
+        "substitui_entrada_antiga": "agent_1_r7_booking (histórico, somente leitura)"
       },
       "agent_2": {
-        "funcao": "Autenticação e conta do usuário",
-        "entrada": "agent_2_r7_auth"
+        "funcao": "Reservas e painel do prestador (ANTES: Autenticação e conta)",
+        "entrada": "agent_2_r7_booking",
+        "substitui_entrada_antiga": "agent_2_r7_auth (histórico, somente leitura)"
       },
       "agent_3": {
         "funcao": "Operações, notificações e qualidade",
@@ -410,6 +412,70 @@
           "W5-A6-T3: validar docs/TESTE-REAL-PRODUCAO.md contra o repositório (ordem real das migrations, nomes de variáveis, flags, comandos); divergências vão para a entrada do Agent 3. Só leitura.",
           "W5-A6-T4: limpeza das branches restantes só com prova de superação/integração (arenas antigas e branches de PRs fechadas). Preservar main, coordination/agents, branches de PR aberta (#154, #130), agent5/w4-121-theme-system e trabalho ativo de qualquer agente. Branches do Agent 5: ele limpa as dele, você confere.",
           "W5-A6-T5: relatório final parcial no state.json (SHAs, PRs, issues, branches, pendências do responsável) e a pergunta sobre GitHub Release (nada de tag/Release sem autorização explícita). Atualizar quando #154 e #130 fecharem."
+        ]
+      }
+    },
+    "role_swap": {
+      "data": "2026-11-28",
+      "pedido_por": "responsável",
+      "motivo": "A #130 (recuperação de senha) está parada há várias rodadas por depender do trabalho local no Codespace; o Agent 1 vinha entregando de forma contínua, então assume a área de autenticação. O Agent 2 assume reservas/painel, onde as tarefas estão bem especificadas e independem de ambiente local.",
+      "regras": [
+        "Não apague nem edite as entradas antigas; crie e escreva somente na entrada nova.",
+        "Leia o 'handoff' da sua entrada nova antes de agir: ele resume o que o antecessor fez, onde parou e armadilhas.",
+        "A branch fix/auth-recovery-preview-origin (#130) passa a ser do Agent 1. O Agent 2 não mexe nela.",
+        "As branches e PRs de reservas já mergeadas não exigem ação; trabalho de painel parte da main atual."
+      ]
+    },
+    "wave_6": {
+      "opened_at": "2026-11-28, quarta verificação do coordenador. Substitui as tarefas pendentes da wave_5 para os Agents 1 e 2 (por causa da troca) e atualiza as dos demais.",
+      "main_verificada": "8255fd5941b2b0e3867e1942dcba552cc2592f36 (CI quality success). Reconfirme antes de agir.",
+      "verificado": [
+        "Mergeadas desde a última rodada: #154 (imagens de serviço), #160 (foto do profissional, #53), #161 (preferências de notificação, #13), #162 (ADR de e-mail + EmailSender noop + fila idempotente, #26), #163 (roteiro de produção atualizado para 24 migrations), #164 (ADR E2E, #31), além de #155, #156, #157 e #158 da verificação anterior.",
+        "Abertas: #159 (temas claro/escuro, Ready, CI verde, aguardando a conferência visual do responsável) e #130 (Draft, com conflito).",
+        "Issues ainda abertas apesar de o código estar na main (para o Agent 6 fechar com prova): #52 (imagem de serviço, #154), #57 (WhatsApp, #153/#155) e #53 já está fechada.",
+        "Agent 3 concluiu a onda 4 inteira (#157, #161, #162, #163, #164) e aguarda decisões do responsável (ver 'decisoes_pendentes_do_responsavel'). Agent 4 concluiu #154 e #160. Agent 6 ainda não iniciou nenhuma tarefa."
+      ],
+      "decisoes_pendentes_do_responsavel": [
+        "E2E (#31, docs/ADR-E2E.md): backend de teste. Recomendado: Opção A (Supabase local via CLI/containers no CI, sem segredos nem custo), política 'e2e em toda PR depois de 3 execuções estáveis' e autorização para @playwright/test e @axe-core/playwright como devDependencies.",
+        "E-mail (#26, docs/ADR-EMAIL-PROVEDOR.md): provedor (recomendado Resend para o MVP) e domínio remetente.",
+        "Pagamentos (#28): modelo da Fase 1 (Pix manual com comprovante) ou integração direta.",
+        "Retenção de dados na exclusão de conta (#47 parte 2).",
+        "Ações de ambiente (#30/#20): staging, variáveis na Netlify, ativação dos agendadores."
+      ],
+      "regra_de_conflito": "Painel: Agent 2 tem prioridade em src/app/painel/painel-client.tsx; Agent 3 (#43) e Agent 5 só mexem no painel depois de cada PR do Agent 2 mergeada ou rebaseando sobre ela.",
+      "tasks": {
+        "agent_1": [
+          "W6-A1-T1 (P0; você agora é Autenticação e conta): resolver a #130 em PR nova e limpa. Passos: (1) criar branch nova a partir da main atual; (2) aplicar a diferença líquida da branch fix/auth-recovery-preview-origin sem o ci.yml (git diff $(git merge-base origin/main origin/fix/auth-recovery-preview-origin) origin/fix/auth-recovery-preview-origin -- . ':!.github/workflows/ci.yml' | git apply --3way) e resolver os 4 conflitos (.env.example, CHANGELOG.md, next.config.ts, src/lib/identity.ts) preservando as correções que a main já tem; (3) enxugar docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md (145 linhas) para um checklist objetivo; (4) testes com mocks, inclusive origem confiável, preview falso/malformado, token_hash/type=recovery e ausência de open redirect; (5) suíte completa verde; (6) abrir PR 'supersedes #130', mergear se o CI e a Netlify estiverem verdes; (7) comentar e fechar a #130 como substituída, e só então apagar a branch antiga.",
+          "W6-A1-T2: #70 e #23: após o merge, comentar a evidência final e listar o que depende do teste real do responsável (recuperação de senha e Google OAuth, já descritos na Fase 3 de docs/TESTE-REAL-PRODUCAO.md; avise o Agent 3 se o comportamento final mudar o roteiro).",
+          "W6-A1-T3: #47 parte 1: edição de dados pessoais (nome, telefone) em /minha-conta conforme o escopo refinado. Parte 2 (exclusão de conta): só a nota de desenho em docs/, esperando a decisão de retenção do responsável; Agent 4 revisa a segurança."
+        ],
+        "agent_2": [
+          "W6-A2-T1 (você agora é Reservas e painel): #56 modal único de criar/editar serviço, incluindo o campo de imagem da #154, foco/Esc/aria, fechar só após sucesso e mantendo o digitado em erro, lógica extraída para funções puras com testes.",
+          "W6-A2-T2: #55 remover o campo de intervalo da UI, com a decisão registrada em docs/MOTOR-RESERVAS.md e testes de não regressão.",
+          "W6-A2-T3: #54 edição por seção, URL pública com copiar e QR Code (avaliar geração sem dependência antes de adicionar biblioteca).",
+          "Uma PR por issue; leia o 'Escopo refinado' de cada uma; avise no state.json ao mergear cada PR."
+        ],
+        "agent_3": [
+          "W6-A3-T1: #43 onboarding (CTA na home, checklist de primeiros passos com dados reais, slug) depois que a #56 do Agent 2 estiver mergeada (rebase sobre ela).",
+          "W6-A3-T2: #24 transformar em checklist de acompanhamento (auditoria do painel) e abrir issues filhas para as lacunas.",
+          "W6-A3-T3: preparar, sem instalar nada, o que a Fase 2 do E2E vai precisar (docs/ADR-E2E.md), para começar assim que o responsável decidir. Manter docs/TESTE-REAL-PRODUCAO.md atualizado com cada migration/PR novo mergeado."
+        ],
+        "agent_4": [
+          "W6-A4-T1: revisão de segurança retroativa e registrada em comentário das PRs já mergeadas #161 (preferências) e #162 (fila de e-mail): RLS, search_path, grants, matriz do privileges-check; abrir PR corretiva com migration nova se achar falha.",
+          "W6-A4-T2: ADR de pagamentos em docs/ADR-PAGAMENTOS.md para a #28 (Fase 1 Pix manual × Fase 2 integração, modelo de estados pending_payment → paid → refunded/expired, riscos), sem implementar nada.",
+          "W6-A4-T3: revisar as migrations/funções do #47 (Agent 1) e do #56/#54 (Agent 2) quando surgirem; e documentar em docs/ o desenho de travas da #132 (demo do feed), sem implementar."
+        ],
+        "agent_5": [
+          "W6-A5-T1: concluir a #159: a conferência visual é do responsável e NÃO bloqueia o merge. Confirmar que o CI e a Netlify estão verdes no SHA exato, que o contraste AA está coberto por teste nos dois temas e que o tema padrão para quem nunca escolheu está claramente documentado na PR; listar na descrição a conferência visual pendente do responsável. Mergear se verde.",
+          "W6-A5-T2: concluir docs/REVISAO-VISUAL-DONO.md (telas, viewports 390/1440, tema claro/escuro, o que observar), cobrindo #150, #158 e #159.",
+          "W6-A5-T3: #27 restante: tokens/tema nas telas de autenticação, área do cliente e home em PRs pequenas; painel só depois das PRs do Agent 2. Apagar suas branches temporárias com prova (o Agent 6 confere)."
+        ],
+        "agent_6": [
+          "W6-A6-T1 (você ainda não executou nada; comece agora): auditar de forma independente os merges da rodada 7: #127, #136, #137, #138, #140, #141, #142, #143, #145, #146, #147, #150, #151, #152, #153, #154, #155, #156, #157, #158, #160, #161, #162, #163, #164. Para cada um: SHA do merge, CI no SHA, vínculo com issue, conteúdo na main. Registrar divergências.",
+          "W6-A6-T2: auditar a issue #8 (matriz critério→evidência) e fechar com prova; fechar com evidência #52 e #57; conferir as evidências de #21, #22, #29, #125 e #53.",
+          "W6-A6-T3: validar docs/TESTE-REAL-PRODUCAO.md contra o repositório (24 migrations em ordem, variáveis, flags, comandos); divergências vão para a entrada do Agent 3. Só leitura.",
+          "W6-A6-T4: limpeza das branches restantes só com prova. Preservar main, coordination/agents, branches de PR aberta (#159 e a PR nova da recuperação), a branch antiga fix/auth-recovery-preview-origin até a #130 ser fechada como substituída, e trabalho ativo de qualquer agente.",
+          "W6-A6-T5: relatório final parcial no state.json e a pergunta sobre GitHub Release (nada de tag/Release sem autorização). Incluir as decisões pendentes do responsável. Atualizar ao fim de cada onda."
         ]
       }
     }
@@ -2869,6 +2935,41 @@
           "next_action": "Verificar as entregas dos Agents 1–5 contra o GitHub."
         }
       ]
+    },
+    "agent_1_r7_auth": {
+      "scope": "Autenticação, recuperação de senha, conta do usuário (#130, #70, #23, #47)",
+      "role_swap_from": "agent_1_r7_booking",
+      "status": "assigned_wave_6",
+      "handoff": {
+        "do_antecessor_na_area": "Agent 2 (agent_2_r7_auth): mergeou a #127 (82af750). A #130 está Draft, 29 commits à frente e 27 atrás da main, com conflito. A tentativa de sincronizar parou porque o trabalho local de proxy.test.ts estava no Codespace do responsável e não chegou ao GitHub.",
+        "diagnostico_do_coordenador": "A diferença líquida da #130 é pequena (11 arquivos, +325/−15; o resto é histórico de ajustes de docs). Aplicar a diferença líquida sobre a main atual (sem o ci.yml) gera conflito em exatamente 4 arquivos: .env.example, CHANGELOG.md, next.config.ts e src/lib/identity.ts; os demais (docs/IDENTITY.md, testes de actions/confirm/identity, identity-origin.test.ts, docs/AUTH-RECOVERY-PREVIEW-ORIGIN.md) aplicam limpos. A main já roda npm run audit no CI, então a alteração de .github/workflows/ci.yml da #130 é redundante e deve ser descartada. src/proxy.ts e src/proxy.test.ts existem na main.",
+        "armadilhas": [
+          "Não force-push em fix/auth-recovery-preview-origin; ela fica preservada até a nova PR mergear.",
+          "Não dependa do Codespace do responsável: se algum teste local (ex.: src/proxy.test.ts com metadados de preview) fizer falta, reescreva-o a partir do comportamento descrito na #130.",
+          "Netlify: CONTEXT e DEPLOY_PRIME_URL são metadados de build, não variáveis de runtime; a #130 já os injeta via next.config.ts (MARCOU_AUTH_DEPLOY_*). Preserve isso.",
+          "Nenhum e-mail real, nenhuma chamada ao Supabase remoto."
+        ]
+      },
+      "current_state": "Entrada criada pelo coordenador na troca de funções. Nenhuma tarefa iniciada.",
+      "next_action": "Executar W6-A1-T1.",
+      "updates": []
+    },
+    "agent_2_r7_booking": {
+      "scope": "Reservas e painel do prestador (#56, #55, #54 e apoio em #43)",
+      "role_swap_from": "agent_2_r7_auth",
+      "status": "assigned_wave_6",
+      "handoff": {
+        "do_antecessor_na_area": "Agent 1 (agent_1_r7_booking): mergeou #142/#143 (multi-serviço, parser BRL, ações por papel), #146 (confirmação e .ics multi-serviço), #153 (atalhos WhatsApp) e #155 (correção P0 de DDD 12–19). Documentou a questão da ordem das migrations da #142 em docs/BOOKING-OPS.md. A fila do painel (#56 → #55 → #54 → #43) estava parada por uma dependência da #150, que já foi mergeada. Agora não há bloqueio.",
+        "contexto_tecnico": "Painel em src/app/painel (painel-client.tsx concentra o formulário de serviços). A #154 já está na main e adicionou o campo de imagem do serviço: o modal da #56 DEVE incluí-lo. Regras de preço/duração/disponibilidade ficam no servidor e no banco, não na interface. O Vitest roda em ambiente node, sem DOM: extraia a lógica do formulário para funções puras testáveis e registre a inspeção visual como pendência do responsável.",
+        "armadilhas": [
+          "painel-client.tsx é disputado: o Agent 5 só aplica tokens/tema no painel depois das suas PRs.",
+          "Migrations novas: versão maior que a última da main (hoje 20261128000700); confira antes de criar.",
+          "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
+        ]
+      },
+      "current_state": "Entrada criada pelo coordenador na troca de funções. Nenhuma tarefa iniciada.",
+      "next_action": "Executar W6-A2-T1.",
+      "updates": []
     }
   },
   "dispatch_history": [
