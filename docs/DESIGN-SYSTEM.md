@@ -12,20 +12,39 @@ A base anterior à PR usava destaque verde e fonte Arial/Helvetica. Nesta entreg
 
 A Issue #27 registra como direção aprovada bege, branco e rosé. A PR aplica essa paleta na folha global compartilhada, cobrindo landing, autenticação, painel, serviços, agendamento, reservas e notificações. As cores semânticas de sucesso, aviso, erro e informação continuam distintas da cor de marca para preservar significado e legibilidade.
 
-## Tokens iniciais
+## Tokens semânticos
 
-Os tokens estão em src/styles/design-tokens.css e são carregados pelo layout raiz.
+Os tokens estão em `src/styles/design-tokens.css`, carregados pelo layout raiz. Aliases de função evitam que componentes conheçam nomes de paleta ou hex.
 
-| Grupo | Convenção |
-|---|---|
-| Cores | --ds-color-* por função semântica |
-| Tipografia | --ds-font-* e --ds-line-height-* |
-| Espaçamento | escala de 4px: --ds-space-1 até --ds-space-16 |
-| Bordas | --ds-radius-* |
-| Elevação | --ds-shadow-* |
-| Foco e controles | --ds-focus-*, --ds-control-min-height |
+| Papel | Tokens | Uso |
+|---|---|---|
+| Fundo | `--ds-color-background` | Base da página |
+| Superfície | `--ds-color-surface-default`, `--ds-color-surface-muted` | Cards, campos e agrupamentos |
+| Texto | `--ds-color-text-primary`, `--ds-color-text-secondary` | Conteúdo e texto auxiliar |
+| Borda | `--ds-color-border`, `--ds-color-border-strong` | Divisores, campos e separação |
+| Destaque | `--ds-color-accent`, `--ds-color-accent-subtle`, `--ds-color-link` | Ações, links e seleção |
+| Feedback | `--ds-color-success/warning/danger/info` + tokens `*-bg` | Status e alertas |
+| Controles | `--ds-color-control-bg`, `--ds-color-control-text` | Formulários |
+| Foco | `--ds-focus-color`, largura e offset | Foco visível |
 
-A folha global mantém as classes e APIs CSS existentes, mas seus valores estruturais agora apontam para os tokens semânticos. A migração de componentes específicos e a remoção gradual de valores legados podem ocorrer em PRs menores.
+Também há tokens de tipografia, espaçamento, raio, elevação, movimento e altura mínima de controle. A escala de espaço segue incrementos de 4px.
+
+### Tema escuro — tokens preparados
+
+O bloco `[data-theme="dark"]` define valores escuros e `color-scheme`, sem seletor, persistência ou ativação automática. Esses comportamentos pertencem à Issue #121. Os aliases legados (`--ink`, `--muted`, `--paper`, `--surface`, `--line`) acompanham os tokens quando o atributo é aplicado. Isso **não** significa que todas as telas ou cores hard-coded já estejam adaptadas ao tema.
+
+### Contrato de uso
+
+```css
+.component {
+  color: var(--ds-color-text-primary);
+  background: var(--ds-color-surface-default);
+  border-color: var(--ds-color-border);
+}
+.component a { color: var(--ds-color-link); }
+```
+
+Evite valores hex de paleta diretamente em componentes novos. Prefira o papel semântico. Feedback deve combinar cor com texto/ícone/label.
 
 ## Acessibilidade e movimento
 
@@ -61,16 +80,47 @@ Ajuste incremental para reduzir áreas vazias sem sacrificar leitura ou toque:
 - Mantida a altura mínima de 44px dos controles interativos para preservar alvos de toque.
 - Nenhuma rota, ação, permissão, regra de agendamento ou migration foi alterada.
 
+## Catálogo de componentes (inventário, não redesign)
+
+As classes são APIs CSS existentes. Use variantes e estados sem duplicar estilos inline.
+
+| Componente/classe | Variantes/estados | Orientação |
+|---|---|---|
+| `.btn`, `.btn-ghost`, `.btn-small` | Primário, ghost/secundário, compacto, hover, foco, disabled | Uma ação principal por contexto; ghost para secundária; alvo interativo de 44px |
+| `.field` + input/select/textarea | Default, focus-visible, erro, disabled | Label visível; erro associado; manter foco |
+| `.card`, `.auth-card`, `.booking-widget` | Superfície, borda, conteúdo, título | Agrupar conteúdo; evitar cards aninhados sem necessidade |
+| `.item-row`, `.notification-row` | Normal, unread, ações, responsivo | Preservar hierarquia; texto longo deve quebrar |
+| `.status-pill` | pending, review, confirmed, cancelled, expired | Status sempre textual; cor não é único sinal |
+| `.alert` | error, success, warning, info | Mensagem clara; `role=alert` conforme urgência |
+| `.provider-nav-item`, `.provider-utility-link` | active, hover, focus, mobile nav | Indicar página atual além da cor |
+| `.slot` | disponível, selected, disabled | Disponibilidade é backend; seleção e foco distintos |
+| Dialog/modal | diálogo, confirmação, cancelamento, loading | Foco inicial/restaurado, Esc, nome acessível e scroll contido; inventário não cria modal universal |
+
+### Exemplos
+
+```tsx
+<button className="btn">Salvar</button>
+<button className="btn btn-ghost">Cancelar</button>
+<label className="field">
+  <span>Nome</span>
+  <input name="name" />
+</label>
+<div className="card">Conteúdo agrupado</div>
+<div className="alert alert-info" role="status">Informação</div>
+```
+
+As classes `.btn-primary` e `.btn-danger` não existem na base atual; não use sem implementação. Modal/dialog é um padrão de interação, não uma classe universal.
+
 ## Próximos passos
 
 1. Fazer revisão visual por tela em desktop e mobile, incluindo estados de erro, sucesso, aviso e indisponibilidade.
 2. Medir contraste WCAG dos pares reais de texto/superfície e corrigir qualquer falha encontrada.
-3. Migrar componentes específicos para os tokens sem alterar comportamento e criar catálogo de exemplos.
+3. Migrar componentes específicos para tokens sem alterar comportamento, em PRs pequenas.
 4. Revisar visualmente a dupla Manrope/Lora em desktop e mobile; avaliar ícones animados somente após verificar licença, peso, fallback e acessibilidade.
 
 ## Limites desta entrega
 
-Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. Foram adicionadas duas famílias auto-hospedadas e suas licenças; nenhum ícone animado ou outro asset visual de terceiros foi incluído.
+Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. O bloco escuro fornece tokens de base, mas não implementa tema nem garante cobertura de todos os componentes. Foram adicionadas duas famílias auto-hospedadas e suas licenças; nenhum ícone animado ou outro asset visual de terceiros foi incluído.
 
 
 ## Migração da paleta — 15/11/2026
