@@ -259,6 +259,21 @@ try {
       roles: { anon: false, authenticated: false, service_role: true },
     },
     {
+      label: "preferência efetiva de notificação é exclusiva de service_role",
+      signature: "public.is_notification_enabled(uuid,text,text)",
+      roles: { anon: false, authenticated: false, service_role: true },
+    },
+    {
+      label: "enfileiramento de e-mail é exclusivo de service_role",
+      signature: "public.enqueue_email_delivery(uuid,uuid,text,text,text,integer)",
+      roles: { anon: false, authenticated: false, service_role: true },
+    },
+    {
+      label: "reprocessamento de e-mail é exclusivo de service_role",
+      signature: "public.reprocess_dead_email_delivery(uuid)",
+      roles: { anon: false, authenticated: false, service_role: true },
+    },
+    {
       label: "helper de totais multi-serviço não é executável por papéis de API",
       signature: "public.booking_service_totals(uuid,uuid[])",
       roles: { anon: false, authenticated: false, service_role: false },

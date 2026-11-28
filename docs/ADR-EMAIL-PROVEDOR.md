@@ -101,8 +101,10 @@ Mesmo antes da decisão do provedor, esta entrega deixa pronta e testada a camad
   - `isEmailDeliveryEnabled()` é **fail-closed** (`false` por padrão).
 - **Renderizador de templates pt-BR sem PII de terceiros** (`src/server/email/template.ts`):
   - Formata horários no fuso do prestador (`bookings.timezone`), escapa HTML, não inclui dados de terceiros e gera link exclusivamente para `/reserva/[id]`.
-- **Fila idempotente com retry, backoff, estado `dead` e reprocessamento seguro:**
-  - Migration `supabase/migrations/20261128000700_email_delivery_queue.sql` criando `public.email_delivery_queue` (tabela estritamente server-only com RLS ativa, `REVOKE ALL` para `anon`/`authenticated`, `GRANT ALL` para `service_role`, sem armazenar e-mail/corpo) e RPCs `enqueue_email_delivery()` e `reprocess_dead_email_delivery()`.
+- **Persistência server-only de enfileiramento e reprocessamento (não é ainda um worker durável):**
+  - Migration `supabase/migrations/20261128000700_email_delivery_queue.sql` cria `public.email_delivery_queue` com RLS ativa, `REVOKE ALL` para `PUBLIC`/`anon`/`authenticated` e `GRANT ALL` para `service_role`; a tabela não guarda endereço de e-mail nem corpo.
+  - As RPCs `enqueue_email_delivery()` e `reprocess_dead_email_delivery()` persistem a criação idempotente e o reprocessamento de itens `dead`. A migration seguinte valida o vínculo entre destinatário e reserva e reafirma os grants server-only.
   - Chave de idempotência canônica: `${booking_id}:${event_type}:${window_key}:${recipient_role}`.
-  - Processador `processEmailQueueBatch()` (`src/server/email/queue.ts`) com backoff exponencial (`60s` → `120s` → `240s` → ... teto `3600s`), transição para estado terminal `dead` em erro permanente (`retryable: false`) ou após `max_attempts` (`5`), e reprocessamento seguro que só aceita itens em `dead` (nunca reenvia `sent`).
-- **Nenhum trigger ou cron enfileira ou envia e-mail automaticamente** até a PR futura de integração com o provedor escolhido pelo responsável.
+  - **Limitação importante:** a única implementação de `EmailQueueStore` é `InMemoryEmailQueueStore`. O processador `processEmailQueueBatch()` implementa claim/lease/backoff/retry/dead apenas nesse store em memória; não existe adaptador PostgreSQL que faça claim atômico (`SKIP LOCKED`) e transições condicionadas ao lease. Portanto, esses estados e retries ainda não são duráveis nem executados contra `email_delivery_queue`; a fila não está pronta para produção.
+  - O `NoopEmailSender` não reivindica itens nem os marca como enviados. Sem provedor real, os jobs permanecem pendentes e nenhum e-mail é enviado.
+- **Nenhum trigger, cron ou worker automático enfileira ou envia e-mail** até decisão do responsável, implementação de adaptador persistente e integração com o provedor escolhido.

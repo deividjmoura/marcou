@@ -194,6 +194,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
+- Hardening da fila de e-mail (#26): a RPC `enqueue_email_delivery` valida que o destinatário informado é o cliente ou o dono do prestador da reserva; os testes PostgreSQL verificam a matriz anon/authenticated/service_role das RPCs de e-mail, a matriz de funções cobre `is_notification_enabled` e as duas RPCs, e o processador não reivindica jobs quando o sender é `NoopEmailSender`. O ADR agora explicita que o worker/lease/backoff ainda é somente em memória e não constitui fila durável operacional.
+
 - Endurece o `search_path` das cinco sobrecargas/helpers `SECURITY DEFINER` do motor de reservas multi-serviço para `pg_catalog, public`, com migration forward-only `20261128000200_booking_definer_search_path.sql` e regressões de `search_path` e grants mínimos em `social-foundation-check.mjs`.
 
 - O harness `scripts/privileges-check.mjs` passa a integrar `npm run test:db`, validando a matriz completa de privilégios com defaults do Supabase emulados, incluindo as tabelas novas de reservas multi-serviço. Usa portas próprias (55438/55439) para não colidir com os demais PostgreSQL embutidos da suíte.

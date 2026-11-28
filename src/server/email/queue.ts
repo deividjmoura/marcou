@@ -254,6 +254,22 @@ export async function processEmailQueueBatch(
   const batchSize = deps.batchSize ?? 25;
   const leaseMs = deps.leaseMs ?? EMAIL_DEFAULT_LEASE_MS;
 
+  // O sender noop nunca entrega mensagens. Não reivindique jobs nem os marque
+  // como "sent": eles devem permanecer pendentes até existir um provedor real.
+  if (sender instanceof NoopEmailSender) {
+    log({
+      event: "email_batch_skipped_noop",
+      reason: "provider_not_configured",
+    });
+    return {
+      claimed: 0,
+      sent: 0,
+      skippedByPreference: 0,
+      retried: 0,
+      dead: 0,
+    };
+  }
+
   const jobs = await deps.store.claimBatch(batchSize, now(), leaseMs);
   const summary: EmailBatchSummary = {
     claimed: jobs.length,
