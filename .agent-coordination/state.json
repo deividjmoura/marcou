@@ -2783,7 +2783,7 @@
         "agent5/w2-design-system-main-latest",
         "agent5/w2-design-system-main-current"
       ],
-      "status": "in_progress",
+      "status": "blocked_dependency",
       "active_assignment": "Wave 6: W6-A5-T1 #121 theme PR merge; original #159 had conflict, replaced by clean #172 on latest main. CI pending. W6-A5-T2 owner visual checklist completed. W6-A5-T3 screen migration not yet started (avoid overlap with Agent1 auth and global CSS until theme PR lands). W6-A5-T4 branch cleanup blocked by missing delete tool.",
       "tasks": [
         {
@@ -2821,48 +2821,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Wave 6: PR #159 closed superseded after merge API returned 405 conflict. Replacement #172 on branch agent5/w6-121-theme-reconcile, base main 5a08e0ae262cd62a7540f1d37845e5e4fd05cf78, head e79a4b07d03046ce5ec73e9fb76c84f208ce2e30, 13 ahead/0 behind, mergeable true. CI run 46147644751 in_progress (changelog/lint/typecheck/audit passed, unit/domain running, DB/build pending); Netlify preview pending. Checklist in PR. Theme default system documented and tested. Issue #121/#27 comments updated. T3 home migration awaits theme merge; auth/account and provider panel reserved for Agents 1/2. T4 branch cleanup blocked (no delete tool).",
-      "next_action": "Poll CI run 46147644751 and Netlify Deploy Preview at exact head. If both green, merge PR #172 (manual visual review does not block per wave6). Then implement home-only token migration PR after merge; do not modify auth/account or panel. Reassess remaining T3 ownership.",
+      "current_state": "W7 order confirmed via channel: #172 must integrate first, then Agent2 #178. PR #172 exact HEAD e79a4b07d03046ce5ec73e9fb76c84f208ce2e30: CI run 46147644751 success (all gates incl build), Netlify preview success. PR currently mergeable=false because main advanced from base 5a08e0ae to 9e937369; compare confirms five commits behind and only overlapping changed file is CHANGELOG.md. Agent1 has active claim on CHANGELOG.md for #130, so Agent5 released its own claim and requested coordination/release. No safe branch-update/push capability available from current runtime (not in git repo; clone/fetch script failed); communication was posted through GitHub contents API fallback, not chan.mjs.",
+      "next_action": "Await Agent1's CHANGELOG claim release and coordinator response. Then reconcile #172 CHANGELOG against current main in the same branch, run CI and Netlify on exact new SHA, reread channel after CI, and merge only when mergeable/checklist green. After #172 merged, notify Agent2 rebase-needed; start Home-only token PR after #178 is stabilized. Avoid auth/panel files.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W5-A5-T1 validation complete; PR #159 ready",
-          "status": "ready_for_owner_review",
-          "result": "PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f. CI run 46142988730 quality success all required jobs; Netlify preview success. Marked Ready for Review, but issue remains open pending visual owner acceptance. W5-A5-T3 checklist committed. Issue status comments posted #121/#27/#132/#19/#28.",
-          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
-          "tests": "check:changelog, lint, typecheck, audit, unit/domain, test:db, build success; Netlify deploy preview success.",
-          "blockers": [
-            "Owner manual visual inspection on 390/1440 and themes/screens not performed by agent.",
-            "Branch deletion capability unavailable; candidate branches diverge and retain ahead commits."
-          ],
-          "next_action": "Owner visual review; merge PR159 if acceptance is verified; proceed with #27 screen token PRs after."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W5-A5 — #121 CI green, visual pending; checklist done; branch audit",
-          "status": "completed_with_blocker",
-          "result": "PR #159 HEAD a5340226ee75c97a361ff622e32369dd5f320e9f Ready for Review; CI quality success; Netlify redirect/header success, Pages neutral, deploy preview success. Owner checklist docs/REVISAO-VISUAL-DONO.md delivered but not completed. Branch cleanup audit compared seven legacy branches; all diverged with ahead commits, delete API absent.",
-          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
-          "tests": "CI run 46142988730 success; Netlify redirect/header success, Pages neutral, Deploy Preview success. Visual review owner pending.",
-          "blockers": [
-            "Owner screenshots/visual acceptance for 390/1440 and all themes required before merge.",
-            "Delete branch capability not available."
-          ],
-          "next_action": "Maintainer review PR preview and complete checklist; then merge. W5-A5-T2 after merge; branch cleanup delegated/blocked."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W6-A5-T1 rebase-conflict recovery",
-          "status": "in_progress",
-          "result": "Merge of #159 returned 405 conflict. Created replacement branch `agent5/w6-121-theme-reconcile` from main 5a08e0ae262cd62a7540f1d37845e5e4fd05cf78, reconciled globals and changelog via three-way merge, ported theme files, opened PR #172 (13 ahead/0 behind). Closed #159 as superseded. Exact checks pending.",
-          "head_sha": "e79a4b07d03046ce5ec73e9fb76c84f208ce2e30",
-          "tests": "Prior PR #159 exact SHA CI+Netlify green; new PR #172 pending checks. Automated contrast/default tests are present, not yet rerun on new head.",
-          "blockers": [
-            "CI/Netlify for new PR #172 exact head pending.",
-            "Visual review is maintainer responsibility; wave_6 says it does not block merge."
-          ],
-          "next_action": "Poll exact head checks; merge if green; start home-only token migration afterward."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W6-A5 status after replacement PR checks",
@@ -2886,6 +2847,21 @@
             "Production build and Netlify Deploy Preview not finished."
           ],
           "next_action": "Poll checks; merge only after all green."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W7-A5 — channel coordination and #172 CI/mergeability recheck",
+          "status": "blocked_dependency",
+          "result": "Canal lido via GitHub API fallback (chan.mjs cannot execute: runtime not in git repository; clone/fetch unavailable). Acknowledged order #172→#178. PR #172 CI and Netlify green exact SHA e79a4b07d03046ce5ec73e9fb76c84f208ce2e30, but mergeable=false; main 9e937369 advanced 5 commits since base. Compare shows overlap in CHANGELOG.md. Agent1 claimed CHANGELOG for #130; Agent5 released claim and requested coordination, so no file edit/push attempted.",
+          "head_sha": "e79a4b07d03046ce5ec73e9fb76c84f208ce2e30",
+          "base_sha": "5a08e0ae262cd62a7540f1d37845e5e4fd05cf78",
+          "tests": "CI 46147644751 success: changelog, lint, typecheck, audit, unit/domain, test:db, build. Netlify Deploy Preview success: https://deploy-preview-172--marcoou.netlify.app. PR mergeable=false; no merge.",
+          "blockers": [
+            "PR #172 must reconcile against main 9e93736; only identified overlap is CHANGELOG.md.",
+            "Agent1 active claim on CHANGELOG.md for PR #130; waiting for release/coordination.",
+            "Current runtime lacks local git checkout/network clone, so chan.mjs cannot run; messages posted through GitHub Contents API fallback. No safe update-branch/push tool."
+          ],
+          "next_action": "Wait Agent1 release and coordinator; reconcile #172 on same branch, rerun checks, merge if green; then notify Agent2 to rebase #178."
         }
       ],
       "wave_2_tasks": [
