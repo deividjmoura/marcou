@@ -2402,8 +2402,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #150 merged squash: merge SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36, main após merge 5a4b069596f7ac9e2575677dc97dfd85318ed2c8. CI quality success e Netlify Redirect/Header success, Pages neutral, Preview success no HEAD 781ace0e2ad86c7373b1e488907237bd89147bda. Inspeção visual 1440/390, console e overflow marcada como pendência do responsável na descrição, conforme desbloqueio W4. Issue #27 etapa tokens/catalogue aberta em PR #158 HEAD 5d09830c6182fad6f2785e26fab6618d4a9d98a4, base main 5a4b069; compare 5 ahead/0 behind; CI run 46142071058 in_progress (install). #121 permanece bloqueada até #158.",
-      "next_action": "Aguardar CI/Preview da #158; corrigir eventuais falhas. Se main avançar, reconciliar. Merge apenas com gates verdes e checklist visual pendente do responsável explicitado. Após #158 integrada, iniciar #121 conforme escopo refinado. Limpeza de branches antigas de Agent5 após merges não executável com ferramentas GitHub disponíveis (sem API de delete branch).",
+      "current_state": "PR #150 merged (SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36), checks CI/Netlify Redirect/Header success, Pages neutral, Preview success; visual review 1440/390/console/overflow pending owner. Main advanced again (#155) to 03a412f956f007010637c58a1ee5a245626fc8a0; #158 was reconciled onto it, HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, compare 5 ahead/0 behind, mergeable, Draft. CI run 46142220450 in_progress; Preview pending. #121 blocked until #158 merge.",
+      "next_action": "Poll CI/Preview #158; main reconfirm. If all gates green and checklist visual pending owner documented, mark ready and merge if authorized; then #121 scope implementation. GitHub branch cleanup API unavailable.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2488,6 +2488,18 @@
             "CI/preview for #158 pending; visual review responsibility pending; branch cleanup API unavailable."
           ],
           "next_action": "Complete #158 CI/preview, merge if checklist green, then #121."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T2 — reconciliação após main avançar #155",
+          "status": "in_progress",
+          "result": "Main avançou para 03a412f956f007010637c58a1ee5a245626fc8a0. PR #158 reconciliada sobre base atual, HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, 5 ahead/0 behind. CI run 46142220450 em progresso; preview pending. #121 bloqueada até #158.",
+          "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
+          "tests": "CI in progress, Netlify Deploy Preview pending. No visual screenshot.",
+          "blockers": [
+            "Checks pending; recheck main before merge."
+          ],
+          "next_action": "Poll CI and preview, then decide merge per checklist."
         }
       ],
       "wave_2_tasks": [
@@ -2543,13 +2555,13 @@
         {
           "id": "W4-A5-T2",
           "status": "in_progress",
-          "result": "#27 tokens semânticos/catalogue iniciada após #150 merge. PR #158 aberta draft, branch agent5/w4-27-rebased-main, HEAD 5d09830c6182fad6f2785e26fab6618d4a9d98a4, base main 5a4b069596f7ac9e2575677dc97dfd85318ed2c8, compare 5 ahead/0 behind, mergeable. Aliases semantic roles, dark tokens `[data-theme=dark]` preparatórios, legacy aliases, catálogo e testes de contraste/contract, changelog. CI run 46142071058 in progress (install). #121 comentada e bloqueada até #158.",
-          "head_sha": "5d09830c6182fad6f2785e26fab6618d4a9d98a4",
-          "tests": "CI run 46142071058 in_progress, install pendente; Preview pending. Nenhum teste local foi executado.",
+          "result": "#27 tokens semânticos/catalogue in PR #158. Reconciliada após main avançar para 03a412f956f007010637c58a1ee5a245626fc8a0 (#155). HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, compare 5 ahead/0 behind, mergeable Draft. CI run 46142220450 in_progress, Preview pending. #121 bloqueada até integrar #158.",
+          "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
+          "tests": "PR #158 head reconciliado. CI run 46142220450 in_progress; Deploy Preview pending. No local test execution.",
           "blockers": [
-            "CI e Netlify Preview ainda pendentes; visual review 390/1440 não realizada."
+            "CI and Netlify Deploy Preview pending; main may advance, reconciling required."
           ],
-          "next_action": "Aguardar CI e Preview; se main avançar, reconciliar; corrigir CI; merge se checklist green e visual review pendente registrada."
+          "next_action": "Wait for checks and re-confirm main; if green and owner visual review explicitly pending, merge according to coordination decision, then #121."
         },
         {
           "id": "W4-A5-T3",
