@@ -109,16 +109,27 @@ Teste manual/real pendente do responsável **não** bloqueia merge se o checklis
 
 ## 9. Instruções por agente (rodada 7)
 
+> **Troca de funções (28/11/2026, a pedido do responsável).** O **Agent 1** passou a exercer a função de **Autenticação e conta** e o **Agent 2** a de **Reservas e painel do prestador**. Cada agente mantém o seu número, mas escreve na **entrada nova** (`agent_1_r7_auth`, `agent_2_r7_booking`); as entradas antigas (`agent_1_r7_booking`, `agent_2_r7_auth`) são histórico somente leitura. Cada entrada nova tem um `handoff` com o que o antecessor fez e as armadilhas. Agents 3 a 6 não mudam. As tarefas vigentes estão em `dispatch.wave_6` do `state.json`; os textos de função abaixo continuam valendo como descrição de escopo, agora com o dono atualizado.
+
+| Número | Função atual | Entrada no `state.json` |
+|---|---|---|
+| Agent 1 | Autenticação e conta | `agent_1_r7_auth` |
+| Agent 2 | Reservas e painel do prestador | `agent_2_r7_booking` |
+| Agent 3 | Operações, notificações e qualidade | `agent_3_r7_ops_schedulers` |
+| Agent 4 | Segurança, banco, mídia e Calendar | `agent_4_r7_security_calendar` |
+| Agent 5 | Design e backlog de produto | `agent_5_r7_product_backlog` |
+| Agent 6 | Auditor independente, limpeza e relatório | `agent_6_r7_coordinator` |
+
 Todos: leiam `.agent-coordination/state.json` (branch `coordination/agents`) e este runbook, assumam o slot do seu número, reconfirmem `main`/PR/CI no GitHub e escrevam **somente** a sua entrada (`agent_N_r7_*`). Autonomia de merge: seção 0. Regras: seção 4. Checklist: seção 5. Um merge por vez.
 
-### Agent 1 — Reservas (#131, #124, #68) · entrada `agent_1_r7_booking`
+### Função Reservas (#131, #124, #68; hoje painel #56/#55/#54) · histórico: `agent_1_r7_booking` · desde 28/11 exercida pelo **Agent 2** (`agent_2_r7_booking`)
 - **P0 da rodada:** a #131 destrava o Agent 4 (#136), a #124 e a #68. Comece por ela.
 - #131: atualizar com a `main`, resolver o conflito, corrigir a regressão do `redirect` dentro de `try/catch` (escreva primeiro o teste que falha), fazer a UI refletir múltiplos serviços, manter compatibilidade com reservas de 1 serviço (`serviceId`/`serviceIds` legados). Migration com versão **maior** que `20261127000000`. Mergear quando verde e **avisar no `state.json`** (SHA do merge e qual migration entrou) para o Agent 4.
 - #124 (após #131): parser BRL com milhar (B3), sinal, ações por papel (B4); autorização continua no banco.
 - #68 (após #124/#131): confirmação e `.ics` corretos com vários serviços, duração e preço totais.
 - Fechar as issues cobertas (#21, #22, etc.) **somente** com aceite comprovado.
 
-### Agent 2 — Autenticação (#127, #130) · entrada `agent_2_r7_auth`
+### Função Autenticação (#127, #130; hoje #130 refeita, #70, #23, #47) · histórico: `agent_2_r7_auth` · desde 28/11 exercida pelo **Agent 1** (`agent_1_r7_auth`)
 - #127: pronta e limpa; atualizar com a `main`, rodar a suíte completa e **mergear primeiro**.
 - #130: reconstruir sobre a `main` já com a #127 (origem confiável, `redirectTo`, `token_hash`/`type=recovery`, code/PKCE, sem open redirect nem loop produção/preview). Só testes com mocks; **nenhum e-mail real**, nenhuma chamada ao Supabase remoto.
 - Issues #70/#23: comentar evidência; o que depende de validação real em produção fica aberto como pendência do responsável.
