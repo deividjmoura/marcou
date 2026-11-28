@@ -22,7 +22,7 @@ propriedade específicos.
 ## Avatar do profissional (#53)
 
 - Coluna: `public.providers.avatar_path` (caminho relativo, nunca URL).
-- Migration: `20261128000500_provider_avatar_storage.sql`, posterior à migration
+- Migration: `20261128000600_provider_avatar_storage.sql`, posterior à migration
   de imagens de serviços.
 - Caminho: `providers/{provider_id}/avatar/{uuid}.{ext}`.
 - Bucket: o mesmo `service-images`; leitura pública intencional para a página
