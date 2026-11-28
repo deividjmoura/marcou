@@ -15,9 +15,9 @@ const globalsPath = fileURLToPath(
   new URL("../app/globals.css", import.meta.url),
 );
 
-function parseCustomProperties(css: string): Record<string, string> {
+function parseCustomProperties(css: string, dark = false): Record<string, string> {
   const tokens: Record<string, string> = {};
-  const block = css.match(/:root\s*\{([\s\S]*?)\}/);
+  const block = dark ? css.match(/\[data-theme="dark"\]\s*\{([\s\S]*?)\}/) : css.match(/:root\s*\{([\s\S]*?)\}/);
   if (!block) return tokens;
   for (const match of block[1].matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)) {
     tokens[match[1]] = match[2].trim();
@@ -72,7 +72,9 @@ interface Pair {
   background: string;
 }
 
-const tokens = parseCustomProperties(readFileSync(tokensPath, "utf8"));
+const tokenCss = readFileSync(tokensPath, "utf8");
+const tokens = parseCustomProperties(tokenCss);
+const darkTokens = parseCustomProperties(tokenCss, true);
 const globals = readFileSync(globalsPath, "utf8");
 const globalsTokens = parseCustomProperties(globals);
 const allTokens = { ...tokens, ...globalsTokens };
@@ -179,6 +181,36 @@ describe("contraste dos tokens publicados", () => {
       .filter((item): item is string => item !== null);
 
     expect(violations).toEqual([]);
+  });
+
+  it("semantic token contract", () => {
+    expect(tokens["ds-color-background"]).toBe("var(--ds-color-paper)");
+    expect(tokens["ds-color-text-primary"]).toBe("var(--ds-color-ink)");
+    expect(tokens["ds-color-text-secondary"]).toBe("var(--ds-color-muted)");
+    expect(tokens["ds-color-border"]).toBe("var(--ds-color-line)");
+    expect(tokens["ds-color-link"]).toBe("var(--ds-color-brand-strong)");
+  });
+
+  it("dark semantic text and feedback pairs meet AA", () => {
+    const pairs = [
+      ["ds-color-text-primary", "ds-color-background"],
+      ["ds-color-text-secondary", "ds-color-background"],
+      ["ds-color-link", "ds-color-surface-default"],
+      ["ds-color-accent", "ds-color-surface-default"],
+      ["ds-color-success", "ds-color-success-bg"],
+      ["ds-color-warning", "ds-color-warning-bg"],
+      ["ds-color-danger", "ds-color-danger-bg"],
+      ["ds-color-info", "ds-color-info-bg"],
+    ];
+    const issues = pairs.map(([fgKey, bgKey]) => {
+      const fg = toHex(resolve(darkTokens[fgKey], darkTokens));
+      const bg = toHex(resolve(darkTokens[bgKey], darkTokens));
+      if (!fg || !bg) return "unresolved " + fgKey + "/" + bgKey;
+      const value = contrast(fg, bg);
+      return value >= 4.5 ? null : fgKey + "/" + bgKey + ": " + value.toFixed(2);
+    }).filter((value): value is string => value !== null);
+    expect(darkTokens["color-scheme"]).toBe("dark");
+    expect(issues).toEqual([]);
   });
 
   it("usa a dupla tipográfica e uma escala de espaçamento mais compacta", () => {
