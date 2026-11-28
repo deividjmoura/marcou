@@ -1912,6 +1912,32 @@ console.log("\n[segurança e RLS]");
   check("prestador A não cria serviço em B", crossTenantService === false);
 
   console.log("\n[storage de imagens de serviços]");
+  const imageBucket = (
+    await db.query(
+      `select public, file_size_limit, allowed_mime_types
+         from storage.buckets where id = 'service-images'`,
+    )
+  ).rows[0];
+  check(
+    "bucket service-images é público para leitura, limita 5 MiB e MIME permitidos",
+    imageBucket?.public === true &&
+      Number(imageBucket.file_size_limit) === 5 * 1024 * 1024 &&
+      ["image/jpeg", "image/png", "image/webp"].every((mime) =>
+        imageBucket.allowed_mime_types.includes(mime),
+      ),
+  );
+  const imagePolicies = (
+    await db.query(
+      `select polname from pg_policy where polrelid = 'storage.objects'::regclass`,
+    )
+  ).rows.map((row) => row.polname);
+  check(
+    "storage.objects possui leitura pública e políticas de escrita do dono",
+    ["service_images_public_read", "service_images_owner_insert", "service_images_owner_update", "service_images_owner_delete"]
+      .every((name) => imagePolicies.includes(name)),
+    imagePolicies.join(", "),
+  );
+
   const anonStorageClient = await asRole("anon");
   const ownServiceImagePath = `providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`;
   const ownImageInsert = await ownerAClient.query(
