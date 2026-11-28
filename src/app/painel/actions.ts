@@ -49,6 +49,7 @@ import {
 export interface PainelActionState {
   error?: string;
   success?: string;
+  savedServiceId?: string;
 }
 
 const SUPABASE_UNAVAILABLE_MESSAGE =
@@ -262,7 +263,10 @@ export async function saveServiceAction(
         revalidatePath("/painel");
         revalidatePath(`/p/${provider.slug}`);
         const reason = error instanceof Error ? error.message : "falha inesperada";
-        return { error: `O serviço foi salvo, mas a imagem não foi enviada: ${reason}` };
+        return {
+          error: `O serviço foi salvo, mas a imagem não foi enviada: ${reason}. Tente novamente; o formulário continuará vinculado a este serviço.`,
+          savedServiceId: savedService.id,
+        };
       }
     } else if (removeImage && intent === "update") {
       const mediaResult = await removeServiceImage(provider.id, savedService.id);
