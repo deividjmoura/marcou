@@ -42,7 +42,7 @@ export interface Service {
   >;
   name: string;
   description: string | null;
-  image_path: string | null;
+  image_path?: string | null;
   image_url?: string | null;
   duration_minutes: number;
   price_cents: number;
