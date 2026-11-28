@@ -27,23 +27,23 @@ set
 
 create policy "service_images_public_read"
   on storage.objects for select to anon, authenticated
-  using (bucket_id = 'service-images');
+  using (storage.objects.bucket_id = 'service-images');
 
 create policy "service_images_owner_insert"
   on storage.objects for insert to authenticated
   with check (
-    bucket_id = 'service-images'
-    and (storage.foldername(name))[1] = 'providers'
-    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
-    and (storage.foldername(name))[3] = 'services'
-    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
+    storage.objects.bucket_id = 'service-images'
+    and (storage.foldername(storage.objects.name))[1] = 'providers'
+    and (storage.foldername(storage.objects.name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(storage.objects.name))[3] = 'services'
+    and (storage.foldername(storage.objects.name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(storage.objects.name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
       join public.services s on s.provider_id = p.id
-      where p.id::text = (storage.foldername(name))[2]
-        and s.id::text = (storage.foldername(name))[4]
+      where p.id::text = (storage.foldername(storage.objects.name))[2]
+        and s.id::text = (storage.foldername(storage.objects.name))[4]
         and p.owner_id = (select auth.uid())
     )
   );
@@ -51,34 +51,34 @@ create policy "service_images_owner_insert"
 create policy "service_images_owner_update"
   on storage.objects for update to authenticated
   using (
-    bucket_id = 'service-images'
-    and (storage.foldername(name))[1] = 'providers'
-    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
-    and (storage.foldername(name))[3] = 'services'
-    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
+    storage.objects.bucket_id = 'service-images'
+    and (storage.foldername(storage.objects.name))[1] = 'providers'
+    and (storage.foldername(storage.objects.name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(storage.objects.name))[3] = 'services'
+    and (storage.foldername(storage.objects.name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(storage.objects.name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
       join public.services s on s.provider_id = p.id
-      where p.id::text = (storage.foldername(name))[2]
-        and s.id::text = (storage.foldername(name))[4]
+      where p.id::text = (storage.foldername(storage.objects.name))[2]
+        and s.id::text = (storage.foldername(storage.objects.name))[4]
         and p.owner_id = (select auth.uid())
     )
   )
   with check (
-    bucket_id = 'service-images'
-    and (storage.foldername(name))[1] = 'providers'
-    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
-    and (storage.foldername(name))[3] = 'services'
-    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
+    storage.objects.bucket_id = 'service-images'
+    and (storage.foldername(storage.objects.name))[1] = 'providers'
+    and (storage.foldername(storage.objects.name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(storage.objects.name))[3] = 'services'
+    and (storage.foldername(storage.objects.name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(storage.objects.name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
       join public.services s on s.provider_id = p.id
-      where p.id::text = (storage.foldername(name))[2]
-        and s.id::text = (storage.foldername(name))[4]
+      where p.id::text = (storage.foldername(storage.objects.name))[2]
+        and s.id::text = (storage.foldername(storage.objects.name))[4]
         and p.owner_id = (select auth.uid())
     )
   );
@@ -86,18 +86,18 @@ create policy "service_images_owner_update"
 create policy "service_images_owner_delete"
   on storage.objects for delete to authenticated
   using (
-    bucket_id = 'service-images'
-    and (storage.foldername(name))[1] = 'providers'
-    and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
-    and (storage.foldername(name))[3] = 'services'
-    and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
+    storage.objects.bucket_id = 'service-images'
+    and (storage.foldername(storage.objects.name))[1] = 'providers'
+    and (storage.foldername(storage.objects.name))[2] ~* '^[0-9a-f-]{36}$'
+    and (storage.foldername(storage.objects.name))[3] = 'services'
+    and (storage.foldername(storage.objects.name))[4] ~* '^[0-9a-f-]{36}$'
+    and storage.filename(storage.objects.name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
       join public.services s on s.provider_id = p.id
-      where p.id::text = (storage.foldername(name))[2]
-        and s.id::text = (storage.foldername(name))[4]
+      where p.id::text = (storage.foldername(storage.objects.name))[2]
+        and s.id::text = (storage.foldername(storage.objects.name))[4]
         and p.owner_id = (select auth.uid())
     )
   );
