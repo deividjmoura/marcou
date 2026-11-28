@@ -3,7 +3,7 @@
   "repository": "deividjmoura/marcou",
   "coordination_branch": "coordination/agents",
   "coordination_file": ".agent-coordination/state.json",
-  "updated_at": "2026-11-28T13:11:20Z",
+  "updated_at": "2026-11-28",
   "purpose": "Shared compact handoff and dispatch state for parallel agents. Source of truth for ownership, latest outcomes, SHAs, blockers and next actions.",
   "protocol": {
     "read_before_work": true,
@@ -2290,7 +2290,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W5-A4-T1 #154 concluída; W5-A4-T2 #53 concluída e fechada; W5-A4-T3 #13/#26 revisadas, #47 aguardando PR; W5-A4-T4 concluída.",
+      "active_assignment": "W6-A4-T1 concluída (#161/#162 auditadas; PR corretiva #170 mergeada); W6-A4-T2 concluída (ADR #28 mergeada); W6-A4-T3 parcial (#132 ADR mergeada, #56 revisada na PR #178; aguardando PRs #47 e #54).",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2321,21 +2321,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #154 merged em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #160 (#53) merged por squash em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; issue #53 CLOSED. CI pré-merge run 46143785917 SUCCESS no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160 e CI pós-merge run 46143945775 SUCCESS no merge SHA 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; Netlify Redirect/Header SUCCESS e Pages changed NEUTRAL. Migration de avatar é 20261128000600_provider_avatar_storage.sql, após notification_preferences 00500. W5-A4-T3: PR #161/#13 auditada; comentário 7239072822 registra grants/RLS corretos e lacuna não bloqueante de teste explícito de grants da função is_notification_enabled. PR #162/#26 auditada; comentário/review 6097747847 registra bloqueios: colisão migration 00600 com avatar, Noop marcado como sent, ausência de EmailQueueStore persistente/operadores SQL de claim/lease/transições, ausência de vínculo recipient_id↔booking e cobertura incompleta de ACL para reprocess_dead. PR #162 permanece aberta e mergeable=false; não aprovar/mergear. Issue #47 permanece aberta e sem PR no snapshot. W5-A4-T4: main privileges-check matriz inclui notification_preferences; social-foundation-check explicitamente cobre booking_counterparty_phone; #154/#53 não criam tabela/função pública. PR #162 adiciona email_delivery_queue apenas na sua branch (não está na main) e a auditoria apontou que as duas RPCs ainda não têm grant matrix explícita. #52 continua OWNER_ACTION para teste real do Supabase Storage.",
-      "next_action": "Aguardar PR do Agent2 para #47 e revisar suas migrations/tabelas/funções. Acompanhar correções da PR #162 (migration version, semântica noop, adapter durável, validação de destinatário e ACL tests) antes de qualquer aprovação. Acompanhar resposta à lacuna de grant-test em #161. Manter #52 aberta para teste real do Storage pelo responsável. Não alterar Supabase remoto, secrets, cron, scheduler ou deploy.",
+      "current_state": "Wave 6: main reconfirmada em 9e9373695ea2c259c28abc87cc1e0f4d90be8461. #161: RLS da notification_preferences é owner-scoped (SELECT/INSERT/UPDATE via auth.uid, sem DELETE), CHECK impede silenciar booking.cancelled/booking.changed, SECURITY DEFINER usa search_path pg_catalog,public, is_notification_enabled é service_role-only e trigger/worker têm search_path fixo. Matriz de tabela já estava correta; PR #170 adicionou asserts de EXECUTE para is_notification_enabled e as RPCs de e-mail. #162: fila sem acesso de clientes e RPCs service_role-only; encontrei e corrigi destinatário sem vínculo com booking, noop marcado como sent e cobertura ACL incompleta. PR #170 mergeada em 56e17078271a537c48c19e49b11f151b108ec1bf; migration 20261128000800_email_queue_recipient_binding.sql valida customer_id/owner_id, asserts ACL em test:db/social-foundation-check, processor não reivindica jobs com NoopEmailSender e ADR documenta que worker/lease/retry continua somente em memória (sem adapter PostgreSQL durável). Issue #26 permanece aberta aguardando OWNER_DECISION do provedor/domínio e adapter operacional futuro. CI pré-merge run 46147576656 SUCCESS; post-merge main run 46147765002 SUCCESS. #28: ADR docs/ADR-PAGAMENTOS.md mergeada pela PR #174 em 9e9373695ea2c259c28abc87cc1e0f4d90be8461; issue comment 7239803678. Recomenda Pix manual Fase 1, separa estados financeiros dos estados de booking, compara Asaas/Mercado Pago/Efí e lista decisões; sem implementação. PR quality 46148552160 SUCCESS, Netlify Redirect/Header SUCCESS, Pages neutral; post-merge quality run 46148672012 ainda in_progress na última consulta. #132: ADR docs/ADR-DEMO-FEED-LOCKS.md mergeada pela PR #175 em 551c56a5e7ef7b547fbe862e2e250c64e00967a0; issue comment 7239779431; gate duplo Deploy Preview + flag, geração condicional de fixtures e nenhum Supabase/Auth/Storage; sem implementação/configuração externa. PR quality run 46148354147 SUCCESS; post-merge main run 46148498298 SUCCESS. #56: PR #178 (substituta da #176) está Draft, HEAD 12e81cdf1e5578553847018b07054946a4b08b28; sem migration/RPC/SQL, action continua derivando prestador da sessão e upload usa escopo da #154; sucesso parcial da imagem agora retorna savedServiceId para retry sem duplicação; Agent4 comentários 6097967571 e 6097976026. PR ainda atrás da main 9e937 e aguarda reconciliação/headless final do Agent2. #47 e #54 continuam sem PR; revisar assim que surgirem. #52 permanece OWNER_ACTION para teste real de Storage.",
+      "next_action": "Aguardar confirmação da CI pós-merge do #28 (run 46148672012). Monitorar a PR #178: revalidar a main/CI/Netlify após o Agent2 reconciliar a branch e repetir a revisão de segurança se o diff mudar; sem merge enquanto Draft/headless pendente. Monitorar abertura de PRs de #47 (Agent1) e #54 (Agent2) e revisar imediatamente migrations, RPCs, RLS, search_path, grants e ownership. Não alterar Supabase remoto, secrets, Netlify, cron/scheduler ou produção.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T12:25:00Z",
-          "task": "W5-A4-T2 #53 concluída; W4 encerrada",
-          "status": "merged_and_postmerge_ci_success",
-          "result": "PR #160 (#53) squash-mergeada em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; issue #53 está closed. Pré-merge quality run 46143785917 success no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160; Redirect/Header success, Pages neutral, Preview ready. Pós-merge quality run 46143945775 success no merge SHA. Comentário de evidências publicado na #53 (#7239151401). Migration de avatar 00600 após notification_preferences 00500; sem migration remota. W4 tarefas concluídas: #154, #156 mergeadas; #155 auditada; #47 sem PR. #52 permanece OWNER_ACTION para teste real Storage.",
-          "head_sha": "96f8ed9b52137d8c7ef1a028009e77a7941ff7a1",
-          "tests": "Pré e pós-merge CI quality success; Netlify Redirect/Header success, Pages neutral, Deploy Preview ready.",
-          "blockers": [
-            "Aguardar validação real do Supabase Storage pelo responsável (#52).",
-            "Monitorar futura PR de #47 para revisão de segurança."
-          ]
-        },
         {
           "timestamp": "2026-11-28T12:22:00Z",
           "task": "W5-A4 conclusão parcial: #53 fechada, auditoria #13 e #26, #47 pendente",
@@ -2359,6 +2347,19 @@
           "blockers": [
             "Não mergear #162 até corrigir version prefix e semântica/integração da fila.",
             "#47 ainda sem PR."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T13:14:00Z",
+          "task": "W6-A4-T1/T2 concluídas; W6-A4-T3 documentação e revisão #56",
+          "status": "partial_wave6_deliveries_merged",
+          "result": "#161/#162 auditadas e registradas; PR corretiva #170 mergeada (56e17078271a537c48c19e49b11f151b108ec1bf) com migration 00800 para vínculo recipient↔booking, grants explícitos e noop fail-safe; issue #26 segue OWNER_DECISION e ADR corrigido para limitação in-memory. ADR de pagamentos #28 mergeada via #174 (9e9373695ea2c259c28abc87cc1e0f4d90be8461), issue comment 7239803678. ADR de travas #132 mergeada via #175 (551c56a5e7ef7b547fbe862e2e250c64e00967a0), issue comment 7239779431. #56/#178 revisada sem bloqueio de segurança/banco; sem SQL novo, action autenticada e ownership preservado; correção de duplicação em falha de imagem presente, comentário atualizado no HEAD 12e81. #47/#54 ainda sem PR.",
+          "head_sha": "9e9373695ea2c259c28abc87cc1e0f4d90be8461",
+          "tests": "PR #170 quality 46147576656 SUCCESS; post-merge main run 46147765002 SUCCESS. PR #174 quality 46148552160 SUCCESS, Netlify Redirect/Header SUCCESS e Pages NEUTRAL; post-merge run 46148672012 em andamento. PR #175 quality 46148354147 SUCCESS; post-merge main run 46148498298 SUCCESS. PR #178 head 12e81: CI quality 2bb365 run 46148244545 SUCCESS (head anterior) e Netlify Redirect/Header SUCCESS; novo head aguarda sincronização e CI final.",
+          "blockers": [
+            "Aguardar post-merge CI de #28.",
+            "PR #178 permanece Draft e atrás da main; Agent2 deve reconciliar e finalizar inspeção headless.",
+            "#47 e #54 aguardam PRs para auditoria de banco/segurança."
           ]
         }
       ],
