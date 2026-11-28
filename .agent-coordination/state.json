@@ -1698,37 +1698,11 @@
       ],
       "dependencies": {
         "blocks": [],
-        "blocked_by": [
-          "A1-T1: PR #142 (substitui #131 e #139), migration final 20261127130000_table_privileges_matrix.sql; aguardar CI e merge na main."
-        ]
+        "blocked_by": []
       },
-      "current_state": "W2-A4-T1 em validação: #136 foi reconciliada sobre main atual pós-#143 (base 03eb70cf11e525260c08abdb8e27d028a6537349), saída de Draft, e liga calendar-check + privileges-check em test:db; o harness usa portas 55438/55439 após colisão observada em 55436. CI run 46085573118 no HEAD f89f26187907499ad825bf23500508153b493b16 está em andamento; Netlify preview pendente. W2-A4-T2: auditoria #142/#141 encontrou 5 funções SECURITY DEFINER multi-serviço com search_path=public; PR corretiva #145 aberta com migration forward-only 20261128000200 e teste específico, primeiro CI falhou por parser do array do pg e a correção do teste foi commitada em 46ba83b4e5356bc0d6ae168be44df74d5176e8b3; aguardar novo CI. W2-A4-T3: compare de árvore confirmou que arena/9e68c2bb-marcou e arena/4017109f-marcou ainda têm handoffs exclusivos docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md ausentes na main; preservar até Agent6 arquivar/portar os handoffs. Nenhuma branch foi apagada.",
-      "next_action": "Aguardar CI verde no HEAD atual da #136; se verde e checks Netlify ok, conferir threads e fazer squash merge com expected_head_sha, comentar/fechar #125 com evidência. Depois validar PR #145 e mergear quando checklist verde. Informar Agent6 via state para preservar as duas arenas até handoffs serem preservados.",
+      "current_state": "W2-A4-T1 CONCLUÍDA: PR #136 squash-mergeada na main em 09c744e77bfc748dca83c6c5f476fc931c90a302; CI quality success no SHA exato f89f26187907499ad825bf23500508153b493b16 e Netlify Redirect/Header success, Pages changed neutral. Issue #125 fechada automaticamente e recebeu comentário com evidências; nenhuma migration foi aplicada remotamente. W2-A4-T2: auditoria #142/#141 encontrou cinco funções SECURITY DEFINER multi-serviço com search_path=public; PR corretiva #145 aberta, migration nova 20261128000200 + regressão; branch reconciliada com main pós-#136, HEAD e5be7a6b533d45298abb06e2c500ce26596744fe, CI em andamento. W2-A4-T3: arena/9e68c2bb-marcou e arena/4017109f-marcou continuam PRESERVAR somente porque contêm handoffs exclusivos docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md que não estão na main; código funcional multi-serviço/matriz já está integrado pela #142. Agent6 deve arquivar/portar os handoffs antes da limpeza.",
+      "next_action": "Aguardar CI/Netlify da PR #145 no SHA e5be7a6b533d45298abb06e2c500ce26596744fe. Se verde no SHA exato, verificar mergeability/reviews e squash merge; confirmar main e checks. Depois registrar o resultado final da auditoria e manter ambas as arenas preservadas até Agent6 preservar os dois handoffs.",
       "updates": [
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T1: atualização da dependência de privilégios",
-          "status": "blocked_waiting_agent1_pr139",
-          "result": "PR #131 foi fechada sem merge; Agent1 substituiu por PR #139, migrations renumeradas para 20261127120000_booking_multiple_services.sql e 20261127130000_table_privileges_matrix.sql. PR #139 HEAD 58b16fd3e064a43f0c728b1f0599c96b75c8e7d6 tem CI success e Netlify preview success, porém mergeable=false e base antiga 90b05aafed8f9f448f67a9b1b8c433a3ca3cb170, anterior ao merge da #141. A #136 segue sem alteração até a migration estar na main.",
-          "head_sha": "PR #139:58b16fd3e064a43f0c728b1f0599c96b75c8e7d6; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
-          "tests": "CI success + Netlify preview success em #139, mas PR ainda mergeable=false; não é autorizável para merge.",
-          "blockers": [
-            "Agent1 precisa atualizar #139 com main cd6065a e resolver conflito/mergeability."
-          ],
-          "next_action": "Após #139 mergear, atualizar #136 sem force-push e preservar ambas as checks em test:db."
-        },
-        {
-          "timestamp": "2026-11-27",
-          "task": "A4-T1: dependência #131/#139 substituída pela PR #142",
-          "status": "blocked_waiting_agent1_pr142",
-          "result": "PR #139 fechada sem merge (comentário: substituída por fix/139-multi-services-final). Nova PR #142 aberta sobre main atual cd6065ad6a46187510bde58e51f474d0ff66a4c0, HEAD 8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2, mergeable=true. Contém migrations 20261127120000_booking_multiple_services.sql e 20261127130000_table_privileges_matrix.sql; CI in_progress no SHA exato.",
-          "head_sha": "PR #142:8f965a8e7eed20e16b513ef1f6a1a8d8a79028c2; main:cd6065ad6a46187510bde58e51f474d0ff66a4c0",
-          "tests": "CI in_progress e Netlify pending; não mergear até sucesso.",
-          "blockers": [
-            "Aguardar CI/merge da #142 pelo Agent1."
-          ],
-          "next_action": "Atualizar #136 depois da migration 20261127130000 estar na main."
-        },
         {
           "timestamp": "2026-11-27",
           "task": "A4-T1: auditoria da falha CI da PR #142",
@@ -1788,6 +1762,40 @@
             "Agent6 precisa preservar/arquivar os dois handoffs antes de apagar arenas."
           ],
           "next_action": "Manter branches; avisar Agent6 na entrada compartilhada."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W2-A4-T1: #136 integrada e Issue #125 encerrada",
+          "status": "completed",
+          "result": "PR #136 saiu de Draft, reconciliada com main pós-#143, test:db passou a executar calendar-check + privileges-check. Portas do harness corrigidas para 55438/55439 após colisão detectada. Checklist verde no SHA exato f89f26187907499ad825bf23500508153b493b16: Actions quality success; Netlify Redirect rules/Header rules success e Pages changed neutral (aceito); PR mergeable=true sem reviews/threads bloqueantes. Squash merge SHA 09c744e77bfc748dca83c6c5f476fc931c90a302. Issue #125 fechada automaticamente e comentada com evidências. Nenhum Supabase remoto alterado.",
+          "head_sha": "PR #136:f89f26187907499ad825bf23500508153b493b16; merge/main:09c744e77bfc748dca83c6c5f476fc931c90a302",
+          "tests": "GitHub Actions CI quality success; Netlify Redirect/Header success, Pages changed neutral.",
+          "blockers": [],
+          "next_action": "W2-A4-T1 concluída."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W2-A4-T2: auditoria de segurança e PR corretiva #145",
+          "status": "correction_pr_ci_in_progress",
+          "result": "Auditoria #142/#141: booking_services com RLS e SELECT autenticado por participantes, sem escrita direta; matriz mínima e Calendar tables RLS+REVOKE cliente; ACLs de definer corretos (helpers internos sem EXECUTE, get_provider_schedule anon/auth, create_booking authenticated, Calendar jobs/state/disconnect service_role). Encontradas cinco funções SECURITY DEFINER de multi-serviço com search_path=public, contra contrato pg_catalog, public. PR #145 inclui migration forward-only 20261128000200 e regressão no social-foundation-check. Primeiro CI falhou no teste novo por array name[]; correção usa count(*) FILTER. Branch atualizada com merge da main pós-#136.",
+          "head_sha": "PR #145:e5be7a6b533d45298abb06e2c500ce26596744fe; main:09c744e77bfc748dca83c6c5f476fc931c90a302",
+          "tests": "CI run 46085776251 em andamento; Netlify checks ainda não confirmados.",
+          "blockers": [
+            "Aguardar CI/Netlify no HEAD atual da #145."
+          ],
+          "next_action": "Se checklist verde, squash merge #145."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W2-A4-T3: confirmação de branches arena para Agent6",
+          "status": "preserve_until_handoffs_archived",
+          "result": "Comparação recursiva de Git trees confirma que arena/9e68c2bb-marcou (tip 8d73650d) e arena/4017109f-marcou (tip 16f0166f) ainda contêm docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md, inexistentes na main. Código multi-serviço/matriz está integrado pela #142; não há justificativa para preservar as branches por código, apenas pelos dois handoffs exclusivos. Informado ao Agent6 pela entrada compartilhada: não apagar até arquivar/portar esses arquivos.",
+          "head_sha": "main:09c744e77bfc748dca83c6c5f476fc931c90a302",
+          "tests": "Comparação de Git trees recursiva por SHA de blobs.",
+          "blockers": [
+            "Agent6 precisa arquivar/portar os dois handoffs antes de apagar as arenas."
+          ],
+          "next_action": "Manter ambas PRESERVAR até handoffs arquivados."
         }
       ],
       "branch_disposition": [
@@ -2028,7 +2036,7 @@
             ]
           ],
           "disposition": "PRESERVAR",
-          "reason": "Além do Calendar V1, contém trabalho de reservas multi-serviço e hardening/matriz #125 ainda dependente da #131; preservar até Agent1 integrar e confirmar ausência de delta exclusivo."
+          "reason": "O código/migrations de multi-serviços, Calendar e matriz de privilégios foram integrados à main (#135/#141/#142), mas a branch ainda contém docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md, ambos ausentes na main (confirmado por comparação recursiva de Git trees/blob SHAs). Preservar até Agent6 arquivar/portar os dois handoffs; demais diferenças são versões antigas já substituídas."
         },
         {
           "branch": "arena/4017109f-marcou",
@@ -2058,7 +2066,7 @@
             ]
           ],
           "disposition": "PRESERVAR",
-          "reason": "Sem código Calendar exclusivo; contém a origem do trabalho de multi-serviços/matriz de privilégios da #131. Preservar até Agent1 concluir a reconciliação."
+          "reason": "O código/migration de multi-serviços e matriz foram integrados à main pela #142, mas a branch ainda contém docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md ausentes na main (comparação recursiva de Git trees/blob SHAs). Preservar até Agent6 arquivar/portar os dois handoffs; demais diferenças são versões antigas já substituídas."
         }
       ]
     },
