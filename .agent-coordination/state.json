@@ -2402,8 +2402,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #150 merged (SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36), checks CI/Netlify Redirect/Header success, Pages neutral, Preview success; visual review 1440/390/console/overflow pending owner. Main advanced again (#155) to 03a412f956f007010637c58a1ee5a245626fc8a0; #158 was reconciled onto it, HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, compare 5 ahead/0 behind, mergeable, Draft. CI run 46142220450 in_progress; Preview pending. #121 blocked until #158 merge.",
-      "next_action": "Poll CI/Preview #158; main reconfirm. If all gates green and checklist visual pending owner documented, mark ready and merge if authorized; then #121 scope implementation. GitHub branch cleanup API unavailable.",
+      "current_state": "W4-A5-T1 #150 merged SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36, main later 03a412f956f007010637c58a1ee5a245626fc8a0 (#155); checks green and visual review pending owner. W4-A5-T2 #27 PR #158 reconciled onto 03a412, HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, 5 ahead/0 behind, mergeable Draft. CI run 46142220450: install/changelog/lint/typecheck/audit/unit/database all success; production build in_progress. Netlify Redirect/Header success, Pages neutral, Preview success. #121 blocked pending #158.",
+      "next_action": "Poll build #158. If main advances, rebase/reconcile. When CI completes green, check exact statuses/main, mark PR ready; merge if checks and scoped acceptance green, visual check marked pending owner. Then start #121. Branch cleanup blocked by no GitHub delete-branch tool.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2500,6 +2500,18 @@
             "Checks pending; recheck main before merge."
           ],
           "next_action": "Poll CI and preview, then decide merge per checklist."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T2 — validation status after rebase",
+          "status": "in_progress",
+          "result": "PR #158 head 8f37e9cff5c44285052dd66f6457ee0875ca4328 sobre main 03a412f956f007010637c58a1ee5a245626fc8a0, 5 ahead/0 behind. CI: install, changelog, lint, typecheck, audit, unit/domain and database tests success; build in_progress. Netlify Redirect/Header success, Pages neutral, Deploy Preview success.",
+          "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
+          "tests": "CI run 46142220450, build pending; Netlify checks complete green/neutral as required.",
+          "blockers": [
+            "Build in_progress; verify main before merge."
+          ],
+          "next_action": "Poll build; if green and main stable, merge under autonomy and continue #121."
         }
       ],
       "wave_2_tasks": [
@@ -2557,11 +2569,11 @@
           "status": "in_progress",
           "result": "#27 tokens semânticos/catalogue in PR #158. Reconciliada após main avançar para 03a412f956f007010637c58a1ee5a245626fc8a0 (#155). HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, compare 5 ahead/0 behind, mergeable Draft. CI run 46142220450 in_progress, Preview pending. #121 bloqueada até integrar #158.",
           "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
-          "tests": "PR #158 head reconciliado. CI run 46142220450 in_progress; Deploy Preview pending. No local test execution.",
+          "tests": "CI run 46142220450: install, changelog, lint, typecheck, audit, unit/domain, database tests success; production build in_progress. Netlify Redirect/Header success, Pages neutral, Deploy Preview success. Visual review not performed by agent; responsibility noted.",
           "blockers": [
-            "CI and Netlify Deploy Preview pending; main may advance, reconciling required."
+            "Production build still in progress; re-confirm main before merge. Owner visual review 390/1440 pending."
           ],
-          "next_action": "Wait for checks and re-confirm main; if green and owner visual review explicitly pending, merge according to coordination decision, then #121."
+          "next_action": "Poll build and main; if all gates green, merge under autonomy; #121 next."
         },
         {
           "id": "W4-A5-T3",
