@@ -2013,7 +2013,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W4 concluída: #154 mergeada, #156 mergeada, #155 auditada; #47 sem PR. Follow-up #53 em PR #160 (W5-A4-T2) após releitura do escopo, atualmente Draft e CI em execução. W5-A4-T4: matriz de privilégios inclui notification_preferences (#161) e migration de avatar será testada na sequência.",
+      "active_assignment": "W5-A4-T1 #154 concluída; W5-A4-T2 #53 PR #160 MERGED; W5-A4-T3 #13 revisada, #47 aguardando PR; W5-A4-T4 concluída.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2044,22 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #160 (branch agent4/w4-provider-avatar) aberta Draft, HEAD 3117377bd6264538734a39d14c91eed7c6cf2160, base reconciliada com main e4307a7f86a10bb72759f10f5736823afd68f4d3 (#161). Merge commit sem force-push incorpora notificação #161 e preserva avatar. Detectada colisão de timestamp: #161 já usa 20261128000500_notification_preferences.sql; migration de avatar foi corrigida para 20261128000600_provider_avatar_storage.sql, antigo arquivo 00500_provider_avatar_storage removido da branch. db-check e privileges-check reconciliados com testes/matriz de #161. PR #160: quality run 46143785917 em andamento (changelog success, lint em andamento); Redirect/Header/Pages em andamento. #52 permanece pendente de teste real Storage pelo responsável; sem mudanças remotas.",
-      "next_action": "Acompanhar quality run 46143785917 e Netlify no SHA 3117377bd6264538734a39d14c91eed7c6cf2160. Corrigir falhas de lint/typecheck/unit/db/build. Depois inspecionar checks e comentários, fazer revisão final de segurança, remover Draft só com CI completo e Preview verde. Merge PR #160 somente com main/PR/CI reconfirmados e sem review bloqueante. Atualizar state com o merge. W5-A4-T4 verificar a matriz final após migration #161 e #53.",
+      "current_state": "PR #154 integrada na main em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #160 (#53) integrada via squash em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; main HEAD confirmado no mesmo SHA; branch foi reconciliada com a PR #161/#13 e migration de avatar renumerada para 20261128000600_provider_avatar_storage.sql (a 00500 agora pertence a notification_preferences). CI pré-merge no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160: quality SUCCESS (changelog, lint, typecheck, audit, unit, test:db, build), Netlify Redirect/Header SUCCESS e Pages changed NEUTRAL; sem review threads. CI pós-merge run 46143945775 ainda in_progress no merge SHA 96f8ed9b. Issue #53 ainda aberta até confirmar pós-merge. W5-A4-T3: auditoria da PR #161/#13 publicada como comentário 7239072822; nenhuma falha de autorização encontrada, mas recomendei teste explícito de EXECUTE para is_notification_enabled (anon=false, authenticated=false, service_role=true). PR para #47 não existe no snapshot; Agent 2 segue bloqueado em Codespace. W5-A4-T4 concluída: matriz public de tabelas/views inclui notification_preferences; função booking_counterparty_phone tem grant matrix explícita; #154 e #53 não criam tabela/função pública nova. #52 segue OWNER_ACTION para teste real do Supabase Storage.",
+      "next_action": "Aguardar CI pós-merge run 46143945775 no SHA 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; se success, fechar issue #53 com evidência. Monitorar criação da PR #47 pelo Agent 2 e revisar imediatamente migrations/tabelas/funções. Acompanhar eventual resposta à lacuna de teste apontada na PR #161. Manter #52 aberta para validação real de Storage pelo responsável; não tocar Supabase remoto nem deploy.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:04:00-03:00",
-          "task": "Retomada W5-A4: conferir #154 e iniciar #53",
-          "status": "in_progress",
-          "result": "#154 confirmada MERGED em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591; #52 permanece OWNER_ACTION para Storage real. #53 escopo refinado lido; branch agent4/w4-provider-avatar tem 4 commits ahead/0 behind, HEAD f11f5654908d3701fec1fd350bbeb14a02948f1c, migration 20261128000500, helper e componente inicial. Auditoria encontrou lacunas de integração: não há Server Actions/preview/upload no painel nem exibição no perfil público/painel; providerId precisa derivar da sessão. Não há checks CI reportados para o HEAD.",
-          "head_sha": "f11f5654908d3701fec1fd350bbeb14a02948f1c",
-          "tests": "Sem execução de testes/CI verificada nesta retomada; combined status vazio para HEAD. Não atribuir CI verde.",
-          "blockers": [
-            "Implementação #53 incompleta; falta integração autenticada, preview e testes.",
-            "PRs #13/#47 ainda não abertas no snapshot; W5-A4-T3 aguarda diffs.",
-            "Validação real de Storage #52 depende do responsável."
-          ]
-        },
         {
           "timestamp": "2026-11-28T09:18:00-03:00",
           "task": "W5-A4-T2 #53 — completar cobertura DB e abrir PR; W5-A4-T4 — auditar matriz",
@@ -2083,6 +2070,19 @@
           "blockers": [
             "Aguardar CI completo e Netlify Preview/checks antes de retirar Draft ou mergear.",
             "#52 requer validação real do Storage pelo responsável."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T12:20:00Z",
+          "task": "W5-A4-T2 #53 merge concluído; W5-A4-T3 revisão #13; W5-A4-T4 matriz",
+          "status": "merged_post_ci_running",
+          "result": "PR #160 (#53) squash merged em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1. Antes do merge: HEAD 3117377bd6264538734a39d14c91eed7c6cf2160, main base e4307a7f86a10bb72759f10f5736823afd68f4d3, quality SUCCESS, Netlify Redirect/Header SUCCESS, Pages changed NEUTRAL, mergeable true, zero review threads. Migration avatar renumerada para 20261128000600 após #161/#13 ocupar 00500. PR #161 revisada e comentário 7239072822 registra resultado sem falha de autorização e lacuna não bloqueante de teste explícito de grants da função is_notification_enabled. #47 ainda sem PR; Agent2 bloqueado. #52 OWNER_ACTION.",
+          "head_sha": "96f8ed9b52137d8c7ef1a028009e77a7941ff7a1",
+          "tests": "Pré-merge CI quality run 46143785917 SUCCESS com test:db e build; Netlify Redirect/Header SUCCESS, Pages changed NEUTRAL. Pós-merge CI run 46143945775 em andamento.",
+          "blockers": [
+            "Aguardar CI pós-merge antes de fechar #53.",
+            "Revisão #47 depende da PR do Agent2.",
+            "Validação real do Supabase Storage #52 depende do responsável."
           ]
         }
       ],
