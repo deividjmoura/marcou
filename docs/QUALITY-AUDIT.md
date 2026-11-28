@@ -196,3 +196,40 @@ Resultado atual: **0 falhas, 0 avisos**.
 - Round-trip real com o Google e com o Supabase (requer credenciais/painel).
 - E2E com navegador; Core Web Vitals/Lighthouse; revisão assistida por teclado
   e leitor de tela; medição de cobertura; rate limiting (Issue #30).
+
+---
+
+# Adendo — atualização transversal e ADR de E2E (28/11/2026)
+
+Medições reais executadas na `main` (`3262c03`) antes da abertura da PR de ADR
+de E2E (Issue `#31`, Fase 1 do *Escopo refinado*):
+
+| Verificação | Comando | Resultado medido (28/11/2026) |
+| --- | --- | --- |
+| Changelog | `npm run check:changelog` | ok |
+| Lint | `npm run lint` | 0 erros, 8 avisos (`@next/next/no-img-element` + 1 unused var em script) |
+| TypeScript | `npm run typecheck` | 0 erros |
+| Auditoria estática | `npm run audit` | 0 falhas, 0 avisos (segredos, guardas de configuração e `@supabase/ssr`) |
+| Testes unitários / rotas / contraste | `npm test` | **46 arquivos / 438 testes passaram** (0 falhas; inclui contraste WCAG, cache-policy, `/api/health`, preferências de notificação, e-mail, WhatsApp, validação de mídia, Calendar e auth) |
+| Integração em PostgreSQL real | `npm run test:db` | **7 harnesses passaram** aplicando as **24 migrations** (`db-check`: **140/140**, `social-foundation-check`, `identity-check`, `discovery-check`, `booking-concurrency`, `calendar-check`, `privileges-check`) |
+| Build de produção | `npm run build` | sucesso (`next build`, Next.js 16.4.0 Turbopack) |
+
+## Estratégia de E2E e plano de Smoke (Fase 1 da Issue `#31`)
+
+- Publicado **`docs/ADR-E2E.md`** comparando as duas opções de backend sem tocar produção:
+  1. **(A) Supabase local via CLI/containers Docker no CI** — recomendada como padrão para PRs (custo zero, zero segredos no CI, isolamento total por PR e teste real das migrations da própria branch);
+  2. **(B) Projeto Supabase de *staging* dedicado** — recomendada apenas como camada complementar pré-produção (requer `OWNER_DECISION` por custo/segredos e compartilha estado entre PRs).
+- Documentado no mesmo ADR o plano executável das **3 jornadas de Smoke E2E** (Fase 2, contra build local `next build` + `next start`):
+  1. Cadastro do prestador → criar 2 serviços → configurar agenda → publicar em `/p/<slug>`.
+  2. Reserva pública multi-serviço em `/p/<slug>` → `/reserva/<id>` (snapshot agregado, restrição de botões por papel e bloqueio da janela completa).
+  3. Confirmação e cancelamento pelo prestador + entrega de notificações em `/notificacoes` e liberação da agenda.
+
+## O que permanece pendente na Issue `#31` (sem métricas inventadas)
+
+1. **`OWNER_DECISION`:** escolha definitiva do backend E2E (Opção A local × Opção B *staging* — ver `docs/ADR-E2E.md`).
+2. **Fase 2 — Smoke E2E:** implementar Playwright + 3 jornadas no CI após aprovação da Fase 1.
+3. **Fase 3 — Acessibilidade:** auditoria automatizada (`@axe-core/playwright`) + checagem manual de teclado/foco/rótulos/leitor de tela + validação de `prefers-reduced-motion` nas telas principais.
+4. **Fase 4 — Desempenho:** medições reais de Core Web Vitals mobile (LCP/CLS/INP) da página pública com data e ambiente registrados (nenhum número estimado aqui).
+5. **Fase 5 — Segurança e *rate limiting*:** revisão de autorização server-side, RLS e adoção de *rate limiting* nos pontos públicos (cadastro, recuperação de senha, reserva) em coordenação com a Issue `#30`.
+6. **Cobertura de testes:** não há relatório de cobertura configurado no Vitest; nenhum percentual de cobertura é reportado.
+
