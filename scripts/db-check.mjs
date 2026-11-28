@@ -11,6 +11,7 @@ import { readFile } from "node:fs/promises";
 import { rm } from "node:fs/promises";
 import EmbeddedPostgres from "embedded-postgres";
 import pg from "pg";
+import { bootstrapStorageHarness } from "./storage-harness.mjs";
 
 const { Client } = pg;
 const PORT = 55432;
@@ -123,6 +124,7 @@ const migrations = [
   "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
   "supabase/migrations/20261127000100_reminder_concurrency_lock.sql",
   "supabase/migrations/20261128000200_booking_definer_search_path.sql",
+  "supabase/migrations/20261128000300_service_images_storage.sql",
 ];
 
 for (const file of migrations) {
@@ -1907,6 +1909,47 @@ console.log("\n[segurança e RLS]");
     .then(() => true)
     .catch(() => false);
   check("prestador A não cria serviço em B", crossTenantService === false);
+
+  console.log("\\n[storage de imagens de serviços]");
+  const anonStorageClient = await asRole("anon");
+  const ownServiceImagePath = `providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`;
+  const ownImageInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1) returning id`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono envia imagem no prefixo do próprio serviço", ownImageInsert);
+
+  const foreignServiceImagePath = `providers/${providerB}/services/${serviceB1}/${uuid()}.jpg`;
+  const foreignImageInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [foreignServiceImagePath],
+  ).then(() => true).catch(() => false);
+  check("prestador A não envia imagem para serviço de B", !foreignImageInsert);
+
+  const anonymousImageInsert = await anonStorageClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [`providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`],
+  ).then(() => true).catch(() => false);
+  check("anon não envia imagem mesmo com caminho válido", !anonymousImageInsert);
+
+  const publicImageRead = await anonStorageClient.query(
+    `select name from storage.objects where bucket_id = 'service-images' and name = $1`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("imagem do bucket público pode ser lida anonimamente", publicImageRead);
+
+  const foreignImageDelete = await ownerBClient.query(
+    `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length > 0).catch(() => true);
+  check("prestador B não remove imagem de A", !foreignImageDelete);
+
+  const ownerImageDelete = await ownerAClient.query(
+    `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownServiceImagePath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono remove imagem do próprio serviço", ownerImageDelete);
+  await anonStorageClient.end();
 
   // 5. Notificações: sem insert/delete direto para autenticados e RLS por destinatário.
   const notificationPolicies = (
