@@ -17,24 +17,69 @@ Consequências dessa escolha:
 - A função é idempotente por `(recipient_id, event_key)`, onde `event_key` é o
   `id` do evento. Reenviar o mesmo evento não duplica mensagem.
 
-## Eventos e destinatários
+## Matriz evento × destinatário × canal
 
-| Evento (`booking_events.event_type`) | Cliente | Profissional | Tipo |
-| --- | --- | --- | --- |
-| `booking.created` | sim | sim | `booking_created` |
-| `booking.proof_received` | — | sim | `booking_proof_received` |
-| `booking.confirmed` | sim | sim | `booking_confirmed` |
-| `booking.cancelled` | sim | sim | `booking_cancelled` |
-| `booking.expired` | sim | sim | `booking_expired` |
-| `booking.reminder` | sim | sim | `booking_reminder` |
-| `booking.changed` | sim | sim | `booking_changed` |
+| Evento (`booking_events.event_type`) | Tipo (`notification_kind`) | Cliente | Profissional | Canal `in_app` (agora) | Canal `email` (futuro, `#26`) | Obrigatório (`in_app`)? |
+| --- | --- | --- | --- | --- | --- | --- |
+| `booking.created` | `booking_created` | sim | sim | Ativo (padrão: ligado) | Desligado por padrão (não envia) | Não (pode silenciar) |
+| `booking.proof_received` | `booking_proof_received` | — | sim | Ativo (padrão: ligado) | Desligado por padrão (não envia) | Não (pode silenciar) |
+| `booking.confirmed` | `booking_confirmed` | sim | sim | Ativo (padrão: ligado) | Desligado por padrão (não envia) | Não (pode silenciar) |
+| `booking.cancelled` | `booking_cancelled` | sim | sim | Ativo (**sempre ligado**) | Desligado por padrão (não envia) | **Sim — não silenciável** |
+| `booking.changed` | `booking_changed` | sim | sim | Ativo (**sempre ligado**) | Desligado por padrão (não envia) | **Sim — não silenciável** |
+| `booking.expired` | `booking_expired` | sim | sim | Ativo (padrão: ligado) | Desligado por padrão (não envia) | Não (pode silenciar) |
+| `booking.reminder` | `booking_reminder` | sim | sim | Ativo (padrão: ligado) | Desligado por padrão (não envia) | Não (pode silenciar) |
 
-`booking.changed` está previsto no mapeamento para futuras edições de
-agendamento (reagendamento, alteração de serviço); nenhuma transição atual o
-emite.
+Notas da matriz:
 
-O texto usa o nome do serviço congelado no snapshot
-(`service_name_snapshot`) e o horário formatado no fuso do prestador.
+- `booking.changed` já está mapeado e protegido como evento obrigatório para futuras
+  edições/reagendamentos de agendamento; nenhuma transição atual o emite.
+- **Conteúdo sem exposição de terceiros:** o texto usa apenas o nome do serviço
+  congelado no snapshot (`service_name_snapshot`) e o horário formatado no fuso
+  do prestador, com link interno para `/reserva/[id]`. Nunca inclui e-mail,
+  telefone ou dados pessoais do outro participante.
+- **Política de eventos obrigatórios (`OWNER_DECISION`):** o padrão adotado nesta
+  entrega torna `booking.cancelled` e `booking.changed` obrigatórios no canal
+  `in_app` (conforme recomendação da Issue `#13`), pois silencíá-los causaria
+  desencontros críticos de atendimento. O responsável pode revisar esta lista
+  em uma migration futura se desejar política diferente.
+
+## Preferências por usuário (Issue `#13`)
+
+A migration `20261128000500_notification_preferences.sql` cria a tabela
+`public.notification_preferences (user_id, event_type, channel, enabled)`:
+
+- **Padrão documentado (ausência de registro):**
+  - `channel = 'in_app'` → **ligado (`true`)**.
+  - `channel = 'email'` → **desligado (`false`)** até haver provedor e credenciais
+    configuradas pelo responsável (`#26`).
+- **Proteção de eventos obrigatórios em 3 camadas:**
+  1. **Banco de dados (constraint `CHECK`):** `notification_preferences_mandatory_in_app_check`
+     rejeita qualquer `INSERT`/`UPDATE` com `enabled = false` quando
+     `channel = 'in_app'` e `event_type in ('booking.cancelled', 'booking.changed')`.
+  2. **Avaliação na emissão:** `public.is_notification_enabled(user_id, event_type, channel)`
+     retorna `true` incondicionalmente para eventos obrigatórios em `in_app` e
+     fail-closed (`false`) para canais desconhecidos.
+  3. **Domínio, Server Action e UI:** `src/domain/notifications/preferences.ts`
+     e `saveNotificationPreferencesAction` sempre forçam `enabled = true` em
+     eventos obrigatórios, e a interface exibe badge **Obrigatório** + explicação
+     clara com controle bloqueado (`Sempre ativo`).
+- **RLS e privilégios:** RLS ativa por `user_id = (select auth.uid())` para
+  `SELECT`, `INSERT` e `UPDATE`. `anon` não tem nenhum privilégio; `authenticated`
+  não tem `DELETE` nem `TRUNCATE`. Coberto em `scripts/privileges-check.mjs` e
+  `scripts/db-check.mjs`.
+- **Respeito às preferências na emissão:**
+  - `public.notify_on_booking_event()` filtra cada destinatário com
+    `public.is_notification_enabled(payload.recipient_id, new.event_type, 'in_app')`.
+    Desligar uma preferência suprime a notificação **apenas** para aquele usuário;
+    a outra parte segue recebendo normalmente e o registro de auditoria em
+    `public.booking_events` permanece intacto.
+  - `public.create_booking_reminders(p_within_hours)` só emite o evento
+    `booking.reminder` quando pelo menos um participante (cliente ou prestador)
+    mantém `booking.reminder` ligado em `in_app`. Se ambos desligaram, retorna `0`
+    sem poluir `booking_events` ou `notifications`. Quando um ou ambos têm a
+    preferência ativa, mantém intactos `FOR UPDATE OF b SKIP LOCKED` e a chave
+    diária no fuso do prestador (`reminder-<booking>-<YYYYMMDD>`), preservando a
+    idempotência diária mesmo em viradas de data UTC.
 
 ## Lembretes
 
@@ -73,8 +118,16 @@ repositório. Nenhuma credencial nova foi criada.
 
 - `/notificacoes` lista as 50 mais recentes, com título, texto, tipo, data e
   destino. Cada item oferece "Marcar como lida" e link para `/reserva/[id]`.
-- O sino (`NotificationBell`) aparece no painel, em "Meus agendamentos" e na
-  página da reserva, com o contador de não lidas.
+- O sino (`NotificationBell`) aparece no painel, em "Meus agendamentos", em
+  "Minha conta" e na página da reserva, com o contador de não lidas.
+- **Gestão de preferências (`NotificationPreferencesForm`):**
+  - **Cliente:** seção *Preferências de alertas* em `/minha-conta` (exibe os 6
+    eventos aplicáveis ao cliente).
+  - **Prestador:** seção *Alertas* no menu do `/painel` (exibe os 7 eventos
+    aplicáveis ao prestador, incluindo `booking.proof_received`).
+  - Ambas as seções salvam via `saveNotificationPreferencesAction` com feedback
+    acessível (`role="status"` / `role="alert"`), identificam eventos obrigatórios
+    não silenciáveis e informam que o canal de e-mail segue desligado por padrão.
 - Datas são formatadas no fuso do navegador (`Intl.DateTimeFormat`), não no
   fuso do prestador, porque a notificação é um fato do usuário.
 
@@ -107,7 +160,12 @@ Nada disso foi criado e nenhum botão de e-mail foi adicionado à interface.
 - impossibilidade de o usuário forjar notificação;
 - `mark_notification_read` gravando `read_at` e não afetando notificação alheia;
 - `mark_all_notifications_read` zerando as não lidas;
-- `create_booking_reminders` criando e depois não duplicando no mesmo dia; concorrência, cancelamento e reservas expiradas não recebem lembrete.
+- `create_booking_reminders` criando e depois não duplicando no mesmo dia; concorrência, cancelamento e reservas expiradas não recebem lembrete;
+- na seção `[preferências de notificação (#13)]`: padrão `in_app` ligado / `email` desligado, isolamento RLS entre usuários (`SELECT`/`INSERT`/`UPDATE` e bloqueio de `anon`), recusa de silenciamento dos eventos obrigatórios (`booking.cancelled` e `booking.changed`), supressão seletiva por destinatário em criação/confirmação, entrega obrigatória de cancelamento pelo prestador sem PII de terceiros e respeito às preferências em `create_booking_reminders(24)` preservando a idempotência diária por fuso do prestador.
+
+Complementarmente, `npm test` cobre o domínio de preferências
+(`src/domain/notifications/preferences.test.ts`) e a Server Action
+(`src/app/notificacoes/actions.test.ts`).
 
 ## Scheduler de lembretes (PR #38)
 

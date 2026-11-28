@@ -105,6 +105,11 @@ const MATRIX = {
   feature_flags: { anon: [], authenticated: [], service_role: ["ALL"] },
   legal_acceptances: { anon: [], authenticated: ["SELECT"], service_role: ["ALL"] },
   legal_documents: { anon: ["SELECT"], authenticated: ["SELECT"], service_role: ["ALL"] },
+  notification_preferences: {
+    anon: [],
+    authenticated: ["SELECT", "INSERT", "UPDATE"],
+    service_role: ["ALL"],
+  },
   notifications: { anon: [], authenticated: ["SELECT"], service_role: ["ALL"] },
   profiles: {
     anon: [],
@@ -643,8 +648,29 @@ async function runPhase(phase) {
       [notificationRow?.rows[0]?.id],
       (result) => result.rows[0]?.one === true,
     );
+    await expectAllowed(
+      "authenticated: grava e atualiza própria preferência de notificação",
+      customerClient,
+      `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+       values ($1, 'booking.reminder', 'in_app', false)
+       on conflict (user_id, event_type, channel) do update set enabled = excluded.enabled
+       returning enabled`,
+      [customer],
+      (result) => result.rows[0]?.enabled === false,
+    );
 
     // Escritas diretas e leituras sem política: negadas por privilégio.
+    await expectDenied(
+      "authenticated: DELETE em notification_preferences",
+      customerClient,
+      `delete from public.notification_preferences where user_id = $1`,
+      [customer],
+    );
+    await expectDenied(
+      "anon: SELECT em notification_preferences",
+      anonClient,
+      `select user_id from public.notification_preferences`,
+    );
     await expectDenied(
       "authenticated: INSERT direto em bookings",
       customerClient,

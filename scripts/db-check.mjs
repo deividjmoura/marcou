@@ -127,6 +127,7 @@ const migrations = [
   "supabase/migrations/20261128000200_booking_definer_search_path.sql",
   "supabase/migrations/20261128000300_booking_counterparty_phone.sql",
   "supabase/migrations/20261128000400_service_images_storage.sql",
+  "supabase/migrations/20261128000500_notification_preferences.sql",
 ];
 
 for (const file of migrations) {
@@ -2038,6 +2039,359 @@ console.log("\n[segurança e RLS]");
       withCheck.every((row) => /auth\.uid\(\)/.test(row.check_expr ?? "")),
     withCheck.map((row) => `${row.polname}:${row.check_expr}`).join(" | "),
   );
+}
+
+// =========================================================================
+// [preferências de notificação (#13)]
+// =========================================================================
+console.log("\n[preferências de notificação (#13)]");
+{
+  const prefOwner = uuid();
+  const prefCust1 = uuid();
+  const prefCust2 = uuid();
+  for (const id of [prefOwner, prefCust1, prefCust2]) {
+    await db.query("insert into auth.users (id) values ($1)", [id]);
+  }
+  const prefOwnerClient = await asRole("authenticated", prefOwner);
+  const prefCust1Client = await asRole("authenticated", prefCust1);
+  const prefCust2Client = await asRole("authenticated", prefCust2);
+  const prefAnonClient = await asRole("anon", null);
+  const prefServiceRole = await asRole("service_role", null);
+
+  try {
+    const prefProviderId = (
+      await db.query(
+        `insert into public.providers (owner_id, slug, display_name, timezone, is_published, booking_hold_minutes)
+         values ($1, 'prov-notif-prefs', 'Studio Preferências', 'America/Sao_Paulo', true, 30)
+         returning id`,
+        [prefOwner],
+      )
+    ).rows[0].id;
+
+    const prefServiceId = (
+      await db.query(
+        `insert into public.services (provider_id, name, duration_minutes, price_cents, deposit_cents, buffer_minutes)
+         values ($1, 'Limpeza de Pele', 60, 12000, 3000, 10)
+         returning id`,
+        [prefProviderId],
+      )
+    ).rows[0].id;
+
+    for (let dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek++) {
+      await db.query(
+        `insert into public.availability_rules (provider_id, day_of_week, starts_at, ends_at)
+         values ($1, $2, '00:00', '23:59')`,
+        [prefProviderId, dayOfWeek],
+      );
+    }
+
+    // 1. Padrão documentado: in_app=true, email=false (sem registros na tabela).
+    const defaults = (
+      await prefServiceRole.query(`
+        select
+          public.is_notification_enabled($1, 'booking.created', 'in_app') as in_app_created,
+          public.is_notification_enabled($1, 'booking.reminder', 'in_app') as in_app_reminder,
+          public.is_notification_enabled($1, 'booking.created', 'email') as email_created,
+          public.is_notification_enabled($1, 'booking.cancelled', 'email') as email_cancelled
+      `, [prefCust1])
+    ).rows[0];
+    check(
+      "padrão sem registro é in_app ligado e email desligado",
+      defaults.in_app_created === true &&
+        defaults.in_app_reminder === true &&
+        defaults.email_created === false &&
+        defaults.email_cancelled === false,
+      JSON.stringify(defaults),
+    );
+
+    // 2. RLS: cada usuário lê e escreve somente as próprias preferências; anon negado.
+    await prefCust1Client.query(
+      `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+       values ($1, 'booking.created', 'in_app', false),
+              ($1, 'booking.confirmed', 'in_app', false),
+              ($1, 'booking.expired', 'in_app', false),
+              ($1, 'booking.reminder', 'in_app', false)`,
+      [prefCust1],
+    );
+    const cust1Rows = (
+      await prefCust1Client.query(
+        `select event_type, enabled from public.notification_preferences order by event_type`,
+      )
+    ).rows;
+    const cust2Rows = (
+      await prefCust2Client.query(
+        `select event_type, enabled from public.notification_preferences`,
+      )
+    ).rows;
+    check(
+      "RLS isola leitura de preferências entre usuários",
+      cust1Rows.length === 4 && cust2Rows.length === 0,
+      `cust1=${cust1Rows.length}, cust2=${cust2Rows.length}`,
+    );
+
+    const forgedInsert = await prefCust2Client
+      .query(
+        `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+         values ($1, 'booking.created', 'in_app', true)`,
+        [prefCust1],
+      )
+      .then(() => true)
+      .catch(() => false);
+    check("RLS bloqueia INSERT de preferência para outro usuário", forgedInsert === false);
+
+    const forgedUpdate = (
+      await prefCust2Client.query(
+        `update public.notification_preferences
+            set enabled = true
+          where user_id = $1 and event_type = 'booking.created'`,
+        [prefCust1],
+      )
+    ).rowCount;
+    check("RLS impede UPDATE em preferência de outro usuário", forgedUpdate === 0);
+
+    const anonPrefRead = await prefAnonClient
+      .query(`select * from public.notification_preferences`)
+      .then(() => true)
+      .catch(() => false);
+    check("anon não pode ler notification_preferences", anonPrefRead === false);
+
+    // 3. Eventos obrigatórios não podem ser silenciados em in_app.
+    const disableCancelled = await prefCust1Client
+      .query(
+        `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+         values ($1, 'booking.cancelled', 'in_app', false)`,
+        [prefCust1],
+      )
+      .then(() => true)
+      .catch(() => false);
+    const disableChanged = await prefCust1Client
+      .query(
+        `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+         values ($1, 'booking.changed', 'in_app', false)`,
+        [prefCust1],
+      )
+      .then(() => true)
+      .catch(() => false);
+    check(
+      "eventos obrigatórios (booking.cancelled e booking.changed) não podem ser silenciados em in_app",
+      disableCancelled === false && disableChanged === false,
+      `cancelled=${disableCancelled}, changed=${disableChanged}`,
+    );
+
+    // 4. Preferência desligada não gera notificação para quem desligou, mas gera para a outra parte;
+    //    e cancelamento pelo prestador continua gerando notificação obrigatória para o cliente.
+    const prefBooking = (
+      await prefCust1Client.query(
+        `select * from public.create_booking($1, $2::uuid, $3::timestamptz, $4, $5, $6)`,
+        [
+          "prov-notif-prefs",
+          prefServiceId,
+          "2026-12-20T14:00:00.000Z",
+          "Cliente Privado NomeCompleto",
+          "+5547999991111",
+          `pref-b1-${uuid()}`,
+        ],
+      )
+    ).rows[0];
+
+    await prefCust1Client.query(
+      `select * from public.transition_booking($1, 'proof_received', $2)`,
+      [prefBooking.id, `pref-b1-proof-${uuid()}`],
+    );
+    await prefOwnerClient.query(
+      `select * from public.transition_booking($1, 'payment_approved', $2)`,
+      [prefBooking.id, `pref-b1-approve-${uuid()}`],
+    );
+
+    const cust1BeforeCancel = (
+      await db.query(
+        `select kind from public.notifications where booking_id = $1 and recipient_id = $2`,
+        [prefBooking.id, prefCust1],
+      )
+    ).rows;
+    const ownerBeforeCancel = (
+      await db.query(
+        `select kind from public.notifications where booking_id = $1 and recipient_id = $2 order by kind`,
+        [prefBooking.id, prefOwner],
+      )
+    ).rows.map((r) => r.kind);
+    check(
+      "preferências desligadas suprimem booking_created/booking_confirmed só para quem desligou",
+      cust1BeforeCancel.length === 0 &&
+        ownerBeforeCancel.includes("booking_created") &&
+        ownerBeforeCancel.includes("booking_proof_received") &&
+        ownerBeforeCancel.includes("booking_confirmed"),
+      `cust1=${JSON.stringify(cust1BeforeCancel)}, owner=${JSON.stringify(ownerBeforeCancel)}`,
+    );
+
+    // Cancelamento pelo prestador: obrigatório — cliente recebe mesmo com opcionais desligados!
+    await prefOwnerClient.query(
+      `select * from public.transition_booking($1, 'cancel', $2)`,
+      [prefBooking.id, `pref-b1-cancel-${uuid()}`],
+    );
+    const cancelNotifs = (
+      await db.query(
+        `select recipient_id, kind, title, body from public.notifications
+          where booking_id = $1 and kind = 'booking_cancelled'`,
+        [prefBooking.id],
+      )
+    ).rows;
+    check(
+      "cancelamento pelo prestador gera notificação obrigatória para cliente e prestador sem PII de terceiros",
+      cancelNotifs.length === 2 &&
+        cancelNotifs.some((n) => n.recipient_id === prefCust1) &&
+        cancelNotifs.some((n) => n.recipient_id === prefOwner) &&
+        cancelNotifs.every(
+          (n) =>
+            !n.body.includes("cliente.privado@example.com") &&
+            !n.body.includes("999991111") &&
+            !n.body.includes("NomeCompleto"),
+        ),
+      JSON.stringify(cancelNotifs),
+    );
+
+    // 5. create_booking_reminders(24) respeitando preferências sem quebrar idempotência diária por fuso.
+    const remWindowSlot = (
+      await db.query(`
+        with base as (
+          select date_trunc('hour', now() at time zone 'America/Sao_Paulo') + interval '4 hours' as local_ts
+        ),
+        adjusted as (
+          select case
+            when extract(hour from local_ts) < 8 then date_trunc('day', local_ts) + interval '9 hours'
+            when extract(hour from local_ts) > 20 then date_trunc('day', local_ts) + interval '1 day 9 hours'
+            else local_ts
+          end as ts
+          from base
+        )
+        select (ts at time zone 'America/Sao_Paulo') as starts_at,
+               to_char(ts, 'YYYYMMDD') as local_ymd
+        from adjusted
+      `)
+    ).rows[0];
+
+    // Reserva 1: prefCust1 (reminder=false) + prefOwner (reminder=true por padrão).
+    const remBookingOneOff = (
+      await prefCust1Client.query(
+        `select * from public.create_booking($1, $2::uuid, $3::timestamptz, $4, $5, $6)`,
+        ["prov-notif-prefs", prefServiceId, remWindowSlot.starts_at, "Cliente Rem 1", "+5547999992222", `pref-rem1-${uuid()}`],
+      )
+    ).rows[0];
+    await prefCust1Client.query(
+      `select * from public.transition_booking($1, 'proof_received', $2)`,
+      [remBookingOneOff.id, `pref-rem1-p-${uuid()}`],
+    );
+    await prefOwnerClient.query(
+      `select * from public.transition_booking($1, 'payment_approved', $2)`,
+      [remBookingOneOff.id, `pref-rem1-a-${uuid()}`],
+    );
+
+    await prefServiceRole.query(`set time zone 'UTC'`);
+    const remCountPartial = Number(
+      (await prefServiceRole.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+    );
+    const remNotifsPartial = (
+      await db.query(
+        `select recipient_id from public.notifications
+          where booking_id = $1 and kind = 'booking_reminder'`,
+        [remBookingOneOff.id],
+      )
+    ).rows.map((r) => r.recipient_id);
+    check(
+      "create_booking_reminders entrega só ao participante com preferência ligada",
+      remCountPartial === 1 &&
+        remNotifsPartial.length === 1 &&
+        remNotifsPartial[0] === prefOwner,
+      `count=${remCountPartial}, recipients=${JSON.stringify(remNotifsPartial)}`,
+    );
+
+    // Reexecução em outro fuso não duplica (idempotência diária preservada).
+    await prefServiceRole.query(`set time zone 'Asia/Tokyo'`);
+    const remCountRepeat = Number(
+      (await prefServiceRole.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+    );
+    check(
+      "idempotência diária por fuso preservada quando apenas 1 participante recebe lembrete",
+      remCountRepeat === 0,
+      `repeat=${remCountRepeat}`,
+    );
+
+    // Reserva 2: AMBOS prefCust1 e prefOwner com booking.reminder = false.
+    await prefOwnerClient.query(
+      `insert into public.notification_preferences (user_id, event_type, channel, enabled)
+       values ($1, 'booking.reminder', 'in_app', false)
+       on conflict (user_id, event_type, channel) do update set enabled = false`,
+      [prefOwner],
+    );
+    const remBookingBothOff = (
+      await prefCust1Client.query(
+        `select * from public.create_booking($1, $2::uuid, ($3::timestamptz + interval '2 hours'), $4, $5, $6)`,
+        ["prov-notif-prefs", prefServiceId, remWindowSlot.starts_at, "Cliente Rem 2", "+5547999993333", `pref-rem2-${uuid()}`],
+      )
+    ).rows[0];
+    await prefCust1Client.query(
+      `select * from public.transition_booking($1, 'proof_received', $2)`,
+      [remBookingBothOff.id, `pref-rem2-p-${uuid()}`],
+    );
+    await prefOwnerClient.query(
+      `select * from public.transition_booking($1, 'payment_approved', $2)`,
+      [remBookingBothOff.id, `pref-rem2-a-${uuid()}`],
+    );
+
+    await prefServiceRole.query(`set time zone 'UTC'`);
+    const remCountBothOff = Number(
+      (await prefServiceRole.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+    );
+    const remEventsBothOff = Number(
+      (
+        await db.query(
+          `select count(*)::int as total from public.booking_events
+            where booking_id = $1 and event_type = 'booking.reminder'`,
+          [remBookingBothOff.id],
+        )
+      ).rows[0].total,
+    );
+    check(
+      "create_booking_reminders retorna 0 e não gera evento/notificação quando ambos desligaram lembretes",
+      remCountBothOff === 0 && remEventsBothOff === 0,
+      `count=${remCountBothOff}, events=${remEventsBothOff}`,
+    );
+
+    // Cliente religa lembrete na mesma janela: próxima execução gera exatamente 1 (só para o cliente) e depois idempotente.
+    await prefCust1Client.query(
+      `update public.notification_preferences
+          set enabled = true, updated_at = now()
+        where user_id = $1 and event_type = 'booking.reminder' and channel = 'in_app'`,
+      [prefCust1],
+    );
+    const remCountReenabled = Number(
+      (await prefServiceRole.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+    );
+    const remNotifsReenabled = (
+      await db.query(
+        `select recipient_id from public.notifications
+          where booking_id = $1 and kind = 'booking_reminder'`,
+        [remBookingBothOff.id],
+      )
+    ).rows.map((r) => r.recipient_id);
+    const remCountReenabledAgain = Number(
+      (await prefServiceRole.query(`select public.create_booking_reminders(24) as total`)).rows[0].total,
+    );
+    check(
+      "religar preferência de lembrete emite uma única vez para quem religou mantendo idempotência",
+      remCountReenabled === 1 &&
+        remNotifsReenabled.length === 1 &&
+        remNotifsReenabled[0] === prefCust1 &&
+        remCountReenabledAgain === 0,
+      `first=${remCountReenabled}, second=${remCountReenabledAgain}, recipients=${JSON.stringify(remNotifsReenabled)}`,
+    );
+  } finally {
+    await prefOwnerClient.end();
+    await prefCust1Client.end();
+    await prefCust2Client.end();
+    await prefAnonClient.end();
+    await prefServiceRole.end();
+  }
 }
 
 await ownerAClient.end();

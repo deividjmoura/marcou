@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { logoutAction } from "../(auth)/actions";
+import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
+import type { ResolvedNotificationPreference } from "@/domain/notifications/preferences";
 
 import { useActionState, useState, type ReactNode } from "react";
 import {
@@ -838,6 +840,7 @@ type ProviderPanelMenuProps = {
   serviceAreas: ProviderServiceArea[];
   categorySuggestions: CategorySuggestion[];
   unreadCount: number;
+  notificationPreferences: ResolvedNotificationPreference[];
   bookingsContent: ReactNode;
 };
 
@@ -846,6 +849,7 @@ const BASE_PANEL_MENU_ITEMS = [
   { id: "business", label: "Meu negócio", description: "Informações e página pública", icon: "ic-local" },
   { id: "services", label: "Serviços", description: "Preços, duração e cadastro", icon: "ic-sacola" },
   { id: "availability", label: "Horários", description: "Expediente e exceções", icon: "ic-horario" },
+  { id: "notifications", label: "Alertas", description: "Preferências de notificação", icon: "ic-notificacoes" },
 ] as const;
 
 const DISCOVERY_MENU_ITEM = {
@@ -865,6 +869,7 @@ export function ProviderPanelMenu({
   serviceAreas,
   categorySuggestions,
   unreadCount,
+  notificationPreferences,
   bookingsContent,
 }: ProviderPanelMenuProps) {
   const [activeSection, setActiveSection] = useState<string>("bookings");
@@ -888,6 +893,15 @@ export function ProviderPanelMenu({
     }
     if (activeSection === "availability") {
       return <AvailabilityManager rules={rules} exceptions={exceptions} />;
+    }
+    if (activeSection === "notifications") {
+      return (
+        <NotificationPreferencesForm
+          audience="provider"
+          initialPreferences={notificationPreferences}
+          headingId="panel-notification-preferences"
+        />
+      );
     }
     if (activeSection === "discovery" && discoveryEnabled) {
       return (

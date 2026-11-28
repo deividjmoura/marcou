@@ -12,6 +12,7 @@ import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { NotificationBell } from "@/components/notification-bell";
 import { AccountModeSwitcher } from "@/components/account-mode-switcher";
 import { countUnreadNotifications } from "@/server/notifications";
+import { listNotificationPreferences } from "@/server/notification-preferences";
 import { isSocialFeatureEnabled } from "@/server/feature-flags";
 import {
   listCategorySuggestions,
@@ -92,14 +93,21 @@ export default async function PainelPage() {
     );
   }
 
-  const [services, rules, exceptions, agenda, discoveryEnabled] =
-    await Promise.all([
-      listServicesForOwner(provider.id),
-      listRules(provider.id),
-      listExceptions(provider.id),
-      listProviderBookingsForPanel(provider.id),
-      isSocialFeatureEnabled("social_discovery", { providerId: provider.id }),
-    ]);
+  const [
+    services,
+    rules,
+    exceptions,
+    agenda,
+    discoveryEnabled,
+    notificationPreferences,
+  ] = await Promise.all([
+    listServicesForOwner(provider.id),
+    listRules(provider.id),
+    listExceptions(provider.id),
+    listProviderBookingsForPanel(provider.id),
+    isSocialFeatureEnabled("social_discovery", { providerId: provider.id }),
+    listNotificationPreferences("provider"),
+  ]);
   const { bookings, failed: bookingsFailed } = agenda;
 
   const [categories, serviceAreas, categorySuggestions] = discoveryEnabled
@@ -132,6 +140,7 @@ export default async function PainelPage() {
         serviceAreas={serviceAreas}
         categorySuggestions={categorySuggestions}
         unreadCount={unread}
+        notificationPreferences={notificationPreferences}
         bookingsContent={<BookingAgenda bookings={bookings} failed={bookingsFailed} />}
       />
     </main>

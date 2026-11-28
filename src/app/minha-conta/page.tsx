@@ -5,8 +5,10 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { logoutAction } from "../(auth)/actions";
 import { NotificationBell } from "@/components/notification-bell";
+import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import { AccountModeSwitcher } from "@/components/account-mode-switcher";
 import { countUnreadNotifications } from "@/server/notifications";
+import { listNotificationPreferences } from "@/server/notification-preferences";
 import { getOwnedProvider } from "@/server/bookings";
 import {
   getPreferredMode,
@@ -26,9 +28,8 @@ export default async function MinhaContaPage() {
     );
   }
 
-  const { user, profile, unread, provider, activeMode } = await measureAuthFlow(
-    "account_bootstrap",
-    async (setOutcome) => {
+  const { user, profile, unread, provider, activeMode, notificationPreferences } =
+    await measureAuthFlow("account_bootstrap", async (setOutcome) => {
       const supabase = await measureAuthStep("supabase_client", () =>
         createClient(),
       );
@@ -38,19 +39,25 @@ export default async function MinhaContaPage() {
       } = await measureAuthStep("auth_get_user", () => supabase.auth.getUser());
       if (error || !currentUser) redirect("/login?next=%2Fminha-conta");
 
-      const [{ data: profileRow }, unreadCount, ownedProvider, preferredMode] =
-        await measureAuthStep("load_account_context", () =>
-          Promise.all([
-            supabase
-              .from("profiles")
-              .select("display_name, phone, created_at")
-              .eq("id", currentUser.id)
-              .maybeSingle(),
-            countUnreadNotifications(),
-            getOwnedProvider(currentUser.id),
-            getPreferredMode(supabase),
-          ]),
-        );
+      const [
+        { data: profileRow },
+        unreadCount,
+        ownedProvider,
+        preferredMode,
+        preferences,
+      ] = await measureAuthStep("load_account_context", () =>
+        Promise.all([
+          supabase
+            .from("profiles")
+            .select("display_name, phone, created_at")
+            .eq("id", currentUser.id)
+            .maybeSingle(),
+          countUnreadNotifications(),
+          getOwnedProvider(currentUser.id),
+          getPreferredMode(supabase),
+          listNotificationPreferences("customer"),
+        ]),
+      );
 
       setOutcome("loaded");
       return {
@@ -59,9 +66,9 @@ export default async function MinhaContaPage() {
         unread: unreadCount,
         provider: ownedProvider,
         activeMode: preferredMode,
+        notificationPreferences: preferences,
       };
-    },
-  );
+    });
 
   const metadataName = user.user_metadata?.display_name;
   const name: string =
@@ -165,6 +172,14 @@ export default async function MinhaContaPage() {
             <span className={styles.arrow} aria-hidden="true">→</span>
           </Link>
         </nav>
+      </section>
+
+      <section className={styles.section} aria-labelledby="account-notification-preferences">
+        <NotificationPreferencesForm
+          audience="customer"
+          initialPreferences={notificationPreferences}
+          headingId="account-notification-preferences"
+        />
       </section>
 
       <section className={styles.details} aria-labelledby="account-details-title">
