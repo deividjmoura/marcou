@@ -29,9 +29,11 @@ Os tokens estão em `src/styles/design-tokens.css`, carregados pelo layout raiz.
 
 Também há tokens de tipografia, espaçamento, raio, elevação, movimento e altura mínima de controle. A escala de espaço segue incrementos de 4px.
 
-### Tema escuro — tokens preparados
+### Tema claro, escuro e automático (Issue #121)
 
-O bloco `[data-theme="dark"]` define valores escuros e `color-scheme`, sem seletor, persistência ou ativação automática. Esses comportamentos pertencem à Issue #121. Os aliases legados (`--ink`, `--muted`, `--paper`, `--surface`, `--line`) acompanham os tokens quando o atributo é aplicado. Isso **não** significa que todas as telas ou cores hard-coded já estejam adaptadas ao tema.
+O seletor global oferece **Claro**, **Escuro** e **Automático**. A preferência é persistida no cookie `marcou-theme` (`Path=/`, `SameSite=Lax`, 1 ano; `Secure` em HTTPS) e lida no servidor no layout raiz. Um script `beforeInteractive` resolve `prefers-color-scheme` antes da hidratação; CSS mantém fallback via media query para Automático. O provider acompanha alterações do sistema quando Automático está selecionado.
+
+O token set `[data-theme="dark"]` e o fallback `[data-theme="system"]` usam `color-scheme: dark`; aliases legados acompanham os papéis semânticos. CSS global, estados de feedback/status, painel, documentos e conta usam tokens para as cores principais. Testes verificam pares texto/fundo AA (4.5:1) e o contrato de preferência. **A cobertura visual ainda deve ser conferida por captura 390/1440 em todos os temas**; hard-coded restantes precisam ser tratados quando identificados.
 
 ### Contrato de uso
 
