@@ -3,7 +3,7 @@
   "repository": "deividjmoura/marcou",
   "coordination_branch": "coordination/agents",
   "coordination_file": ".agent-coordination/state.json",
-  "updated_at": "2026-11-28",
+  "updated_at": "2026-11-28T12:39:28Z",
   "purpose": "Shared compact handoff and dispatch state for parallel agents. Source of truth for ownership, latest outcomes, SHAs, blockers and next actions.",
   "protocol": {
     "read_before_work": true,
@@ -1818,7 +1818,12 @@
         38,
         32,
         138,
-        151
+        151,
+        157,
+        161,
+        162,
+        163,
+        164
       ],
       "issues": [
         25,
@@ -1834,8 +1839,8 @@
         "feat/30-platform-hardening",
         "arena/3b7c9d2f-marcou"
       ],
-      "status": "completed_round_7_wave_2",
-      "active_assignment": "Definir UM mecanismo canônico de expiração/lembretes, integrar #128 e #38 em sequência e triar a #32. Nenhum scheduler é ativado.",
+      "status": "completed_round_7_wave_4",
+      "active_assignment": "Onda 4 concluída (W4-A3-T1: #20/#13/#26; W4-A3-T2: runbook produção 24 migrations + ADR E2E #31). Nenhum scheduler/e-mail ativado e nenhuma alteração remota executada.",
       "tasks": [
         {
           "id": "A3-T1",
@@ -1866,8 +1871,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "RODADA 7 — ONDA 1 (A3-T1..A3-T4, PR #138 -> 44ed540) E ONDA 2 (W2-A3-T1..W2-A3-T3, PR #151 -> 6042275) CONCLUÍDAS para Agent 3. W2-A3-T1: validado em código e em PostgreSQL real que expiração (#128) e lembretes (#38) continuam corretos com reservas multi-serviço (#142/#145); identificada e fechada lacuna de cobertura em scripts/db-check.mjs (que não aplicava 20261125120000/20261125130000/20261128000200), adicionando casts legados e 18 novas asserções multi-serviço (total 98/98 passaram). W2-A3-T2: criado docs/TESTE-REAL-PRODUCAO.md (Fases 0–7) com ordem das 19 migrations (incluindo tratamento da ordem fora de sequência da #142 e precedência obrigatória antes da 20261128000200 da #145, validada nos dois cenários em PostgreSQL embutido), variáveis de ambiente por fase, teste de recuperação de senha pós-#127, fluxo multi-serviço ponta a ponta pós-#142/#143/#146, ativação/desligamento seguro de cada scheduler e rollback por camada; docs/PLATFORM.md e README.md atualizados para 19 migrations e 7 harnesses de test:db. PR #151 (head 343b40bde982c732f3ce3a47bde9e306e1a7ceeb) mergeada via squash na main em 60422754b7654a65957c676be04b3fe3022a57f1 com CI quality PR (run 46086689510) SUCCESS, Netlify checks SUCCESS e CI pós-merge na main (check-run 140798270189) SUCCESS. W2-A3-T3: issues #26, #13, #30, #20 e #31 confirmadas abertas com Escopo refinado atual e comentadas com evidências da PR #151 (#26, #30, #20, #31; #13 já atual). Nenhuma migration aplicada em remoto, nenhum secret/serviço alterado e nenhum scheduler ativado.",
-      "next_action": "Onda 2 concluída pelo Agent 3. Demais agentes devem atualizar sobre main >= 60422754b7654a65957c676be04b3fe3022a57f1. Agent 6 audita PR #151 (merge 6042275, CI PR 46086689510, CI main 140798270189) e pode limpar arena/fdad472c-marcou após o encerramento da sessão (PR #151 MERGED, tip == headRefOid 343b40b). Responsável executa as Fases 0–7 de docs/TESTE-REAL-PRODUCAO.md quando autorizar.",
+      "current_state": "RODADA 7 — ONDAS 1, 2 E 4 CONCLUÍDAS para Agent 3. Na Onda 4 foram entregues e mergeadas 5 PRs em sequência limpa sobre a main (todas com 7/7 gates locais, CI quality PR PASS, Netlify deploy-preview PASS e CI pós-merge na main PASS): (1) PR #157 (#20 -> main 03a412f): GET /api/health (liveness + ?deep=1 com timingSafeEqual via HEALTH_CHECK_SECRET) e política centralizada de Cache-Control/Vary; (2) PR #161 (#13 -> main e4307a7): migration 20261128000500_notification_preferences.sql com RLS/constraints, respeito em triggers/lembretes e UI em /minha-conta e /painel; (3) PR #162 (#26 -> main 4c3794b): docs/ADR-EMAIL-PROVEDOR.md (aguarda OWNER_DECISION), NoopEmailSender desligado por padrão, renderizador pt-BR sem PII de terceiros, migration 20261128000700_email_delivery_queue.sql (server-only com RLS) e processador de fila idempotente; (4) PR #163 (W4-A3-T2 item 1 -> main 3262c03): docs/TESTE-REAL-PRODUCAO.md, docs/PLATFORM.md e README.md atualizados para 24 migrations (compatibilidade natural e --include-all verificada em PostgreSQL embutido), /api/health, WhatsApp/DDD, preferências, Storage real obrigatório (service-images) e e-mail desligado; (5) PR #164 (#31 Fase 1 -> main 8255fd5): docs/ADR-E2E.md (Supabase local em container no CI vs staging dedicado como OWNER_DECISION + plano detalhado das 3 jornadas Smoke E2E contra build local) e medições reais atualizadas em docs/QUALITY-AUDIT.md. Issues #20, #13, #26, #30 e #31 comentadas com evidência e mantidas abertas para decisões/ações do responsável.",
+      "next_action": "Onda 4 concluída pelo Agent 3 sobre main 8255fd5941b2b0e3867e1942dcba552cc2592f36. Aguarda OWNER_DECISION nas issues #30/#20 (staging/produção, migrations remotas, env vars, schedulers), #26 (provedor/domínio de e-mail em docs/ADR-EMAIL-PROVEDOR.md) e #31 (backend E2E em docs/ADR-E2E.md para iniciar Fase 2 Playwright). Branch arena/fdad472c-marcou sincronizada com origin/main (8255fd5) e pronta para limpeza após encerramento da sessão.",
       "updates": [
         {
           "timestamp": "2026-11-27T23:13:46Z",
@@ -1894,6 +1899,20 @@
             "Execução real de docs/TESTE-REAL-PRODUCAO.md (migrations remotas, variáveis por contexto, rotação OAuth/SMTP, ativação de schedulers, teste real de recovery/Google/Calendar) depende do responsável (OWNER_DECISION)."
           ],
           "next_action": "Agent 6 audita PR #151 (merge 6042275) e conclui o relatório final da Rodada 7."
+        },
+        {
+          "timestamp": "2026-11-28T12:39:28Z",
+          "task": "W4-A3-T1 (#20, #13, #26) e W4-A3-T2 (runbook produção 24 migrations + ADR E2E #31)",
+          "status": "completed_wave_4",
+          "result": "5 PRs mergeadas via squash na main em sequência limpa: PR #157 (#20 -> 03a412f956f007010637c58a1ee5a245626fc8a0), PR #161 (#13 -> e4307a7f86a10bb72759f10f5736823afd68f4d3), PR #162 (#26 -> 4c3794b3734381b7f93c085e0adbe07536bcb27c), PR #163 (runbook 24 migrations -> 3262c03c46133527364353d4c57fbc7d359749ed) e PR #164 (#31 ADR E2E + Smoke plan -> 8255fd5941b2b0e3867e1942dcba552cc2592f36). Todas passaram nos 7 gates locais, CI quality de PR, Netlify deploy-preview e CI pós-merge na main. Issues #20, #13, #26, #30 e #31 comentadas com evidência e mantidas abertas conforme escopo. Nenhum e-mail real enviado, nenhum scheduler ativado e nenhum ambiente remoto modificado.",
+          "head_sha": "PR #157 -> 03a412f; PR #161 -> e4307a7; PR #162 -> 4c3794b; PR #163 -> 3262c03; PR #164 -> 8255fd5941b2b0e3867e1942dcba552cc2592f36",
+          "tests": "Estado final na main 8255fd5: check:changelog ok, lint 0 errors (8 warnings pré-existentes), typecheck 0 errors, audit 0/0, vitest 46/46 (438/438 passed), test:db 7/7 harnesses aplicando 24 migrations (db-check 140/0, social, identity, discovery, booking-concurrency, calendar, privileges-check), build ok; validação adicional de 24 migrations em PostgreSQL embutido em ordem natural e --include-all (0 erros, 0 leaks SECURITY DEFINER, 6 tabelas com RLS, bucket service-images public=true). CI pós-merge main: 46142150926 (#157), 46143352601 (#161), 46144343379 (#162), 46145031614 (#163), 46145558476 (#164) — todos SUCCESS.",
+          "blockers": [
+            "OWNER_DECISION #26: escolha do provedor/domínio remetente de e-mail (docs/ADR-EMAIL-PROVEDOR.md) antes do adaptador real.",
+            "OWNER_DECISION #31: escolha do backend E2E no CI (Supabase local em container vs staging dedicado — docs/ADR-E2E.md) antes da Fase 2 (Playwright).",
+            "OWNER_DECISION #30/#20/#53/#57: execução manual de docs/TESTE-REAL-PRODUCAO.md (24 migrations em staging/produção, env vars, Supabase Storage real, schedulers e rate limiting)."
+          ],
+          "next_action": "Agent 6 audita as 5 PRs da Onda 4 (#157, #161, #162, #163, #164) sobre main 8255fd5 e coordena as decisões pendentes do responsável."
         }
       ],
       "last_verified": {
@@ -1931,7 +1950,7 @@
           "feat/26-notification-scheduler": "JA_APAGADA (PR #38 merged em 5b4e894)",
           "arena/3b7c9d2f-marcou": "APAGAR (HEAD 664cb5b77181abbaf04d2394a3d668415f1738b8: propõe endpoint duplicado POST /api/bookings/expire + src/lib/supabase/service.ts sem timingSafeEqual, sem server-only, sem no-store em erros e violando audit @supabase/ssr; superada pelo mecanismo canônico único da PR #128 em 8a5e4e7)",
           "feat/30-platform-hardening": "PRESERVAR_OU_APAGAR_APOS_DECISAO_27 (HEAD 5b63265662978df1e7e25808a5826435c97fab06: PR #32 fechada como substituída pela PR #138; única peça não portada foi docs/MOTION.md por ser escopo da Issue #27)",
-          "arena/fdad472c-marcou": "APAGAR_APOS_ENCERRAMENTO_SESSAO (PR #138 merged em 44ed540 e PR #151 merged em 6042275; tip remoto == headRefOid 343b40bde982c732f3ce3a47bde9e306e1a7ceeb; sem PR aberta)"
+          "arena/fdad472c-marcou": "APAGAR_APOS_ENCERRAMENTO_SESSAO (PRs #138, #151, #157, #161, #162, #163 e #164 todas MERGED na main até 8255fd5941b2b0e3867e1942dcba552cc2592f36; sem PR aberta)"
         },
         "issues": {
           "13": "OPEN (PARTIAL/BACKLOG — comentário: https://github.com/deividjmoura/marcou/issues/13#issuecomment-7229959625)",
@@ -1982,6 +2001,91 @@
             "30": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7230771285)",
             "31": "OPEN (PARTIAL/OWNER_DECISION — comentário Onda 2: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7230771759)"
           }
+        },
+        "wave_4": {
+          "completed_at": "2026-11-28T12:39:28Z",
+          "final_main_sha": "8255fd5941b2b0e3867e1942dcba552cc2592f36",
+          "tasks": {
+            "W4-A3-T1": "COMPLETED (PR #157 #20 -> 03a412f; PR #161 #13 -> e4307a7; PR #162 #26 -> 4c3794b)",
+            "W4-A3-T2": "COMPLETED (PR #163 runbook 24 migrations -> 3262c03; PR #164 #31 ADR E2E + Smoke plan -> 8255fd5)"
+          },
+          "prs": {
+            "pr_157": {
+              "issue": 20,
+              "title": "feat(ops): add /api/health endpoint and HTTP cache policy (#20)",
+              "head_sha": "7d15538557cfdacb12bd3c0e7a66f57af5a6e054",
+              "merge_sha": "03a412f956f007010637c58a1ee5a245626fc8a0",
+              "pr_ci_run_id": 46142041485,
+              "pr_ci_job_id": 140969885845,
+              "post_merge_ci_run_id": 46142150926,
+              "post_merge_ci_job_id": 140970227541,
+              "netlify": "SUCCESS",
+              "issue_comment_url": "https://github.com/deividjmoura/marcou/issues/20#issuecomment-7238889436"
+            },
+            "pr_161": {
+              "issue": 13,
+              "title": "feat(notifications): add per-user notification preferences with RLS and UI (#13)",
+              "head_sha": "74e30e82daf53ebd6fcb6065364cdac9360194a1",
+              "merge_sha": "e4307a7f86a10bb72759f10f5736823afd68f4d3",
+              "pr_ci_run_id": 46143227533,
+              "pr_ci_job_id": 140973573371,
+              "post_merge_ci_run_id": 46143352601,
+              "post_merge_ci_job_id": 140973951145,
+              "netlify": "SUCCESS",
+              "issue_comment_url": "https://github.com/deividjmoura/marcou/issues/13#issuecomment-7239061076"
+            },
+            "pr_162": {
+              "issue": 26,
+              "title": "feat(email): add provider ADR, NoopEmailSender and idempotent delivery queue (#26)",
+              "head_sha": "f497786dfe046543bc1bdfa4ef645a790905e5a1",
+              "merge_sha": "4c3794b3734381b7f93c085e0adbe07536bcb27c",
+              "pr_ci_run_id": 46144229643,
+              "pr_ci_job_id": 140976624474,
+              "post_merge_ci_run_id": 46144343379,
+              "post_merge_ci_job_id": 140976969604,
+              "netlify": "SUCCESS",
+              "issue_comment_url": "https://github.com/deividjmoura/marcou/issues/26#issuecomment-7239198984"
+            },
+            "pr_163": {
+              "issues": [
+                30,
+                20,
+                13,
+                26,
+                53,
+                57,
+                31
+              ],
+              "title": "docs(ops): update production validation runbook for 24 migrations and Wave 4",
+              "head_sha": "0f74b3b48dbcb3009f07d11888f25eca5c711877",
+              "merge_sha": "3262c03c46133527364353d4c57fbc7d359749ed",
+              "pr_ci_run_id": 46144888268,
+              "pr_ci_job_id": 140978630073,
+              "post_merge_ci_run_id": 46145031614,
+              "post_merge_ci_job_id": 140979055037,
+              "netlify": "SUCCESS",
+              "issue_comment_url": "https://github.com/deividjmoura/marcou/issues/30#issuecomment-7239296943"
+            },
+            "pr_164": {
+              "issue": 31,
+              "title": "docs(quality): add E2E strategy ADR and 3-journey smoke plan (#31)",
+              "head_sha": "7272b88cfa9cee27775ac9adb9b8cafb993ba3f7",
+              "merge_sha": "8255fd5941b2b0e3867e1942dcba552cc2592f36",
+              "pr_ci_run_id": 46145439900,
+              "pr_ci_job_id": 140980355244,
+              "post_merge_ci_run_id": 46145558476,
+              "post_merge_ci_job_id": 140980717870,
+              "netlify": "SUCCESS",
+              "issue_comment_url": "https://github.com/deividjmoura/marcou/issues/31#issuecomment-7239369363"
+            }
+          },
+          "issues_wave_4": {
+            "13": "OPEN (PARTIAL — preferencias in_app entregues na PR #161; canal e-mail aguarda #26; comentario: https://github.com/deividjmoura/marcou/issues/13#issuecomment-7239061076)",
+            "20": "OPEN (PARTIAL/OWNER_DECISION — /api/health e politica Cache-Control entregues na PR #157; uptime/alertas/rate-limiting externos pendentes; comentario: https://github.com/deividjmoura/marcou/issues/20#issuecomment-7238889436)",
+            "26": "OPEN (PARTIAL/OWNER_DECISION — ADR + NoopEmailSender + fila idempotente entregues na PR #162; aguarda escolha de provedor/dominio; comentario: https://github.com/deividjmoura/marcou/issues/26#issuecomment-7239198984)",
+            "30": "OPEN (PARTIAL/OWNER_DECISION — runbook atualizado para 24 migrations na PR #163; execucao remota pendente do responsavel; comentario: https://github.com/deividjmoura/marcou/issues/30#issuecomment-7239296943)",
+            "31": "OPEN (PARTIAL/OWNER_DECISION — Fase 1 ADR E2E + plano 3 jornadas entregue na PR #164; aguarda escolha de backend E2E e Fases 2-5; comentario: https://github.com/deividjmoura/marcou/issues/31#issuecomment-7239369363)"
+          }
         }
       },
       "wave_2_status": "completed",
@@ -1989,6 +2093,11 @@
         "W2-A3-T1",
         "W2-A3-T2",
         "W2-A3-T3"
+      ],
+      "wave_4_status": "completed",
+      "wave_4_completed_tasks": [
+        "W4-A3-T1",
+        "W4-A3-T2"
       ]
     },
     "agent_4_r7_security_calendar": {
