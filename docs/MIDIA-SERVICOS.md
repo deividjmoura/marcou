@@ -32,3 +32,12 @@ executa nem valida o serviço real Supabase Storage, CDN, upload HTTP, MIME
 scanner remoto ou cache. A validação real do Storage permanece pendente para o
 responsável no roteiro de produção; nenhuma configuração remota é alterada
 nesta PR.
+
+## Rollback
+
+O rollback de código é seguro enquanto `image_path` permanece nullable: a
+versão anterior ignora a coluna e os serviços continuam agendáveis. Não remover
+bucket, coluna ou objetos automaticamente. Uma remoção completa exige backup,
+inventário dos objetos e decisão explícita do responsável; deve ser feita por
+nova migration forward-only que remova políticas/bucket/coluna somente depois
+de confirmar que nenhum serviço ainda referencia os arquivos.
