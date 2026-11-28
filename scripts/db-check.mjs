@@ -128,6 +128,7 @@ const migrations = [
   "supabase/migrations/20261128000300_booking_counterparty_phone.sql",
   "supabase/migrations/20261128000400_service_images_storage.sql",
   "supabase/migrations/20261128000500_notification_preferences.sql",
+  "supabase/migrations/20261128000600_provider_avatar_storage.sql",
 ];
 
 for (const file of migrations) {
@@ -2004,6 +2005,102 @@ console.log("\n[segurança e RLS]");
     [ownServiceImagePath],
   ).then((result) => result.rows.length === 1).catch(() => false);
   check("dono remove imagem do próprio serviço", ownerImageDelete);
+
+  const avatarColumn = (
+    await db.query(
+      `select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = 'providers'
+          and column_name = 'avatar_path'`,
+    )
+  ).rows.length === 1;
+  check("providers possui coluna avatar_path", avatarColumn);
+  const avatarConstraint = (
+    await db.query(
+      `select 1 from pg_constraint
+        where conrelid = 'public.providers'::regclass
+          and conname = 'providers_avatar_path_format'`,
+    )
+  ).rows.length === 1;
+  check("providers valida formato de avatar_path", avatarConstraint);
+
+  await db.query("begin");
+  const mismatchedAvatarPathRejected = await db.query(
+    `update public.providers set avatar_path = $1 where id = $2`,
+    [`providers/${providerB}/avatar/${uuid()}.jpg`, providerA],
+  ).then(() => false).catch(() => true);
+  await db.query("rollback");
+  check("providers rejeita avatar_path de outro prestador", mismatchedAvatarPathRejected);
+
+  console.log("\n[storage de avatar do profissional]");
+  const avatarPolicies = (
+    await db.query(
+      `select polname from pg_policy where polrelid = 'storage.objects'::regclass`,
+    )
+  ).rows.map((row) => row.polname);
+  check(
+    "Storage inclui políticas separadas para avatar",
+    ["provider_avatars_owner_insert", "provider_avatars_owner_update", "provider_avatars_owner_delete"]
+      .every((name) => avatarPolicies.includes(name)),
+    avatarPolicies.join(", "),
+  );
+
+  const ownAvatarPath = `providers/${providerA}/avatar/${uuid()}.jpg`;
+  const ownAvatarInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1) returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono envia avatar no próprio prefixo", ownAvatarInsert);
+
+  const invalidAvatarInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [`providers/${providerA}/avatar/not-a-uuid.svg`],
+  ).then(() => true).catch(() => false);
+  check("Storage rejeita extensão/formato de caminho de avatar inválido", !invalidAvatarInsert);
+
+  const foreignAvatarPath = `providers/${providerB}/avatar/${uuid()}.jpg`;
+  const foreignAvatarInsert = await ownerAClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [foreignAvatarPath],
+  ).then(() => true).catch(() => false);
+  check("prestador A não envia avatar para o perfil de B", !foreignAvatarInsert);
+
+  const anonymousAvatarInsert = await anonStorageClient.query(
+    `insert into storage.objects (bucket_id, name) values ('service-images', $1)`,
+    [`providers/${providerA}/avatar/${uuid()}.jpg`],
+  ).then(() => true).catch(() => false);
+  check("anon não envia avatar mesmo com caminho válido", !anonymousAvatarInsert);
+
+  const publicAvatarRead = await anonStorageClient.query(
+    `select name from storage.objects where bucket_id = 'service-images' and name = $1`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("avatar do bucket público pode ser lido anonimamente", publicAvatarRead);
+
+  const foreignAvatarDelete = await ownerBClient.query(
+    `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length > 0).catch(() => true);
+  const foreignAvatarUpdate = await ownerBClient.query(
+    `update storage.objects set name = name
+      where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length > 0).catch(() => true);
+  check("prestador B não altera avatar de A", !foreignAvatarUpdate);
+
+  const ownerAvatarUpdate = await ownerAClient.query(
+    `update storage.objects set name = name
+      where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono altera avatar do próprio perfil", ownerAvatarUpdate);
+
+  check("prestador B não remove avatar de A", !foreignAvatarDelete);
+
+  const ownerAvatarDelete = await ownerAClient.query(
+    `delete from storage.objects where bucket_id = 'service-images' and name = $1 returning id`,
+    [ownAvatarPath],
+  ).then((result) => result.rows.length === 1).catch(() => false);
+  check("dono remove avatar do próprio perfil", ownerAvatarDelete);
   await anonStorageClient.end();
 
   // 5. Notificações: sem insert/delete direto para autenticados e RLS por destinatário.

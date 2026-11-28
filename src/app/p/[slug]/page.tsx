@@ -4,6 +4,7 @@ import { BookingWidget } from "./booking-widget";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SupabaseConfigWarning } from "@/components/supabase-config-warning";
 import { getPublicProviderDiscovery } from "@/server/discovery";
+import { ProviderAvatar } from "@/components/provider-avatar";
 import { DELIVERY_MODE_LABELS } from "@/domain/discovery/discovery";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,12 @@ export default async function ProviderPage({
   return (
     <main className="page-shell page-provider">
       <header className="provider-header">
-        <div>
+        <ProviderAvatar
+          src={provider.avatar_url}
+          name={provider.display_name}
+          className="provider-avatar-public"
+        />
+        <div className="provider-header-copy">
           <span className="eyebrow">AGENDAMENTO ONLINE</span>
           <h1>{provider.display_name}</h1>
           <p className="muted">

@@ -31,6 +31,8 @@ export interface Provider {
   booking_hold_minutes: number;
   created_at: string;
   updated_at: string;
+  avatar_path?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface Service {
@@ -160,6 +162,19 @@ export async function requireUser(next?: string) {
   return user;
 }
 
+function withProviderAvatarUrl(
+  data: Record<string, unknown>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Provider {
+  const provider = data as unknown as Provider;
+  return {
+    ...provider,
+    avatar_url: provider.avatar_path
+      ? supabase.storage.from("service-images").getPublicUrl(provider.avatar_path).data.publicUrl
+      : null,
+  };
+}
+
 export async function getProvider(slug: string): Promise<Provider | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -169,7 +184,7 @@ export async function getProvider(slug: string): Promise<Provider | null> {
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as Provider;
+  return withProviderAvatarUrl(data, supabase);
 }
 
 export async function getProviderById(id: string): Promise<Provider | null> {
@@ -181,7 +196,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as Provider;
+  return withProviderAvatarUrl(data, supabase);
 }
 
 export async function getOwnedProvider(ownerId: string): Promise<Provider | null> {
@@ -193,7 +208,7 @@ export async function getOwnedProvider(ownerId: string): Promise<Provider | null
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as Provider;
+  return withProviderAvatarUrl(data, supabase);
 }
 
 export async function listActiveServices(providerId: string): Promise<Service[]> {

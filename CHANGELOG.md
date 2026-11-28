@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Foto do perfil profissional na página pública e no painel, com preview local, upload/substituição/remoção autenticados, validação server-side JPEG/PNG/WebP e políticas Storage restritas ao dono (Issue #53). O harness PostgreSQL cobre o isolamento do prefixo de avatar; validação do serviço Supabase Storage real permanece pendente do responsável.
+
 - Preferências de notificação por usuário, evento e canal (Issue `#13`):
   - Matriz `evento × destinatário × canal` documentada em `docs/NOTIFICACOES.md` (padrão: `in_app` ligado, `email` desligado por padrão até configuração de provedor em `#26`; `booking.cancelled` e `booking.changed` obrigatórios no aplicativo).
   - Nova migration `supabase/migrations/20261128000500_notification_preferences.sql` criando `public.notification_preferences` com RLS por `auth.uid()`, privilégios explícitos (validados em `scripts/privileges-check.mjs`), constraint impedindo silenciar eventos obrigatórios e função `public.is_notification_enabled()`.
