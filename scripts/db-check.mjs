@@ -2005,7 +2005,7 @@ console.log("\n[segurança e RLS]");
   ).then((result) => result.rows.length === 1).catch(() => false);
   check("dono remove imagem do próprio serviço", ownerImageDelete);
 
-  console.log("\\n[storage de avatar do profissional]");
+  console.log("\n[storage de avatar do profissional]");
   const avatarPolicies = (
     await db.query(
       `select polname from pg_policy where polrelid = 'storage.objects'::regclass`,
