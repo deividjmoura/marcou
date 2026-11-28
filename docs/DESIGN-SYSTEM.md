@@ -37,22 +37,40 @@ A folha global mantém as classes e APIs CSS existentes, mas seus valores estrut
 
 ## Tipografia e licenças
 
-Nenhuma fonte externa foi adicionada nesta etapa. A base permanece em Arial/Helvetica, sem download de arquivos ou dependência nova. Uma fonte de marca só deve ser escolhida após avaliar licença, cobertura de caracteres portugueses, legibilidade mobile, peso e carregamento.
+A primeira combinação tipográfica foi aplicada com arquivos servidos pelo próprio app, sem requisições a serviços externos:
+
+- **Interface e textos:** Manrope Variable, pesos variáveis, pacote `@fontsource-variable/manrope@5.3.0`.
+- **Títulos e destaques editoriais:** Lora, pesos 400–600 e itálico 400, pacote `@fontsource/lora@5.3.0`.
+- As duas famílias usam SIL Open Font License 1.1; os avisos e textos integrais estão em `LICENSES/MANROPE-OFL.txt` e `LICENSES/LORA-OFL.txt`.
+- Ambas incluem subconjuntos Latin e Latin Extended, necessários para os caracteres em português. O fallback de sistema permanece definido nos tokens.
+- O arquivo de marca `public/branding/marcou-logo.svg` foi preservado; a tipografia não redesenha nem substitui o logotipo.
+
+A escolha é uma primeira versão revisável, não uma aprovação visual final. Evitar adicionar uma terceira família sem necessidade comprovada.
 
 ## Ícones e animações
 
 Nenhuma biblioteca ou asset animado foi adicionado. Ícones animados devem ser pontuais, ter alternativa estática, respeitar prefers-reduced-motion e não carregar conteúdo remoto sem necessidade. Antes de incorporar arquivos da LottieFlow/LottieFiles, registrar origem e licença do asset.
+
+## Densidade de interface — 16/11/2026
+
+Ajuste incremental para reduzir áreas vazias sem sacrificar leitura ou toque:
+
+- Reduzidos os degraus maiores da escala de espaçamento (tokens 8, 10, 12 e 16).
+- Compactados os paddings e intervalos da landing, autenticação e painel do prestador.
+- Reduzida a altura mínima visual do painel; navegação lateral e cabeçalho ocupam menos espaço.
+- Mantida a altura mínima de 44px dos controles interativos para preservar alvos de toque.
+- Nenhuma rota, ação, permissão, regra de agendamento ou migration foi alterada.
 
 ## Próximos passos
 
 1. Fazer revisão visual por tela em desktop e mobile, incluindo estados de erro, sucesso, aviso e indisponibilidade.
 2. Medir contraste WCAG dos pares reais de texto/superfície e corrigir qualquer falha encontrada.
 3. Migrar componentes específicos para os tokens sem alterar comportamento e criar catálogo de exemplos.
-4. Avaliar fonte de marca e ícones animados somente após verificar licença, peso, fallback e acessibilidade.
+4. Revisar visualmente a dupla Manrope/Lora em desktop e mobile; avaliar ícones animados somente após verificar licença, peso, fallback e acessibilidade.
 
 ## Limites desta entrega
 
-Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. Não foram adicionadas dependências, fontes externas ou assets de terceiros.
+Esta fundação não afirma que todo o produto já está em conformidade WCAG. A auditoria completa por tela e testes assistivos permanecem pendentes. Foram adicionadas duas famílias auto-hospedadas e suas licenças; nenhum ícone animado ou outro asset visual de terceiros foi incluído.
 
 
 ## Migração da paleta — 15/11/2026
