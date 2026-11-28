@@ -7,7 +7,7 @@ alter table public.services
   add constraint services_image_path_format
   check (
     image_path is null
-    or image_path ~* '^providers/[0-9a-f-]{36}/services/[0-9a-f-]{36}/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    or image_path ~* '^providers/[0-9a-f-]{36}/services/[0-9a-f-]{36}/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
   );
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -37,7 +37,7 @@ create policy "service_images_owner_insert"
     and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
     and (storage.foldername(name))[3] = 'services'
     and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
@@ -56,7 +56,7 @@ create policy "service_images_owner_update"
     and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
     and (storage.foldername(name))[3] = 'services'
     and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
@@ -72,7 +72,7 @@ create policy "service_images_owner_update"
     and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
     and (storage.foldername(name))[3] = 'services'
     and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
@@ -91,7 +91,7 @@ create policy "service_images_owner_delete"
     and (storage.foldername(name))[2] ~* '^[0-9a-f-]{36}$'
     and (storage.foldername(name))[3] = 'services'
     and (storage.foldername(name))[4] ~* '^[0-9a-f-]{36}$'
-    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$'
+    and storage.filename(name) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$'
     and exists (
       select 1
       from public.providers p
