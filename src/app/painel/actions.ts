@@ -195,8 +195,15 @@ export async function saveServiceAction(
 
     let cleanupWarning = false;
     if (imageFile) {
-      const mediaResult = await uploadServiceImage(provider.id, savedService.id, imageFile);
-      cleanupWarning = mediaResult.cleanupWarning;
+      try {
+        const mediaResult = await uploadServiceImage(provider.id, savedService.id, imageFile);
+        cleanupWarning = mediaResult.cleanupWarning;
+      } catch (error) {
+        revalidatePath("/painel");
+        revalidatePath(`/p/${provider.slug}`);
+        const reason = error instanceof Error ? error.message : "falha inesperada";
+        return { error: `O serviço foi salvo, mas a imagem não foi enviada: ${reason}` };
+      }
     } else if (removeImage && intent === "update") {
       const mediaResult = await removeServiceImage(provider.id, savedService.id);
       cleanupWarning = mediaResult.cleanupWarning;
