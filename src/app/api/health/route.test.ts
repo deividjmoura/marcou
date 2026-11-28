@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { limitMock, selectMock, fromMock, createServerClientMock } = vi.hoisted(
   () => {
@@ -17,6 +17,12 @@ vi.mock("@supabase/ssr", () => ({
 
 import { GET } from "./route";
 import { APP_VERSION, getBuildCommit, isHealthDeepAuthorized } from "@/server/health";
+
+beforeEach(() => {
+  vi.stubEnv("COMMIT_REF", "");
+  vi.stubEnv("GITHUB_SHA", "");
+  vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
