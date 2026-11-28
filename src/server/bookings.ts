@@ -42,6 +42,8 @@ export interface Service {
   >;
   name: string;
   description: string | null;
+  image_path: string | null;
+  image_url?: string | null;
   duration_minutes: number;
   price_cents: number;
   deposit_cents: number;
@@ -204,7 +206,12 @@ export async function listActiveServices(providerId: string): Promise<Service[]>
     .order("name", { ascending: true });
 
   if (error) return [];
-  return (data ?? []) as Service[];
+  return (data ?? []).map((service) => ({
+    ...service,
+    image_url: service.image_path
+      ? supabase.storage.from("service-images").getPublicUrl(service.image_path).data.publicUrl
+      : null,
+  })) as Service[];
 }
 
 export interface ScheduleServiceDetail {
