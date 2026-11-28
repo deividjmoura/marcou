@@ -1710,8 +1710,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W2-A4-T1 CONCLUÍDA: PR #136 squash-mergeada na main em 09c744e77bfc748dca83c6c5f476fc931c90a302; CI quality success no SHA exato f89f26187907499ad825bf23500508153b493b16 e Netlify Redirect/Header success, Pages changed neutral. Issue #125 fechada automaticamente e recebeu comentário com evidências; nenhuma migration foi aplicada remotamente. W2-A4-T2: auditoria #142/#141 encontrou cinco funções SECURITY DEFINER multi-serviço com search_path=public; PR corretiva #145 aberta, migration nova 20261128000200 + regressão; branch reconciliada com main pós-#136, HEAD 0d4af0700234d0c6f90fb2ba69a5c9559a570e50, reconciliada com main pós-#146, CI run 46085927646 pendente. W2-A4-T3: arena/9e68c2bb-marcou e arena/4017109f-marcou continuam PRESERVAR somente porque contêm handoffs exclusivos docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md que não estão na main; código funcional multi-serviço/matriz já está integrado pela #142. Agent6 deve arquivar/portar os handoffs antes da limpeza.",
-      "next_action": "Aguardar CI/Netlify da PR #145 no HEAD 0d4af0700234d0c6f90fb2ba69a5c9559a570e50. Se verde no SHA exato, verificar mergeability/reviews e squash merge; confirmar main e checks. Depois registrar o resultado final da auditoria.",
+      "current_state": "W2-A4-T1 CONCLUÍDA: PR #136 squash-mergeada na main em 09c744e77bfc748dca83c6c5f476fc931c90a302; CI quality success no SHA exato f89f26187907499ad825bf23500508153b493b16 e Netlify Redirect/Header success, Pages changed neutral. Issue #125 fechada automaticamente e recebeu comentário com evidências; nenhuma migration foi aplicada remotamente. W2-A4-T2: auditoria #142/#141 encontrou cinco funções SECURITY DEFINER multi-serviço com search_path=public; PR corretiva #145 aberta, migration nova 20261128000200 + regressão; branch reconciliada com main pós-#136, HEAD 7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12, reconciliada com main pós-#147, CI aguardando iniciar. W2-A4-T3: arena/9e68c2bb-marcou e arena/4017109f-marcou continuam PRESERVAR somente porque contêm handoffs exclusivos docs/handoffs/21-booking.md e docs/handoffs/privilegios-tabelas.md que não estão na main; código funcional multi-serviço/matriz já está integrado pela #142. Agent6 deve arquivar/portar os handoffs antes da limpeza.",
+      "next_action": "Aguardar CI/Netlify da PR #145 no HEAD 7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12. Se verde no SHA exato e base ainda for a main atual, verificar mergeability/reviews e squash merge; confirmar main e checks. Depois registrar o resultado final da auditoria.",
       "updates": [
         {
           "timestamp": "2026-11-27",
@@ -1788,8 +1788,8 @@
           "task": "W2-A4-T2: auditoria de segurança e PR corretiva #145",
           "status": "correction_pr_ci_in_progress",
           "result": "Auditoria #142/#141: booking_services com RLS e SELECT autenticado por participantes, sem escrita direta; matriz mínima e Calendar tables RLS+REVOKE cliente; ACLs de definer corretos (helpers internos sem EXECUTE, get_provider_schedule anon/auth, create_booking authenticated, Calendar jobs/state/disconnect service_role). Encontradas cinco funções SECURITY DEFINER de multi-serviço com search_path=public, contra contrato pg_catalog, public. PR #145 inclui migration forward-only 20261128000200 e regressão no social-foundation-check. Primeiro CI falhou no teste novo por array name[]; correção usa count(*) FILTER. Branch atualizada com merge da main pós-#136.",
-          "head_sha": "PR #145:0d4af0700234d0c6f90fb2ba69a5c9559a570e50; main:13d67f672f98551b35db12d10ac1a3f756a88bf0",
-          "tests": "CI run 46085927646 pending no HEAD atual; Netlify ainda pendente.",
+          "head_sha": "PR #145:7bcf70f3af4fa1ff3c314d9965edd5a29ea0cc12; main:539035b29e9a8971279215607eba8f80ec369757",
+          "tests": "CI/Netlify aguardando iniciar após rebase/merge sem force da main pós-#147.",
           "blockers": [
             "Aguardar CI/Netlify no HEAD atual da #145."
           ],
