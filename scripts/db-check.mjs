@@ -125,6 +125,7 @@ const migrations = [
   "supabase/migrations/20261127000000_booking_transition_concurrency_lock.sql",
   "supabase/migrations/20261127000100_reminder_concurrency_lock.sql",
   "supabase/migrations/20261128000200_booking_definer_search_path.sql",
+  "supabase/migrations/20261128000300_booking_counterparty_phone.sql",
   "supabase/migrations/20261128000400_service_images_storage.sql",
 ];
 
