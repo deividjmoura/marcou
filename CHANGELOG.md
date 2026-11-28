@@ -133,6 +133,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Corrigido
 
+- Normalização WhatsApp: DDDs 12–19 (e demais Anatel) deixam de ser rejeitados; internacional só com `+` explícito diferente de 55 (#153 regressão).
 - Página pública (`#22`): reserva criada com sucesso voltava a mostrar "Não foi
   possível concluir a reserva" porque o `redirect()` do Next.js (que lança uma
   exceção de controle) estava dentro do `try/catch` de `bookSlotAction`. O
