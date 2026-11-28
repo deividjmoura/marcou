@@ -231,6 +231,7 @@ Itens fora do escopo de automação por agente (Issues #30 e #20):
 - [ ] Provisionar Environment `booking-expiration-staging` e validar `booking-expiration.yml` antes de ligar `BOOKING_EXPIRATION_ENABLED=true`.
 - [ ] Escolher e provisionar scheduler externo para `GET /api/cron` (`CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`) e, se desejado, para `POST /api/calendar/worker`.
 - [ ] Definir rate limiting, health check externo e alertas de erro 5xx/uptime.
+- [ ] Aprovar a estratégia de backend para testes E2E no CI (Supabase local em container × projeto de *staging* dedicado — ver `docs/ADR-E2E.md`, Issue `#31`).
 
 ---
 
