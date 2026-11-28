@@ -109,8 +109,9 @@ await db.query(`
   create or replace function auth.uid() returns uuid
     language sql stable as $$
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
-    $$;
+    $;
 `);
+await bootstrapStorageHarness(db);
 
 const migrations = [
   "supabase/migrations/202611150001_initial_schema.sql",
