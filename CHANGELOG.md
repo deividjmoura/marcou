@@ -12,7 +12,12 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 ### Adicionado
 
 - Tema claro/escuro/automático (Issue #121): cookie `marcou-theme`, resolução de `prefers-color-scheme` antes da hidratação, seletor global acessível e cores de estados/telas migradas para tokens semânticos.
-
+- ADR de pagamentos `docs/ADR-PAGAMENTOS.md` (Issue #28): separa a máquina de estados financeira do estado da reserva, recomenda Pix manual na Fase 1 e compara Asaas, Mercado Pago e Efí para futura Fase 2, com riscos, controles e decisões do responsável. Somente documentação; nenhuma integração ou transação foi ativada.
+- ADR de segurança da demo do feed `docs/ADR-DEMO-FEED-LOCKS.md` (Issue #132): define gate duplo Deploy Preview + flag explícita, geração condicional para excluir fixtures do bundle de produção, isolamento sem Supabase/Auth e testes de não vazamento. Somente desenho; implementação segue bloqueada pelo feed funcional.
+- Preparação pura da Fase 2 de E2E (sem novas dependências nem alterações de CI — Issue `#31`):
+  - Módulo `src/lib/e2e-smoke.ts` e suíte `src/lib/e2e-smoke.test.ts` (11 testes Vitest) entregando trava fail-closed `assertSafeE2EEnvironment()` (bloqueia `peornypgltuueubmsucm` e `marcoou.netlify.app`, aponta probe `webServer` para `GET /api/health`), cálculo determinístico de data no fuso `America/Sao_Paulo` (`pickDeterministicE2EDate()`) e gerador de massa isolada RFC 2606 `.test` (`buildSmokeFixture()`) validado contra os schemas Zod reais e `aggregateBookingServices()`.
+  - Seção 5 de `docs/ADR-E2E.md` com blueprint pronto de `supabase/config.toml` mínimo (Opção A), job `e2e` no CI e checklist em 4 passos para execução imediata pós-`OWNER_DECISION`.
+  - Atualização de `docs/TESTE-REAL-PRODUCAO.md`, `docs/PLATFORM.md` e `README.md` para as 25 migrations na `main` (incluindo `20261128000800_email_queue_recipient_binding.sql` da PR `#170`, com compatibilidade validada nas ordens natural e `--include-all`).
 - ADR de estratégia E2E e plano de Smoke E2E das 3 jornadas críticas em `docs/ADR-E2E.md` (Issue `#31`, Fase 1 do *Escopo refinado*): compara Supabase local via CLI/Docker no CI (recomendado para PRs sem custo nem segredos) contra projeto Supabase de *staging* dedicado (`OWNER_DECISION`), especifica as 3 jornadas contra build local (cadastro do prestador → criar serviço → publicar; reserva pública multi-serviço; confirmação/cancelamento pelo prestador e notificações) e registra medições reais atualizadas em `docs/QUALITY-AUDIT.md` (46 arquivos / 438 testes Vitest, 7 harnesses PostgreSQL com 24 migrations e `db-check` 140/140).
 - Fundação neutra para futura entrega de e-mail transacional sem envio real (Issue `#26`):
   - ADR de escolha de provedor em `docs/ADR-EMAIL-PROVEDOR.md` comparando Resend, Postmark, Amazon SES e Brevo em entregabilidade (domínio próprio, SPF/DKIM/DMARC), custo, limites, tratamento de *bounce*/*complaint*, templates pt-BR e LGPD (aguarda `OWNER_DECISION`).
@@ -194,6 +199,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
   previews e ambiente local.
 
 ### Segurança
+
+- Hardening da fila de e-mail (#26): a RPC `enqueue_email_delivery` valida que o destinatário informado é o cliente ou o dono do prestador da reserva; os testes PostgreSQL verificam a matriz anon/authenticated/service_role das RPCs de e-mail, a matriz de funções cobre `is_notification_enabled` e as duas RPCs, e o processador não reivindica jobs quando o sender é `NoopEmailSender`. O ADR agora explicita que o worker/lease/backoff ainda é somente em memória e não constitui fila durável operacional.
 
 - Endurece o `search_path` das cinco sobrecargas/helpers `SECURITY DEFINER` do motor de reservas multi-serviço para `pg_catalog, public`, com migration forward-only `20261128000200_booking_definer_search_path.sql` e regressões de `search_path` e grants mínimos em `social-foundation-check.mjs`.
 

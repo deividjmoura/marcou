@@ -169,6 +169,37 @@ describe("EmailSender default noop & fail-closed configuration (#26)", () => {
 });
 
 describe("Email delivery queue: idempotency, backoff retry, dead state & safe reprocessing (#26)", () => {
+  it("does not claim or mark jobs as sent when only the noop sender is configured", async () => {
+    const store = new InMemoryEmailQueueStore();
+    const { job } = await store.enqueue(
+      {
+        bookingId: BOOKING_ID,
+        recipientId: CUSTOMER_ID,
+        recipientRole: "customer",
+        eventType: "booking.confirmed",
+        windowKey: "noop-not-delivered",
+      },
+      1_000,
+    );
+
+    const summary = await processEmailQueueBatch({
+      store,
+      now: () => 1_000,
+      log: () => {},
+      resolveContext: async () => makeContext(),
+    });
+
+    expect(summary).toEqual({
+      claimed: 0,
+      sent: 0,
+      skippedByPreference: 0,
+      retried: 0,
+      dead: 0,
+    });
+    expect((await store.getById(job.id))?.status).toBe("pending");
+    expect((await store.getById(job.id))?.sentAtMs).toBeNull();
+  });
+
   it("enforces idempotency by booking_id + tipo + janela + papel", async () => {
     const store = new InMemoryEmailQueueStore();
     const first = await store.enqueue({
