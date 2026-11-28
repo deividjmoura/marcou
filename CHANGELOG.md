@@ -13,8 +13,18 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 - Tema claro/escuro/automático (Issue #121): cookie `marcou-theme`, resolução de `prefers-color-scheme` antes da hidratação, seletor global acessível e cores de estados/telas migradas para tokens semânticos.
 
+- ADR de estratégia E2E e plano de Smoke E2E das 3 jornadas críticas em `docs/ADR-E2E.md` (Issue `#31`, Fase 1 do *Escopo refinado*): compara Supabase local via CLI/Docker no CI (recomendado para PRs sem custo nem segredos) contra projeto Supabase de *staging* dedicado (`OWNER_DECISION`), especifica as 3 jornadas contra build local (cadastro do prestador → criar serviço → publicar; reserva pública multi-serviço; confirmação/cancelamento pelo prestador e notificações) e registra medições reais atualizadas em `docs/QUALITY-AUDIT.md` (46 arquivos / 438 testes Vitest, 7 harnesses PostgreSQL com 24 migrations e `db-check` 140/140).
+- Fundação neutra para futura entrega de e-mail transacional sem envio real (Issue `#26`):
+  - ADR de escolha de provedor em `docs/ADR-EMAIL-PROVEDOR.md` comparando Resend, Postmark, Amazon SES e Brevo em entregabilidade (domínio próprio, SPF/DKIM/DMARC), custo, limites, tratamento de *bounce*/*complaint*, templates pt-BR e LGPD (aguarda `OWNER_DECISION`).
+  - Interface `EmailSender` com implementação padrão `NoopEmailSender` (`src/server/email/sender.ts`, fail-closed, sem chamadas de rede e logs sem PII), renderizador pt-BR no fuso do prestador sem dados de terceiros com link exclusivo `/reserva/[id]` (`src/server/email/template.ts`) e processador de fila com backoff exponencial, estado terminal `dead` e reprocessamento seguro (`src/server/email/queue.ts`, 11 testes com mocks em `src/server/email/email.test.ts`).
+  - Migration `supabase/migrations/20261128000700_email_delivery_queue.sql` criando tabela server-only `public.email_delivery_queue` (RLS sem acesso para `anon`/`authenticated`, validada em `scripts/privileges-check.mjs`, sem armazenar PII/corpo) e RPCs idempotentes `enqueue_email_delivery()` e `reprocess_dead_email_delivery()` (testadas em `scripts/db-check.mjs`). Nenhum envio real ou trigger foi ativado.
+- Foto do perfil profissional na página pública e no painel, com preview local, upload/substituição/remoção autenticados, validação server-side JPEG/PNG/WebP e políticas Storage restritas ao dono (Issue #53). O harness PostgreSQL cobre o isolamento do prefixo de avatar; validação do serviço Supabase Storage real permanece pendente do responsável.
+- Preferências de notificação por usuário, evento e canal (Issue `#13`):
+  - Matriz `evento × destinatário × canal` documentada em `docs/NOTIFICACOES.md` (padrão: `in_app` ligado, `email` desligado por padrão até configuração de provedor em `#26`; `booking.cancelled` e `booking.changed` obrigatórios no aplicativo).
+  - Nova migration `supabase/migrations/20261128000500_notification_preferences.sql` criando `public.notification_preferences` com RLS por `auth.uid()`, privilégios explícitos (validados em `scripts/privileges-check.mjs`), constraint impedindo silenciar eventos obrigatórios e função `public.is_notification_enabled()`.
+  - Emissão em `notify_on_booking_event()` e `create_booking_reminders()` passa a respeitar as preferências preservando serialização `SKIP LOCKED` e idempotência diária por fuso do prestador (12 novos testes em PostgreSQL real em `scripts/db-check.mjs`).
+  - Interface de gestão (`src/components/notification-preferences-form.tsx`, `src/domain/notifications/preferences.ts`, `src/server/notification-preferences.ts`, `saveNotificationPreferencesAction`) integrada em `/minha-conta` (cliente) e `/painel` (seção *Alertas* do prestador), com explicação dos eventos obrigatórios e sem ativar envio de e-mail.
 - Contrato de tokens semânticos claro/escuro e catálogo inicial de componentes (Issue #27), com aliases para superfície, texto, borda, destaque, feedback, controles e foco. Tema escuro apenas preparado por atributo; seletor/persistência e cobertura visual permanecem na #121.
-
 - Endpoint de saúde `GET /api/health` (`src/app/api/health/route.ts`, `src/server/health.ts`, Issue `#20`): modo mínimo responde HTTP `200` com `{ status, version, commit }` e `Cache-Control: private, no-store` sem consultar segredos nem expor configuração; modo profundo (`?deep=1`) exige `Authorization: Bearer <HEALTH_CHECK_SECRET>` comparado em tempo constante (`timingSafeEqual`, fail-closed) e verifica conectividade de banco via `@supabase/ssr` somente-leitura sem vazar detalhes internos.
 - Política centralizada e testada de cabeçalhos HTTP de cache (`src/lib/cache-policy.ts`, `src/proxy.ts` e `next.config.ts`, Issue `#20`): páginas autenticadas, callbacks de autenticação e rotas `/api/*` recebem `Cache-Control: private, no-store, max-age=0, must-revalidate` (com defesa em profundidade em `next.config.ts`); rotas públicas anônimas recebem política explícita com `Vary: Cookie` e rebaixamento automático para `private, no-store` na presença de cookies de sessão ou `Set-Cookie`.
 - Sistema tipográfico inicial (Issue `#27`): Manrope Variable para interface e Lora para títulos, fontes auto-hospedadas via Fontsource, tokens tipográficos, subconjuntos Latin/Latin Extended e licenças SIL OFL 1.1 em `LICENSES/`. Compactação incremental de espaçamentos na landing, autenticação e painel, mantendo alvos de toque de 44px. Nenhuma rota, regra de negócio ou migration alterada. Revisão visual final desktop/mobile continua pendente.
@@ -111,6 +121,16 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Alterado
 
+- Roteiro operacional de produção `docs/TESTE-REAL-PRODUCAO.md` (junto com os
+  inventários de `docs/PLATFORM.md` e `README.md`) atualizado para a `main` com
+  24 migrations (`202611150001_initial_schema.sql` até
+  `20261128000700_email_delivery_queue.sql`): inclui precedência do bucket
+  `service-images` (`20261128000400` antes de `20261128000600`), verificação de
+  `GET /api/health` (`?deep=1`) e política `Cache-Control`/`Vary` (`#20`),
+  atalhos WhatsApp/DDD (`#57`), preferências de notificação no app e lembretes
+  (`#13`), validação obrigatória de upload real no Supabase Storage para
+  imagens de serviços e avatar (`#53`/`#57`), confirmação do canal de e-mail
+  desligado por padrão (`#26`) e cuidados de rollback para Storage/banco.
 - Hardening do pipeline CI (`.github/workflows/ci.yml`, substituindo a parte
   exclusiva da PR `#32`): adiciona `concurrency` (cancela runs redundantes fora
   da `main`), `timeout-minutes: 20`, steps nomeados e remove a execução
