@@ -640,14 +640,11 @@ try {
     await db.query(`
       select
         count(*)::integer as total,
-        coalesce(
-          array_agg(p.proname order by p.proname) filter (
-            where not (
-              'search_path=pg_catalog, public' = any(coalesce(p.proconfig, '{}'::text[]))
-            )
-          ),
-          '{}'::text[]
-        ) as unsafe
+        count(*) filter (
+          where not (
+            'search_path=pg_catalog, public' = any(coalesce(p.proconfig, '{}'::text[]))
+          )
+        )::integer as unsafe_count
       from pg_proc p
       join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public'
@@ -658,8 +655,8 @@ try {
   ).rows[0];
   check(
     "RPCs SECURITY DEFINER de multi-serviço usam search_path pg_catalog, public",
-    bookingDefinerPaths.total === 5 && bookingDefinerPaths.unsafe.length === 0,
-    `total=${bookingDefinerPaths.total}; unsafe=${bookingDefinerPaths.unsafe.join(", ")}`,
+    bookingDefinerPaths.total === 5 && bookingDefinerPaths.unsafe_count === 0,
+    `total=${bookingDefinerPaths.total}; unsafe_count=${bookingDefinerPaths.unsafe_count}`,
   );
 
   await db.query(`
