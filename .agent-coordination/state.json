@@ -2518,8 +2518,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "PR #150 merged SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. PR #158 (#27 tokens/catalogue) merged SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. Main latest 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (media PR #154 merged). Issue #121 theme implementation in PR #159, HEAD 86f8b9f79b19b3e3e01e15afa119eed6f682b149, 13 ahead/0 behind. CI run 46142911252 in_progress (install); Netlify redirect/header/pages/preview pending. Visual screenshots 390/1440 in three themes pending responsible.",
-      "next_action": "Poll CI/Netlify PR #159; recheck main before merge. If main advances, reconcile. Merge only if checks green and visual review pending is explicitly noted. Branch cleanup of old Agent5 branches remains unavailable via connector (no delete branch operation).",
+      "current_state": "W4 #150 merged SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36; #27 semantic tokens/catalogue PR #158 merged SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. #121 implementation PR #159 now HEAD a5340226ee75c97a361ff622e32369dd5f320e9f (added docs/REVISAO-VISUAL-DONO.md checklist), base main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, compare 14 ahead/0 behind, mergeable Draft. CI run 46142988730 in progress at install; quality run 46142911252 cancelled by head update. Netlify checks in progress. Screenshots/console/overflow 390/1440 all modes pending maintainer.",
+      "next_action": "Poll CI run 46142988730 and Netlify. Reconfirm main. If checks green, mark Ready for Review; keep merge blocked until maintainer completes docs/REVISAO-VISUAL-DONO.md captures and checks all themes/areas.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2640,6 +2640,18 @@
             "CI/preview pending; visual 390/1440 three-theme inspection not performed."
           ],
           "next_action": "Wait checks and main recheck; reconcile if needed, then merge if checklist green."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T2 #121 — head update and owner review checklist",
+          "status": "in_progress",
+          "result": "PR #159 head advanced to a5340226ee75c97a361ff622e32369dd5f320e9f with docs/REVISAO-VISUAL-DONO.md checklist. CI run 46142988730 in progress; previous 46142911252 cancelled by head change. Main stable 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, compare 14 ahead/0 behind.",
+          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
+          "tests": "CI run 46142988730 install in progress; Netlify checks in progress. Visual review owner checklist created, but not executed.",
+          "blockers": [
+            "CI/Netlify pending and manual screenshots 390/1440 across themes/console/overflow remain maintainer requirement."
+          ],
+          "next_action": "Wait latest checks; then ready for review, but merge only after owner evidence."
         }
       ],
       "wave_2_tasks": [
@@ -2712,13 +2724,13 @@
         {
           "id": "W4-A5-T2-121",
           "status": "in_progress",
-          "result": "Issue #121 implementation PR #159 opened draft after #158 merge. Main latest 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, HEAD 86f8b9f79b19b3e3e01e15afa119eed6f682b149, 13 ahead/0 behind. Features cookie `marcou-theme`, SSR theme mode, beforeInteractive system resolver, client listener, accessible select, dark/system CSS, semantic status colors, tests and changelog. CI run 46142911252 in_progress (install); Netlify checks pending. Visual review is pending owner.",
-          "head_sha": "86f8b9f79b19b3e3e01e15afa119eed6f682b149",
-          "tests": "CI run 46142911252 in_progress, install; Netlify Preview and rules pending. No local tests/screenshots.",
+          "result": "PR #159 updated to HEAD a5340226ee75c97a361ff622e32369dd5f320e9f after adding docs/REVISAO-VISUAL-DONO.md owner checklist. Main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, 14 ahead/0 behind. CI run 46142988730 in_progress (install); prior quality run cancelled due new head. Netlify statuses in_progress. Visual capture still owner pending.",
+          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
+          "tests": "CI run 46142988730 in_progress (install); earlier run 46142911252 cancelled when HEAD changed. Netlify redirect/header/pages/preview in progress. No screenshots captured by agent.",
           "blockers": [
-            "CI and preview pending; main may advance; visual screenshots 390/1440 for all modes/console/overflow not available in session."
+            "CI and Netlify pending on exact latest HEAD; owner visual checklist must be completed before merge."
           ],
-          "next_action": "Poll CI/Preview; rebase if main moves; merge if checks green with visual-review owner pending."
+          "next_action": "Poll checks; if green, mark ready, but don't merge until owner visual checklist/screenshots in all themes are complete."
         }
       ]
     },
