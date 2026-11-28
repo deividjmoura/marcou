@@ -118,18 +118,10 @@ function ProviderAvatarForm({ provider }: { provider: Provider }) {
   const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!file) {
-      setPreview(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(file);
-    setPreview(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [file]);
-
-  useEffect(() => {
-    if (state.success) setFile(null);
-  }, [state]);
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   return (
     <form action={action} className="card form-stack provider-avatar-form">
@@ -149,7 +141,7 @@ function ProviderAvatarForm({ provider }: { provider: Provider }) {
           type="file"
           name="avatar"
           accept="image/jpeg,image/png,image/webp"
-          onChange={(event) => setFile(event.currentTarget.files?.[0] ?? null)}
+          onChange={(event) => {\n            const nextFile = event.currentTarget.files?.[0] ?? null;\n            setFile(nextFile);\n            setPreview(nextFile ? URL.createObjectURL(nextFile) : null);\n          }}
         />
         <span className="muted small">
           JPEG, PNG ou WebP · até 5 MB · validação repetida no servidor.
@@ -167,7 +159,7 @@ function ProviderAvatarForm({ provider }: { provider: Provider }) {
             value="remove"
             className="btn btn-ghost"
             disabled={pending}
-            onClick={() => setFile(null)}
+            onClick={() => { setFile(null); setPreview(null); }}
             formNoValidate
           >
             {pending ? "Aguarde..." : "Remover foto"}
