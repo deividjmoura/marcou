@@ -1,66 +1,79 @@
 "use client";
 
 import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import {
-  cancelOwnBookingAction,
-  markProofReceivedAction,
+  reservationTransitionAction,
   type ReservationActionState,
 } from "./actions";
+import {
+  reservationActionsFor,
+  reservationSuccessMessage,
+  type ReservationActionSpec,
+  type ReservationRole,
+} from "./reservation-role";
 
 const initialState: ReservationActionState = {};
+
+function SubmitButton({
+  spec,
+  disabled,
+}: {
+  spec: ReservationActionSpec;
+  disabled: boolean;
+}) {
+  // Só o formulário enviado mostra o rótulo de progresso.
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className={spec.variant === "primary" ? "btn" : "btn btn-ghost"}
+      disabled={disabled || pending}
+    >
+      {pending ? spec.pendingLabel : spec.label}
+    </button>
+  );
+}
 
 export function ReservationActions({
   bookingId,
   status,
+  role,
 }: {
   bookingId: string;
   status: string;
+  role: ReservationRole;
 }) {
-  const [proofState, proofAction, proofPending] = useActionState(
-    markProofReceivedAction,
-    initialState,
-  );
-  const [cancelState, cancelAction, cancelPending] = useActionState(
-    cancelOwnBookingAction,
+  const [state, action, pending] = useActionState(
+    reservationTransitionAction,
     initialState,
   );
 
-  const message = proofState.error ??
-    cancelState.error ??
-    proofState.success ??
-    cancelState.success;
+  const actions = reservationActionsFor(role, status);
+  const success = state.completedEvent
+    ? reservationSuccessMessage(role, state.completedEvent)
+    : undefined;
+  const message = state.error ?? success;
 
   return (
     <div className="reservation-actions">
       {message ? (
-        <p
-          className={
-            proofState.error || cancelState.error
-              ? "alert alert-error"
-              : "alert alert-success"
-          }
-        >
+        <p className={state.error ? "alert alert-error" : "alert alert-success"}>
           {message}
         </p>
       ) : null}
 
-      {status === "pending_payment" ? (
-        <form action={proofAction} className="form-stack">
+      {actions.map((spec) => (
+        <form
+          key={spec.event}
+          action={action}
+          className={spec.variant === "primary" ? "form-stack" : undefined}
+        >
           <input type="hidden" name="bookingId" value={bookingId} />
-          <button type="submit" className="btn" disabled={proofPending}>
-            {proofPending ? "Registrando..." : "Já enviei o comprovante"}
-          </button>
+          <input type="hidden" name="event" value={spec.event} />
+          <SubmitButton spec={spec} disabled={pending} />
         </form>
-      ) : null}
-
-      {status === "pending_payment" || status === "pending_review" ? (
-        <form action={cancelAction}>
-          <input type="hidden" name="bookingId" value={bookingId} />
-          <button type="submit" className="btn btn-ghost" disabled={cancelPending}>
-            Cancelar agendamento
-          </button>
-        </form>
-      ) : null}
+      ))}
     </div>
   );
 }

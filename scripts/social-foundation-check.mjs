@@ -235,6 +235,21 @@ try {
       roles: { anon: false, authenticated: false, service_role: true },
     },
     {
+      label: "helper de totais multi-serviço não é executável por papéis de API",
+      signature: "public.booking_service_totals(uuid,uuid[])",
+      roles: { anon: false, authenticated: false, service_role: false },
+    },
+    {
+      label: "agenda multi-serviço permanece pública",
+      signature: "public.get_provider_schedule(text,uuid[],date,timestamptz,timestamptz)",
+      roles: { anon: true, authenticated: true },
+    },
+    {
+      label: "criação multi-serviço exige autenticação",
+      signature: "public.create_booking(text,uuid[],timestamptz,text,text,text)",
+      roles: { anon: false, authenticated: true },
+    },
+    {
       label: "criação de reserva exige autenticação",
       signature: "public.create_booking(text,uuid,timestamptz,text,text,text)",
       roles: { anon: false, authenticated: true },
@@ -634,6 +649,29 @@ try {
     "funções SECURITY DEFINER mantêm search_path fixo",
     unsafeDefiners.length === 0,
     unsafeDefiners.join(", "),
+  );
+
+  const bookingDefinerPaths = (
+    await db.query(`
+      select
+        count(*)::integer as total,
+        count(*) filter (
+          where not (
+            'search_path=pg_catalog, public' = any(coalesce(p.proconfig, '{}'::text[]))
+          )
+        )::integer as unsafe_count
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and p.prosecdef
+        and p.proname in ('booking_service_totals', 'get_provider_schedule', 'create_booking')
+    `
+    )
+  ).rows[0];
+  check(
+    "RPCs SECURITY DEFINER de multi-serviço usam search_path pg_catalog, public",
+    bookingDefinerPaths.total === 5 && bookingDefinerPaths.unsafe_count === 0,
+    `total=${bookingDefinerPaths.total}; unsafe_count=${bookingDefinerPaths.unsafe_count}`,
   );
 
   await db.query(`

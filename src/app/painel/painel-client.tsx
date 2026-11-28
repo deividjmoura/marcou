@@ -408,7 +408,7 @@ export function ServicesManager({
                 type="text"
                 inputMode="decimal"
                 name="deposit"
-                required
+                placeholder="Vazio = sem sinal"
                 defaultValue={
                   editing ? (editing.deposit_cents / 100).toFixed(2) : "0.00"
                 }
