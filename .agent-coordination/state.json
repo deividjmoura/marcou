@@ -2479,7 +2479,7 @@
         "agent5/w2-design-system-main-current"
       ],
       "status": "in_progress",
-      "active_assignment": "W4-A5-T1 concluída (#150 merge); W4-A5-T2 (#27 PR #158 em CI); W4-A5-T3 backlog status atualizado.",
+      "active_assignment": "W4-A5-T1 #150 merged; W4-A5-T2 #27 merged via #158, #121 implementation PR #159 CI in progress; W4-A5-T3 backlog status completed.",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2516,8 +2516,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W4-A5-T1 #150 merged SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36, main later 03a412f956f007010637c58a1ee5a245626fc8a0 (#155); checks green and visual review pending owner. W4-A5-T2 #27 PR #158 reconciled onto 03a412, HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, 5 ahead/0 behind, mergeable Draft. CI run 46142220450: install/changelog/lint/typecheck/audit/unit/database all success; production build in_progress. Netlify Redirect/Header success, Pages neutral, Preview success. #121 blocked pending #158.",
-      "next_action": "Poll build #158. If main advances, rebase/reconcile. When CI completes green, check exact statuses/main, mark PR ready; merge if checks and scoped acceptance green, visual check marked pending owner. Then start #121. Branch cleanup blocked by no GitHub delete-branch tool.",
+      "current_state": "PR #150 merged SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. PR #158 (#27 tokens/catalogue) merged SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. Main latest 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (media PR #154 merged). Issue #121 theme implementation in PR #159, HEAD 86f8b9f79b19b3e3e01e15afa119eed6f682b149, 13 ahead/0 behind. CI run 46142911252 in_progress (install); Netlify redirect/header/pages/preview pending. Visual screenshots 390/1440 in three themes pending responsible.",
+      "next_action": "Poll CI/Netlify PR #159; recheck main before merge. If main advances, reconcile. Merge only if checks green and visual review pending is explicitly noted. Branch cleanup of old Agent5 branches remains unavailable via connector (no delete branch operation).",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2626,6 +2626,18 @@
             "Build in_progress; verify main before merge."
           ],
           "next_action": "Poll build; if green and main stable, merge under autonomy and continue #121."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W4-A5-T2 #27 merged; W4-A5-T2 #121 implementation",
+          "status": "in_progress",
+          "result": "#27 semantic tokens/catalogue PR #158 merged SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. Main now 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 after media PR #154. #121 implementation in PR #159 head 86f8b9f79b19b3e3e01e15afa119eed6f682b149, 13 ahead/0 behind; CI run 46142911252 in progress, preview pending.",
+          "head_sha": "86f8b9f79b19b3e3e01e15afa119eed6f682b149",
+          "tests": "CI in progress at install; Netlify statuses pending. No visual screenshots.",
+          "blockers": [
+            "CI/preview pending; visual 390/1440 three-theme inspection not performed."
+          ],
+          "next_action": "Wait checks and main recheck; reconcile if needed, then merge if checklist green."
         }
       ],
       "wave_2_tasks": [
@@ -2674,26 +2686,37 @@
           "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
           "tests": "CI quality success; Netlify redirect/header success, Pages neutral, Deploy Preview success. Visual review pendente do responsável.",
           "blockers": [
-            "Branch cleanup (agent5 antigas) não pode ser executada via ferramentas conectadas: não há ação de delete GitHub branch, fetch é GET-only."
+            "Branch cleanup (Agent5 legacy branches) not possible with available GitHub tools: no delete-branch action."
           ],
           "next_action": "Avisar coordinator no state; manter branch cleanup pendente, não usar ação destrutiva alternativa."
         },
         {
           "id": "W4-A5-T2",
-          "status": "in_progress",
-          "result": "#27 tokens semânticos/catalogue in PR #158. Reconciliada após main avançar para 03a412f956f007010637c58a1ee5a245626fc8a0 (#155). HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, compare 5 ahead/0 behind, mergeable Draft. CI run 46142220450 in_progress, Preview pending. #121 bloqueada até integrar #158.",
+          "status": "completed",
+          "result": "Issue #27 semantic tokens/catalogue merged via PR #158, merge SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. CI quality green, Netlify redirect/header green, Pages neutral, preview green. Dark token contract and component catalogue now on main. Visual screenshots pending responsible before theme audit.",
           "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
-          "tests": "CI run 46142220450: install, changelog, lint, typecheck, audit, unit/domain, database tests success; production build in_progress. Netlify Redirect/Header success, Pages neutral, Deploy Preview success. Visual review not performed by agent; responsibility noted.",
+          "tests": "CI quality success; Netlify redirect/header success, Pages neutral, preview success. Visual review 390/1440 not performed by agent, noted.",
           "blockers": [
-            "Production build still in progress; re-confirm main before merge. Owner visual review 390/1440 pending."
+            "Visual review of design system before completing #121 remains pending maintainer."
           ],
-          "next_action": "Poll build and main; if all gates green, merge under autonomy; #121 next."
+          "next_action": "Proceed #121 implementation PR #159; ask maintainer to visually inspect PR #158 preview when convenient."
         },
         {
           "id": "W4-A5-T3",
           "status": "completed",
           "result": "Triagem de backlog confirmada; issues #24/#43/#47/#52–57/#132/#19/#28 mantidas classificadas por status/owner decisions, sem encerramentos indevidos.",
           "next_action": "Revisar status quando outras PRs integram."
+        },
+        {
+          "id": "W4-A5-T2-121",
+          "status": "in_progress",
+          "result": "Issue #121 implementation PR #159 opened draft after #158 merge. Main latest 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, HEAD 86f8b9f79b19b3e3e01e15afa119eed6f682b149, 13 ahead/0 behind. Features cookie `marcou-theme`, SSR theme mode, beforeInteractive system resolver, client listener, accessible select, dark/system CSS, semantic status colors, tests and changelog. CI run 46142911252 in_progress (install); Netlify checks pending. Visual review is pending owner.",
+          "head_sha": "86f8b9f79b19b3e3e01e15afa119eed6f682b149",
+          "tests": "CI run 46142911252 in_progress, install; Netlify Preview and rules pending. No local tests/screenshots.",
+          "blockers": [
+            "CI and preview pending; main may advance; visual screenshots 390/1440 for all modes/console/overflow not available in session."
+          ],
+          "next_action": "Poll CI/Preview; rebase if main moves; merge if checks green with visual-review owner pending."
         }
       ]
     },
