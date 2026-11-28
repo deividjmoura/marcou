@@ -16,6 +16,10 @@ function ascii(bytes: Uint8Array, start: number, value: string): boolean {
   return [...value].every((char, index) => bytes[start + index] === char.charCodeAt(0));
 }
 
+function readUint32LE(bytes: Uint8Array, offset: number): number {
+  return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
+}
+
 function readUint24LE(bytes: Uint8Array, offset: number): number {
   return bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
 }
@@ -47,8 +51,9 @@ function jpegDimensions(bytes: Uint8Array): { width: number; height: number } | 
 }
 
 function webpDimensions(bytes: Uint8Array): { width: number; height: number } | null {
-  if (bytes.length < 25 || !ascii(bytes, 0, "RIFF") || !ascii(bytes, 8, "WEBP")) return null;
-  if (ascii(bytes, 12, "VP8X") && bytes.length >= 30) {
+  if (bytes.length < 30 || !ascii(bytes, 0, "RIFF") || !ascii(bytes, 8, "WEBP")) return null;
+  if (readUint32LE(bytes, 4) + 8 !== bytes.length) return null;
+  if (ascii(bytes, 12, "VP8X") && bytes.length >= 30 && readUint32LE(bytes, 16) === 10) {
     return {
       width: 1 + readUint24LE(bytes, 24),
       height: 1 + readUint24LE(bytes, 27),
@@ -94,7 +99,9 @@ export function inspectServiceImage(
       height: view.getUint32(20, false),
     };
   } else if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    const dimensions = jpegDimensions(bytes);
+    const dimensions = bytes[bytes.length - 2] === 0xff && bytes[bytes.length - 1] === 0xd9
+      ? jpegDimensions(bytes)
+      : null;
     if (dimensions) metadata = { ...dimensions, mime: "image/jpeg", extension: "jpg" };
   } else {
     const dimensions = webpDimensions(bytes);
