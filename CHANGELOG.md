@@ -11,6 +11,10 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Fundação neutra para futura entrega de e-mail transacional sem envio real (Issue `#26`):
+  - ADR de escolha de provedor em `docs/ADR-EMAIL-PROVEDOR.md` comparando Resend, Postmark, Amazon SES e Brevo em entregabilidade (domínio próprio, SPF/DKIM/DMARC), custo, limites, tratamento de *bounce*/*complaint*, templates pt-BR e LGPD (aguarda `OWNER_DECISION`).
+  - Interface `EmailSender` com implementação padrão `NoopEmailSender` (`src/server/email/sender.ts`, fail-closed, sem chamadas de rede e logs sem PII), renderizador pt-BR no fuso do prestador sem dados de terceiros com link exclusivo `/reserva/[id]` (`src/server/email/template.ts`) e processador de fila com backoff exponencial, estado terminal `dead` e reprocessamento seguro (`src/server/email/queue.ts`, 10 testes com mocks em `src/server/email/email.test.ts`).
+  - Migration `supabase/migrations/20261128000600_email_delivery_queue.sql` criando tabela server-only `public.email_delivery_queue` (RLS sem acesso para `anon`/`authenticated`, validada em `scripts/privileges-check.mjs`, sem armazenar PII/corpo) e RPCs idempotentes `enqueue_email_delivery()` e `reprocess_dead_email_delivery()` (testadas em `scripts/db-check.mjs`). Nenhum envio real ou trigger foi ativado.
 - Preferências de notificação por usuário, evento e canal (Issue `#13`):
   - Matriz `evento × destinatário × canal` documentada em `docs/NOTIFICACOES.md` (padrão: `in_app` ligado, `email` desligado por padrão até configuração de provedor em `#26`; `booking.cancelled` e `booking.changed` obrigatórios no aplicativo).
   - Nova migration `supabase/migrations/20261128000500_notification_preferences.sql` criando `public.notification_preferences` com RLS por `auth.uid()`, privilégios explícitos (validados em `scripts/privileges-check.mjs`), constraint impedindo silenciar eventos obrigatórios e função `public.is_notification_enabled()`.

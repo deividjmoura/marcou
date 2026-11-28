@@ -131,21 +131,30 @@ repositório. Nenhuma credencial nova foi criada.
 - Datas são formatadas no fuso do navegador (`Intl.DateTimeFormat`), não no
   fuso do prestador, porque a notificação é um fato do usuário.
 
-## E-mail
+## E-mail (fundação neutra — Issue `#26`)
 
-**Não implementado.** Nenhuma infraestrutura de envio está configurada no
-projeto (não há dependência de envio, nem variável de ambiente de SMTP/API).
-A estrutura de notificações é a base para o e-mail futuro: basta consumir
-`public.notifications` (ou `booking_events`) e enviar. Para habilitar, seriam
-necessários:
+**Envio real desligado por padrão.** Nenhuma credencial de provedor existe,
+nenhuma dependência externa de envio foi instalada e nenhum e-mail real é
+enviado. A base neutra já está pronta e testada para plugar o provedor escolhido
+pelo responsável:
 
-- um provedor (Resend/SendGrid/SES etc.) e a dependência correspondente;
-- variáveis de ambiente com a chave do provedor (nunca commitadas);
-- uma tarefa que envie e registre o resultado, com idempotência por
-  `notifications.id`;
-- consentimento/preferência de recebimento, se aplicável.
-
-Nada disso foi criado e nenhum botão de e-mail foi adicionado à interface.
+- **ADR do provedor:** `docs/ADR-EMAIL-PROVEDOR.md` (comparativo Resend / Postmark /
+  Amazon SES / Brevo cobrindo SPF/DKIM/DMARC, custo, limites, bounce/complaint,
+  templates pt-BR e LGPD; aguarda `OWNER_DECISION` sobre provedor e domínio).
+- **Interface `EmailSender` + implementação padrão `NoopEmailSender`:**
+  `src/server/email/sender.ts` — não faz chamadas externas, mantém logs sem PII
+  e é fail-closed (`EMAIL_DELIVERY_ENABLED` desligado por padrão).
+- **Fila idempotente com retry/backoff/`dead` e reprocessamento seguro:**
+  `supabase/migrations/20261128000600_email_delivery_queue.sql` (tabela
+  server-only `public.email_delivery_queue` sem armazenar PII/corpo) e
+  `src/server/email/queue.ts` (chave `booking_id:event_type:window_key:recipient_role`,
+  backoff exponencial, estado terminal `dead` e `reprocess_dead_email_delivery`
+  que nunca reenvia `sent`).
+- **Templates pt-BR sem PII de terceiros (`src/server/email/template.ts`):**
+  horário no fuso do prestador (`bookings.timezone`), escape HTML e link único
+  para `/reserva/[id]` (exige autenticação).
+- Nenhum trigger ou cron enfileira/dispara e-mails reais até a escolha do
+  provedor e configuração das variáveis pelo responsável.
 
 ## Testes
 

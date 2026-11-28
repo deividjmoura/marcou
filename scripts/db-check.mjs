@@ -128,6 +128,7 @@ const migrations = [
   "supabase/migrations/20261128000300_booking_counterparty_phone.sql",
   "supabase/migrations/20261128000400_service_images_storage.sql",
   "supabase/migrations/20261128000500_notification_preferences.sql",
+  "supabase/migrations/20261128000600_email_delivery_queue.sql",
 ];
 
 for (const file of migrations) {
@@ -2391,6 +2392,128 @@ console.log("\n[preferências de notificação (#13)]");
     await prefCust2Client.end();
     await prefAnonClient.end();
     await prefServiceRole.end();
+  }
+}
+
+// =========================================================================
+// [fila de e-mail idempotente (#26)]
+// =========================================================================
+console.log("\n[fila de e-mail idempotente (#26)]");
+{
+  const emailAnonClient = await asRole("anon", null);
+  const emailServiceRole = await asRole("service_role", null);
+
+  try {
+    const sampleBooking = (
+      await db.query(
+        `select b.id, b.customer_id, p.owner_id
+           from public.bookings b
+           join public.providers p on p.id = b.provider_id
+          limit 1`,
+      )
+    ).rows[0];
+
+    // 1. Tabela e RPCs inacessíveis para anon e authenticated.
+    const anonSelect = await emailAnonClient
+      .query(`select id from public.email_delivery_queue`)
+      .then(() => true)
+      .catch(() => false);
+    const authSelect = await customerCClient
+      .query(`select id from public.email_delivery_queue`)
+      .then(() => true)
+      .catch(() => false);
+    const authRpc = await customerCClient
+      .query(
+        `select public.enqueue_email_delivery($1, $2, 'customer', 'booking.reminder', '20261128')`,
+        [sampleBooking.id, sampleBooking.customer_id],
+      )
+      .then(() => true)
+      .catch(() => false);
+    check(
+      "email_delivery_queue e RPCs são restritas a service_role (anon/authenticated negados)",
+      anonSelect === false && authSelect === false && authRpc === false,
+      `anon=${anonSelect}, auth=${authSelect}, authRpc=${authRpc}`,
+    );
+
+    // 2. Enfileiramento idempotente por booking_id + tipo + janela + papel.
+    const firstJobId = (
+      await emailServiceRole.query(
+        `select public.enqueue_email_delivery($1, $2, 'customer', 'booking.reminder', '20261128', 3) as id`,
+        [sampleBooking.id, sampleBooking.customer_id],
+      )
+    ).rows[0].id;
+    const duplicateJobId = (
+      await emailServiceRole.query(
+        `select public.enqueue_email_delivery($1, $2, 'customer', 'booking.reminder', '20261128', 3) as id`,
+        [sampleBooking.id, sampleBooking.customer_id],
+      )
+    ).rows[0].id;
+    const providerJobId = (
+      await emailServiceRole.query(
+        `select public.enqueue_email_delivery($1, $2, 'provider', 'booking.reminder', '20261128', 3) as id`,
+        [sampleBooking.id, sampleBooking.owner_id],
+      )
+    ).rows[0].id;
+    check(
+      "enqueue_email_delivery é idempotente por booking+tipo+janela+papel",
+      Boolean(firstJobId) && duplicateJobId === null && Boolean(providerJobId),
+      `first=${firstJobId}, dup=${duplicateJobId}, provider=${providerJobId}`,
+    );
+
+    // 3. Reprocessamento seguro só atua em status='dead', preservando idempotency_key e bloqueando sent/pending.
+    const reprocessPending = (
+      await emailServiceRole.query(
+        `select public.reprocess_dead_email_delivery($1) as ok`,
+        [firstJobId],
+      )
+    ).rows[0].ok;
+    await db.query(
+      `update public.email_delivery_queue
+          set status = 'dead', attempts = 3, last_error_code = 'timeout', dead_at = now()
+        where id = $1`,
+      [firstJobId],
+    );
+    const reprocessDead = (
+      await emailServiceRole.query(
+        `select public.reprocess_dead_email_delivery($1) as ok`,
+        [firstJobId],
+      )
+    ).rows[0].ok;
+    const reopenedRow = (
+      await db.query(
+        `select status, attempts, dead_at, reprocessed_at, idempotency_key
+           from public.email_delivery_queue
+          where id = $1`,
+        [firstJobId],
+      )
+    ).rows[0];
+    await db.query(
+      `update public.email_delivery_queue
+          set status = 'sent', sent_at = now(), provider_name = 'noop', provider_message_id = 'noop:test'
+        where id = $1`,
+      [firstJobId],
+    );
+    const reprocessSent = (
+      await emailServiceRole.query(
+        `select public.reprocess_dead_email_delivery($1) as ok`,
+        [firstJobId],
+      )
+    ).rows[0].ok;
+    check(
+      "reprocess_dead_email_delivery reabre apenas itens dead e bloqueia pending/sent",
+      reprocessPending === false &&
+        reprocessDead === true &&
+        reopenedRow.status === "pending" &&
+        reopenedRow.attempts === 0 &&
+        reopenedRow.dead_at === null &&
+        reopenedRow.reprocessed_at !== null &&
+        reopenedRow.idempotency_key === `${sampleBooking.id}:booking.reminder:20261128:customer` &&
+        reprocessSent === false,
+      JSON.stringify({ reprocessPending, reprocessDead, reopenedRow, reprocessSent }),
+    );
+  } finally {
+    await emailAnonClient.end();
+    await emailServiceRole.end();
   }
 }
 

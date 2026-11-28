@@ -158,6 +158,8 @@ const MATRIX = {
   calendar_connections: { anon: [], authenticated: [], service_role: ["ALL"] },
   calendar_sync_outbox: { anon: [], authenticated: [], service_role: ["ALL"] },
   booking_calendar_events: { anon: [], authenticated: [], service_role: ["ALL"] },
+  // Fila idempotente de entrega por e-mail (#26): só servidor (desligada por padrão).
+  email_delivery_queue: { anon: [], authenticated: [], service_role: ["ALL"] },
 };
 
 const OBJECTS = Object.keys(MATRIX);
@@ -670,6 +672,16 @@ async function runPhase(phase) {
       "anon: SELECT em notification_preferences",
       anonClient,
       `select user_id from public.notification_preferences`,
+    );
+    await expectDenied(
+      "anon: SELECT em email_delivery_queue",
+      anonClient,
+      `select id from public.email_delivery_queue`,
+    );
+    await expectDenied(
+      "authenticated: SELECT em email_delivery_queue",
+      customerClient,
+      `select id from public.email_delivery_queue`,
     );
     await expectDenied(
       "authenticated: INSERT direto em bookings",
