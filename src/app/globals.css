@@ -901,3 +901,9 @@ a { color: inherit; text-decoration: none; }
 
   .reservation-calendar-link { transition: none; }
 
+.reservation-whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}

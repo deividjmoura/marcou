@@ -11,8 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Atalhos WhatsApp (`wa.me`) no detalhe da reserva e no painel do prestador, com normalização E.164 e RPC `booking_counterparty_phone` restrita a participantes (issue #57).
 - Imagens opcionais para serviços no agendamento público, com bucket Storage público para leitura e escrita restrita ao dono, validação server-side de JPEG/PNG/WebP (5 MiB, 4096 px e 16 MP), substituição/remoção com limpeza best-effort e harness PostgreSQL para RLS de `storage.objects` (sem afirmar validação do serviço Supabase Storage real).
-
 - Roteiro operacional ordenado para teste real em produção pelo responsável em
   `docs/TESTE-REAL-PRODUCAO.md` (Issues `#30`, `#20`, `#26`, `#31`): sequência
   das 19 migrations (incluindo tratamento da ordem fora de sequência da PR

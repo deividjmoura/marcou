@@ -479,6 +479,19 @@ export async function listCustomerBookings(): Promise<Booking[]> {
   return (data ?? []) as Booking[];
 }
 
+
+/** Telefone da contraparte (cliente ou prestador) se o usuário for participante. */
+export async function getBookingCounterpartyPhone(
+  bookingId: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("booking_counterparty_phone", {
+    p_booking_id: bookingId,
+  });
+  if (error || data == null || data === "") return null;
+  return String(data);
+}
+
 export async function getBooking(id: string): Promise<Booking | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
