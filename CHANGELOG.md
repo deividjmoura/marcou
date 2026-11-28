@@ -11,8 +11,11 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Sistema tipográfico inicial (Issue `#27`): Manrope Variable para interface e Lora para títulos, fontes auto-hospedadas via Fontsource, tokens tipográficos, subconjuntos Latin/Latin Extended e licenças SIL OFL 1.1 em `LICENSES/`. Compactação incremental de espaçamentos na landing, autenticação e painel, mantendo alvos de toque de 44px. Nenhuma rota, regra de negócio ou migration alterada. Revisão visual final desktop/mobile continua pendente.
+
 - Atalhos WhatsApp (`wa.me`) no detalhe da reserva e no painel do prestador, com normalização E.164 e RPC `booking_counterparty_phone` restrita a participantes (issue #57).
 - Imagens opcionais para serviços no agendamento público, com bucket Storage público para leitura e escrita restrita ao dono, validação server-side de JPEG/PNG/WebP (5 MiB, 4096 px e 16 MP), substituição/remoção com limpeza best-effort e harness PostgreSQL para RLS de `storage.objects` (sem afirmar validação do serviço Supabase Storage real).
+- Teste de integração PostgreSQL para `booking_counterparty_phone`: confirma o telefone somente para cliente e dono da reserva, nega terceiros e verifica grants mínimos da RPC.
 - Roteiro operacional ordenado para teste real em produção pelo responsável em
   `docs/TESTE-REAL-PRODUCAO.md` (Issues `#30`, `#20`, `#26`, `#31`): sequência
   das 19 migrations (incluindo tratamento da ordem fora de sequência da PR
@@ -134,6 +137,7 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Corrigido
 
+- Normalização WhatsApp: DDDs 12–19 (e demais Anatel) deixam de ser rejeitados; internacional só com `+` explícito diferente de 55 (#153 regressão).
 - Página pública (`#22`): reserva criada com sucesso voltava a mostrar "Não foi
   possível concluir a reserva" porque o `redirect()` do Next.js (que lança uma
   exceção de controle) estava dentro do `try/catch` de `bookSlotAction`. O
