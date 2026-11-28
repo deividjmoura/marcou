@@ -145,6 +145,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Segurança
 
+- Endurece o `search_path` das cinco sobrecargas/helpers `SECURITY DEFINER` do motor de reservas multi-serviço para `pg_catalog, public`, com migration forward-only `20261128000200_booking_definer_search_path.sql` e regressões de `search_path` e grants mínimos em `social-foundation-check.mjs`.
+
 - O harness `scripts/privileges-check.mjs` passa a integrar `npm run test:db`, validando a matriz completa de privilégios com defaults do Supabase emulados, incluindo as tabelas novas de reservas multi-serviço. Usa portas próprias (55438/55439) para não colidir com os demais PostgreSQL embutidos da suíte.
 
 - Google Calendar (#29): callback OAuth falha fechado com `503` quando `NEXT_PUBLIC_SITE_URL` está ausente/inválida, sem aceitar a origem da própria requisição como fallback. Worker da outbox usa `lease_token` rotativo por claim e exige o token atual para confirmar/reagendar/encerrar jobs, impedindo ack tardio de worker cujo lease foi retomado. Migration `20261128000000_calendar_worker_fencing.sql`; harness `calendar-check.mjs` passa a integrar `npm run test:db`. Revogação externa do refresh token permanece pendente no banco até confirmação do Google; falhas transitórias são repetidas pelo worker, com `complete_calendar_disconnect` removendo a conexão só após sucesso. Funções Calendar recebem `search_path = pg_catalog, public` na migration `20261128000100_calendar_disconnect_revocation_retry.sql`.
