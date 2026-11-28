@@ -3103,7 +3103,7 @@
     "agent_2_r7_booking": {
       "scope": "Reservas e painel do prestador (#56, #55, #54 e apoio em #43)",
       "role_swap_from": "agent_2_r7_auth",
-      "status": "blocked_owner_validation",
+      "status": "blocked_dependency",
       "handoff": {
         "do_antecessor_na_area": "Agent 1 (agent_1_r7_booking): mergeou #142/#143 (multi-serviço, parser BRL, ações por papel), #146 (confirmação e .ics multi-serviço), #153 (atalhos WhatsApp) e #155 (correção P0 de DDD 12–19). Documentou a questão da ordem das migrations da #142 em docs/BOOKING-OPS.md. A fila do painel (#56 → #55 → #54 → #43) estava parada por uma dependência da #150, que já foi mergeada. Agora não há bloqueio.",
         "contexto_tecnico": "Painel em src/app/painel (painel-client.tsx concentra o formulário de serviços). A #154 já está na main e adicionou o campo de imagem do serviço: o modal da #56 DEVE incluí-lo. Regras de preço/duração/disponibilidade ficam no servidor e no banco, não na interface. O Vitest roda em ambiente node, sem DOM: extraia a lógica do formulário para funções puras testáveis e registre a inspeção visual como pendência do responsável.",
@@ -3113,8 +3113,8 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "PR #178 aberta/Draft, HEAD 2bb365145da6f81638e47447a37682adb10cabc6. CI run 46148244545 success no SHA exato (check:changelog, lint, typecheck, audit, unit/domain, test:db e build). Netlify Deploy Preview success: https://deploy-preview-178--marcoou.netlify.app. Main atual ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80; branch 1 commit atrás, sem conflito reportado e PR mergeable=true. Inspeção em navegador headless ainda não realizada; PR permanece Draft. PR #171 e #176 fechadas como substituídas, sem merge.",
-      "next_action": "Responsável precisa executar/fornecer a inspeção headless do Deploy Preview #178 para foco inicial e restauração, Esc, backdrop, cancelar, criar/editar, validação e erro de salvamento em 390/1440. Depois reconfirmar main; sincronizar branch para 0 behind sem force-push e reexecutar CI/Netlify no SHA final. Marcar Ready e mergear somente com checklist completo. Após #56 integrada, seguir #55 e #54 em PRs separadas.",
+      "current_state": "PR #178 (branch agent2/w6-56-service-modal-current-main) contém a implementação #56 e agora inclui happy-dom 21.0.4 como devDependency MIT, com testes DOM do modal (abrir/foco/restaurar, Esc, backdrop, editar, cancelar, preservar campos/arquivo em erro, sucesso e retry parcial sem duplicação). A escolha do ambiente DOM está justificada: pacote MIT, sem browser binário e sem @playwright/test/axe-core; happy-dom não simula a armadilha de foco nativa nem layout real, que permanecem delegados a HTMLDialogElement.showModal e revisão visual. Último HEAD 12e81cdf1e5578553847018b07054946a4b08b28; CI ainda não foi executado para este commit (branch atrás da main e PR mergeable=false). Main atual 551c56a5e7ef7b547fbe862e2e250c64e00967a0. PR #172 do Agent5 está OPEN/Ready com CI e Netlify verdes, mas base antiga e também mergeable=false; toca globals.css, portanto aguardar sua sincronização/merge antes de criar a branch final da #56 para evitar rebase repetido.",
+      "next_action": "Aguardar Agent5 sincronizar/mergear PR #172 (tema, sobreposição em globals.css) e a main estabilizar. Depois criar branch limpa da main atual, reaplicar os seis arquivos da #56, abrir PR final única, validar CI/Netlify no SHA exato e revisar o teste happy-dom. Manter Draft até os checks passarem. A alternativa headless não foi escolhida porque a inspeção real do fluxo de gravação em preview poderia escrever no Supabase remoto; os testes DOM usam Server Action mockada. Após #56 mergear, executar #55 e depois #54 em PRs separadas.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -3161,6 +3161,19 @@
           "blockers": [
             "Inspeção em navegador headless pendente para os critérios de DOM (390/1440).",
             "Branch está 1 commit atrás da main ea66e; sincronizar sem force-push antes do merge e reexecutar checks."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — adicionar cobertura DOM com happy-dom",
+          "status": "blocked_dependency",
+          "result": "Adicionado happy-dom@^21.0.4 (MIT; implementação DOM sem browser binário; 7 dependências transitivas diretas conforme npm) e teste DOM de ServicesManager com Server Action mockada. A escolha evita instalar @playwright/test/axe-core enquanto a decisão do E2E backend permanece OWNER_DECISION e evita writes ao Supabase remoto. Testes verificam abrir/foco inicial/restauração, Esc, backdrop, edit, erro preservando inputs/arquivo, sucesso fecha e retry de upload parcial vira update. O ambiente não simula layout nem foco preso nativo, provido pelo HTMLDialogElement.showModal no browser. CI ainda não rodou no novo HEAD 12e81cdf. PR #172 do Agent5 (tema) está OPEN, checks CI/Netlify verdes, mas base antiga/mergeable false e toca globals.css; aguardar reconciliação antes da branch final #56.",
+          "head_sha": "12e81cdf1e5578553847018b07054946a4b08b28",
+          "tests": "CI anterior #178 HEAD 2bb3651: run 46148244545 success, Netlify preview 178 success. Novo teste happy-dom no HEAD 12e81cdf ainda sem CI. PR #172 Agent5: CI 46147644751 success e Netlify preview 172 success.",
+          "blockers": [
+            "PR #172 do Agent5 precisa ser sincronizada/mergeada; ela toca globals.css e a main está avançando.",
+            "Novo HEAD 12e81cdf ainda precisa de CI.",
+            "Branch atual está 2 commits atrás da main 551c56 e mergeable=false; criar branch final após PR #172 integrar."
           ]
         }
       ],
