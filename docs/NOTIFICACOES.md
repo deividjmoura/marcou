@@ -145,7 +145,7 @@ pelo responsável:
   `src/server/email/sender.ts` — não faz chamadas externas, mantém logs sem PII
   e é fail-closed (`EMAIL_DELIVERY_ENABLED` desligado por padrão).
 - **Fila idempotente com retry/backoff/`dead` e reprocessamento seguro:**
-  `supabase/migrations/20261128000600_email_delivery_queue.sql` (tabela
+  `supabase/migrations/20261128000700_email_delivery_queue.sql` (tabela
   server-only `public.email_delivery_queue` sem armazenar PII/corpo) e
   `src/server/email/queue.ts` (chave `booking_id:event_type:window_key:recipient_role`,
   backoff exponencial, estado terminal `dead` e `reprocess_dead_email_delivery`

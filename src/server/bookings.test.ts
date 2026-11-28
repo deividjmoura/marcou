@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
-import { listProviderBookingsForPanel, requireUser } from "./bookings";
+import { getProvider, listProviderBookingsForPanel, requireUser } from "./bookings";
 
 describe("requireUser", () => {
   beforeEach(() => {
@@ -97,5 +97,70 @@ describe("listProviderBookingsForPanel", () => {
       bookings,
       failed: false,
     });
+  });
+});
+
+
+describe("getProvider: avatar público", () => {
+  const query = {
+    select: vi.fn(),
+    eq: vi.fn(),
+    maybeSingle: vi.fn(),
+  };
+  const from = vi.fn();
+  const getPublicUrl = vi.fn();
+  const storageFrom = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    query.select.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    query.maybeSingle.mockResolvedValue({
+      data: {
+        id: "provider-1",
+        slug: "studio-ana",
+        display_name: "Ana Silva",
+        avatar_path: "providers/provider-1/avatar/avatar-id.jpg",
+      },
+      error: null,
+    });
+    from.mockReturnValue(query);
+    getPublicUrl.mockReturnValue({
+      data: { publicUrl: "https://storage.example.test/service-images/avatar.jpg" },
+    });
+    storageFrom.mockReturnValue({ getPublicUrl });
+    mocks.createClient.mockResolvedValue({
+      from,
+      storage: { from: storageFrom },
+    });
+  });
+
+  it("converte avatar_path em URL pública do bucket compartilhado", async () => {
+    const provider = await getProvider("studio-ana");
+
+    expect(provider?.avatar_url).toBe(
+      "https://storage.example.test/service-images/avatar.jpg",
+    );
+    expect(storageFrom).toHaveBeenCalledWith("service-images");
+    expect(getPublicUrl).toHaveBeenCalledWith(
+      "providers/provider-1/avatar/avatar-id.jpg",
+    );
+  });
+
+  it("retorna null para avatar_url quando não há foto", async () => {
+    query.maybeSingle.mockResolvedValueOnce({
+      data: {
+        id: "provider-1",
+        slug: "studio-ana",
+        display_name: "Ana Silva",
+        avatar_path: null,
+      },
+      error: null,
+    });
+
+    const provider = await getProvider("studio-ana");
+
+    expect(provider?.avatar_url).toBeNull();
+    expect(getPublicUrl).not.toHaveBeenCalled();
   });
 });

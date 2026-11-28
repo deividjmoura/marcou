@@ -102,7 +102,7 @@ Mesmo antes da decisão do provedor, esta entrega deixa pronta e testada a camad
 - **Renderizador de templates pt-BR sem PII de terceiros** (`src/server/email/template.ts`):
   - Formata horários no fuso do prestador (`bookings.timezone`), escapa HTML, não inclui dados de terceiros e gera link exclusivamente para `/reserva/[id]`.
 - **Fila idempotente com retry, backoff, estado `dead` e reprocessamento seguro:**
-  - Migration `supabase/migrations/20261128000600_email_delivery_queue.sql` criando `public.email_delivery_queue` (tabela estritamente server-only com RLS ativa, `REVOKE ALL` para `anon`/`authenticated`, `GRANT ALL` para `service_role`, sem armazenar e-mail/corpo) e RPCs `enqueue_email_delivery()` e `reprocess_dead_email_delivery()`.
+  - Migration `supabase/migrations/20261128000700_email_delivery_queue.sql` criando `public.email_delivery_queue` (tabela estritamente server-only com RLS ativa, `REVOKE ALL` para `anon`/`authenticated`, `GRANT ALL` para `service_role`, sem armazenar e-mail/corpo) e RPCs `enqueue_email_delivery()` e `reprocess_dead_email_delivery()`.
   - Chave de idempotência canônica: `${booking_id}:${event_type}:${window_key}:${recipient_role}`.
   - Processador `processEmailQueueBatch()` (`src/server/email/queue.ts`) com backoff exponencial (`60s` → `120s` → `240s` → ... teto `3600s`), transição para estado terminal `dead` em erro permanente (`retryable: false`) ou após `max_attempts` (`5`), e reprocessamento seguro que só aceita itens em `dead` (nunca reenvia `sent`).
 - **Nenhum trigger ou cron enfileira ou envia e-mail automaticamente** até a PR futura de integração com o provedor escolhido pelo responsável.

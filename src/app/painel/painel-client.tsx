@@ -5,13 +5,14 @@ import { logoutAction } from "../(auth)/actions";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import type { ResolvedNotificationPreference } from "@/domain/notifications/preferences";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import {
   deleteExceptionAction,
   deleteRuleAction,
   deleteServiceAreaAction,
   saveExceptionAction,
   saveProviderAction,
+  saveProviderAvatarAction,
   saveRuleAction,
   saveServiceAction,
   saveServiceAreaAction,
@@ -26,6 +27,7 @@ import type {
   Service,
 } from "@/server/bookings";
 import { formatCents } from "@/lib/format";
+import { ProviderAvatar } from "@/components/provider-avatar";
 import {
   BRAZIL_STATE_CODES,
   DEFAULT_SERVICE_CATEGORY_ID,
@@ -112,10 +114,73 @@ function ServiceToggleForm({ service }: { service: Service }) {
   );
 }
 
+function ProviderAvatarForm({ provider }: { provider: Provider }) {
+  const [state, action, pending] = useActionState(saveProviderAvatarAction, {});
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  return (
+    <form action={action} className="card form-stack provider-avatar-form">
+      <h2>Foto do profissional</h2>
+      <ProviderAvatar
+        src={preview ?? provider.avatar_url}
+        name={provider.display_name}
+        className="provider-avatar-panel"
+      />
+      <p className="muted small">
+        Essa foto aparece na página pública do seu negócio. Use uma imagem sua ou
+        autorizada por você.
+      </p>
+      <label className="field">
+        <span>Escolher foto</span>
+        <input
+          type="file"
+          name="avatar"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => {
+            const nextFile = event.currentTarget.files?.[0] ?? null;
+            setFile(nextFile);
+            setPreview(nextFile ? URL.createObjectURL(nextFile) : null);
+          }}
+        />
+        <span className="muted small">
+          JPEG, PNG ou WebP · até 5 MB · validação repetida no servidor.
+        </span>
+      </label>
+      <Alert state={state} />
+      <div className="item-actions">
+        <button type="submit" className="btn" disabled={pending || !file}>
+          {pending ? "Salvando foto..." : "Salvar foto"}
+        </button>
+        {provider.avatar_path ? (
+          <button
+            type="submit"
+            name="intent"
+            value="remove"
+            className="btn btn-ghost"
+            disabled={pending}
+            onClick={() => { setFile(null); setPreview(null); }}
+            formNoValidate
+          >
+            {pending ? "Aguarde..." : "Remover foto"}
+          </button>
+        ) : null}
+      </div>
+    </form>
+  );
+}
+
 export function ProviderForm({ provider }: { provider: Provider | null }) {
   const [state, action, pending] = useActionState(saveProviderAction, {});
 
   return (
+    <>
     <form action={action} className="card form-stack">
       <h2>{provider ? "Dados do negócio" : "Seu negócio"}</h2>
 
@@ -196,6 +261,8 @@ export function ProviderForm({ provider }: { provider: Provider | null }) {
         {pending ? "Salvando..." : provider ? "Salvar alterações" : "Criar negócio"}
       </button>
     </form>
+    {provider ? <ProviderAvatarForm provider={provider} /> : null}
+    </>
   );
 }
 
