@@ -125,7 +125,21 @@ try {
   const uuid = () => crypto.randomUUID();
   const ownerA = uuid();
   const ownerB = uuid();
-  await db.query(`insert into auth.users (id) values ($1), ($2)`, [ownerA, ownerB]);
+  const ownerC = uuid();
+  const ownerD = uuid();
+  await db.query(
+    `insert into auth.users (id) values ($1), ($2), ($3), ($4)`,
+    [ownerA, ownerB, ownerC, ownerD],
+  );
+  await db.query(
+    `insert into public.profiles (id, display_name, phone)
+     values
+       ($1, 'Prestador A', '47911112222'),
+       ($2, 'Cliente B', '47922223333'),
+       ($3, 'Terceiro C', '47933334444'),
+       ($4, 'Prestador D', '47944445555')`,
+    [ownerA, ownerB, ownerC, ownerD],
+  );
 
   const providerA = (
     await db.query(
@@ -143,6 +157,15 @@ try {
        ) values ($1, 'social-prov-b', 'Social B', 'America/Sao_Paulo', true)
        returning id`,
       [ownerB],
+    )
+  ).rows[0].id;
+  const providerD = (
+    await db.query(
+      `insert into public.providers (
+         owner_id, slug, display_name, timezone, is_published
+       ) values ($1, 'social-prov-d', 'Social D', 'America/Sao_Paulo', true)
+       returning id`,
+      [ownerD],
     )
   ).rows[0].id;
   const serviceA = (
@@ -182,6 +205,8 @@ try {
 
   const ownerAClient = await asRole("authenticated", ownerA);
   const ownerBClient = await asRole("authenticated", ownerB);
+  const ownerCClient = await asRole("authenticated", ownerC);
+  const ownerDClient = await asRole("authenticated", ownerD);
   const anonClient = await asRole("anon");
   const serviceRoleClient = await asRole("service_role");
 
@@ -253,6 +278,11 @@ try {
       label: "criação de reserva exige autenticação",
       signature: "public.create_booking(text,uuid,timestamptz,text,text,text)",
       roles: { anon: false, authenticated: true },
+    },
+    {
+      label: "telefone da contraparte só é executável por authenticated",
+      signature: "public.booking_counterparty_phone(uuid)",
+      roles: { anon: false, authenticated: true, service_role: false },
     },
     {
       label: "transição de reserva exige autenticação",
@@ -703,6 +733,59 @@ try {
   check(
     "booking autenticado continua funcional após hardening",
     bookingAfterHardening?.status === "pending_payment",
+  );
+
+  const ownerPhone = (
+    await ownerAClient.query(
+      `select public.booking_counterparty_phone($1::uuid) as phone`,
+      [bookingAfterHardening.id],
+    )
+  ).rows[0].phone;
+  const customerPhone = (
+    await ownerBClient.query(
+      `select public.booking_counterparty_phone($1::uuid) as phone`,
+      [bookingAfterHardening.id],
+    )
+  ).rows[0].phone;
+  const unrelatedUserPhone = (
+    await ownerCClient.query(
+      `select public.booking_counterparty_phone($1::uuid) as phone`,
+      [bookingAfterHardening.id],
+    )
+  ).rows[0].phone;
+  const otherProviderPhone = (
+    await ownerDClient.query(
+      `select public.booking_counterparty_phone($1::uuid) as phone`,
+      [bookingAfterHardening.id],
+    )
+  ).rows[0].phone;
+  check(
+    "dono do prestador vê o telefone do cliente da reserva",
+    ownerPhone === "47999999999",
+    String(ownerPhone),
+  );
+  check(
+    "cliente da reserva vê o telefone do dono do prestador",
+    customerPhone === "47911112222",
+    String(customerPhone),
+  );
+  check(
+    "terceiro autenticado recebe NULL para telefone da reserva",
+    unrelatedUserPhone === null,
+    String(unrelatedUserPhone),
+  );
+  check(
+    "dono de outro negócio recebe NULL para telefone da reserva",
+    otherProviderPhone === null,
+    String(otherProviderPhone),
+  );
+  await expectError(
+    "anon não consegue executar RPC de telefone da contraparte",
+    () => anonClient.query(
+      `select public.booking_counterparty_phone($1::uuid)`,
+      [bookingAfterHardening.id],
+    ),
+    "permission denied",
   );
   const bookingNotifications = (
     await db.query(
