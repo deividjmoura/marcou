@@ -180,4 +180,16 @@ describe("contraste dos tokens publicados", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("usa a dupla tipográfica e uma escala de espaçamento mais compacta", () => {
+    expect(tokens["ds-font-sans"]).toContain("Manrope Variable");
+    expect(tokens["ds-font-display"]).toContain("Lora");
+    expect(tokens["ds-space-8"]).toBe("1.75rem");
+    expect(tokens["ds-space-10"]).toBe("2rem");
+    expect(tokens["ds-space-12"]).toBe("2.5rem");
+    expect(tokens["ds-space-16"]).toBe("3rem");
+    expect(tokens["ds-control-min-height"]).toBe("44px");
+    expect(globals).toContain("font-family: var(--ds-font-sans)");
+    expect(globals).toContain("font-family: var(--ds-font-display)");
+  });
 });
