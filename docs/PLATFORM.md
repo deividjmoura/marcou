@@ -40,9 +40,9 @@ Google Cloud ou secrets foi executada nesta entrega.
 
 ### Migrations versionadas
 
-As migrations ficam em `supabase/migrations/` (24 arquivos em 2026-11-28, de
+As migrations ficam em `supabase/migrations/` (25 arquivos em 2026-11-28, de
 `202611150001_initial_schema.sql` até
-`20261128000700_email_delivery_queue.sql`). Para a sequência
+`20261128000800_email_queue_recipient_binding.sql`). Para a sequência
 completa de aplicação — incluindo o tratamento das migrations fora de ordem da
 PR `#142` (`20261125120000` e `20261125130000`) e a precedência do bucket
 `service-images` (`20261128000400` antes de `20261128000600`) —, variáveis por
