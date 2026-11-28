@@ -2958,7 +2958,7 @@
     "agent_2_r7_booking": {
       "scope": "Reservas e painel do prestador (#56, #55, #54 e apoio em #43)",
       "role_swap_from": "agent_2_r7_auth",
-      "status": "assigned_wave_6",
+      "status": "in_progress",
       "handoff": {
         "do_antecessor_na_area": "Agent 1 (agent_1_r7_booking): mergeou #142/#143 (multi-serviço, parser BRL, ações por papel), #146 (confirmação e .ics multi-serviço), #153 (atalhos WhatsApp) e #155 (correção P0 de DDD 12–19). Documentou a questão da ordem das migrations da #142 em docs/BOOKING-OPS.md. A fila do painel (#56 → #55 → #54 → #43) estava parada por uma dependência da #150, que já foi mergeada. Agora não há bloqueio.",
         "contexto_tecnico": "Painel em src/app/painel (painel-client.tsx concentra o formulário de serviços). A #154 já está na main e adicionou o campo de imagem do serviço: o modal da #56 DEVE incluí-lo. Regras de preço/duração/disponibilidade ficam no servidor e no banco, não na interface. O Vitest roda em ambiente node, sem DOM: extraia a lógica do formulário para funções puras testáveis e registre a inspeção visual como pendência do responsável.",
@@ -2968,9 +2968,23 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "Entrada criada pelo coordenador na troca de funções. Nenhuma tarefa iniciada.",
-      "next_action": "Executar W6-A2-T1.",
-      "updates": []
+      "current_state": "Main reconfirmada em 5a08e0ae262cd62a7540f1d37845e5e4fd05cf78. Branch nova agent2/w6-56-service-modal criada diretamente da main; 5 commits exclusivos, 0 atrás. PR #171 aberta como Draft, HEAD 3993ac028845b1cb8acc1f72b2c428af3ee4ef98, mergeable=true na última consulta; CI run 46147641363 ainda queued. Implementação inclui <dialog> nativo, imagem da #154, submit direto da Server Action para preservar valores/arquivo em erro, helper puro shouldCloseServiceModal com testes, CSS responsivo e CHANGELOG. Não foram executados testes locais nem inspeção headless nesta sessão. Branch antiga agent1/w5-56-service-modal: 3 commits exclusivos/7 atrás, sem PR; contém helper parcial e CHANGELOG placeholder, não reutilizada. PR #159 (Agent 5) também altera src/app/globals.css e está 7 commits atrás da main; coordenar sequência/reconciliação antes de merge para evitar conflito.",
+      "next_action": "Aguardar CI quality e Netlify da PR #171 no SHA exato; corrigir falhas se houver. Registrar inspeção em navegador headless (foco, Esc, backdrop, cancelamento, create/edit, erros, 390/1440). Reconfirmar main/PR/CI; coordenar sobreposição de globals.css com #159. Após merge da #56, iniciar #55 e depois #54, cada uma em PR separada.",
+      "updates": [
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — início da reconstrução da #56",
+          "status": "in_progress",
+          "result": "Criada branch agent2/w6-56-service-modal diretamente da main 5a08e0ae. PR #171 Draft aberta no HEAD 3993ac0. Implementado modal nativo, suporte a imagem da #154, preservação do formulário em erro via submit manual da Server Action, regra pura de fechamento/testes e CSS responsivo. CI 46147641363 aguardando. Inspeção headless pendente. PR #159 também modifica globals.css e precisa de coordenação.",
+          "head_sha": "3993ac028845b1cb8acc1f72b2c428af3ee4ef98",
+          "tests": "Não executados localmente nesta sessão. CI da PR #171 queued; testes unitários da regra pura estão incluídos.",
+          "blockers": [
+            "Inspeção em navegador headless ainda pendente.",
+            "PR #159 altera src/app/globals.css e está 7 commits atrás da main; reconciliar antes do merge da #171."
+          ]
+        }
+      ],
+      "active_assignment": "W6-A2-T1 (#56): implementar modal único acessível de criação/edição de serviços, incluindo imagem, preservação de formulário em erros, testes puros e validação headless. Depois seguir W6-A2-T2 (#55) e W6-A2-T3 (#54), uma PR por issue."
     }
   },
   "dispatch_history": [
