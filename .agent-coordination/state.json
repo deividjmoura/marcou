@@ -2321,8 +2321,8 @@
         "agent5/w2-design-system-main-latest",
         "agent5/w2-design-system-main-current"
       ],
-      "status": "completed_with_blocker",
-      "active_assignment": "Wave 3 W3-A5-T1 (#150: CI/preview concluídos, visual headless bloqueado), W3-A5-T2 (#27 escopo refinado e #121 status; implementação bloqueada pela #150), W3-A5-T3 (triagem de status de backlog confirmada).",
+      "status": "in_progress",
+      "active_assignment": "Wave 4 W4-A5-T1 (#150 reconciliada sobre main atual; CI/Preview reexecutando; merge autorizado quando checks do checklist green), W4-A5-T2 (#27 tokens/catalogue após #150; #121 após #27), W4-A5-T3 status backlog",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2359,8 +2359,8 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W3 reconfirmada: main d1e0c2faf0f99124ba65ab08fe24252e1f79406a; PR #150 head 8df0652d903c372fdfa766e3a163059d971c5fe5, 9 ahead/0 behind. CI quality #335 success (changelog/lint/typecheck/audit/unit/test:db/build) e Netlify preview check success. Ainda Draft, não mergeada: falta captura headless 1440/390 com console/overflow, browser atual não tem navegação/captura. Refinamento de escopo #27 publicado; #121 atualizada como backlog bloqueada. Status das issues de produto existentes (#24/#43/#47/#52–57/#132/#19/#28) verificados e recentes, não precisam duplicar comentários.",
-      "next_action": "Obter evidência visual headless da preview #150 em 1440px e 390px (console e overflow). Com isso, concluir checklist e mergear se main/checks continuarem verdes. Só então iniciar #27 tokens semânticos/catalogue; depois #121 tema conforme escopo.",
+      "current_state": "Main confirmada 994cf1c4efe65754ebb70042b448259344a2cc7c (merge #151–#153). PR #150 foi reconciliada sobre main atual por re-aplicação de patch, mantendo os 9 arquivos e changelog atualizado; HEAD fc92a8bdc2b10da40f8b719f735ebf606672d453, compare 9 ahead/0 behind, mergeable=true, Ready for Review. Descrição registra inspeção visual 1440/390, console e overflow como pendência do responsável conforme decisão de desbloqueio_wave4. CI run 46141488822 e Netlify preview ainda in progress/pending. #27/#121 comentários atualizados, aguardando integração.",
+      "next_action": "Aguardar CI e Netlify preview no SHA fc92a8bdc2b10da40f8b719f735ebf606672d453; confirmar checks do checklist (CI quality, Redirect/Header e Pages neutral). Se todos verdes, mergear #150 e avisar coordenação. Depois iniciar #27 tokens/catalogue.",
       "updates": [
         {
           "timestamp": "2026-11-28",
@@ -2397,6 +2397,18 @@
             "Inspeção visual desktop/mobile com screenshot, console e overflow a 1440px e 390px não disponível; merge fica suspenso até evidência."
           ],
           "next_action": "Concluir visual review de #150; então merge se checklist completo e continuar #27/#121."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "Wave 4 W4-A5 — reconciliar #150 e atualizar escopos dependentes",
+          "status": "in_progress",
+          "result": "Main avançou para 994cf1c4efe65754ebb70042b448259344a2cc7c. #150 reconciliada sobre main, 9 ahead/0 behind, mergeable e Ready for Review. Descrição agora marca inspeção visual como pendência do responsável (autorização coordenador). CI run 46141488822 em andamento e Netlify pending. Comentários de #27/#121 atualizados: dependências em ordem, implementação #27 aguarda #150 merge.",
+          "head_sha": "fc92a8bdc2b10da40f8b719f735ebf606672d453",
+          "tests": "CI: install in_progress, demais steps pending. Netlify Deploy Preview pending. Não executar revisão visual local.",
+          "blockers": [
+            "Checks CI e Netlify Deploy Preview/Redirect/Header/Pages ainda precisam finalizar e ser confirmados no SHA exato."
+          ],
+          "next_action": "Aguardar checks; merge autorizado somente após checklist coordenador completo; depois destravar #27."
         }
       ],
       "wave_2_tasks": [
@@ -2435,6 +2447,31 @@
           "status": "completed",
           "result": "Status de issues de produto confirmado por comentários recentes e scopes refinados: #24/#43/#47 PARTIAL; #52–56 BACKLOG; #57 BACKLOG (Agent1 implementará); #132 BLOCKED por #90–95; #19 FUTURO/OWNER_DECISION; #28 OWNER_DECISION. Roadmap fica aberto, sem fechamentos artificiais.",
           "next_action": "Manter comentários atualizados conforme merges e dependências."
+        }
+      ],
+      "wave_4_tasks": [
+        {
+          "id": "W4-A5-T1",
+          "status": "in_progress",
+          "result": "PR #150 reconciliada com main 994cf1c4efe65754ebb70042b448259344a2cc7c após avanço #151–#153. HEAD fc92a8bdc2b10da40f8b719f735ebf606672d453; compare 9 ahead/0 behind; mergeable, Ready for Review. Body atualizada com revisão visual 1440/390, console/overflow pendente do responsável (regra do coordenador). CI run 46141488822 in_progress; Netlify deploy-preview pending. Ainda não mergeada.",
+          "head_sha": "fc92a8bdc2b10da40f8b719f735ebf606672d453",
+          "tests": "CI ainda in progress (install dependencies); Netlify Deploy Preview pending. Visual review por agente não executada; marcada explicitamente como pendência do responsável.",
+          "blockers": [
+            "Aguardar CI quality e Netlify Redirect/Header verdes, Pages neutral e Deploy Preview success no SHA reconciliado."
+          ],
+          "next_action": "Merge #150 se todos os checks especificados pela coordenação estiverem verdes no HEAD exato; registrar merge SHA e avisar no state."
+        },
+        {
+          "id": "W4-A5-T2",
+          "status": "blocked_dependency",
+          "result": "Escopo refinado #27/#121 lido junto de docs/PADRAO-DE-ESCOPO.md. Comentários de progresso publicados: #27 recebe tokens semânticos/catalogue depois da #150; #121 continua bloqueada até #27.",
+          "next_action": "Após merge #150, iniciar #27 (tokens semânticos + catálogo em docs/DESIGN-SYSTEM.md) com PR pequena e critérios/testes; #121 apenas depois."
+        },
+        {
+          "id": "W4-A5-T3",
+          "status": "completed",
+          "result": "Triagem de issues #24/#43/#47/#52–57/#132/#19/#28 verificada na Wave 3; nenhuma precisa ser fechada sem evidência, mantendo status e decisões/dependências.",
+          "next_action": "Atualizar status após entregas futuras, sem fechar backlog artificialmente."
         }
       ]
     },
