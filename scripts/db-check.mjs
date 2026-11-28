@@ -1941,6 +1941,25 @@ console.log("\n[segurança e RLS]");
 
   const anonStorageClient = await asRole("anon");
   const ownServiceImagePath = `providers/${providerA}/services/${serviceA1}/${uuid()}.jpg`;
+  const imagePathProbe = (
+    await ownerAClient.query(
+      `select auth.uid()::text as uid,
+              storage.foldername($1) as folders,
+              storage.filename($1) as filename,
+              exists (
+                select 1 from public.providers p
+                join public.services s on s.provider_id = p.id
+                where p.id::text = (storage.foldername($1))[2]
+                  and s.id::text = (storage.foldername($1))[4]
+                  and p.owner_id = (select auth.uid())
+              ) as owns_service`,
+      [ownServiceImagePath],
+    )
+  ).rows[0];
+  check("Storage RLS resolve auth.uid() do dono", imagePathProbe.uid === ownerA);
+  check("Storage RLS decompõe o caminho do serviço", imagePathProbe.folders?.length === 4);
+  check("Storage RLS confirma o vínculo dono/serviço", imagePathProbe.owns_service === true);
+
   const ownImageInsert = await ownerAClient.query(
     `insert into storage.objects (bucket_id, name) values ('service-images', $1) returning id`,
     [ownServiceImagePath],
