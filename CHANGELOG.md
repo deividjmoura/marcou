@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Contrato de tokens semânticos claro/escuro e catálogo inicial de componentes (Issue #27), com aliases para superfície, texto, borda, destaque, feedback, controles e foco. Tema escuro apenas preparado por atributo; seletor/persistência e cobertura visual permanecem na #121.
+
 - Sistema tipográfico inicial (Issue `#27`): Manrope Variable para interface e Lora para títulos, fontes auto-hospedadas via Fontsource, tokens tipográficos, subconjuntos Latin/Latin Extended e licenças SIL OFL 1.1 em `LICENSES/`. Compactação incremental de espaçamentos na landing, autenticação e painel, mantendo alvos de toque de 44px. Nenhuma rota, regra de negócio ou migration alterada. Revisão visual final desktop/mobile continua pendente.
 
 - Atalhos WhatsApp (`wa.me`) no detalhe da reserva e no painel do prestador, com normalização E.164 e RPC `booking_counterparty_phone` restrita a participantes (issue #57).
