@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createService, updateService } from "@/server/services";
 import { uploadServiceImage, removeServiceImage } from "@/server/service-images";
-import { saveServiceAction } from "./actions";
+import { uploadProviderAvatar, removeProviderAvatar } from "@/server/provider-avatar";
+import { getOwnedProvider } from "@/server/bookings";
+import { saveProviderAvatarAction, saveServiceAction } from "./actions";
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/env", () => ({ isSupabaseConfigured: vi.fn(() => true) }));
@@ -9,6 +11,10 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/server/service-images", () => ({
   uploadServiceImage: vi.fn(async () => ({ cleanupWarning: false })),
   removeServiceImage: vi.fn(async () => ({ cleanupWarning: false })),
+}));
+vi.mock("@/server/provider-avatar", () => ({
+  uploadProviderAvatar: vi.fn(async () => ({ cleanupWarning: false })),
+  removeProviderAvatar: vi.fn(async () => ({ cleanupWarning: false })),
 }));
 vi.mock("@/server/feature-flags", () => ({
   isSocialFeatureEnabled: vi.fn(async () => false),
@@ -41,6 +47,9 @@ const mockedCreateService = vi.mocked(createService);
 const mockedUpdateService = vi.mocked(updateService);
 const mockedUploadServiceImage = vi.mocked(uploadServiceImage);
 const mockedRemoveServiceImage = vi.mocked(removeServiceImage);
+const mockedUploadProviderAvatar = vi.mocked(uploadProviderAvatar);
+const mockedRemoveProviderAvatar = vi.mocked(removeProviderAvatar);
+const mockedGetOwnedProvider = vi.mocked(getOwnedProvider);
 
 function serviceForm(price: string, deposit: string, extra: Record<string, string> = {}) {
   const form = new FormData();
@@ -58,8 +67,11 @@ describe("saveServiceAction: preço e sinal em reais", () => {
   beforeEach(() => {
     mockedCreateService.mockReset();
     mockedUpdateService.mockReset();
-    mockedUploadServiceImage.mockReset();
-    mockedRemoveServiceImage.mockReset();
+    mockedUploadServiceImage.mockReset().mockResolvedValue({ cleanupWarning: false });
+    mockedRemoveServiceImage.mockReset().mockResolvedValue({ cleanupWarning: false });
+    mockedUploadProviderAvatar.mockReset().mockResolvedValue({ cleanupWarning: false });
+    mockedRemoveProviderAvatar.mockReset().mockResolvedValue({ cleanupWarning: false });
+    mockedGetOwnedProvider.mockResolvedValue({ id: "provider-1", slug: "studio-ana" } as never);
   });
 
   const savedCents = () => mockedCreateService.mock.calls[0]?.[1];
@@ -177,5 +189,71 @@ describe("saveServiceAction: preço e sinal em reais", () => {
 
     expect(result.error).toBe("O sinal não pode ser maior que o preço.");
     expect(mockedCreateService).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("saveProviderAvatarAction: foto do profissional", () => {
+  beforeEach(() => {
+    mockedUploadProviderAvatar.mockReset().mockResolvedValue({ cleanupWarning: false });
+    mockedRemoveProviderAvatar.mockReset().mockResolvedValue({ cleanupWarning: false });
+    mockedGetOwnedProvider.mockResolvedValue({ id: "provider-1", slug: "studio-ana" } as never);
+  });
+
+  function validPngFile() {
+    const bytes = new Uint8Array(45);
+    bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+    new DataView(bytes.buffer).setUint32(8, 13, false);
+    bytes.set([0x49, 0x48, 0x44, 0x52], 12);
+    new DataView(bytes.buffer).setUint32(16, 20, false);
+    new DataView(bytes.buffer).setUint32(20, 10, false);
+    bytes.set([8, 6, 0, 0, 0], 24);
+    bytes.set([0x49, 0x45, 0x4e, 0x44], 37);
+    return new File([bytes], "avatar.png", { type: "image/png" });
+  }
+
+  it("deriva o prestador da sessão e envia somente arquivo validado", async () => {
+    const form = new FormData();
+    const file = validPngFile();
+    form.set("avatar", file);
+
+    const result = await saveProviderAvatarAction({}, form);
+
+    expect(result).toEqual({ success: "Foto do perfil atualizada." });
+    expect(mockedGetOwnedProvider).toHaveBeenCalledWith("user-1");
+    expect(mockedUploadProviderAvatar).toHaveBeenCalledWith("provider-1", file);
+  });
+
+  it("não aceita providerId do cliente para remover foto de outro perfil", async () => {
+    const form = new FormData();
+    form.set("intent", "remove");
+    form.set("providerId", "provider-victim");
+
+    const result = await saveProviderAvatarAction({}, form);
+
+    expect(result).toEqual({ success: "Foto do perfil removida." });
+    expect(mockedRemoveProviderAvatar).toHaveBeenCalledWith("provider-1");
+    expect(mockedRemoveProviderAvatar).not.toHaveBeenCalledWith("provider-victim");
+  });
+
+  it("rejeita SVG no servidor sem chamar Storage", async () => {
+    const form = new FormData();
+    form.set("avatar", new File(["<svg/>"], "avatar.svg", { type: "image/svg+xml" }));
+
+    const result = await saveProviderAvatarAction({}, form);
+
+    expect(result.error).toMatch(/JPEG, PNG ou WebP/);
+    expect(mockedUploadProviderAvatar).not.toHaveBeenCalled();
+  });
+
+  it("não permite upload sem negócio pertencente à sessão", async () => {
+    mockedGetOwnedProvider.mockResolvedValueOnce(null);
+    const form = new FormData();
+    form.set("avatar", validPngFile());
+
+    const result = await saveProviderAvatarAction({}, form);
+
+    expect(result.error).toMatch(/não configurou seu negócio/i);
+    expect(mockedUploadProviderAvatar).not.toHaveBeenCalled();
   });
 });
