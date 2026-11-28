@@ -2013,7 +2013,7 @@
         "arena/4017109f-marcou"
       ],
       "status": "in_progress",
-      "active_assignment": "W4 concluída. W5: #53 (#160) concluída e issue fechada; matriz de privilégios verificada; revisão #13 registrada; monitorar PR de #47 e completar auditoria #20 se a coordenação mantiver a atribuição.",
+      "active_assignment": "W5-A4-T1 #154 concluída; W5-A4-T2 #53 concluída e fechada; W5-A4-T3 #13/#26 revisadas, #47 aguardando PR; W5-A4-T4 concluída.",
       "tasks": [
         {
           "id": "A4-T1",
@@ -2044,21 +2044,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main HEAD 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1. PR #160 (#53) squash-mergeada em 96f8ed9b; issue #53 fechada. Pré-merge quality run 46143785917 success no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160 (changelog/lint/typecheck/audit/unit/test:db/build), Netlify Redirect/Header success, Pages neutral e Preview ready. Pós-merge quality run 46143945775 success no merge SHA. Migration avatar 20261128000600 após 20261128000500_notification_preferences (#161); sem colisão. Issue #53 recebeu comentário 7239151401 com evidência e limitação do Storage real. W4: #154/#156 mergeadas, #155 auditada. #52 permanece OWNER_ACTION para validação real de Supabase Storage. #47 aberta, sem PR relacionada. W5-A4-T4: privileges-check inclui notification_preferences, e #53 não cria tabela/função pública nova; migration de avatar é aplicada depois da notificação e excluída da baseline anterior.",
-      "next_action": "W4 encerrada. Manter #52 aberta até o responsável testar upload/persistência/renderização no Supabase Storage real. Monitorar PR de #47/exclusão de conta do Agent2 e revisar imediatamente quando aparecer. W5-A4-T1: completar auditoria de RLS/privilégios da migration #20 se ainda atribuída; #13 revisada com observação não bloqueante para teste explícito de EXECUTE em is_notification_enabled (anon=false, authenticated=false, service_role=true).",
+      "current_state": "PR #154 merged em 7a9d2be52c9fa2dd66411c98e9f4effbf0238591. PR #160 (#53) merged por squash em 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; issue #53 CLOSED. CI pré-merge run 46143785917 SUCCESS no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160 e CI pós-merge run 46143945775 SUCCESS no merge SHA 96f8ed9b52137d8c7ef1a028009e77a7941ff7a1; Netlify Redirect/Header SUCCESS e Pages changed NEUTRAL. Migration de avatar é 20261128000600_provider_avatar_storage.sql, após notification_preferences 00500. W5-A4-T3: PR #161/#13 auditada; comentário 7239072822 registra grants/RLS corretos e lacuna não bloqueante de teste explícito de grants da função is_notification_enabled. PR #162/#26 auditada; comentário/review 6097747847 registra bloqueios: colisão migration 00600 com avatar, Noop marcado como sent, ausência de EmailQueueStore persistente/operadores SQL de claim/lease/transições, ausência de vínculo recipient_id↔booking e cobertura incompleta de ACL para reprocess_dead. PR #162 permanece aberta e mergeable=false; não aprovar/mergear. Issue #47 permanece aberta e sem PR no snapshot. W5-A4-T4: privileges-check matriz inclui notification_preferences e email_delivery_queue; social-foundation-check explicitamente cobre booking_counterparty_phone; #154/#53 não criam tabela/função pública. #52 continua OWNER_ACTION para teste real do Supabase Storage.",
+      "next_action": "Aguardar PR do Agent2 para #47 e revisar suas migrations/tabelas/funções. Acompanhar correções da PR #162 (migration version, semântica noop, adapter durável, validação de destinatário e ACL tests) antes de qualquer aprovação. Acompanhar resposta à lacuna de grant-test em #161. Manter #52 aberta para teste real do Storage pelo responsável. Não alterar Supabase remoto, secrets, cron, scheduler ou deploy.",
       "updates": [
-        {
-          "timestamp": "2026-11-28T09:45:00-03:00",
-          "task": "W4 encerrada e W5 follow-up #53 em CI",
-          "status": "pr160_draft_ci_running",
-          "result": "#154/#156 mergeadas, #155 auditada e #47 sem PR. #53 implementada em PR #160; após main avançar com #161, reconciliei a branch sem force-push sobre e4307a7f. Colisão de versão 00500 detectada e resolvida: notification_preferences mantém 00500, avatar passa a 00600; removido arquivo avatar 00500. db-check e privileges-check reconciliados com a migration/tabela de notificações #161. PR #160 Draft no HEAD 3117377bd6264538734a39d14c91eed7c6cf2160; CI quality run 46143785917 em andamento, changelog success e lint running.",
-          "head_sha": "3117377bd6264538734a39d14c91eed7c6cf2160",
-          "tests": "CI e Netlify pendentes no SHA 3117377bd6264538734a39d14c91eed7c6cf2160.",
-          "blockers": [
-            "Aguardar CI completo e Netlify Preview/checks antes de retirar Draft ou mergear.",
-            "#52 requer validação real do Storage pelo responsável."
-          ]
-        },
         {
           "timestamp": "2026-11-28T12:20:00Z",
           "task": "W5-A4-T2 #53 merge concluído; W5-A4-T3 revisão #13; W5-A4-T4 matriz",
@@ -2082,6 +2070,19 @@
           "blockers": [
             "Aguardar validação real do Supabase Storage pelo responsável (#52).",
             "Monitorar futura PR de #47 para revisão de segurança."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T12:22:00Z",
+          "task": "W5-A4 conclusão parcial: #53 fechada, auditoria #13 e #26, #47 pendente",
+          "status": "completed_with_external_reviews_pending",
+          "result": "#53: PR #160 merged (96f8ed9b52137d8c7ef1a028009e77a7941ff7a1), issue #53 closed. CI pré e pós-merge SUCCESS; Netlify Redirect/Header SUCCESS, Pages changed NEUTRAL. #13: PR #161 revisada com comentário 7239072822; RLS/grants e SECURITY DEFINER corretos, sem falha de autorização, mas sugerido assert explícito de EXECUTE para is_notification_enabled. #26: PR #162 revisada com comentário/review 6097747847; sem merge, cinco pontos para corrigir: migration prefix collision (main already uses 00600), Noop marks sent, missing durable DB EmailQueueStore/claim-lease-transitions, missing recipient-booking binding, missing explicit ACL tests for reprocess RPC. #47 ainda sem PR, issue aberta.",
+          "head_sha": "96f8ed9b52137d8c7ef1a028009e77a7941ff7a1",
+          "tests": "PR #160 pre-merge quality run 46143785917 SUCCESS e post-merge run 46143945775 SUCCESS; test:db e build concluídos. #162 ainda não validada contra a main atual e permanece sem aprovação.",
+          "blockers": [
+            "W5-A4-T3 #47 depende da PR do Agent2.",
+            "PR #162 (#26) tem bloqueios de segurança/semântica e colisão de migration; não mergear até correção.",
+            "Validação real do Supabase Storage #52 depende do responsável."
           ]
         }
       ],
