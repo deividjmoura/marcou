@@ -13,6 +13,7 @@ describe("BookingWidget service images", () => {
           name: "Corte feminino",
           description: null,
           imageUrl: "https://storage.example.test/service-images/corte.webp",
+          bufferMinutes: 0,
           durationMinutes: 45,
           priceCents: 8000,
         }]}
@@ -33,6 +34,7 @@ describe("BookingWidget service images", () => {
           name: "Corte feminino",
           description: null,
           imageUrl: null,
+          bufferMinutes: 0,
           durationMinutes: 45,
           priceCents: 8000,
         }]}
