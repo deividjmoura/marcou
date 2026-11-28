@@ -141,7 +141,11 @@ function ProviderAvatarForm({ provider }: { provider: Provider }) {
           type="file"
           name="avatar"
           accept="image/jpeg,image/png,image/webp"
-          onChange={(event) => {\n            const nextFile = event.currentTarget.files?.[0] ?? null;\n            setFile(nextFile);\n            setPreview(nextFile ? URL.createObjectURL(nextFile) : null);\n          }}
+          onChange={(event) => {
+            const nextFile = event.currentTarget.files?.[0] ?? null;
+            setFile(nextFile);
+            setPreview(nextFile ? URL.createObjectURL(nextFile) : null);
+          }}
         />
         <span className="muted small">
           JPEG, PNG ou WebP · até 5 MB · validação repetida no servidor.
