@@ -1927,6 +1927,15 @@ console.log("\n[segurança e RLS]");
         imageBucket.allowed_mime_types.includes(mime),
       ),
   );
+  const storagePolicyDefinitions = (
+    await db.query(
+      `select policyname, roles, cmd, qual, with_check
+         from pg_policies
+        where schemaname = 'storage' and tablename = 'objects'
+        order by policyname`,
+    )
+  ).rows;
+  console.log("Storage policies:", JSON.stringify(storagePolicyDefinitions));
   const imagePolicies = (
     await db.query(
       `select polname from pg_policy where polrelid = 'storage.objects'::regclass`,
@@ -1945,7 +1954,10 @@ console.log("\n[segurança e RLS]");
     await ownerAClient.query(
       `select auth.uid()::text as uid,
               storage.foldername($1) as folders,
+              current_user as db_role,
               storage.filename($1) as filename,
+              (storage.foldername($1))[2] ~* '^[0-9a-f-]{36}$' as provider_uuid_valid,
+              (storage.foldername($1))[4] ~* '^[0-9a-f-]{36}$' as service_uuid_valid,
               storage.filename($1) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[.](jpg|png|webp)$' as filename_valid,
               exists (
                 select 1 from public.providers p
