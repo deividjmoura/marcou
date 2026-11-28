@@ -17,6 +17,23 @@
   --ds-color-danger-text: #a12626;
   --ds-color-info-bg: #e8f0f7;
   --ds-color-info-text: #2d5677;
+  /* Semantic aliases: components consume roles, not palette names. */
+  --ds-color-background: var(--ds-color-paper);
+  --ds-color-surface-default: var(--ds-color-surface);
+  --ds-color-surface-muted: var(--ds-color-brand-soft);
+  --ds-color-text-primary: var(--ds-color-ink);
+  --ds-color-text-secondary: var(--ds-color-muted);
+  --ds-color-border: var(--ds-color-line);
+  --ds-color-border-strong: #d5b8c2;
+  --ds-color-accent: var(--ds-color-brand-strong);
+  --ds-color-accent-subtle: var(--ds-color-brand-soft);
+  --ds-color-link: var(--ds-color-brand-strong);
+  --ds-color-control-bg: var(--ds-color-surface);
+  --ds-color-control-text: var(--ds-color-ink);
+  --ds-color-success: var(--ds-color-success-text);
+  --ds-color-warning: var(--ds-color-warning-text);
+  --ds-color-danger: var(--ds-color-danger-text);
+  --ds-color-info: var(--ds-color-info-text);
   --ds-font-sans: "Manrope Variable", "Manrope", system-ui, sans-serif;
   --ds-font-display: "Lora", Georgia, serif;
   --ds-font-size-xs: 0.75rem;
@@ -47,6 +64,43 @@
   --ds-focus-width: 2px;
   --ds-focus-offset: 3px;
   --ds-control-min-height: 44px;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ds-color-ink: #f5edf0;
+  --ds-color-muted: #c5b7be;
+  --ds-color-paper: #191417;
+  --ds-color-surface: #241c20;
+  --ds-color-line: #4b3942;
+  --ds-color-brand: #e8c4cf;
+  --ds-color-brand-strong: #f3b2c8;
+  --ds-color-brand-soft: #4b303b;
+  --ds-color-success-bg: #26321a;
+  --ds-color-success-text: #b5d98a;
+  --ds-color-warning-bg: #342b18;
+  --ds-color-warning-text: #f2cf70;
+  --ds-color-danger-bg: #3a2023;
+  --ds-color-danger-text: #f3a1a1;
+  --ds-color-info-bg: #1f2e3a;
+  --ds-color-info-text: #a6cce9;
+  --ds-color-background: var(--ds-color-paper);
+  --ds-color-surface-default: var(--ds-color-surface);
+  --ds-color-surface-muted: var(--ds-color-brand-soft);
+  --ds-color-text-primary: var(--ds-color-ink);
+  --ds-color-text-secondary: var(--ds-color-muted);
+  --ds-color-border: var(--ds-color-line);
+  --ds-color-border-strong: #755765;
+  --ds-color-accent: var(--ds-color-brand-strong);
+  --ds-color-accent-subtle: var(--ds-color-brand-soft);
+  --ds-color-link: var(--ds-color-brand-strong);
+  --ds-color-control-bg: var(--ds-color-surface);
+  --ds-color-control-text: var(--ds-color-ink);
+  --ds-color-success: var(--ds-color-success-text);
+  --ds-color-warning: var(--ds-color-warning-text);
+  --ds-color-danger: var(--ds-color-danger-text);
+  --ds-color-info: var(--ds-color-info-text);
+  --ds-focus-color: #f3b2c8;
 }
 
 :where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
