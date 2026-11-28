@@ -3,7 +3,7 @@
   "repository": "deividjmoura/marcou",
   "coordination_branch": "coordination/agents",
   "coordination_file": ".agent-coordination/state.json",
-  "updated_at": "2026-11-28",
+  "updated_at": "2026-11-28T13:28:09Z",
   "purpose": "Shared compact handoff and dispatch state for parallel agents. Source of truth for ownership, latest outcomes, SHAs, blockers and next actions.",
   "protocol": {
     "read_before_work": true,
@@ -1948,8 +1948,8 @@
         "feat/30-platform-hardening",
         "arena/3b7c9d2f-marcou"
       ],
-      "status": "in_progress_round_7_wave_6_blocked_on_56",
-      "active_assignment": "Onda 6: W6-A3-T2 (#24 auditoria + filhas #167/#168/#169) e W6-A3-T3 (PR #177 preparação E2E Fase 2 + runbook 25 migrations) CONCLUÍDAS. W6-A3-T1 (#43 onboarding) aguarda merge da #56 (Agent 2, PR #178) para rebase limpo sobre src/app/painel/painel-client.tsx.",
+      "status": "blocked_dependency_wave_7_waiting_130_172_178",
+      "active_assignment": "Onda 6/7: W6-A3-T2 (#24 + #167/#168/#169) e W6-A3-T3 (PR #177) concluidas. W6-A3-T1 (#43) desenhada e aguardando sequencia #130 -> #172 -> #178 no canal antes de reivindicar claim e abrir 1 PR limpa (modo economia Netlify).",
       "tasks": [
         {
           "id": "A3-T1",
@@ -1979,11 +1979,12 @@
       "dependencies": {
         "blocks": [],
         "blocked_by": [
-          "W6-A3-T1 (#43 onboarding) aguarda merge da #56 (PR #178 do Agent 2) pela regra_de_conflito em src/app/painel/painel-client.tsx e modo economia da Netlify."
+          "Claim ativo a1-claim130 (agent_1) em CHANGELOG.md para PR limpa da #130.",
+          "Ordem combinada wave_7_ajustes (#130 -> #172 -> #178 -> #43): PR #178 (#56, agent_2) toca src/app/painel/painel-client.tsx e src/app/painel/actions.ts, arquivos tambem tocados por #43 e pelas filhas #167/#168/#169."
         ]
       },
-      "current_state": "RODADA 7 — ONDA 6 (PARCIAL: 2/3 tarefas concluídas, 1 aguardando dependência da regra de conflito). W6-A3-T2 CONCLUÍDA: auditoria completa de src/app/painel na main (5a08e0a), corpo da Issue #24 convertido em checklist guarda-chuva com status (existe/parcial/falta), evidências reais e donos; 3 novas issues filhas pequenas criadas no padrão de docs/PADRAO-DE-ESCOPO.md (#167 pausas/bloqueios parciais/exceções + RLS, #168 fuso horário do negócio no painel, #169 link /reserva/[id] + feedback na agenda + link condicional Calendar + RLS completo) vinculadas sem duplicar #56/#55/#54/#43; comentário de registro publicado em #24 (7239643482). W6-A3-T3 CONCLUÍDA: PR #177 (head e0eef05, squash main ea66e3199a9e36faea8fd8cd4a2d3ef4c8946b80 com Co-authored-by, CI PR 46148015117 PASS, Netlify PASS, CI pós-merge 46148148964 PASS) entregou sem novas dependências src/lib/e2e-smoke.ts + src/lib/e2e-smoke.test.ts (11 testes Vitest: trava fail-closed assertSafeE2EEnvironment contra peornypgltuueubmsucm e marcoou.netlify.app usando GET /api/health, pickDeterministicE2EDate em America/Sao_Paulo e buildSmokeFixture RFC 2606 .test validado nos schemas Zod reais), Seção 5 em docs/ADR-E2E.md (blueprints config.toml/CI/checklist pós-OWNER_DECISION), e atualizou docs/TESTE-REAL-PRODUCAO.md, docs/PLATFORM.md e README.md para 25 migrations (incluindo #25 20261128000800_email_queue_recipient_binding.sql da PR #170, validada em PostgreSQL embutido nas ordens natural e --include-all); comentário publicado em #31 (7239746541). W6-A3-T1 (#43) pronta para iniciar imediatamente após o merge da #56 (PR #178 do Agent 2), respeitando a regra_de_conflito e o modo economia da Netlify (seção 9).",
-      "next_action": "Aguardar o Agent 2 mergear a #56 (PR #178 atual) na main; assim que mergeada, fazer rebase sobre a nova main e implementar W6-A3-T1 (#43 onboarding: CTA na home, checklist de primeiros passos com dados reais e corrida de slug com teste de banco) em uma única PR respeitando o orçamento de build Netlify (modo economia).",
+      "current_state": "Canal JSON lido e respondido (ack a3-mx0g25yp para coordinator-mx0fvd5p + blocker a3-mx0g2sur para coordinator/agent_2). Main reconfirmada em 9e9373695ea2c259c28abc87cc1e0f4d90be8461 (CI 46148672012 SUCCESS; commits 551c56a e 9e93736 sao somente docs, mantendo 25 migrations intactas em docs/TESTE-REAL-PRODUCAO.md). Auditoria tecnica das PRs abertas confirmou que PR #178 (#56, agent_2) altera src/app/painel/painel-client.tsx e src/app/painel/actions.ts (ambos tocados por #43 e tambem pelas filhas #167/#168/#169), enquanto CHANGELOG.md esta sob claim ativo a1-claim130 (agent_1) e a cadeia combinada no canal esta em #130 (agent_1) -> #172 (agent_5) -> #178 (agent_2). Em respeito a Regra 1/5 do canal e ao modo economia da Netlify, nenhuma PR ou push extra foi aberto. Desenho de #43 auditado e pronto (CTA na home para anon/logado com guarda isSupabaseConfigured, sugestao pura de slug + teste de corrida 23505 em scripts/db-check.mjs, checklist de 4 passos reais no painel que some ao concluir).",
+      "next_action": "Monitorar o canal (chan.mjs read --me agent_3) ate o merged da #178 (#56, agent_2) e liberacao de CHANGELOG.md; entao postar claim em src/app/page.tsx, src/app/painel/painel-client.tsx, src/app/painel/actions.ts, scripts/db-check.mjs e CHANGELOG.md, rodar os 7 gates locais e abrir 1 PR unica para W6-A3-T1 (#43).",
       "updates": [
         {
           "timestamp": "2026-11-27T23:13:46Z",
@@ -2038,6 +2039,19 @@
             "OWNER_DECISION #26 (docs/ADR-EMAIL-PROVEDOR.md) e #30/#20 (staging/produção, 25 migrations remotas, Storage real e schedulers)."
           ],
           "next_action": "Monitorar merge da #56 (PR #178 do Agent 2) e então iniciar W6-A3-T1 (#43) sobre a main atualizada."
+        },
+        {
+          "timestamp": "2026-11-28T13:28:09Z",
+          "task": "wave_7_ajustes checkpoint — leitura/resposta no canal JSON e confirmacao de nao-colisao (#43/#167/#168/#169)",
+          "status": "blocked_dependency_respecting_claims_and_budget",
+          "result": "Canal instalado/lido (node /tmp/chan.mjs read --me agent_3) e respondido via channel/agent_3.jsonl (ack a3-mx0g25yp + blocker a3-mx0g2sur). Confirmado em inspeção de arquivos das PRs #178 e #172 que #167/#168/#169 tambem tocam src/app/painel/painel-client.tsx e src/app/painel/actions.ts (alem de CHANGELOG.md sob claim a1-claim130). Main reconfirmada em 9e93736 (25 migrations, sem impacto pendente em docs/TESTE-REAL-PRODUCAO.md). Desenho tecnico da #43 concluido localmente sem push/build adicional.",
+          "head_sha": "main=9e9373695ea2c259c28abc87cc1e0f4d90be8461 (sem novo push)",
+          "tests": "Sem alteracoes em codigo neste checkpoint; CI main 46148672012 SUCCESS; docs/TESTE-REAL-PRODUCAO.md ja sincronizado com 25 migrations (PR #177 -> ea66e31).",
+          "blockers": [
+            "Claim ativo a1-claim130 (agent_1) em CHANGELOG.md (#130).",
+            "Ordem combinada no canal: #130 (agent_1) -> #172 (agent_5) -> #178 (#56, agent_2) antes da #43 (agent_3)."
+          ],
+          "next_action": "Assim que agent_2 postar merged da #178 (#56) e CHANGELOG.md estiver livre, reivindicar claim no canal e implementar W6-A3-T1 (#43) em 1 PR unica."
         }
       ],
       "last_verified": {
@@ -2270,6 +2284,33 @@
             "migrations_verified": 25,
             "issue_31_comment_url": "https://github.com/deividjmoura/marcou/issues/31#issuecomment-7239746541"
           }
+        },
+        "wave_7_checkpoint": {
+          "checked_at": "2026-11-28T13:28:09Z",
+          "main_sha": "9e9373695ea2c259c28abc87cc1e0f4d90be8461",
+          "main_ci_run_id": 46148672012,
+          "migrations_count": 25,
+          "runbook_up_to_date": true,
+          "channel_messages_posted": [
+            "a3-mx0g25yp",
+            "a3-mx0g2sur"
+          ],
+          "observed_active_claims": [
+            "a1-claim130",
+            "a5-claim172"
+          ],
+          "pr_178_files_checked": [
+            "CHANGELOG.md",
+            "package.json",
+            "src/app/globals.css",
+            "src/app/painel/actions.ts",
+            "src/app/painel/painel-client.tsx"
+          ],
+          "ready_design_for_43": [
+            "CTA separada na home (src/app/page.tsx) para prestador vs cliente com destino correto para anon e autenticado (respeitando isSupabaseConfigured e Vary: Cookie)",
+            "Sugestao automatica pura de slug a partir do displayName + validacao server-side + teste de corrida 23505 no PostgreSQL real em scripts/db-check.mjs",
+            "Checklist de 4 passos reais no painel (negocio salvo -> >=1 servico ativo -> expediente definido -> link copiado) com funcao pura testavel que oculta o checklist ao concluir"
+          ]
         }
       },
       "wave_2_status": "completed",
