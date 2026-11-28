@@ -11,6 +11,8 @@ Toda Pull Request com mudanças relevantes deve atualizar a seção `## [Unrelea
 
 ### Adicionado
 
+- Modal único de criação e edição de serviços no painel do prestador, com suporte à imagem já existente, foco/teclado nativos, rolagem interna e preservação do formulário em erros (Issue #56).
+
 - ADR de estratégia E2E e plano de Smoke E2E das 3 jornadas críticas em `docs/ADR-E2E.md` (Issue `#31`, Fase 1 do *Escopo refinado*): compara Supabase local via CLI/Docker no CI (recomendado para PRs sem custo nem segredos) contra projeto Supabase de *staging* dedicado (`OWNER_DECISION`), especifica as 3 jornadas contra build local (cadastro do prestador → criar serviço → publicar; reserva pública multi-serviço; confirmação/cancelamento pelo prestador e notificações) e registra medições reais atualizadas em `docs/QUALITY-AUDIT.md` (46 arquivos / 438 testes Vitest, 7 harnesses PostgreSQL com 24 migrations e `db-check` 140/140).
 - Fundação neutra para futura entrega de e-mail transacional sem envio real (Issue `#26`):
   - ADR de escolha de provedor em `docs/ADR-EMAIL-PROVEDOR.md` comparando Resend, Postmark, Amazon SES e Brevo em entregabilidade (domínio próprio, SPF/DKIM/DMARC), custo, limites, tratamento de *bounce*/*complaint*, templates pt-BR e LGPD (aguarda `OWNER_DECISION`).
