@@ -1937,20 +1937,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "Main atual 5a4b069596f7ac9e2575677dc97dfd85318ed2c8 (#156 merge), incluindo #155 em ecdff384a71a948a3d7e6b713d604a5562a1bebc e #150 em 774d1726cf251c7d7e6de0673f9e5ebdafe80d36. W4-A4-T1: #154 foi reconciliada sem force-push com merge commit e23e9e4f88003ad39d30a0446be379f28f1bce60 (parents: head anterior 96f1490c + main 5a4b0695), preservando CSS/tipografia da #150, changelog #155/#150 e teste de isolamento #156; branch agora 0 atrás, PR mergeable=true. CI quality run 46142009138 em andamento; Netlify checks iniciados. W4-A4-T2: #156 squash-mergeada em 5a4b069596f7ac9e2575677dc97dfd85318ed2c8 após quality success, Redirect/Header success, Pages neutral e Preview ready; logs DB confirmam 57 checks sociais passaram, incluindo dono/cliente/terceiro/outro prestador/anon. W4-A4-T3: PR #155 auditada; alteração só em normalização de telefone e testes, sem mudança nos caminhos de autorização/RPC nem exposição em listagens; CI quality e Netlify verdes no head b3c9e83 e merge commit ecdff384. #47 permanece aberta sem PR relacionada.",
-      "next_action": "Aguardar CI run 46142009138 e Netlify Redirect/Header/Pages/Preview no SHA e23e9e4f88003ad39d30a0446be379f28f1bce60; inspecionar logs DB Storage RLS e corrigir falhas se houver. Mergear #154 com expected_head_sha somente após checklist verde. Depois reler Escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md antes de iniciar W4-A4-T1 follow-up. Manter #52 aberta até teste real Supabase Storage feito pelo responsável. Monitorar PRs de exclusão de conta/#47 e revisar quando surgirem.",
+      "current_state": "Main atual 03a412f956f007010637c58a1ee5a245626fc8a0 (PR #157 health/cache merged), com #150/#155/#156 anteriores integradas. W4-A4-T1: #154 reconciliada duas vezes sem force-push. Primeiro merge commit e23e9e4f incorporou main 5a4b (#150/#156) mas CI 46142009138 falhou em social-foundation-check porque o delimitador dollar da fixture auth.uid foi reduzido a `$`; correção explícita `$$` aplicada em d1778302. CI 46142138260 passou integralmente (incluindo DB/build). Main avançou então por #157, apenas com mudanças em .env.example, CHANGELOG, docs/PLATFORM, next.config e health/cache; segunda reconciliação merge commit d2a427c8 incorporou main 03a412f, preservando imagem bullet no changelog. Branch compare main...branch ahead 55/behind 0, PR #154 mergeable=true. Novo CI 46142289245 em andamento. W4-A4-T2 #156 mergeada; W4-A4-T3 #155 auditada sem relaxamento de privacidade; #47 sem PR relacionada.",
+      "next_action": "Acompanhar CI run 46142289245 e Netlify Redirect/Header/Pages/Preview no HEAD d2a427c83c86174c440b90055c0bb55f7c31147f. Se todos verdes, reconfirmar main e PR #154 imediatamente antes do merge, então squash merge com expected_head_sha. Após merge, reler Escopo refinado #53 e docs/PADRAO-DE-ESCOPO.md para iniciar #53. Manter #52 aberta até teste real Storage pelo responsável; sem alterações externas.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W3-A4-T2: CI verde; aguardar dependência #150",
-          "status": "ci_green_waiting_for_150",
-          "result": "No HEAD 96f1490cccfb3daeb59a9dd37a50a1c9b459ef45, CI quality run 46089503494 passou integralmente: changelog, lint, typecheck, audit, unit/domain (370), DB integration (incluindo Storage RLS), build. Netlify Redirect/Header success, Pages changed neutral, Deploy Preview ready. Corrigida resolução ambígua de `name` na subquery da policy qualificando `storage.objects.name`; todos os asserts de owner/path passaram.",
-          "head_sha": "96f1490cccfb3daeb59a9dd37a50a1c9b459ef45",
-          "tests": "quality success; Redirect/Header success; Pages neutral; Preview ready.",
-          "blockers": [
-            "#150 continua draft e a regra wave_3.regra_de_conflito exige esperar/rebasear painel-client.tsx sobre #150. Não mergear #154 até #150 estar integrada."
-          ]
-        },
         {
           "timestamp": "2026-11-28T08:50:00-03:00",
           "task": "Wave 4 — início W4-A4-T1/T2/T3",
@@ -1975,6 +1964,17 @@
             "Não mergear #154 até checks verdes no novo SHA e23e9e4f.",
             "#52 exige validação real de Storage pelo responsável antes de fechar.",
             "#53 depende do merge de #154."
+          ]
+        },
+        {
+          "timestamp": "2026-11-28T09:10:00-03:00",
+          "task": "W4-A4-T1: corrigir CI de reconciliação e incorporar PR #157",
+          "status": "reconciled_waiting_ci",
+          "result": "CI 46142009138 no merge commit e23e9e4f falhou no test:db porque o trecho SQL auth.uid do social-foundation-check ficou com `as $`/`$;`. Identificado pelo log exato, corrigido com linhas explícitas `$$` em commit d1778302. CI 46142138260 passou integralmente (changelog/lint/typecheck/audit/unit/DB/build). Main avançou por PR #157 (health/cache) para 03a412f956f007010637c58a1ee5a245626fc8a0; mudança não sobrepõe código de mídia, mas altera CHANGELOG. Branch reconciliada novamente sem force-push via merge commit d2a427c83c86174c440b90055c0bb55f7c31147f; changelog preserva #150/#155/#156/#157 e bullet de imagens. Compare main...branch ahead 55/behind 0; PR #154 mergeable true. Novo quality run 46142289245 in_progress.",
+          "head_sha": "d2a427c83c86174c440b90055c0bb55f7c31147f",
+          "tests": "CI 46142138260 success no SHA d1778302; CI 46142289245 pendente no SHA d2a427c8.",
+          "blockers": [
+            "Aguardar quality e Netlify checks no SHA d2a427c8 antes do merge."
           ]
         }
       ],
@@ -2295,14 +2295,13 @@
           {
             "id": "W4-A4-T1",
             "target": "#154 / Issue #52: mergear imagens de serviço se checklist verde; depois #53",
-            "status": "reconciled_waiting_ci",
+            "status": "reconciled_after_157_waiting_ci",
             "pr": 154,
-            "head_sha": "e23e9e4f88003ad39d30a0446be379f28f1bce60",
-            "base_sha": "5a4b069596f7ac9e2575677dc97dfd85318ed2c8",
-            "tests": "Branch reconciliada sobre main após #150/#155/#156; merge commit e23e9e4f com parents antigo head 96f1490c + main 5a4b0695; compare main...branch ahead 53/behind 0; PR mergeable true. CI quality run 46142009138 in_progress; Netlify Header/Pages in_progress.",
+            "head_sha": "d2a427c83c86174c440b90055c0bb55f7c31147f",
+            "base_sha": "03a412f956f007010637c58a1ee5a245626fc8a0",
+            "tests": "Primeira reconciliação e23e9e4f falhou apenas por fixture auth.uid com delimitador $; corrigido em d1778302; CI run 46142138260 success completo. Main avançou por #157 (health/cache), reconciliada novamente em d2a427c8 sem force-push; compare main...branch ahead 55/behind 0; PR mergeable true. CI run 46142289245 em andamento.",
             "blockers": [
-              "Aguardar quality completo e Redirect/Header success; Pages neutral/green; Preview success.",
-              "#52 continua aberta até responsável validar Storage real; harness não simula upload remoto real."
+              "Aguardar CI/Netlify completos no novo HEAD d2a427c8."
             ]
           },
           {
