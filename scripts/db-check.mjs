@@ -2022,6 +2022,14 @@ console.log("\n[segurança e RLS]");
   ).rows.length === 1;
   check("providers valida formato de avatar_path", avatarConstraint);
 
+  await db.query("begin");
+  const mismatchedAvatarPathRejected = await db.query(
+    `update public.providers set avatar_path = $1 where id = $2`,
+    [`providers/${providerB}/avatar/${uuid()}.jpg`, providerA],
+  ).then(() => false).catch(() => true);
+  await db.query("rollback");
+  check("providers rejeita avatar_path de outro prestador", mismatchedAvatarPathRejected);
+
   console.log("\n[storage de avatar do profissional]");
   const avatarPolicies = (
     await db.query(
