@@ -2452,7 +2452,8 @@
         133,
         67,
         46,
-        2
+        2,
+        159
       ],
       "issues": [
         24,
@@ -2481,7 +2482,7 @@
         "agent5/w2-design-system-main-current"
       ],
       "status": "in_progress",
-      "active_assignment": "W4-A5-T1 #150 merged; W4-A5-T2 #27 merged via #158, #121 implementation PR #159 CI in progress; W4-A5-T3 backlog status completed.",
+      "active_assignment": "W5-A5-T1 #121 implementada em PR #159; checklist visual T3 criado; CI/Netlify pendentes. T2 aguardando integração/revisão visual da #121 para separar migrações de tokens por tela. T4: branches temporárias comparadas com main, mas sem API de delete branch; branches divergem e têm commits ahead, preservadas.",
       "tasks": [
         {
           "id": "A5-T1",
@@ -2518,117 +2519,9 @@
         "blocks": [],
         "blocked_by": []
       },
-      "current_state": "W4 #150 merged SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36; #27 semantic tokens/catalogue PR #158 merged SHA b0b1aeef48f4a86aa2ed9fc1cd4de8cc7d875d82. #121 implementation PR #159 now HEAD a5340226ee75c97a361ff622e32369dd5f320e9f (added docs/REVISAO-VISUAL-DONO.md checklist), base main 7a9d2be52c9fa2dd66411c98e9f4effbf0238591, compare 14 ahead/0 behind, mergeable Draft. CI run 46142988730 in progress at install; quality run 46142911252 cancelled by head update. Netlify checks in progress. Screenshots/console/overflow 390/1440 all modes pending maintainer.",
-      "next_action": "Poll CI run 46142988730 and Netlify. Reconfirm main. If checks green, mark Ready for Review; keep merge blocked until maintainer completes docs/REVISAO-VISUAL-DONO.md captures and checks all themes/areas.",
+      "current_state": "Main confirmada 7a9d2be52c9fa2dd66411c98e9f4effbf0238591 (#158 merge). PR #159 sobre essa base, HEAD a5340226ee75c97a361ff622e32369dd5f320e9f, 14 ahead/0 behind, mergeable Draft. CI run 46142988730: install em andamento; changelog/lint/typecheck/audit haviam passado no SHA anterior; unit/domain, test:db e build pendentes/reexecutando após commit doc. Netlify preview success no SHA anterior, pendente no atualizado. Criado docs/REVISAO-VISUAL-DONO.md. Issue #121 atualizada, #27/#132/#19/#28 triadas por comentários. Revisão manual 390/1440, console, overflow e todos temas pendente do responsável.",
+      "next_action": "Aguardar CI/Netlify no SHA a5340226. Reconfirmar main. Se CI/checks verdes, retirar Draft e integrar somente após revisão visual manual do responsável; depois abrir PR pequena para restante da migração tokens #27 em home/auth/cliente (sem painel enquanto Agent1 atua). Branches temporárias divergem e API não permite deletar; não remover.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "Atualização CI e Netlify da PR #149",
-          "status": "in_progress",
-          "result": "Netlify deploy-preview #149 success (https://deploy-preview-149--marcoou.netlify.app). CI quality run 46086141759: install, check:changelog, lint, typecheck, audit e unit/domain tests success; test:db in_progress, build pending. SHA head ab2d2861744a793259ec9cc62deddda9c559bead.",
-          "head_sha": "ab2d2861744a793259ec9cc62deddda9c559bead",
-          "tests": "CI parcial verde; DB/build pendentes. Preview Netlify success.",
-          "blockers": [
-            "Inspeção visual headless desktop/mobile não disponível na sessão."
-          ],
-          "next_action": "Aguardar test:db/build; PR permanece Draft até evidência visual."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "Reconciliação Wave2 #150 após main avançar",
-          "status": "in_progress",
-          "result": "Main avançou de 539035b para d1e0c2fa com migration de booking + changelog. #149 encerrada e #150 reconstruída sobre main atual (9 ahead/0 behind). CI run 46086360003 in_progress; Netlify pending. 59 open issues já triadas.",
-          "head_sha": "8df0652d903c372fdfa766e3a163059d971c5fe5",
-          "tests": "CI install in progress; checks restantes pending; preview pending.",
-          "blockers": [
-            "Inspeção headless visual 1440/390 não disponível nesta sessão."
-          ],
-          "next_action": "Aguardar CI/preview, não mergear sem visual."
-        },
-        {
-          "timestamp": "2026-11-27",
-          "task": "Wave 3 W3-A5 — design, docs e backlog",
-          "status": "completed_with_blocker",
-          "result": "Main confirmada d1e0c2faf0f99124ba65ab08fe24252e1f79406a. PR #150 head 8df0652d903c372fdfa766e3a163059d971c5fe5, 9 ahead/0 behind, mergeable/Draft. CI quality #335 success (todos os steps, incluindo test:db e build); Netlify deploy-preview success. Não mergeada por ausência de evidência de inspeção headless 1440/390, console e overflow. Refinamento de escopo #27 publicado; #121 status atualizado e bloqueado até #27/#150. Status recentes verificados nas issues #24, #43, #47, #52–57, #132, #19, #28; backlog e OWNER_DECISION mantidos abertos.",
-          "head_sha": "8df0652d903c372fdfa766e3a163059d971c5fe5",
-          "tests": "CI quality #335 success no SHA exato; Netlify deploy-preview check success. Inspeção visual/headless não executada (ferramentas de browser disponíveis nesta sessão são apenas leitura de tabs).",
-          "blockers": [
-            "Inspeção visual desktop/mobile com screenshot, console e overflow a 1440px e 390px não disponível; merge fica suspenso até evidência."
-          ],
-          "next_action": "Concluir visual review de #150; então merge se checklist completo e continuar #27/#121."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "Wave 4 W4-A5 — reconciliar #150 e atualizar escopos dependentes",
-          "status": "in_progress",
-          "result": "Main avançou para 994cf1c4efe65754ebb70042b448259344a2cc7c. #150 reconciliada sobre main, 9 ahead/0 behind, mergeable e Ready for Review. Descrição agora marca inspeção visual como pendência do responsável (autorização coordenador). CI run 46141488822 em andamento e Netlify pending. Comentários de #27/#121 atualizados: dependências em ordem, implementação #27 aguarda #150 merge.",
-          "head_sha": "fc92a8bdc2b10da40f8b719f735ebf606672d453",
-          "tests": "CI: install in_progress, demais steps pending. Netlify Deploy Preview pending. Não executar revisão visual local.",
-          "blockers": [
-            "Checks CI e Netlify Deploy Preview/Redirect/Header/Pages ainda precisam finalizar e ser confirmados no SHA exato."
-          ],
-          "next_action": "Aguardar checks; merge autorizado somente após checklist coordenador completo; depois destravar #27."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W4-A5-T1 — segunda reconciliação por avanço de main",
-          "status": "in_progress",
-          "result": "Main avançou para ecdff384a71a948a3d7e6b713d604a5562a1bebc durante CI (PR #154 integrada). PR #150 reaplicada sobre essa base e head atualizado. Compare 9 ahead/0 behind, mergeable. CI run 46141610708 in_progress; preview check ainda não publicado.",
-          "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
-          "tests": "Install in progress; demais gates pending; preview pending. Visual inspection não realizada pelo agente e explicitamente marcada pendente do responsável.",
-          "blockers": [
-            "Aguardar CI/Netlify no head atual e reconfirmar main antes de mergear."
-          ],
-          "next_action": "Aguardar checks; se main não avançar e gates forem verdes, mergear #150 segundo autorização Wave 4."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W4-A5-T1 — estado de validação do HEAD reconciliado",
-          "status": "in_progress",
-          "result": "Main estável e confirmada ecdff384a71a948a3d7e6b713d604a5562a1bebc. PR #150 HEAD 781ace0e2ad86c7373b1e488907237bd89147bda, 9 ahead/0 behind, mergeable, ready. CI: install/changelog/lint/typecheck/audit/unit tests green; test:db running, build pending. Preview pending. Pendência visual transferida ao responsável por decisão wave_4.",
-          "head_sha": "781ace0e2ad86c7373b1e488907237bd89147bda",
-          "tests": "CI quality parcial; DB/build pendentes; preview pending. Nenhuma inspeção visual foi realizada pelo agente.",
-          "blockers": [
-            "Aguardar CI completo e Netlify checks. Main reconfirmar antes do merge."
-          ],
-          "next_action": "Aguardar checks, merge com autonomia se green. Depois iniciar #27."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W4-A5-T1 merge #150 + W4-A5-T2 PR #158",
-          "status": "in_progress",
-          "result": "#150 merged squash SHA 774d1726cf251c7d7e6de0673f9e5ebdafe80d36; checks verdes (CI quality, redirect/header, pages neutral, preview). Inspeção visual é pendência do responsável. #27 implementada incrementalmente em PR #158, HEAD 5d09830c6182fad6f2785e26fab6618d4a9d98a4; CI run 46142071058 in progress; base main 5a4b069596f7ac9e2575677dc97dfd85318ed2c8. #121 bloqueada.",
-          "head_sha": "5d09830c6182fad6f2785e26fab6618d4a9d98a4",
-          "tests": "#150: all checks success (Netlify Pages neutral). #158: CI in_progress, install step pending; no preview check yet.",
-          "blockers": [
-            "CI/preview for #158 pending; visual review responsibility pending; branch cleanup API unavailable."
-          ],
-          "next_action": "Complete #158 CI/preview, merge if checklist green, then #121."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W4-A5-T2 — reconciliação após main avançar #155",
-          "status": "in_progress",
-          "result": "Main avançou para 03a412f956f007010637c58a1ee5a245626fc8a0. PR #158 reconciliada sobre base atual, HEAD 8f37e9cff5c44285052dd66f6457ee0875ca4328, 5 ahead/0 behind. CI run 46142220450 em progresso; preview pending. #121 bloqueada até #158.",
-          "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
-          "tests": "CI in progress, Netlify Deploy Preview pending. No visual screenshot.",
-          "blockers": [
-            "Checks pending; recheck main before merge."
-          ],
-          "next_action": "Poll CI and preview, then decide merge per checklist."
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W4-A5-T2 — validation status after rebase",
-          "status": "in_progress",
-          "result": "PR #158 head 8f37e9cff5c44285052dd66f6457ee0875ca4328 sobre main 03a412f956f007010637c58a1ee5a245626fc8a0, 5 ahead/0 behind. CI: install, changelog, lint, typecheck, audit, unit/domain and database tests success; build in_progress. Netlify Redirect/Header success, Pages neutral, Deploy Preview success.",
-          "head_sha": "8f37e9cff5c44285052dd66f6457ee0875ca4328",
-          "tests": "CI run 46142220450, build pending; Netlify checks complete green/neutral as required.",
-          "blockers": [
-            "Build in_progress; verify main before merge."
-          ],
-          "next_action": "Poll build; if green and main stable, merge under autonomy and continue #121."
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W4-A5-T2 #27 merged; W4-A5-T2 #121 implementation",
@@ -2652,6 +2545,19 @@
             "CI/Netlify pending and manual screenshots 390/1440 across themes/console/overflow remain maintainer requirement."
           ],
           "next_action": "Wait latest checks; then ready for review, but merge only after owner evidence."
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "Wave 5 — W5-A5-T1/T3 e triagem backlog",
+          "status": "in_progress",
+          "result": "PR #159 atualizada com checklist visual, HEAD a5340226ee75c97a361ff622e32369dd5f320e9f. CI run 46142988730 em progresso (install); Netlify Preview pending. #121/#27/#132/#19/#28 receberam comentários de status/next action. Branches temporárias divergentes preservadas porque não há ferramenta de deleção.",
+          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
+          "tests": "CI pending; Deploy Preview pending; revisão visual manual pendente do responsável.",
+          "blockers": [
+            "CI/Netlify exatos e revisão visual 390/1440.",
+            "Branch deletion capability absent; ahead branches retained."
+          ],
+          "next_action": "Poll CI; if green, seek owner visual check before merge; start W5-A5-T2 after #159."
         }
       ],
       "wave_2_tasks": [
@@ -2731,6 +2637,37 @@
             "CI and Netlify pending on exact latest HEAD; owner visual checklist must be completed before merge."
           ],
           "next_action": "Poll checks; if green, mark ready, but don't merge until owner visual checklist/screenshots in all themes are complete."
+        }
+      ],
+      "wave_5_tasks": [
+        {
+          "id": "W5-A5-T1",
+          "status": "in_progress",
+          "result": "Implementação #121 na PR #159. Cookie light/dark/system, leitura SSR, beforeInteractive script, provider de system preference, seletor acessível e CSS semantic tokens. PR Draft. CI/Netlify pendentes no HEAD atualizado; revisão visual manual 390/1440 ainda do responsável.",
+          "head_sha": "a5340226ee75c97a361ff622e32369dd5f320e9f",
+          "tests": "CI 46142988730 em andamento; Netlify preview pending. Contraste automated tests included; no screenshots/console review.",
+          "blockers": [
+            "CI and Deploy Preview must pass on exact HEAD.",
+            "Owner visual verification across screens and themes required before issue closure."
+          ],
+          "next_action": "Poll CI; verify exact SHA and main; after green ask owner to inspect preview before closing."
+        },
+        {
+          "id": "W5-A5-T2",
+          "status": "blocked_dependency",
+          "result": "Aguardando PR #159 integrar e revisão visual para aplicar tokens nas telas remanescentes em PRs pequenas. Painel reservado ao Agent1.",
+          "next_action": "Após #159, identificar tela/arquivo sem sobreposição e criar PRs separadas home, auth e customer."
+        },
+        {
+          "id": "W5-A5-T3",
+          "status": "completed",
+          "result": "Criado docs/REVISAO-VISUAL-DONO.md na branch #159 com checklist viewport 390/1440, Claro/Escuro/Automático, áreas/telas, overflow, console, foco, movimento reduzido e evidências."
+        },
+        {
+          "id": "W5-A5-T4",
+          "status": "blocked_tool_and_safety",
+          "result": "Branches temporárias pesquisadas e comparadas à main; todas têm commits ahead e estão divergidas (não são provadamente superadas). Nenhuma API de delete branch disponível; não apagar nem reescrever.",
+          "next_action": "Preservar; coordenador pode limpar quando houver API e prova individual de superação."
         }
       ]
     },
