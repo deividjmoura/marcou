@@ -1,14 +1,14 @@
 const DEFAULT_NEXT_PATH = "/inicio";
 const LOCAL_ORIGIN = "https://marcou.invalid";
 const LOCAL_APP_ORIGIN = "http://localhost:3000";
+const PRODUCTION_ORIGIN = "https://marcoou.netlify.app";
+const NETLIFY_PREVIEW_HOST = /^deploy-preview-\d+--marcoou\.netlify\.app$/;
 
 // Caracteres de formato Unicode que podem aparecer invisivelmente em URLs
 // (ex.: U+2060 WORD JOINER, U+200B ZERO WIDTH SPACE, U+FEFF BOM). Eles não
 // fazem parte de um hostname válido e podem fazer o Supabase rejeitar o
 // `redirectTo`, caindo em fallback silencioso para a raiz do Site URL.
 const FORMAT_CHARACTERS = /[\u200B-\u200D\u2060\uFEFF]/g;
-const NETLIFY_SITE_HOST = "marcoou.netlify.app";
-const NETLIFY_DEPLOY_PREVIEW_HOST = /^deploy-preview-\d+--marcoou\.netlify\.app$/i;
 
 /** Remove caracteres de formato invisíveis que podem contaminar uma origem. */
 export function stripFormatCharacters(value: string): string {
@@ -33,34 +33,53 @@ function parseConfiguredOrigin(value: string | null | undefined): string | null 
   }
 }
 
-/** Requests may use the production host, a Netlify PR preview, or localhost. */
-function isTrustedRequestOrigin(value: string | null | undefined): string | null {
+/** Accept only Netlify's numbered deploy-preview URL for this site. */
+function netlifyPreviewOrigin(value: string | null | undefined): string | null {
   const origin = parseConfiguredOrigin(value);
   if (!origin) return null;
 
-  const url = new URL(origin);
-  const isLocalhost = url.hostname === "localhost";
-  const isNetlifySite = url.protocol === "https:" && (
-    url.hostname === NETLIFY_SITE_HOST ||
-    NETLIFY_DEPLOY_PREVIEW_HOST.test(url.hostname)
-  );
-  return isLocalhost || isNetlifySite ? origin : null;
+  try {
+    const url = new URL(origin);
+    return url.protocol === "https:" && NETLIFY_PREVIEW_HOST.test(url.hostname)
+      ? origin
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Email and callback redirects must use a configured public origin. Request
- * origins are accepted only for localhost and the exact Marcou Netlify site /
- * numbered PR-preview hostname. Arbitrary Host and forwarded-host values are
- * never reflected into auth links or redirects.
+ * Auth links/redirects use deployment metadata captured by next.config.ts at
+ * build time. Preview hostnames are strictly validated. Request Host/origin is
+ * ignored in production/previews; localhost is the only dev request fallback.
  */
 export function trustedAppOrigin(requestOrigin?: string): string {
-  const trustedRequestOrigin = isTrustedRequestOrigin(requestOrigin);
-  if (trustedRequestOrigin) return trustedRequestOrigin;
+  if (process.env.MARCOU_AUTH_DEPLOY_CONTEXT === "deploy-preview") {
+    const preview = netlifyPreviewOrigin(process.env.MARCOU_AUTH_DEPLOY_PRIME_URL);
+    if (preview) return preview;
+    return PRODUCTION_ORIGIN;
+  }
 
   const configured = parseConfiguredOrigin(process.env.NEXT_PUBLIC_SITE_URL);
-  if (configured) return configured;
+  if (configured === PRODUCTION_ORIGIN) return configured;
 
-  return LOCAL_APP_ORIGIN;
+  if (process.env.NODE_ENV !== "production") {
+    const localConfigured = parseConfiguredOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+    if (localConfigured && new URL(localConfigured).hostname === "localhost") {
+      return localConfigured;
+    }
+
+    const localRequestOrigin = parseConfiguredOrigin(requestOrigin);
+    if (
+      localRequestOrigin &&
+      new URL(localRequestOrigin).hostname === "localhost"
+    ) {
+      return localRequestOrigin;
+    }
+    return LOCAL_APP_ORIGIN;
+  }
+
+  return PRODUCTION_ORIGIN;
 }
 
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
