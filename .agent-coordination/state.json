@@ -3133,56 +3133,9 @@
           "Leia o 'Escopo refinado' de cada issue; ele prevalece sobre o corpo."
         ]
       },
-      "current_state": "PR #178 OPEN/Draft, HEAD 12e81cdf1e5578553847018b07054946a4b08b28, compare atual 10 ahead/2 behind em relação à main. Main atual 9e9373695ea2c259c28abc87cc1e0f4d90be8461. PR mergeable=false. O commit 12e81 adiciona happy-dom 21.0.4 MIT e testes DOM com Server Action mockada; Netlify Deploy Preview deste SHA está pending (deploy 6b0ad3c158869c11cfc03ea1); ainda não há CI run para este SHA. CI 46148244545 e preview 178 haviam passado no HEAD anterior 2bb3651, não são evidência para 12e81. PR #172 Agent5 segue OPEN/Ready, HEAD e79a4b0, base 5a08e0, 13 ahead/5 behind, mergeable=false; CI 46147644751 e Netlify preview 172 success. Ela toca globals.css, então aguardar a sincronização/integração da PR #172 e estabilização da main antes de criar a branch final da #56.",
-      "next_action": "Aguardar Agent5 sincronizar/mergear #172 e reconfirmar main/PR/CI. Depois criar branch limpa da main atual, reaplicar implementação e testes DOM, abrir PR final única, aguardar CI + Netlify no SHA exato. Revisar happy-dom: foco inicial/restauração, Esc/backdrop, cancelamento, create/edit, erros e retry parcial. Manter Draft até checks verdes. Após #56 mergear, seguir #55 e #54 em PRs separadas.",
+      "current_state": "PR #178 OPEN/Draft, HEAD 12e81cdf1e5578553847018b07054946a4b08b28; main 9e9373695ea2c259c28abc87cc1e0f4d90be8461. PR #172 ainda OPEN, HEAD e79a4b07d03046ce5ec73e9fb76c84f208ce2e30, mergeable=false por base desatualizada; Agent5 confirmou ordem #172→#178 e claim ativo em globals.css/layout/theme. CI #172 success e Netlify preview success no SHA e79a4b0. #178 não tem workflow run no HEAD 12e81, mas Netlify Deploy Preview publicou no SHA atual. Agent2 leu canal via API porque runtime não tem checkout/origin e DNS externo falha; enviou ack ao coordenador, heads_up ao Agent5 e blocker. Nenhum arquivo quente foi editado.",
+      "next_action": "Aguardar Agent5 concluir a reconciliação/merge da #172 e avisar merged no canal. Depois reler canal, main, PR #178, checks e Netlify; reconciliar a branch #178 uma única vez sobre a main estabilizada, com claim dos arquivos quentes antes de editar, um push, CI e preview no SHA exato. Só então considerar merge da #56; depois seguir #55 e #54.",
       "updates": [
-        {
-          "timestamp": "2026-11-28",
-          "task": "W6-A2-T1 — início da reconstrução da #56",
-          "status": "in_progress",
-          "result": "Criada branch agent2/w6-56-service-modal diretamente da main 5a08e0ae. PR #171 Draft aberta no HEAD 3993ac0. Implementado modal nativo, suporte a imagem da #154, preservação do formulário em erro via submit manual da Server Action, regra pura de fechamento/testes e CSS responsivo. CI 46147641363 aguardando. Inspeção headless pendente. PR #159 também modifica globals.css e precisa de coordenação.",
-          "head_sha": "3993ac028845b1cb8acc1f72b2c428af3ee4ef98",
-          "tests": "Não executados localmente nesta sessão. CI da PR #171 queued; testes unitários da regra pura estão incluídos.",
-          "blockers": [
-            "Inspeção em navegador headless ainda pendente.",
-            "PR #159 altera src/app/globals.css e está 7 commits atrás da main; reconciliar antes do merge da #171."
-          ]
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W6-A2-T1 — reconciliar main e substituir PR #171",
-          "status": "in_progress",
-          "result": "Main avançou para 56e1707 (#170) enquanto a PR #171 estava em validação. Para cumprir branch atualizada sem force-push, a PR #171 foi fechada como supersedida e a implementação foi reaplicada em branch limpa baseada na main atual. PR #176 aberta como substituta, compare 5 ahead/0 behind; CI 46147904815 em andamento. CI da #171 havia passado, mas não é evidência para o SHA novo. Headless ainda pendente.",
-          "head_sha": "3c5a4631f192797bcbcaf6a0b98d096b9681611c",
-          "tests": "PR #171 SHA 3993ac0: CI 46147641363 success e Netlify preview success. PR #176 SHA 3c5a463: CI em andamento, Netlify ainda pendente.",
-          "blockers": [
-            "Inspeção em navegador headless ainda pendente."
-          ]
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W6-A2-T1 — PR #178 e validação",
-          "status": "in_progress",
-          "result": "PR #178 aberta como substituta na branch agent2/w6-56-service-modal-current-main. CI 46148244545 success no HEAD 2bb3651, incluindo check:changelog, lint, typecheck, audit, testes unitários, test:db e build. Netlify ainda sem status consultável. Main avançou para ea66e (1 commit atrás na branch; mudanças documentais/E2E, sem conflito reportado). PR #171 e #176 fechadas como supersedidas, sem merge. Inspeção headless permanece pendente.",
-          "head_sha": "2bb365145da6f81638e47447a37682adb10cabc6",
-          "tests": "CI quality run 46148244545 success no SHA 2bb3651. Netlify ainda pendente/não publicado. Testes locais não executados nesta sessão.",
-          "blockers": [
-            "Inspeção em navegador headless pendente.",
-            "Branch está 1 commit atrás da main ea66e; sincronizar sem force-push antes do merge e reexecutar checks."
-          ]
-        },
-        {
-          "timestamp": "2026-11-28",
-          "task": "W6-A2-T1 — CI e Deploy Preview aprovados",
-          "status": "blocked_owner_validation",
-          "result": "PR #178 HEAD 2bb3651: CI run 46148244545 success em todos os passos (check:changelog, lint, typecheck, audit, unit/domain, test:db, build). Netlify Deploy Preview success em https://deploy-preview-178--marcoou.netlify.app. PR permanece Draft porque falta evidência de inspeção headless dos comportamentos de DOM exigidos pelo escopo refinado. Main atual ea66e; branch 1 commit atrás, mergeable=true, sem conflito reportado. Não mergeada.",
-          "head_sha": "2bb365145da6f81638e47447a37682adb10cabc6",
-          "tests": "CI quality run 46148244545 success; Netlify deploy-preview success. Inspeção headless não executada.",
-          "blockers": [
-            "Inspeção em navegador headless pendente para os critérios de DOM (390/1440).",
-            "Branch está 1 commit atrás da main ea66e; sincronizar sem force-push antes do merge e reexecutar checks."
-          ]
-        },
         {
           "timestamp": "2026-11-28",
           "task": "W6-A2-T1 — adicionar cobertura DOM com happy-dom",
@@ -3208,6 +3161,19 @@
             "Main continua avançando; branch #178 2 commits atrás, mergeable=false.",
             "CI e Netlify no HEAD 12e81 ainda pendentes."
           ]
+        },
+        {
+          "timestamp": "2026-11-28",
+          "task": "W6-A2-T1 — retomada, protocolo de canal e coordenação com Agent5",
+          "status": "blocked_dependency",
+          "result": "Releitura de dispatch.identities/channel/wave_6/wave_7_ajustes confirma Agent2=reservas/painel e ordem #172→#178. Canal consultado pela API GitHub; script não pôde ser executado porque este runtime não contém checkout Git/origin e DNS externo falha. Agent2 respondeu ao heads_up do coordenador, avisou Agent5 e publicou blocker. Agent5 confirmou a ordem e claim ativo de globals.css/layout/theme. #172 permanece OPEN/mergeable=false (base antiga), CI 46147644751 e Netlify verdes em e79a4b0. #178 permanece Draft, HEAD 12e81cdf; sem workflow run nesse SHA, Netlify preview publicado. Main 9e937369. Nenhum arquivo quente foi editado.",
+          "head_sha": "12e81cdf1e5578553847018b07054946a4b08b28",
+          "tests": "CI #172: 46147644751 success no HEAD e79a4b0; CI #178: nenhum workflow run encontrado para 12e81cdf. Netlify Deploy Preview #178 publicou no HEAD 12e81cdf. Nenhum teste local executado.",
+          "blockers": [
+            "Aguardar Agent5 reconciliar/mergear #172; claim ativo em src/app/globals.css, src/app/layout.tsx e arquivos de tema.",
+            "Depois da integração, sincronizar #178 uma única vez com main e obter CI/Netlify no SHA final."
+          ],
+          "next_action": "Aguardar Agent5 concluir #172; reler canal e reconfirmar main/PRs/checks antes de tocar arquivos quentes. Em seguida reconciliar #178 uma única vez, rodar validação completa e mergear apenas com checklist verde."
         }
       ],
       "active_assignment": "W6-A2-T1 (#56): implementar modal único acessível de criação/edição de serviços, incluindo imagem, preservação de formulário em erros, testes puros e validação headless. Depois seguir W6-A2-T2 (#55) e W6-A2-T3 (#54), uma PR por issue."
