@@ -15,6 +15,7 @@ import {
   type AgendaPeriod,
 } from "@/domain/agenda/agenda";
 import { providerBookingAction } from "./actions";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 const PERIOD_OPTIONS: Array<{ id: AgendaPeriod; label: string }> = [
   { id: "upcoming", label: "Próximos" },
@@ -204,11 +205,22 @@ export function BookingAgenda({
                           {booking.customer_name}
                         </strong>
                         <span>{booking.service_name_snapshot}</span>
-                        {booking.customer_phone ? (
-                          <span className="muted small">
-                            {booking.customer_phone}
-                          </span>
-                        ) : null}
+                        {(() => {
+                          const wa = buildWhatsAppLink(
+                            booking.customer_phone,
+                            `Olá! Sobre o agendamento de ${booking.service_name_snapshot}.`,
+                          );
+                          return wa ? (
+                            <a
+                              className="muted small reservation-whatsapp-link"
+                              href={wa}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              WhatsApp do cliente
+                            </a>
+                          ) : null;
+                        })()}
                         <span className="muted small">
                           {formatCents(booking.price_cents_snapshot)}
                         </span>
